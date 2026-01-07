@@ -1,0 +1,42 @@
+<div class="step-content" *ngIf="stepKey !== 'terms'">
+  <form [formGroup]="form">
+    <div *ngFor="let field of fields" class="field-row">
+      <label [for]="field.name">{{field.label}}</label>
+
+      <ng-container [ngSwitch]="field.type">
+        <!-- Text Input -->
+        <input *ngSwitchCase="'text'" pInputText type="text" [id]="field.name" [formControlName]="field.name"
+          [placeholder]="field.placeholder">
+
+        <!-- Dropdown -->
+        <p-select *ngSwitchCase="'dropdown'" [options]="field.options" [formControlName]="field.name"
+          [placeholder]="field.placeholder">
+        </p-select>
+
+        <!-- Checkbox -->
+        <p-checkbox *ngSwitchCase="'checkbox'" [binary]="true" [formControlName]="field.name" [label]="field.label">
+        </p-checkbox>
+
+        <!-- Add more field types as needed -->
+      </ng-container>
+
+      <small *ngIf="getFieldControl(field.name)?.invalid && 
+                   getFieldControl(field.name)?.touched" class="p-error">
+        <span *ngIf="getFieldControl(field.name)?.errors?.required">
+          This field is required
+        </span>
+        <span *ngIf="getFieldControl(field.name)?.errors?.minlength">
+          Minimum {{field.minLength}} characters required
+        </span>
+      </small>
+    </div>
+  </form>
+</div>
+
+<div *ngIf="stepKey === 'terms'" class="terms-content">
+  <div [innerHTML]="content"></div>
+  <form [formGroup]="form" class="terms-form">
+    <p-checkbox [binary]="true" [formControlName]="fields[0].name" [label]="fields[0].label">
+    </p-checkbox>
+  </form>
+</div>

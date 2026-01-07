@@ -1,0 +1,97 @@
+@if (!isLoading) {
+  <div class="setup-container" [ngStyle]="getBackgroundStyle()">
+    <!-- Access denied message for base URL restriction -->
+    @if (isAccessDenied) {
+      <div class="error-container">
+        <div class="error-card">
+          <h1>Access Restricted</h1>
+          <div class="error-content">
+            <i class="pi pi-ban error-icon"></i>
+            <p class="error-message">{{ baseUrlAccessDeniedInstruction }}</p>
+            <p class="error-subtitle">Please contact your administrator for a valid registration link.</p>
+          </div>
+        </div>
+      </div>
+    }
+    <!-- Error message for invalid URL -->
+    @if (hasInvalidUrl && !isAccessDenied) {
+      <div class="error-container">
+        <div class="error-card">
+          <h1>Invalid URL</h1>
+          <div class="error-content">
+            <i class="pi pi-exclamation-triangle error-icon"></i>
+            <p class="error-message">{{ errorMessage }}</p>
+            <p class="error-subtitle">Please contact your administrator for a valid registration link.</p>
+          </div>
+        </div>
+      </div>
+    }
+    <!-- Normal registration form -->
+    @if (!hasInvalidUrl && !isAccessDenied) {
+      <div class="setup-card">
+        <h1>{{ pageTitle || ('Visitor_Registration' | translate) }}</h1>
+        <!-- Appointment flow indicator -->
+        <!-- <div class="appointment-info" *ngIf="isAppointmentFlow">
+        <div class="appointment-badge">
+          <i class="pi pi-calendar"></i>
+          <span>Appointment Registration</span>
+        </div>
+        <p class="appointment-message">You are registering for a scheduled appointment.</p>
+      </div> -->
+      <!-- <p class="instructions">Please select your branch and category to begin the registration process. Please select your
+      branch and category to begin the registration process. Please select your branch and category to begin the
+      registration process. Please select your branch and category to begin the registration process. Please select your
+    branch and category to begin the registration process.</p> -->
+    <div class="form-container">
+      <!-- Branch Selection - Hidden in appointment flow -->
+      @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
+        <div class="form-field">
+          <label for="branch_input">{{ branchTranslation.caption || ('branch' | translate) }}</label>
+          <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
+            [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')" optionLabel="Branch_Name"
+            inputId="branch_input" optionValue="RefBranchSeqID" [showClear]="true" [autofocus]="false">
+          </p-select>
+        </div>
+      }
+      <!-- Category Selection - Disabled in appointment flow -->
+      @if (selectedBranch && categories.length !== 1) {
+        <div class="form-field">
+          <label for="category_input">{{ 'category' | translate }}</label>
+          <p-select
+            [options]="categories"
+            [(ngModel)]="selectedCategory"
+            (ngModelChange)="onCategoryChange($event)"
+            [placeholder]="'category' | translate:'placeholder'"
+            optionLabel="visitor_ctg_desc"
+            inputId="category_input"
+            optionValue="visitor_ctg_id"
+            [showClear]="!isAppointmentFlow"
+            [disabled]="isAppointmentFlow"
+            [autofocus]="false">
+          </p-select>
+        </div>
+      }
+      @if (selectedBranch && selectedCategory) {
+        <div class="text-left">
+          <label>{{'terms_and_conditions' | translate}}</label>
+          <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
+        </div>
+      }
+      <p-button [label]="'agree_and_proceed' | translate" icon="pi pi-arrow-right" iconPos="right" (onClick)="proceedToWizard()"
+        [disabled]="!selectedBranch || !selectedCategory">
+      </p-button>
+    </div>
+  </div>
+}
+</div>
+}
+
+@if (isLoading) {
+  <div class="loading-indicator" [ngStyle]="getBackgroundStyle()">
+    <div class="loading-content">
+      <p-progressbar mode="indeterminate" [style]="{ height: '8px', width: '300px' }" />
+      <p>Loading...</p>
+    </div>
+  </div>
+}
+<p-toast></p-toast>

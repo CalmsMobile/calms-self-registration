@@ -1,0 +1,77 @@
+<div class="registration-status-container">
+  <div class="status-card">
+    <div class="status-header">
+      <h2>{{'visitor_registration' | translate}}</h2>
+    </div>
+
+    <div class="status-content">
+      <!-- Success Icon for Auto-Approved -->
+      @if (registrationData) {
+        <div class="success-icon-section">
+          <div class="success-icon">
+            <i class="pi pi-check-circle"></i>
+          </div>
+          @if (registrationData.isAutoApproved) {
+            <div class="success-text">{{'registration_successful' | translate}}</div>
+          }
+          @if (!registrationData.isAutoApproved) {
+            <div class="success-text">{{'registration_successful_and_sent_for_approval' | translate}}</div>
+          }
+        </div>
+      }
+
+      <!-- Message Lines -->
+      <div class="message-section">
+        @if (messageLine1) {
+          <div class="message-line">
+            {{ messageLine1 }}
+          </div>
+        }
+        @if (messageLine2) {
+          <div class="message-line">
+            {{ messageLine2 }}
+          </div>
+        }
+        @if (messageLine3) {
+          <div class="message-line">
+            {{ messageLine3 }}
+          </div>
+        }
+      </div>
+
+      <!-- QR Code Section -->
+      @if (showQrCode && qrCodeValue) {
+        <div class="qr-code-section">
+          <div class="qr-code-container">
+            <img [src]="qrCodeImageUrl" alt="QR Code" class="qr-code-image" />
+          </div>
+          <div class="qr-code-label">
+            {{'scan_qr_code' | translate}}
+          </div>
+        </div>
+      }
+
+      <!-- Status Badge -->
+      <div class="status-badge" [ngClass]="registrationData.isAutoApproved ? 'approved' : 'pending'">
+        @if (registrationData.isAutoApproved) {
+          <span>{{'approved' | translate}}</span>
+        }
+        @if (!registrationData.isAutoApproved) {
+          <span>{{'pending_approval' | translate}}</span>
+        }
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      @if (showQrCode) {
+        <p-button [label]="'print' | translate" (onClick)="onPrint()">
+        </p-button>
+      }
+      @if (showNewRegistrationButton) {
+        <p-button [label]="'new_registration' | translate" (onClick)="onNewRegistration()">
+        </p-button>
+      }
+    </div>
+  </div>
+</div>

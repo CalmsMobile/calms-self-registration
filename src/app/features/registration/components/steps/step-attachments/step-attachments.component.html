@@ -1,0 +1,105 @@
+<div class="step-container">
+  <!-- <h2>Upload Required Documents</h2> -->
+  <!-- Documents Upload Panel -->
+  @if (attachmentUploadEnabled) {
+    <p-panel [header]="'Additional_Documents' | translate" [toggleable]="true" [collapsed]="false">
+      <div class="attachments-list">
+        @for (doc of documentTypes; track doc) {
+          <div class="attachment-item">
+            <div class="attachment-header">
+              <h3>{{ doc.Caption }} @if (doc.Mandatory) {
+                <span class="red-color">*</span>
+              }</h3>
+              <small>
+                Max size: {{ maxSize / 1000000 }}MB
+                ({{ acceptedTypes.replace('image/*,', '').replace('image/*', 'Images') }})
+              </small>
+            </div>
+            <div class="attachment-controls">
+              @if (!attachments[doc.VisitorAttachSeqId].file) {
+                <p-fileUpload mode="basic" [chooseLabel]="'browse' | translate"
+                  [accept]="acceptedTypes" [maxFileSize]="maxSize" (onSelect)="onFileSelect($event, doc.VisitorAttachSeqId)">
+                </p-fileUpload>
+              }
+              @if (attachments[doc.VisitorAttachSeqId].file) {
+                <div class="preview-container">
+                  <span class="file-name"><i class="pi pi-file"></i> {{ attachments[doc.VisitorAttachSeqId].file?.name }}</span>
+                  <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text"
+                    (click)="confirmDelete(doc.VisitorAttachSeqId)">
+                  </button>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </p-panel>
+  }
+
+  <!-- Items Declaration Panel -->
+  @if (materialDeclareEnabled) {
+    <p-panel [header]="'Item Declaration' | translate" [toggleable]="true" class="mt-4">
+      <div class="items-declaration">
+        <div class="nothing-to-declare">
+          <p-checkbox inputId="no-declare-doc" [(ngModel)]="nothingToDeclare" [binary]="true"
+            (onChange)="onNothingToDeclareChange()">
+          </p-checkbox>
+          <label for="no-declare-doc"> {{'i_have_nothing_to_declare' | translate}}</label>
+        </div>
+
+        @if (!nothingToDeclare) {
+          <div class="items-list">
+            <div class="item-form">
+              <div class="field">
+                <label for="itemDescription">{{'item_description' | translate}}</label>
+                <input id="itemDescription" pInputText [(ngModel)]="newItem.description"
+                  placeholder="{{'enter_item_description' | translate:'placeholder'}}">
+                </div>
+                <div class="field">
+                  <label for="serialNumber">{{'serial_number' | translate}}</label>
+                  <input id="serialNumber" pInputText [(ngModel)]="newItem.serialNumber" placeholder="{{'enter_serial_number' | translate:'placeholder'}}">
+                </div>
+                <div class="field">
+                  <label for="itemDirection">{{'direction' | translate}}</label>
+                  <p-select id="itemDirection" [options]="directionOptions" [(ngModel)]="newItem.direction"
+                    optionLabel="label" optionValue="value" placeholder="{{'select_direction' | translate:'placeholder'}}">
+                  </p-select>
+                </div>
+                <div class="field">
+                  <button pButton label="Add" icon="pi pi-plus" class="p-button-sm mobile-full-width" (click)="addItem()"
+                    [disabled]="!newItem.description">
+                  </button>
+                </div>
+              </div>
+              @if (declaredItems && declaredItems.length > 0) {
+                <p-table [value]="declaredItems" class="mt-3">
+                  <ng-template pTemplate="header">
+                    <tr>
+                      <th>{{'item_description' | translate}}</th>
+                      <th>{{'serial_number' | translate}}</th>
+                      <th>{{'direction' | translate}}</th>
+                      <th>{{'actions' | translate}}</th>
+                    </tr>
+                  </ng-template>
+                  <ng-template pTemplate="body" let-item let-rowIndex="rowIndex">
+                    <tr>
+                      <td>{{item.description}}</td>
+                      <td>{{item.serialNumber || '-'}}</td>
+                      <td>{{getDirectionLabel(item.direction)}}</td>
+                      <td>
+                        <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text"
+                          (click)="removeItem(rowIndex)">
+                        </button>
+                      </td>
+                    </tr>
+                  </ng-template>
+                </p-table>
+              }
+            </div>
+          }
+        </div>
+      </p-panel>
+    }
+  </div>
+
+  <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>

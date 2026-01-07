@@ -1,0 +1,37 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  gap: 12px;
+  /*background-image: url('/assets/bg_self_reg.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;*/
+
+  .header-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 1rem;
+    position: relative;
+    
+    app-header {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+    }
+    
+    app-language-selector {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+  }
+
+  .app-content {
+    flex: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}

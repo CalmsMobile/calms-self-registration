@@ -1,0 +1,100 @@
+:root {
+  --font-family: 'Inter', sans-serif;
+  --theme-bg-color: #D9D9D9;
+  --theme-bg-light-color: #f2f2f2;
+  --theme-bg-dark-color: #b1b0b0;
+  --theme-primary-text-color: #0D0D0D;
+  --theme-secondary-text-color: #373737;
+  --theme-primary-green-color: #03a781;;
+  --theme-green-light-color: #53A67F;
+  --theme-green-color: #027158;;
+  --theme-error-color: #e80505;
+  --theme-border-radius: 16px;
+  --theme-glossy-white: rgba(255, 255, 255, 0.85);
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  color: var(--theme-primary-text-color);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light !important;
+  }
+}
+
+/***   Header   ***/
+.app-container {
+  background-color: var(--theme-bg-color);
+}
+
+.p-button:not(.p-dialog-close-button):not(.p-panel-header-icon) {
+  border-radius: var(--theme-border-radius) !important;
+  background-color: var(--theme-primary-green-color) !important;
+  // border-color: var(--theme-bg-dark-color) !important;
+  color: var(--theme-bg-light-color) !important;
+
+  &:disabled {
+    color: var(--theme-bg-color) !important;
+    cursor: not-allowed !important;
+  }
+}
+
+.p-steps-item-number {
+  background-color: var(--theme-bg-color) !important;
+  color: var(--theme-primary-text-color) !important;
+  border-radius: var(--theme-border-radius) !important;
+}
+
+.p-steps-item-label {
+  color: var(--theme-secondary-text-color) !important;
+}
+
+.p-steps-item-active {
+  .p-steps-item-label {
+    color: var(--theme-primary-green-color) !important;
+  }
+
+  .p-steps-item-number {
+    color: var(--theme-bg-light-color) !important;
+    border-color: var(--theme-primary-green-color) !important;
+    background-color: var(--theme-primary-green-color) !important;
+  }
+}
+
+.step-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  h2 {
+    color: var(--theme-primary-text-color);
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+}
+
+.step-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .step-container {
+    padding: 0.5rem;
+  }
+
+  .step-content {
+    padding: 1rem;
+  }
+}

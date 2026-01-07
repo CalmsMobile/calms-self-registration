@@ -1,0 +1,44 @@
+@if (!isLoading) {
+  <div class="step-container">
+    <h2>{{ 'questionnaire' | translate }}</h2>
+    <div class="step-content">
+      <form [formGroup]="questionnaireForm" class="questionnaire-form">
+        @for (question of questions; track question) {
+          <div class="question-item">
+            <div class="question-header">
+              @if (question.ShortName) {
+                <h3>{{ question.ShortName }}</h3>
+              }
+              <p class="question-text">{{ question.Description }}</p>
+            </div>
+            <div class="answer-options">
+              <div class="p-field-radiobutton">
+                @if (getQuestionControl(question.QuestionariesSeqId)) {
+                  <p-radioButton
+                    name="q{{question.QuestionariesSeqId}}" value="1"
+                    [formControl]="getQuestionControl(question.QuestionariesSeqId)" label="Yes"
+                    [inputId]="'yes_' + question.QuestionariesSeqId" />
+                }
+                <label [for]="'yes_' + question.QuestionariesSeqId" class="ml-2">Yes</label>
+              </div>
+              <div class="p-field-radiobutton">
+                @if (getQuestionControl(question.QuestionariesSeqId)) {
+                  <p-radioButton
+                    name="q{{question.QuestionariesSeqId}}" value="0"
+                    [formControl]="getQuestionControl(question.QuestionariesSeqId)" label="No"
+                    [inputId]="'no_' + question.QuestionariesSeqId" />
+                }
+                <label [for]="'no_' + question.QuestionariesSeqId" class="ml-2">No</label>
+              </div>
+              @if (getQuestionError(question.QuestionariesSeqId)) {
+                <small class="p-error">
+                  Your answer doesn't match the required response
+                </small>
+              }
+            </div>
+          </div>
+        }
+      </form>
+    </div>
+  </div>
+}

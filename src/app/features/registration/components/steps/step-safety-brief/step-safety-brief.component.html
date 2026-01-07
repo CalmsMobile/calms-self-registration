@@ -1,0 +1,43 @@
+<div class="step-container">
+  <h2>{{ 'safety_briefing' | translate }}</h2>
+
+  <div class="step-content">
+    <div class="video-instructions">
+      <p style="margin: 0;">{{'watch_safety_briefing_video_before_proceeding' | translate}}</p>
+      @if (isFullscreen && !videoEnded) {
+        <p class="fullscreen-message">
+          Press the replay button after the video completes to exit fullscreen
+        </p>
+      }
+    </div>
+
+    <div #videoContainer class="video-container">
+      <video #safetyVideo class="safety-video" [hidden]="videoEnded && showReplay" disablePictureInPicture
+        controlsList="nodownload nofullscreen noremoteplayback">
+        <source [src]="videoSource" type="video/mp4">
+        Your browser does not support HTML5 video.
+      </video>
+
+      @if (showPlayButton) {
+        <button #playButton pButton class="play-button" icon="pi pi-play"
+          (click)="startPlayback()">
+          {{'play_safety_video' | translate}}
+        </button>
+      }
+
+      @if (videoEnded && showReplay && !isFullscreen) {
+        <div class="video-complete">
+          <div class="completion-message">
+            <h3>{{'safety_briefing_complete' | translate}}</h3>
+            <p>{{'proceed_next_step_or_replay' | translate}}</p>
+            <div class="action-buttons">
+              <button pButton type="button" icon="pi pi-replay" [label]="'replay_video' | translate" (click)="onReplay()"
+                class="p-button-outlined">
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

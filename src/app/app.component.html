@@ -1,0 +1,15 @@
+<div class="app-container">
+  <div class="header-content">
+    @if (showHeader) {
+      <app-header></app-header>
+    }
+    @if (showLanguageSelector) {
+      <app-language-selector
+        (languageChange)="onLanguageChange($event)">
+      </app-language-selector>
+    }
+  </div>
+  <main class="app-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

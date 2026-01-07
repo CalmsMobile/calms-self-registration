@@ -1,0 +1,24 @@
+# compiled output
+/dist
+/tmp
+/out-tsc
+/coverage
+/.angular/cache
+
+# dependencies
+/node_modules
+
+# IDE - VSCode
+/.vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+/**/.vscode/*.func.json
+
+# System Files
+.DS_Store
+Thumbs.db
+.babelrc.js.map
+*.js.map
