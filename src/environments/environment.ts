@@ -3,7 +3,7 @@
 
 export const environment = {
   production: false,
-  proURL: 'http://localhost:57080/',
-  apiURL: 'http://localhost:57080/api/vims',
-  portalApiURL: 'http://localhost:57080/api/portal'
+  proURL: 'https://rndv6.calmsweb.com/app',
+  apiURL: 'https://rndv6.calmsweb.com/app/api/vims',
+  portalApiURL: 'https://rndv6.calmsweb.com/app/api/portal'
 };

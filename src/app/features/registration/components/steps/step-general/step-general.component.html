@@ -611,55 +611,59 @@
       </div>
       }
       <!-- Saved Visitors Table (only when multiple visitor setting is enabled) -->
-      @if (settings?.MultipleVisitorEnabled) {
-      <div class="saved-visitors-table full-width">
-        <h4>{{'saved_visitors' | translate}}</h4>
-        <!-- No visitors message -->
-        @if (savedVisitors.length === 0) {
-        <div class="no-visitors-message">
-          <p>{{'no_visitors_added' | translate}}</p>
-        </div>
-        }
-        <!-- Visitors table -->
-        @if (savedVisitors.length > 0) {
-        <p-table class="visitor-table">
-          <thead>
-            <tr>
-              <th>S.No</th>
-              @if (settings?.ImageUploadEnabled) {
-              <th>Photo</th>
-              }
-              <th>Full Name</th>
-              <th>Email</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (visitor of savedVisitors; track visitor; let i = $index) {
-            <tr>
-              <td>{{i + 1}}</td>
-              @if (settings?.ImageUploadEnabled) {
-              <td class="photo-cell">
-                <img [src]="visitor.profile || 'assets/default-profile.jpg'" class="visitor-photo" alt="Visitor photo">
-              </td>
-              }
-              <td>{{getVisitorDisplayName(visitor)}}</td>
-              <td>{{visitor.email}}</td>
-              <td>
-                <div class="table-actions">
-                  <p-button icon="pi pi-pencil" [outlined]="true" size="small" (onClick)="editSavedVisitor(i)"
-                    title="Edit"></p-button>
-                  <p-button icon="pi pi-trash" [outlined]="true" size="small" severity="danger"
-                    (onClick)="deleteSavedVisitor(i)" title="Delete"></p-button>
-                </div>
-              </td>
-            </tr>
-            }
-          </tbody>
-        </p-table>
-        }
-      </div>
-      }
+      <!-- Saved Visitors Table (only when multiple visitor setting is enabled) -->
+@if (settings?.MultipleVisitorEnabled) {
+<div class="saved-visitors-table full-width">
+  <h4>{{'saved_visitors' | translate}}</h4>
+
+  
+  <!-- No visitors message -->
+  @if (savedVisitors.length === 0) {
+  <div class="no-visitors-message">
+    <p>{{'no_visitors_added' | translate}}</p>
+  </div>
+  }
+  
+  <!-- Visitors table -->
+  @if (savedVisitors.length > 0) {
+  <div style="border: 2px solid green; padding: 10px;">
+    <p-table [value]="savedVisitors" styleClass="visitor-table">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>S.No</th>
+          @if (settings?.ImageUploadEnabled) {
+          <th>Photo</th>
+          }
+          <th>Full Name</th>
+          <th>Email</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-visitor let-i="rowIndex">
+        <tr>
+          <td>{{i + 1}}</td>
+          @if (settings?.ImageUploadEnabled) {
+          <td class="photo-cell">
+            <img [src]="visitor.profile || 'assets/default-profile.jpg'" class="visitor-photo" alt="Visitor photo">
+          </td>
+          }
+          <td>{{getVisitorDisplayName(visitor)}}</td>
+          <td>{{visitor.email}}</td>
+          <td>
+            <div class="table-actions">
+              <p-button icon="pi pi-pencil" [outlined]="true" size="small" (onClick)="editSavedVisitor(i)"
+                title="Edit"></p-button>
+              <p-button icon="pi pi-trash" [outlined]="true" size="small" severity="danger"
+                (onClick)="deleteSavedVisitor(i)" title="Delete"></p-button>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+  }
+</div>
+}
     </form>
     }
   </div>

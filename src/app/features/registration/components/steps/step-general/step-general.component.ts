@@ -1,9 +1,8 @@
-import { Component, OnDestroy, OnInit, Sanitizer } from '@angular/core';
+import { Component, OnDestroy, OnInit, Sanitizer,ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, ValidatorFn, FormArray } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { WizardService } from '../../../../../core/services/wizard.service';
-
 import { InputTextModule } from 'primeng/inputtext';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -18,6 +17,7 @@ import { filter, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../../core/services/api.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
+
 
 
 @Component({
@@ -119,7 +119,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     private wizardService: WizardService,
     private messageService: MessageService,
     private sanitizer: DomSanitizer,
-    private api: ApiService
+    private api: ApiService,
+    private cdr: ChangeDetectorRef
   ) {
   }
 
@@ -1198,97 +1199,120 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.visitorsArray.push(newVisitor);
   }
 
-  addVisitorToTable(): void {
-    // Only allow adding visitors to table if multi-visitor setting is enabled
-    if (!this.settings?.MultipleVisitorEnabled) {
-      return;
-    }
+addVisitorToTable(): void {
+  console.log('=== ADD VISITOR START ===');
+  console.log('MultipleVisitorEnabled:', this.settings?.MultipleVisitorEnabled);
+  console.log('savedVisitors before:', this.savedVisitors);
+  console.log('savedVisitors.length before:', this.savedVisitors.length);
+  
+  // Only allow adding visitors to table if multi-visitor setting is enabled
+  if (!this.settings?.MultipleVisitorEnabled) {
+    console.log('Multiple visitor not enabled, returning');
+    return;
+  }
 
-    const currentForm = this.getCurrentVisitorForm();
-    if (this.isCurrentVisitorFormValid()) {
-      // Save to savedVisitors array for multiple visitor functionality
-      const visitorData = { ...currentForm.value };
-      
-      // Initialize Visitor_IC and IdentityNo fields
-      visitorData.Visitor_IC = visitorData.visitor_id || '';
-      visitorData.IdentityNo = visitorData.visitor_id || '';
-      
-      // Apply Singapore PDPA formatting for visitor_id if enabled
-      if (this.isSingaporePDPARequired && visitorData.visitor_id && visitorData.fullName) {
-        const formattedId = this.formatVisitorIdForPDPA(visitorData.visitor_id, visitorData.fullName);
-        visitorData.visitor_id = formattedId;
-        visitorData.Visitor_IC = formattedId;
-        visitorData.IdentityNo = formattedId;
-      }
-      
-      // Automatically set "myself" flag based on safety briefing and first visitor
-      if (this.settings?.Visitor?.[0]?.SafetyBriefingEnabled && this.savedVisitors.length === 0) {
-        visitorData.myself = true; // First visitor is always "myself" when safety briefing is enabled
-      } else {
-        visitorData.myself = false; // Subsequent visitors are not "myself"
-      }
-      
-      if (this.editingVisitorIndex >= 0) {
-        // Update existing visitor
-        this.savedVisitors[this.editingVisitorIndex] = visitorData;
-        this.editingVisitorIndex = -1; // Reset editing index
-        
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Visitor updated successfully'
-        });
-      } else {
-        // Add new visitor
-        this.savedVisitors.push(visitorData);
-        
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Visitor saved successfully'
-        });
-      }
-      
-      // Save form data immediately after visitor modification
-      this.saveFormDataToWizard();
-      
-      // Clear only main visitor identification fields: fullName, visitor_id, profile
-      // Keep other information (email, phone, company, vehicle info, UDF fields, etc.)
-      const fieldsToReset = ['fullName', 'visitor_id', 'profile'];
-      
-      fieldsToReset.forEach(field => {
-        if (currentForm.get(field)) {
-          currentForm.get(field)?.reset();
-        }
-      });
-      
-      // Reset profile image display
-      this.profileImage = '';
-      
-      // Reset form touched state for the cleared fields only
-      fieldsToReset.forEach(field => {
-        if (currentForm.get(field)) {
-          currentForm.get(field)?.markAsUntouched();
-          currentForm.get(field)?.markAsPristine();
-        }
-      });
-      
+  const currentForm = this.getCurrentVisitorForm();
+  console.log('Current form value:', currentForm.value);
+  console.log('Is form valid:', this.isCurrentVisitorFormValid());
+  
+  if (this.isCurrentVisitorFormValid()) {
+    // Save to savedVisitors array for multiple visitor functionality
+    const visitorData = { ...currentForm.value };
+    
+    console.log('Visitor data before processing:', visitorData);
+    
+    // Initialize Visitor_IC and IdentityNo fields
+    visitorData.Visitor_IC = visitorData.visitor_id || '';
+    visitorData.IdentityNo = visitorData.visitor_id || '';
+    
+    // Apply Singapore PDPA formatting for visitor_id if enabled
+    if (this.isSingaporePDPARequired && visitorData.visitor_id && visitorData.fullName) {
+      const formattedId = this.formatVisitorIdForPDPA(visitorData.visitor_id, visitorData.fullName);
+      visitorData.visitor_id = formattedId;
+      visitorData.Visitor_IC = formattedId;
+      visitorData.IdentityNo = formattedId;
+    }
+    
+    // Automatically set "myself" flag based on safety briefing and first visitor
+    if (this.settings?.Visitor?.[0]?.SafetyBriefingEnabled && this.savedVisitors.length === 0) {
+      visitorData.myself = true;
     } else {
-      // Mark only visitor-related required fields as touched to show validation errors
-      const requiredFields = this.getRequiredVisitorFields();
-      
-      // Mark only required visitor fields as touched
-      requiredFields.forEach(field => {
-        currentForm.get(field)?.markAsTouched();
-      });
+      visitorData.myself = false;
+    }
+    
+    console.log('Visitor data after processing:', visitorData);
+    console.log('Editing index:', this.editingVisitorIndex);
+    
+    if (this.editingVisitorIndex >= 0) {
+      // Update existing visitor
+      this.savedVisitors[this.editingVisitorIndex] = visitorData;
+      this.editingVisitorIndex = -1;
       
       this.messageService.add({
-        severity: 'error',
-        summary: 'Validation Error',
-        detail: 'Please fill all required visitor fields'
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Visitor updated successfully'
+      });
+    } else {
+      // Add new visitor - use spread to create new array reference
+      this.savedVisitors = [...this.savedVisitors, visitorData];
+      
+      console.log('savedVisitors after adding:', this.savedVisitors);
+      console.log('savedVisitors.length after:', this.savedVisitors.length);
+      
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Visitor saved successfully'
       });
     }
+    
+    // Force change detection
+    console.log('Calling detectChanges');
+    this.cdr.detectChanges();
+    
+    // Save form data immediately after visitor modification
+    this.saveFormDataToWizard();
+    
+    // Clear only main visitor identification fields: fullName, visitor_id, profile
+    // Keep other information (email, phone, company, vehicle info, UDF fields, etc.)
+    const fieldsToReset = ['fullName', 'visitor_id', 'profile'];
+    
+    fieldsToReset.forEach(field => {
+      if (currentForm.get(field)) {
+        currentForm.get(field)?.reset();
+      }
+    });
+    
+    // Reset profile image display
+    this.profileImage = '';
+    
+    // Reset form touched state for the cleared fields only
+    fieldsToReset.forEach(field => {
+      if (currentForm.get(field)) {
+        currentForm.get(field)?.markAsUntouched();
+        currentForm.get(field)?.markAsPristine();
+      }
+    });
+    
+    console.log('=== ADD VISITOR END ===');
+    
+  } else {
+    // Mark only visitor-related required fields as touched to show validation errors
+    const requiredFields = this.getRequiredVisitorFields();
+    
+    // Mark only required visitor fields as touched
+    requiredFields.forEach(field => {
+      currentForm.get(field)?.markAsTouched();
+    });
+    
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Validation Error',
+      detail: 'Please fill all required visitor fields'
+    });
   }
+}
 
   removeVisitor(index: number): void {
     if (this.visitorsArray.length > 1) {

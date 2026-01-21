@@ -81,7 +81,7 @@
           "builder": "@angular/build:dev-server",
           "options": {
             "buildTarget": "calms-self-registration:build:development",
-            "proxyConfig": "proxy.conf.json"
+          
           },
           "configurations": {
             "production": {
