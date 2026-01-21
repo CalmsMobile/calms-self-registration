@@ -565,11 +565,20 @@ export class HomePageComponent {
     return category ? category.Name : '';
   }
 
+  shouldShowTerms(): boolean {
+  const settings = this.wizardService.getSettings();
+  return settings?.TermsnCondEnabled || false;
+}
+// shouldShowTerms(): boolean {
+//   const settings = this.wizardService.getSettings();
+//   // return settings?.TermsnCondEnabled || false;  // Original line
+//   return false;  // Temporarily hardcode for testing
+// }
   proceedToWizard() {
     this.isLoading = true;
     if (this.selectedBranch && this.selectedCategory) {
 
-      if (this.termsComponent && !this.termsComponent.validateTerms()) {
+      if (this.shouldShowTerms() && this.termsComponent && !this.termsComponent.validateTerms()) {
         this.isLoading = false;
         return;
       }

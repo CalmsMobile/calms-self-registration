@@ -19,11 +19,18 @@ export class StepTermsComponent implements OnInit {
   }
 
   ngOnInit() {
+    const settings = this.wizardService.getSettings();
+    const termsEnabled = settings?.TermsnCondEnabled || false;
     // Emit terms acceptance after component is initialized
-    setTimeout(() => {
-      this.termsStatus.emit(this.termsAccepted);
-    }, 0);
+   setTimeout(() => {
+    this.termsStatus.emit(termsEnabled ? this.termsAccepted : true);
+  }, 0);
   }
+
+  isTermsEnabled(): boolean {
+  const settings = this.wizardService.getSettings();
+  return settings?.TermsnCondEnabled || false;
+}
 
   getSafeHtml(): SafeHtml {
     const settings = this.wizardService.getSettings();

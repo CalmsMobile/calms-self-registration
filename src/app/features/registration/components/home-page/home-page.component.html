@@ -72,11 +72,12 @@
         </div>
       }
       @if (selectedBranch && selectedCategory) {
+        @if (shouldShowTerms()){
         <div class="text-left">
           <label>{{'terms_and_conditions' | translate}}</label>
           <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
         </div>
-      }
+      }}
       <p-button [label]="'agree_and_proceed' | translate" icon="pi pi-arrow-right" iconPos="right" (onClick)="proceedToWizard()"
         [disabled]="!selectedBranch || !selectedCategory">
       </p-button>
