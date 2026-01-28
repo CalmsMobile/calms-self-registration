@@ -898,3 +898,33 @@
 .ng-invalid {
   border-color: var(--theme-error-color) !important;
 }
+
+.step-container {
+  .header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    
+    h2 {
+      margin: 0;
+    }
+    
+    .existing-guest-btn {
+      white-space: nowrap;
+    }
+  }
+}
+
+// Responsive styles
+@media (max-width: 768px) {
+  .header-section {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem;
+    
+    .existing-guest-btn {
+      width: 100%;
+    }
+  }
+}

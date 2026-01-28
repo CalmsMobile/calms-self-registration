@@ -1,5 +1,16 @@
 <div class="step-container">
-  <h2>{{'general_information' | translate}}</h2>
+  <div class="header-section">
+    <h2>{{'general_information' | translate}}</h2>
+    <p-button 
+      type="button" 
+      [label]="'are_you_an_existing_guest ?' | translate" 
+      icon="pi pi-user" 
+      [outlined]="true"
+      size="small"
+      (onClick)="onExistingGuestClick()"
+      class="existing-guest-btn">
+    </p-button>
+  </div>
 
   <!-- Loading State -->
   @if (isLoading) {

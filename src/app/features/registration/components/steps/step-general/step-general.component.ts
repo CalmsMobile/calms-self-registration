@@ -1750,6 +1750,16 @@ addVisitorToTable(): void {
     }, 100);
   }
 
+  onExistingGuestClick(): void {
+  this.messageService.add({
+    severity: 'info',
+    summary: 'Existing Guest',
+    detail: 'Opening existing guest search...'
+  });
+  
+
+}
+
   isFieldInvalid(field: string): boolean {
     const control = this.generalForm.get(field);
     if (!control || !control.enabled) {
