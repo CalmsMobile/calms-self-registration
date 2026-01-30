@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, OnInit } from '@angular/core';
+import { Component, ViewChild, ElementRef, EventEmitter, Output, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SelectModule } from 'primeng/select';
 import { ApiService } from '../../../core/services/api.service';
@@ -20,6 +20,7 @@ interface LanguageModel {
 export class LanguageSelectorComponent implements OnInit {
   @Output() languageChange = new EventEmitter<LanguageModel>();
 
+  langSelect!: ElementRef;
   languages: LanguageModel[] = [];
   selectedLanguage?: LanguageModel;
 
@@ -30,12 +31,12 @@ export class LanguageSelectorComponent implements OnInit {
 
   ngOnInit() {
     this.getLanguages();
-    
+
     // Subscribe to language service for updates
     this.languageService.currentLanguage$.subscribe(language => {
       if (language && this.languages.length) {
         // Find matching language in our list
-        const matchedLang = this.languages.find(lang => 
+        const matchedLang = this.languages.find(lang =>
           lang.LanguageCode === language.LanguageCode
         );
         if (matchedLang && matchedLang !== this.selectedLanguage) {
@@ -50,11 +51,11 @@ export class LanguageSelectorComponent implements OnInit {
       next: (data: any) => {
         if (data?.length) {
           this.languages = data;
-          
+
           // Try to set saved language or default
           const savedLang = this.languageService.getCurrentLanguage();
           if (savedLang) {
-            const matchedLang = this.languages.find(lang => 
+            const matchedLang = this.languages.find(lang =>
               lang.LanguageCode === savedLang.LanguageCode
             );
             if (matchedLang) {
@@ -80,5 +81,8 @@ export class LanguageSelectorComponent implements OnInit {
       this.languageChange.emit(event.value);
     }
   }
+
+
+
 
 }

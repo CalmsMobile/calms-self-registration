@@ -1,0 +1,29 @@
+.language-wrapper {
+    position: relative;
+    width: 42px;
+    height: 42px;
+}
+
+/* REAL SELECT — invisible but clickable */
+:host ::ng-deep .language-dropdown {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* ICON — visual only */
+.language-icon {
+    position: absolute;
+    inset: 0;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    color: #333;
+    pointer-events: none;
+    /* ← VERY IMPORTANT */
+}
