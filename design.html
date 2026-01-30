@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CALMS</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:'Inter',sans-serif;
+  overflow-x:hidden;
+  min-height:90vh;
+
+  /* ✅ DESKTOP BACKGROUND */
+  background-image:url("assets/desktop-background.jpg");
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+}
+
+/* LANGUAGE BUTTON */
+.lang-btn{
+  position:fixed;
+  top:25px;
+  right:25px;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  background:#ffffff61;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 8px 25px rgba(0,0,0,0.1);
+}
+
+/* ILLUSTRATION */
+.hero{
+  text-align:center;
+  margin-top:60px;
+}
+
+.hero img{
+  width:420px;
+  max-width:90%;
+}
+
+/* CARD CONTAINER */
+.card{
+  width:600px;
+  margin:0px auto;
+  background:#ffffff29;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius:26px;
+  padding:45px;
+  text-align:center;
+  box-shadow:0 30px 60px rgba(0,0,0,0.08);
+}
+
+.logo{
+  width:70px;
+  margin-bottom:10px;
+}
+
+h1{
+  font-size:36px;
+  margin:10px 0 5px;
+  color:#444;
+}
+
+p{
+  color:#666;
+  margin-bottom:30px;
+}
+
+label{
+  display:block;
+  text-align:left;
+  font-weight:600;
+  margin-bottom:8px;
+  color:#333;
+}
+
+select{
+  width: 100%;
+    padding: 19px;
+    border-radius: 18px;
+    border: 1px solid #dddddd85;
+    font-size: 16px;
+    background: #ffffffab;
+}
+
+button{
+  margin-top:25px;
+  width:100%;
+  padding:16px;
+  border:none;
+  border-radius:30px;
+  background:#f5b942;
+  font-size:18px;
+  font-weight:600;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 25px rgba(0,0,0,0.15);
+}
+
+/* ================= MOBILE ================= */
+@media(max-width:768px){
+
+  body{
+    /* ✅ MOBILE BACKGROUND */
+    background-image:url("assets/mobile-background.jpg");
+  }
+
+  .hero{
+    margin-top:90px;
+  }
+
+  .hero img{
+    width:85%;
+  }
+
+  .card{
+    width:100%;
+    margin:0;
+    border-radius:30px 30px 0 0;
+    padding:28px;
+    box-shadow:none;
+    backdrop-filter:none;
+    background:transparent;
+  }
+
+  h1{
+    font-size:28px;
+  }
+
+  select, button{
+    font-size:16px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="lang-btn">
+  <img src="assets/globe-icon.svg" width="24">
+</div>
+
+<div class="hero">
+  <img src="assets/illustration.png">
+</div>
+
+<div class="card">
+  <img src="assets/logo.png" class="logo">
+
+  <h1>Welcome to CALMS</h1>
+  <p>Please select your branch location</p>
+
+  <label>Select Branch (Optional)</label>
+
+  <select>
+    <option>Choose a branch...</option>
+  </select>
+
+  <a href="visitor-category.html">
+  <button>Continue →</button>
+</a>
+</div>
+
+</body>
+</html>

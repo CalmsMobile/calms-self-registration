@@ -1,8 +1,9 @@
-<p-select 
-    [options]="languages" 
-    [(ngModel)]="selectedLanguage" 
-    (onChange)="onLanguageChange($event)"
-    optionLabel="LanguageName"
-    [style]="{'min-width': '150px'}"
-    placeholder="Select Language">
-</p-select>
+<div class="language-wrapper">
+    <!-- PrimeNG Select (real control) -->
+    <p-select [options]="languages" [(ngModel)]="selectedLanguage" (onChange)="onLanguageChange($event)"
+        optionLabel="LanguageName" placeholder="Select Language" appendTo="body" styleClass="language-dropdown">
+    </p-select>
+
+    <!-- Icon overlay -->
+    <i class="pi pi-globe language-icon" title="Change language"></i>
+</div>

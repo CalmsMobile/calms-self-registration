@@ -1,14 +1,14 @@
 <div class="app-container">
-  <div class="header-content">
-    @if (showHeader) {
-      <app-header></app-header>
-    }
-    @if (showLanguageSelector) {
-      <app-language-selector
-        (languageChange)="onLanguageChange($event)">
-      </app-language-selector>
-    }
-  </div>
+  @if (showHeader) {
+  <app-header></app-header>
+  }
+
+  <!-- Global Language Icon -->
+  @if (showLanguageSelector) {
+  <app-language-selector class="global-language-icon" (languageChange)="onLanguageChange($event)">
+  </app-language-selector>
+  }
+
   <main class="app-content">
     <router-outlet></router-outlet>
   </main>

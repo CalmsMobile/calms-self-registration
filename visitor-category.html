@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Visitor Registration</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:'Inter',sans-serif;
+  min-height:90vh;
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* ================= BACKGROUND SWITCH ================= */
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background-size:cover;
+  background-position:center;
+  z-index:-1;
+}
+
+/* Desktop background */
+@media(min-width:769px){
+  body::before{
+    background-image:url("assets/desktop-background.jpg");
+  }
+}
+
+/* Mobile background */
+@media(max-width:768px){
+  body::before{
+    background-image:url("assets/mobile-background.jpg");
+  }
+}
+
+/* ================= LANGUAGE BUTTON ================= */
+.lang-btn{
+  position:fixed;
+  top:20px;
+  right:20px;
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  background:#fff;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 10px 25px rgba(0,0,0,0.12);
+}
+
+/* ================= HEADER ================= */
+.header{
+  text-align:center;
+  margin-top:80px;
+}
+
+.header img{
+  width:100px;
+  margin-bottom:10px;
+}
+
+.header h1{
+  font-size:34px;
+  font-weight:700;
+  color:#444;
+}
+
+.header h1 span{
+  color:#f5b942;
+}
+
+/* ================= DESKTOP CARD ================= */
+.card{
+  width:720px;
+  margin:50px auto;
+  padding:45px;
+  border-radius:30px;
+  background:#ffffff45;
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  box-shadow:0 30px 60px rgba(0,0,0,0.08);
+}
+
+/* INPUT GROUP */
+.input-group{
+  margin-bottom:28px;
+}
+
+label{
+  font-size:14px;
+  font-weight:600;
+  margin-bottom:8px;
+  display:block;
+  color:#333;
+}
+
+select{
+ 
+    width: 100%;
+    padding: 19px 20px;
+    border-radius: 18px;
+    border: 1px solid #ededed;
+    font-size: 15px;
+    background: #ffffff69;
+}
+
+/* BUTTON ROW */
+.btn-row{
+  display:flex;
+  justify-content:space-between;
+  margin-top:40px;
+}
+
+.btn-back{
+  padding:16px 40px;
+  border-radius:35px;
+  border:none;
+  background:#fff;
+  box-shadow:0 10px 25px rgba(0,0,0,0.1);
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.btn-continue{
+  padding:16px 45px;
+  border-radius:35px;
+  border:none;
+  background:#FAC32E;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+/* ================= MOBILE EXACT LAYOUT ================= */
+@media(max-width:768px){
+
+  .header{
+    text-align:left;
+    padding:0 20px;
+    margin-top:250px;
+  }
+
+  .header img{
+    display:block;
+    margin:0 auto 30px;
+  }
+
+  .header h1{
+    font-size:26px;
+  }
+
+  /* Remove glass card look */
+  .card{
+    width:100%;
+    margin:30px 0 0;
+    padding:0 20px 40px;
+    background:transparent;
+    backdrop-filter:none;
+    box-shadow:none;
+  }
+
+  /* Inputs appear like floating white pills */
+  select{
+    border:none;
+    box-shadow:0 8px 18px rgba(0,0,0,0.08);
+  }
+
+  .btn-row{
+    margin-top:35px;
+  }
+
+  .btn-back{
+    padding:14px 28px;
+  }
+
+  .btn-continue{
+    padding:14px 32px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="lang-btn">
+  <img src="assets/globe-icon.svg" width="22">
+</div>
+
+<div class="header">
+  <img src="assets/logo.png">
+  <h1><span>Visitor</span> Registration</h1>
+</div>
+
+<div class="card">
+
+  <div class="input-group">
+    <label>Select Branch (Optional)</label>
+    <select>
+      <option>Choose a branch...</option>
+    </select>
+  </div>
+
+  <div class="input-group">
+    <label>Type of visit? (Optional)</label>
+    <select>
+      <option>Choose a branch...</option>
+    </select>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-back">← Back</button>
+    <button class="btn-continue">Continue →</button>
+  </div>
+
+</div>
+
+</body>
+</html>

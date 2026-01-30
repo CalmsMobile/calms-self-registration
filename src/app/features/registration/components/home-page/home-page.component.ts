@@ -15,6 +15,8 @@ import { environment } from '../../../../../environments/environment';
 import { ToastModule } from 'primeng/toast';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { StepTermsComponent } from '../steps/step-terms/step-terms.component';
+import { RouterLink } from '@angular/router';
+import { CheckboxModule } from 'primeng/checkbox';
 
 interface Branch {
   RefBranchSeqID: number;
@@ -33,11 +35,12 @@ interface Category {
     CommonModule,
     FormsModule,
     SelectModule,
-    ButtonModule,
+    ButtonModule, CheckboxModule,
     ToastModule,
     ProgressBarModule,
-    StepTermsComponent,
-    TranslatePipe
+    StepTermsComponent, RouterLink,
+    TranslatePipe,
+
   ],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss'
@@ -45,6 +48,7 @@ interface Category {
 export class HomePageComponent {
   @ViewChild(StepTermsComponent) termsComponent!: StepTermsComponent;
   termsValid = false;
+  termsAccepted = false;
   branchList: Branch[] = [];
   currentLanguage: any;
 
@@ -57,11 +61,11 @@ export class HomePageComponent {
   hasInvalidUrl = false;
   errorMessage = '';
   bgImageUrl = '';
-  
+
   // Branch translation data
   branchTranslation: any = {};
   pageTitle = '';
-  
+
   // Base URL access control
   isBaseUrlAccessDisabled = false;
   baseUrlAccessDeniedInstruction = '';
@@ -76,13 +80,37 @@ export class HomePageComponent {
     return this._isLoading;
   }
 
+  get formattedPageTitle(): { first: string, rest: string } {
+    const fullTitle = this.pageTitle || 'Visitor Registration'; // Default if empty, translate pipe not easily usable in logic without subscription, assuming default string for split logic or handled in template
+    // Ideally we rely on the same logic as template: pageTitle || translate pipe
+    // But for splitting, we need the string. 
+    // If pageTitle is set, use it. If not, we might display "Visitor Registration" as fallback for now or handle TranslateService. 
+    // Given the complexity of TranslatePipe in TS, I'll rely on pageTitle being set or default.
+
+    // Better approach: simple split method used in template with a pipe, OR just simple logic here if pageTitle is populated.
+    // Let's assume pageTitle is populated or we strictly use what's available.
+
+    const text = this.pageTitle || 'Visitor Registration';
+    const firstSpaceIndex = text.indexOf(' ');
+
+    if (firstSpaceIndex === -1) {
+      return { first: text, rest: '' };
+    }
+
+    return {
+      first: text.substring(0, firstSpaceIndex),
+      rest: text.substring(firstSpaceIndex + 1)
+    };
+  }
+
   set isLoading(value: boolean) {
     console.log('Loading state changed:', this._isLoading, '->', value);
     this._isLoading = value;
   }
 
   private destroy$ = new Subject<void>();
-
+  title = 'Company Title';
+  logo = 'assets/logo.png';
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -93,6 +121,12 @@ export class HomePageComponent {
     private labelService: LabelService
   ) {
     this.wizardService.clearSessionStorage();
+    this.sharedService.currentTitle.subscribe(title => {
+      this.title = title;
+    });
+    this.sharedService.currentLogo.subscribe(logo => {
+      this.logo = logo;
+    });
   }
 
   ngOnInit() {
@@ -103,7 +137,7 @@ export class HomePageComponent {
         try {
           this.isAppointmentFlow = true;
           const encryptedCode = params['q'];
-          
+
           if (!encryptedCode) {
             this.hasInvalidUrl = true;
             this.errorMessage = 'Invalid visitor acknowledgment link: No appointment code provided';
@@ -113,15 +147,15 @@ export class HomePageComponent {
 
           // Get visitor acknowledgment data using the encrypted code
           await this.getAppointmentData(encryptedCode);
-          
+
           // Load branches after getting visitor acknowledgment data
           await this.loadBranches();
-          
+
           // Auto-select branch and category for appointment flow
           await this.autoSelectBranchAndCategory();
-          
+
           this.isLoading = false;
-          
+
         } catch (error) {
           console.error('Error processing visitor acknowledgment link:', error);
           this.hasInvalidUrl = true;
@@ -142,7 +176,7 @@ export class HomePageComponent {
         // Set the decrypted branch value
         this.selectedBranch = parseInt(decryptedBranch);
         this.isBranchFromQuery = true;
-        
+
         // Trigger branch change after branches are loaded
         this.loadBranches().then(() => {
           if (this.selectedBranch && this.branchList.some(b => b.RefBranchSeqID === this.selectedBranch)) {
@@ -171,7 +205,7 @@ export class HomePageComponent {
       )
       .subscribe(async language => {
         this.currentLanguage = language;
-        
+
         // Only update labels if we have a selected branch
         if (this.selectedBranch) {
           await this.getSelfRegistrationSettings();
@@ -191,23 +225,23 @@ export class HomePageComponent {
     try {
       this.encryptedAppointmentCode = encryptedCode;
       console.log('Encrypted Appointment Code:', encryptedCode);
-      
+
       // Call GetVisitorAck API with encrypted code and current date
       const response = await this.api.getAppointmentData(encryptedCode).toPromise();
 
       console.log(response);
-      
+
       if (response) {
         this.appointmentData = response;
-        
+
         // Parse the response structure
         const table1Data = (response as any).Table1;
         const table2Data = (response as any).Table2; // Image details
         const table3Data = (response as any).Table3; // Item declaration data
-        
+
         if (table1Data && table1Data.length > 0) {
           const visitorData = table1Data[0]; // Get first row
-          
+
           // Map the JSON object data directly to structured visitor information
           const parsedVisitorData = {
             seqId: visitorData.SEQ_ID,
@@ -250,7 +284,7 @@ export class HomePageComponent {
             udf9: visitorData.UDF9,
             udf10: visitorData.UDF10
           };
-          
+
           // Store visitor data in wizard service for use in step-general
           this.wizardService.setVisitorAckData({
             visitorData: parsedVisitorData,
@@ -258,20 +292,20 @@ export class HomePageComponent {
             itemDeclarationData: table3Data,
             isAppointmentFlow: true
           });
-          
+
           // Set branch and category from visitor data
           if (parsedVisitorData.branchId) {
             this.selectedBranch = parseInt(parsedVisitorData.branchId.toString());
             this.isBranchFromQuery = true;
           }
-          
+
           if (parsedVisitorData.categoryId) {
             this.selectedCategory = parseInt(parsedVisitorData.categoryId.toString());
           }
-          
+
           console.log('Visitor acknowledgment data parsed:', parsedVisitorData);
         }
-        
+
         console.log('Visitor acknowledgment data loaded:', this.appointmentData);
       } else {
         console.log('No visitor acknowledgment data found in response');
@@ -293,7 +327,7 @@ export class HomePageComponent {
       try {
         // Trigger branch change to load categories and settings
         await this.onBranchChange(this.selectedBranch);
-        
+
         // Auto-select category if available
         if (this.selectedCategory) {
           this.onCategoryChange(this.selectedCategory);
@@ -326,7 +360,7 @@ export class HomePageComponent {
       try {
         // Load labels through the centralized service and get the response data
         const responseData = await this.labelService.loadLabels(this.selectedBranch, this.currentLanguage.LanguageId);
-        
+
         // Update page title based on the loaded labels
         const wizardTitle = this.labelService.getLabel('wizardTitle', 'caption');
         if (wizardTitle) {
@@ -337,7 +371,7 @@ export class HomePageComponent {
         if (responseData && responseData.Table) {
           this.processAdditionalPageSettings(responseData.Table);
         }
-        
+
       } catch (error) {
         console.error('Error loading labels:', error);
       }
@@ -351,7 +385,7 @@ export class HomePageComponent {
   private processAdditionalPageSettings(translationData: any[]) {
     try {
       console.log('Processing additional page settings from cached data:', translationData);
-      
+
       // Find the Branch field translation
       const branchField = translationData.find((item: any) => item.Title === 'Branch');
       if (branchField) {
@@ -360,26 +394,26 @@ export class HomePageComponent {
           placeholder: branchField.Placeholder || 'Select Branch'
         };
       }
-      
+
       // Set page title from the translation data
       const titleField = translationData.find((item: any) => item.Title === 'Visitor Registration');
       if (titleField && titleField.Caption) {
         this.pageTitle = titleField.Caption;
         this.wizardService.pageTitle = titleField.Caption;
       }
-      
+
       // Check for base URL access settings
       const disableBaseUrlField = translationData.find((item: any) => item.Title === 'Disable base URL for registration');
       if (disableBaseUrlField) {
         this.isBaseUrlAccessDisabled = disableBaseUrlField.Caption === 'true' || disableBaseUrlField.Caption === true;
       }
-      
+
       // Get base URL access denied instruction
       const accessDeniedInstructionField = translationData.find((item: any) => item.Title === 'Base URL access denied instruction');
       if (accessDeniedInstructionField) {
         this.baseUrlAccessDeniedInstruction = accessDeniedInstructionField.Caption || 'Access to this registration page is restricted. Please use the direct link provided by your administrator.';
       }
-      
+
       // Check if access should be denied (when base URL is disabled and no branch query parameter)
       this.checkAccessRestriction();
     } catch (error) {
@@ -420,7 +454,7 @@ export class HomePageComponent {
                 this.wizardService.currentBranchID = this.selectedBranch;
                 this.loadCategories();
               }
-              
+
               // Load branch translation after branches are loaded
               if (this.currentLanguage) {
                 await this.getSelfRegistrationSettings();
@@ -447,7 +481,7 @@ export class HomePageComponent {
     const data = this.wizardService.getmasterData();
     if (data.Table4.length) {
       let loFilterCategory: any[] = [...data.Table4.filter((item: any) => {
-        return !item.IsForPatientVisit 
+        return !item.IsForPatientVisit
         //&& item.RefBranchSeqId === this.selectedBranch;
       })];
 
@@ -475,7 +509,7 @@ export class HomePageComponent {
   async onBranchChange(newValue: any) {
     this.isLoading = true;
     let lsBranchName = this.getBranchName(newValue);
-    
+
     // Don't reset category in appointment flow as it's pre-selected
     if (!this.isAppointmentFlow) {
       this.selectedCategory = null;
@@ -485,7 +519,7 @@ export class HomePageComponent {
     try {
       // Load labels first (this will handle branch translation too)
       await this.getSelfRegistrationSettings();
-      
+
       // Then load categories after labels are ready
       this.loadCategories();
 
@@ -529,17 +563,17 @@ export class HomePageComponent {
 
   getPageSettings() {
     this.api.GetVisitorSelfRegistrationPageSetup(this.selectedBranch)
-    .subscribe((pageSettings: any) => {
-      this.wizardService.setPageSettings(pageSettings);
-      if (pageSettings?.Table?.length) {
-        this.sharedService.updateHeader(
-          pageSettings.Table[0].SchoolName,
-          environment.proURL + "Handler/PortalImageHandler.ashx?ScreenType=20&RefSlno=" + this.selectedBranch
-        );
+      .subscribe((pageSettings: any) => {
+        this.wizardService.setPageSettings(pageSettings);
+        if (pageSettings?.Table?.length) {
+          this.sharedService.updateHeader(
+            pageSettings.Table[0].SchoolName,
+            environment.proURL + "Handler/PortalImageHandler.ashx?ScreenType=20&RefSlno=" + this.selectedBranch
+          );
 
-        this.bgImageUrl = environment.proURL + "FS/" + pageSettings.Table[0].ImgPathUrl;
-      }
-    });
+          this.bgImageUrl = environment.proURL + "FS/" + pageSettings.Table[0].ImgPathUrl;
+        }
+      });
   }
 
   // Method to get background style for the container
@@ -566,14 +600,14 @@ export class HomePageComponent {
   }
 
   shouldShowTerms(): boolean {
-  const settings = this.wizardService.getSettings();
-  return settings?.TermsnCondEnabled || false;
-}
-// shouldShowTerms(): boolean {
-//   const settings = this.wizardService.getSettings();
-//   // return settings?.TermsnCondEnabled || false;  // Original line
-//   return false;  // Temporarily hardcode for testing
-// }
+    const settings = this.wizardService.getSettings();
+    return settings?.TermsnCondEnabled || false;
+  }
+  // shouldShowTerms(): boolean {
+  //   const settings = this.wizardService.getSettings();
+  //   // return settings?.TermsnCondEnabled || false;  // Original line
+  //   return false;  // Temporarily hardcode for testing
+  // }
   proceedToWizard() {
     this.isLoading = true;
     if (this.selectedBranch && this.selectedCategory) {
@@ -590,7 +624,7 @@ export class HomePageComponent {
       this.wizardService.currentBranchID = this.selectedBranch;
       this.wizardService.selectedVisitCategory = this.selectedCategory;
       this.wizardService.setDataToSessionStorage();
-      
+
       // Navigate to wizard
       this.router.navigate(['/register'], {
         state: {
@@ -641,5 +675,14 @@ export class HomePageComponent {
     this.sharedService.setAccessDenied(false);
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  goBack(): void {
+    this.selectedCategory = null;
+    // Reset terms validation
+    this.termsValid = false;
+    this.termsAccepted = false; // Add this reset
+    // Clear any stored settings related to category
+    this.wizardService.setSettings(null);
   }
 }

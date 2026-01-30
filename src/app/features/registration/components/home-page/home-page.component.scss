@@ -1,10 +1,34 @@
 .setup-container {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  padding-top: 16px;
-  
-  // Ensure good contrast with background images
+  padding: 40px;
+  gap: 0;
+  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
+  overflow: visible;
+
+  // Desktop: center vertically
+  justify-content: center;
+
+  // Override PrimeNG theme variables locally
+  --p-primary-color: #eab308;
+  --p-primary-500: #eab308;
+  --p-primary-600: #ca8a04;
+  --p-primary-700: #a16207;
+  --p-focus-ring-color: rgba(234, 179, 8, 0.5);
+
+  // Specific component overrides
+  --p-checkbox-checked-background: #eab308;
+  --p-checkbox-checked-border-color: #eab308;
+  --p-checkbox-checked-hover-background: #ca8a04;
+  --p-checkbox-checked-hover-border-color: #ca8a04;
+  --p-button-primary-background: #eab308;
+  --p-button-primary-border-color: #eab308;
+  --p-button-primary-hover-background: #ca8a04;
+  --p-button-primary-hover-border-color: #ca8a04;
+
   &::before {
     content: '';
     position: absolute;
@@ -12,62 +36,233 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.1); // Light overlay for better text readability
     pointer-events: none;
     z-index: 1;
   }
-  
-  // Ensure content is above the overlay
-  > * {
+
+  >* {
     position: relative;
     z-index: 2;
+  }
+
+  // Mobile: center everything on page
+  @media (max-width: 968px) {
+    padding: 24px 20px;
+    justify-content: center; // Center on mobile
+    min-height: 100vh;
+  }
+
+  @media (max-width: 600px) {
+    padding: 20px 16px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 16px 12px;
+  }
+
+  @media (max-width: 390px) {
+    padding: 16px 12px;
+  }
+}
+
+.illustration-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 450px;
+  flex-shrink: 0;
+  margin-bottom: 0; // Remove gap on desktop
+
+  img {
+    width: 100%;
+    max-width: 450px;
+    height: auto;
+  }
+
+  // Desktop spacing - NO GAP
+  @media (min-width: 969px) {
+    margin-bottom: 0;
+    transform: translateY(-40px); // Move illustration up in desktop view
+  }
+
+  // Tablet - larger illustration
+  @media (max-width: 968px) {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 0; // Removed gap
+
+    img {
+      max-width: 380px;
+    }
+  }
+
+  // Mobile - LARGER illustration
+  @media (max-width: 600px) {
+    max-width: 350px;
+    margin-bottom: 0; // Removed gap
+
+    img {
+      max-width: 330px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    max-width: 320px;
+    margin-bottom: 0; // Removed gap
+
+    img {
+      max-width: 300px;
+    }
+  }
+
+  @media (max-width: 390px) {
+    max-width: 300px;
+    margin-bottom: 0; // Removed gap
+
+    img {
+      max-width: 280px;
+    }
   }
 }
 
 .setup-card {
-  background: var(--theme-glossy-white);
-  border-radius: var(--theme-border-radius);
-  
-  .language-selector {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 1rem;
-  }
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 2rem;
   width: 100%;
-  max-width: 720px;
-  text-align: center;
+  max-width: 550px;
+  padding: 48px 40px;
+  border-radius: 24px;
+  position: relative;
+  z-index: 2;
+  overflow: visible;
+  flex-shrink: 0;
+
+  // Desktop: WITH background, shadow, and blur
+  @media (min-width: 969px) {
+    background: rgb(255 255 255 / 27%);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  // Mobile: NO background, shadow, or blur
+  @media (max-width: 968px) {
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
 
   h1 {
     margin-top: 0;
   }
-}
 
-.logo-container {
-  margin-bottom: 2rem;
-  
-  .logo {
-    height: 80px;
+  // Tablet
+  @media (max-width: 968px) {
     max-width: 100%;
+    padding: 0 32px 40px 32px; // Removed top padding
+    border-radius: 20px;
+  }
+
+  // Mobile
+  @media (max-width: 600px) {
+    padding: 0 28px 36px 28px; // Removed top padding
+    border-radius: 18px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 24px 32px 24px; // Removed top padding
+    border-radius: 16px;
+  }
+
+  @media (max-width: 390px) {
+    padding: 0 20px 28px 20px; // Removed top padding
+    border-radius: 14px;
   }
 }
 
-h1 {
-  color: #2c3e50;
+// Language selector - show only on initial screen
+.language-selector {
+  display: flex;
+  justify-content: flex-end;
   margin-bottom: 1rem;
+  width: 100%;
+}
+
+h1 {
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  margin-top: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  text-align: center;
+
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+  }
+
+  @media (max-width: 600px) {
+    font-size: 1.4rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.25rem;
+  }
 }
 
 .instructions {
-  color: #666;
-  margin-bottom: 2rem;
+  color: #718096;
+  margin-bottom: 1.5rem;
+  margin-top: 0;
   line-height: 1.5;
+  font-size: 1rem;
+  font-weight: 400;
+  text-align: center;
+
+  @media (max-width: 600px) {
+    font-size: 0.95rem;
+    margin-bottom: 1.25rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
 }
 
 .form-container {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 1.5rem;
+
+  @media (max-width: 600px) {
+    gap: 1.25rem;
+  }
+
+  @media (max-width: 480px) {
+    gap: 1.1rem;
+  }
+
+  @media (max-width: 390px) {
+    gap: 1rem;
+  }
+
+  .logo {
+    height: 70px;
+    max-width: 100%;
+    object-fit: contain;
+    margin: 0 auto;
+
+    @media (max-width: 600px) {
+      height: 65px;
+    }
+
+    @media (max-width: 480px) {
+      height: 45px;
+    }
+  }
+
+
+
 }
 
 .form-field {
@@ -75,10 +270,26 @@ h1 {
   flex-direction: column;
   gap: 0.5rem;
   text-align: left;
+  position: relative;
+  z-index: 1;
 
   label {
-    font-weight: 500;
-    color: #333;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+
+    @media (max-width: 600px) {
+      font-size: 0.875rem;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 390px) {
+      font-size: 0.825rem;
+    }
   }
 }
 
@@ -86,22 +297,29 @@ h1 {
   text-align: left;
 }
 
+
 .error-container {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
+  padding: 0 16px;
 }
 
 .error-card {
-  background: var(--theme-glossy-white);
-  border-radius: var(--theme-border-radius);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 248, 240, 0.85);
+  overflow: hidden;
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   padding: 2rem;
   width: 100%;
   max-width: 500px;
   text-align: center;
   border-left: 4px solid #dc3545;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 
   h1 {
     color: #dc3545;
@@ -118,24 +336,55 @@ h1 {
     .error-icon {
       font-size: 3rem;
       color: #dc3545;
+
+      @media (max-width: 600px) {
+        font-size: 2.5rem;
+      }
     }
 
     .error-message {
       font-size: 1.1rem;
-      color: #333;
+      color: #2d3748;
       font-weight: 500;
       margin: 0;
+
+      @media (max-width: 600px) {
+        font-size: 1rem;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 0.95rem;
+      }
     }
 
     .error-subtitle {
-      color: #666;
+      color: #718096;
       margin: 0;
       line-height: 1.5;
+      font-size: 0.95rem;
+
+      @media (max-width: 600px) {
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 480px) {
+        font-size: 0.85rem;
+      }
     }
+  }
+
+  @media (max-width: 600px) {
+    padding: 1.5rem;
+    border-radius: 20px;
+    max-width: 100%;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1.25rem;
+    border-radius: 16px;
   }
 }
 
-// Loading indicator styling
 .loading-indicator {
   display: flex;
   flex-direction: column;
@@ -143,14 +392,14 @@ h1 {
   align-items: center;
   min-height: 100vh;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.95); // More opaque background
+  background: rgba(255, 255, 255, 0.95);
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 9999; // Ensure it's on top
-  
+  z-index: 9999;
+
   .loading-content {
     display: flex;
     flex-direction: column;
@@ -162,26 +411,599 @@ h1 {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     min-width: 300px;
     text-align: center;
+
+    @media (max-width: 480px) {
+      min-width: 250px;
+      padding: 1.5rem;
+    }
   }
-  
+
   p-progressbar {
     width: 100%;
   }
-  
+
   p {
     margin: 0;
-    color: #666;
+    color: #718096;
     font-size: 1rem;
     font-weight: 500;
+
+    @media (max-width: 480px) {
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem;
   }
 }
 
-@media (max-width: 600px) {
-  .setup-container {
+// PrimeNG component overrides
+::ng-deep {
+
+  // Dropdown styling
+  .p-select {
+    font-size: 0.95rem;
+    border: none;
+    border-radius: 12px;
+    background: #ffffff66;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+    height: 50px;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.2);
+    }
+
+    @media (max-width: 600px) {
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 0.875rem;
+    }
+
+    @media (max-width: 390px) {
+      font-size: 0.85rem;
+    }
+  }
+
+  .p-select-label {
+    padding: 0.875rem 1rem;
+    color: #2d3748;
+    font-weight: 400;
+
+    &.p-placeholder {
+      color: #a0aec0;
+    }
+
+    @media (max-width: 600px) {
+      padding: 0.8rem 0.875rem;
+    }
+
+    @media (max-width: 480px) {
+      padding: 0.75rem 0.875rem;
+    }
+
+    @media (max-width: 390px) {
+      padding: 0.7rem 0.8rem;
+    }
+  }
+
+  .p-select-dropdown {
+    color: #2d3748;
+  }
+
+  // Button styling
+  .p-button {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    width: 100%;
+    flex-grow: 1; // Make button fill remaining space when in container
+    border-radius: 12px;
+    background: #eab308;
+    border: none;
+    color: #4d525c;
+    box-shadow: 0 2px 8px rgba(234, 179, 8, 0.25);
+    transition: all 0.2s ease;
+    letter-spacing: 0.3px;
+
+    &:hover:not(:disabled) {
+      background: #d19e07;
+      box-shadow: 0 4px 12px rgba(234, 179, 8, 0.35);
+      transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.3);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: #eab308;
+    }
+
+    .p-button-icon {
+      font-size: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      padding: 0.8rem 1.25rem;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 480px) {
+      padding: 0.75rem 1.1rem;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 390px) {
+      padding: 0.7rem 1rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  // Dropdown overlay
+  .p-select-overlay {
+    z-index: 9999 !important;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border: none;
+    margin-top: 4px;
+  }
+
+  .p-select-panel {
+    z-index: 9999 !important;
+    border-radius: 12px;
+    background: white;
+  }
+
+  .p-select-list {
+    padding: 0.5rem;
+  }
+
+  .p-select-option {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin: 2px 0;
+    color: #2d3748;
+    font-size: 0.95rem;
+    transition: all 0.15s ease;
+
+    &:hover {
+      background: #fef3c7;
+      color: #2d3748;
+    }
+
+    &.p-select-option-selected {
+      background: #fde68a;
+      color: #2d3748;
+      font-weight: 500;
+    }
+
+    @media (max-width: 390px) {
+      padding: 0.65rem 0.875rem;
+      font-size: 0.875rem;
+    }
+  }
+
+  .p-overlay {
+    z-index: 9999 !important;
+  }
+}
+
+.logo-company {
+  height: 50px;
+  max-width: 200px;
+}
+
+.page-title {
+  font-size: 25px;
+  color: #4d525c;
+  text-align: left;
+  padding-bottom: 30px;
+}
+
+.title-highlight {
+  color: #eab308;
+}
+
+// Remove the old logo-container styles inside .setup-card and add these at the root level:
+
+// Header container for logo and title (when no branch selected) - OUTSIDE the card
+.header-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 550px;
+
+  @media (max-width: 968px) {
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 600px) {
+    margin-bottom: 1.25rem;
+    gap: 0.75rem;
+  }
+}
+
+// Logo container styling for centered logo (when no branch selected)
+.logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+
+  .logo {
+    height: 65px;
+    max-width: 200px;
+    object-fit: contain;
+
+    @media (max-width: 600px) {
+      height: 65px;
+      max-width: 160px;
+    }
+
+    @media (max-width: 480px) {
+      height: 60px;
+      max-width: 140px;
+    }
+
+    @media (max-width: 390px) {
+      height: 65px;
+      max-width: 130px;
+    }
+  }
+}
+
+// Welcome title styling (updated)
+.welcome-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: #2d3748;
+  text-align: center;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+
+  @media (max-width: 768px) {
+    font-size: 2rem;
+  }
+
+  @media (max-width: 600px) {
+    font-size: 1.75rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.5rem;
+  }
+
+  @media (max-width: 390px) {
+    font-size: 1.4rem;
+  }
+}
+
+// Branch header (when branch is selected)
+.branch-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.logo-company {
+  height: 50px;
+  cursor: pointer;
+  object-fit: contain;
+}
+
+.app-title {
+  font-size: 1.4rem;
+  color: #2d3748;
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+  cursor: pointer;
+
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
+
+  @media (max-width: 600px) {
+    font-size: 1.15rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.05rem;
+  }
+}
+
+// Terms and Conditions section
+.terms-section {
+  background: #ffffff5c;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 600px) {
+    padding: 1.25rem;
+  }
+
+  @media (max-width: 480px) {
     padding: 1rem;
   }
-  
-  .setup-card {
-    padding: 1.5rem;
+}
+
+.terms-header {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #4d525c;
+  margin: 0 0 1.5rem 0;
+
+  @media (max-width: 600px) {
+    font-size: 1.15rem;
+    margin-bottom: 1.25rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+}
+
+.terms-content {
+  margin-bottom: 1.5rem;
+
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #4d525c;
+    margin: 0 0 1rem 0;
+
+    @media (max-width: 480px) {
+      font-size: 1rem;
+      margin-bottom: 0.875rem;
+    }
+  }
+
+  p {
+    font-size: 1rem;
+    color: #2d3748;
+    line-height: 1.7;
+    margin: 0;
+
+    @media (max-width: 480px) {
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+  }
+
+  @media (max-width: 600px) {
+    margin-bottom: 1.25rem;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 1rem;
+  }
+}
+
+.terms-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+
+  .checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+
+    span {
+      font-size: 1rem;
+      color: #2d3748;
+      font-weight: 500;
+      cursor: default; // Default cursor to indicate not clickable
+
+      @media (max-width: 480px) {
+        font-size: 0.95rem;
+      }
+    }
+  }
+
+  @media (max-width: 480px) {
+    padding-top: 0.875rem;
+    gap: 0.75rem;
+  }
+}
+
+// Checkbox styling to match reference
+// Checkbox styling to match reference
+// Checkbox styling to match reference
+// Custom Checkbox styling
+::ng-deep {
+  .setup-container .form-container .checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .custom-checkbox {
+      width: 24px;
+      height: 24px;
+      min-width: 24px; // Prevent shrinking
+      border: 2px solid #cbd5e0;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: #eab308;
+      }
+
+      &.checked {
+        background: #eab308;
+        border-color: #eab308;
+
+        i {
+          color: white;
+          font-size: 14px;
+          font-weight: bold;
+        }
+      }
+    }
+  }
+}
+
+// Updated button styles
+.button-container {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+  margin-top: 1.5rem;
+
+  @media (max-width: 600px) {
+    gap: 0.875rem;
+    margin-top: 1.25rem;
+  }
+
+  @media (max-width: 480px) {
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+}
+
+// Back button styling - white with border
+.back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 50px;
+  color: #2d3748;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  &:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  i {
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 600px) {
+    padding: 0.875rem 1.75rem;
+    font-size: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 390px) {
+    padding: 0.75rem 1.3rem;
+    font-size: 0.9rem;
+  }
+}
+
+// Continue button styling - solid yellow/gold
+
+::ng-deep {
+  .setup-container .form-container .button-container .p-button {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    flex: 1;
+    border-radius: 50px;
+    background: linear-gradient(145deg, #f8c44f, #f2b124);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+    border: none;
+    color: #4d525c !important;
+    box-shadow: 0 4px 12px rgba(234, 179, 8, 0.3) !important;
+    transition: all 0.3s ease;
+    letter-spacing: 0.3px;
+
+    &:hover:not(:disabled) {
+      background: #ca8a04 !important; // Darker yellow on hover
+      box-shadow: 0 6px 16px rgba(234, 179, 8, 0.4) !important;
+      transform: translateY(-2px);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(234, 179, 8, 0.3) !important;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: #eab308 !important;
+    }
+
+    .p-button-icon {
+      font-size: 1.1rem;
+    }
+
+    @media (max-width: 600px) {
+      padding: 0.875rem 1.75rem;
+      font-size: 1rem;
+    }
+
+    @media (max-width: 480px) {
+      padding: 0.8rem 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 390px) {
+      padding: 0.75rem 1.3rem;
+      font-size: 0.9rem;
+    }
   }
 }

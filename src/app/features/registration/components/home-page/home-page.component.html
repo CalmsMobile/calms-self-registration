@@ -1,98 +1,164 @@
 @if (!isLoading) {
-  <div class="setup-container" [ngStyle]="getBackgroundStyle()">
-    <!-- Access denied message for base URL restriction -->
-    @if (isAccessDenied) {
-      <div class="error-container">
-        <div class="error-card">
-          <h1>Access Restricted</h1>
-          <div class="error-content">
-            <i class="pi pi-ban error-icon"></i>
-            <p class="error-message">{{ baseUrlAccessDeniedInstruction }}</p>
-            <p class="error-subtitle">Please contact your administrator for a valid registration link.</p>
-          </div>
-        </div>
+<div class="setup-container" [ngStyle]="getBackgroundStyle()">
+  <!-- Access denied message for base URL restriction -->
+  @if (isAccessDenied) {
+  <div class="error-container">
+    <div class="error-card">
+      <h1>Access Restricted</h1>
+      <div class="error-content">
+        <i class="pi pi-ban error-icon"></i>
+        <p class="error-message">{{ baseUrlAccessDeniedInstruction }}</p>
+        <p class="error-subtitle">Please contact your administrator for a valid registration link.</p>
       </div>
-    }
-    <!-- Error message for invalid URL -->
-    @if (hasInvalidUrl && !isAccessDenied) {
-      <div class="error-container">
-        <div class="error-card">
-          <h1>Invalid URL</h1>
-          <div class="error-content">
-            <i class="pi pi-exclamation-triangle error-icon"></i>
-            <p class="error-message">{{ errorMessage }}</p>
-            <p class="error-subtitle">Please contact your administrator for a valid registration link.</p>
-          </div>
-        </div>
-      </div>
-    }
-    <!-- Normal registration form -->
-    @if (!hasInvalidUrl && !isAccessDenied) {
-      <div class="setup-card">
-        <h1>{{ pageTitle || ('Visitor_Registration' | translate) }}</h1>
-        <!-- Appointment flow indicator -->
-        <!-- <div class="appointment-info" *ngIf="isAppointmentFlow">
-        <div class="appointment-badge">
-          <i class="pi pi-calendar"></i>
-          <span>Appointment Registration</span>
-        </div>
-        <p class="appointment-message">You are registering for a scheduled appointment.</p>
-      </div> -->
-      <!-- <p class="instructions">Please select your branch and category to begin the registration process. Please select your
-      branch and category to begin the registration process. Please select your branch and category to begin the
-      registration process. Please select your branch and category to begin the registration process. Please select your
-    branch and category to begin the registration process.</p> -->
-    <div class="form-container">
-      <!-- Branch Selection - Hidden in appointment flow -->
-      @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
-        <div class="form-field">
-          <label for="branch_input">{{ branchTranslation.caption || ('branch' | translate) }}</label>
-          <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
-            [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')" optionLabel="Branch_Name"
-            inputId="branch_input" optionValue="RefBranchSeqID" [showClear]="true" [autofocus]="false">
-          </p-select>
-        </div>
-      }
-      <!-- Category Selection - Disabled in appointment flow -->
-      @if (selectedBranch && categories.length !== 1) {
-        <div class="form-field">
-          <label for="category_input">{{ 'category' | translate }}</label>
-          <p-select
-            [options]="categories"
-            [(ngModel)]="selectedCategory"
-            (ngModelChange)="onCategoryChange($event)"
-            [placeholder]="'category' | translate:'placeholder'"
-            optionLabel="visitor_ctg_desc"
-            inputId="category_input"
-            optionValue="visitor_ctg_id"
-            [showClear]="!isAppointmentFlow"
-            [disabled]="isAppointmentFlow"
-            [autofocus]="false">
-          </p-select>
-        </div>
-      }
-      @if (selectedBranch && selectedCategory) {
-        @if (shouldShowTerms()){
-        <div class="text-left">
-          <label>{{'terms_and_conditions' | translate}}</label>
-          <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
-        </div>
-      }}
-      <p-button [label]="'agree_and_proceed' | translate" icon="pi pi-arrow-right" iconPos="right" (onClick)="proceedToWizard()"
-        [disabled]="!selectedBranch || !selectedCategory">
-      </p-button>
     </div>
   </div>
-}
+  }
+
+  <!-- Error message for invalid URL -->
+  @if (hasInvalidUrl && !isAccessDenied) {
+  <div class="error-container">
+    <div class="error-card">
+      <h1>Invalid URL</h1>
+      <div class="error-content">
+        <i class="pi pi-exclamation-triangle error-icon"></i>
+        <p class="error-message">{{ errorMessage }}</p>
+        <p class="error-subtitle">Please contact your administrator for a valid registration link.</p>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Normal registration form -->
+  @if (!hasInvalidUrl && !isAccessDenied) {
+  <!-- Show illustration only when no branch is selected -->
+  @if (!selectedBranch) {
+
+  <div class="illustration-container">
+    <img src="/assets/illustration.png" alt="abstract">
+  </div>
+
+  <!-- Static Logo and Title - centered above card when no branch selected -->
+
+  }
+
+  <!-- Dynamic Logo and Title - shown when branch is selected -->
+  @if (selectedBranch) {
+  <div class="branch-header">
+    <img routerLink="/" [src]="logo" alt="Company Logo" class="logo-company">
+    <h1 routerLink="/" class="app-title">{{title}}</h1>
+  </div>
+  }
+
+  <div class="setup-card">
+    @if (!selectedBranch) {
+    <div class="header-container">
+      <div class="logo-container">
+        <img src="/assets/logo.png" alt="Company Logo" class="logo">
+      </div>
+      <h1 class="welcome-title">Welcome to CALMS</h1>
+    </div>}
+    <!-- Show page title when branch is selected -->
+    @if (selectedBranch) {
+    <div>
+      <h1 class="page-title">
+        <span class="title-highlight">{{ formattedPageTitle.first }}</span>
+        <br>
+        <span class="title-normal">{{ formattedPageTitle.rest }}</span>
+      </h1>
+    </div>
+    }
+
+    <!-- Show language selector when both branch and category are selected -->
+    @if (selectedBranch && selectedCategory) {
+    <div class="language-selector">
+    </div>
+    }
+
+    <div class="form-container">
+      <!-- Branch Selection -->
+      @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
+      <div class="form-field">
+        <label for="branch_input">{{ branchTranslation.caption || ('branch' | translate) }}</label>
+        <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
+          [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
+          optionLabel="Branch_Name" inputId="branch_input" optionValue="RefBranchSeqID" [showClear]="true"
+          [autofocus]="false" appendTo="body">
+        </p-select>
+      </div>
+      }
+
+      <!-- Category Selection -->
+      @if (selectedBranch && categories.length !== 1) {
+      <div class="form-field">
+        <label for="category_input">{{ 'category' | translate }}</label>
+        <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
+          [placeholder]="'category' | translate:'placeholder'" optionLabel="visitor_ctg_desc" inputId="category_input"
+          optionValue="visitor_ctg_id" [showClear]="!isAppointmentFlow" [disabled]="isAppointmentFlow"
+          [autofocus]="false" appendTo="body">
+        </p-select>
+      </div>
+      }
+
+      <!-- Terms and Conditions -->
+      @if (selectedBranch && selectedCategory) {
+      @if (shouldShowTerms()) {
+      <div class="terms-section">
+        <h2 class="terms-header">Terms and Condition</h2>
+
+        <div class="terms-content">
+          <h3>For CALMS</h3>
+          <p>
+            By submitting your information, you agree and consent to Calms Technologies Sdn Bhd
+            and its related corporations, and its managing agent, collecting, using and disclosing
+            such information for the purposes of seeking clarification on the information submitted
+            or contacting you in event of any emergencies and related purposes.
+          </p>
+        </div>
+
+        <!-- Hidden terms component for validation -->
+        <div style="display: none;">
+          <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
+        </div>
+
+        <!-- Checkbox at bottom -->
+        <div class="terms-checkbox-wrapper">
+          <div class="checkbox-container">
+            <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsAccepted = !termsAccepted">
+              @if (termsAccepted) {
+              <i class="pi pi-check"></i>
+              }
+            </div>
+            <span>I agree to the terms and conditions</span>
+          </div>
+        </div>
+      </div>
+      }
+      }
+      <!-- Back button and Continue button -->
+      @if (selectedBranch && selectedCategory) {
+      <div class="button-container">
+        <button class="back-button" (click)="goBack()">
+          <i class="pi pi-arrow-left"></i>
+          <span>Back</span>
+        </button>
+        <p-button [label]="'agree_and_proceed' | translate" icon="pi pi-arrow-right" iconPos="right"
+          [disabled]="!termsAccepted || !termsValid" (onClick)="proceedToWizard()">
+        </p-button>
+      </div>
+      }
+    </div>
+  </div>
+  }
 </div>
 }
 
 @if (isLoading) {
-  <div class="loading-indicator" [ngStyle]="getBackgroundStyle()">
-    <div class="loading-content">
-      <p-progressbar mode="indeterminate" [style]="{ height: '8px', width: '300px' }" />
-      <p>Loading...</p>
-    </div>
+<div class="loading-indicator" [ngStyle]="getBackgroundStyle()">
+  <div class="loading-content">
+    <p-progressbar mode="indeterminate" [style]="{ height: '8px', width: '300px' }" />
+    <p>Loading...</p>
   </div>
+</div>
 }
+
 <p-toast></p-toast>
