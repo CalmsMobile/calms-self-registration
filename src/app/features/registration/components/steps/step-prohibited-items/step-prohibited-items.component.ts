@@ -106,4 +106,5 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
     this.saveFormData();
     this.wizardService.navigateToNextStep();
   }
+  ///test
 }
