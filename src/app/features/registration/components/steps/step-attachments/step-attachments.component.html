@@ -1,105 +1,143 @@
-<div class="step-container">
-  <!-- <h2>Upload Required Documents</h2> -->
-  <!-- Documents Upload Panel -->
-  @if (attachmentUploadEnabled) {
-    <p-panel [header]="'Additional_Documents' | translate" [toggleable]="true" [collapsed]="false">
-      <div class="attachments-list">
-        @for (doc of documentTypes; track doc) {
-          <div class="attachment-item">
-            <div class="attachment-header">
-              <h3>{{ doc.Caption }} @if (doc.Mandatory) {
-                <span class="red-color">*</span>
-              }</h3>
-              <small>
-                Max size: {{ maxSize / 1000000 }}MB
-                ({{ acceptedTypes.replace('image/*,', '').replace('image/*', 'Images') }})
-              </small>
-            </div>
-            <div class="attachment-controls">
-              @if (!attachments[doc.VisitorAttachSeqId].file) {
-                <p-fileUpload mode="basic" [chooseLabel]="'browse' | translate"
-                  [accept]="acceptedTypes" [maxFileSize]="maxSize" (onSelect)="onFileSelect($event, doc.VisitorAttachSeqId)">
-                </p-fileUpload>
-              }
-              @if (attachments[doc.VisitorAttachSeqId].file) {
-                <div class="preview-container">
-                  <span class="file-name"><i class="pi pi-file"></i> {{ attachments[doc.VisitorAttachSeqId].file?.name }}</span>
-                  <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text"
-                    (click)="confirmDelete(doc.VisitorAttachSeqId)">
-                  </button>
-                </div>
-              }
-            </div>
-          </div>
-        }
-      </div>
-    </p-panel>
-  }
+<div class="wrapper">
 
-  <!-- Items Declaration Panel -->
-  @if (materialDeclareEnabled) {
-    <p-panel [header]="'Item Declaration' | translate" [toggleable]="true" class="mt-4">
-      <div class="items-declaration">
-        <div class="nothing-to-declare">
-          <p-checkbox inputId="no-declare-doc" [(ngModel)]="nothingToDeclare" [binary]="true"
-            (onChange)="onNothingToDeclareChange()">
-          </p-checkbox>
-          <label for="no-declare-doc"> {{'i_have_nothing_to_declare' | translate}}</label>
-        </div>
+  <img src="assets/logo.png" class="header-img" alt="Company Logo">
 
-        @if (!nothingToDeclare) {
-          <div class="items-list">
-            <div class="item-form">
-              <div class="field">
-                <label for="itemDescription">{{'item_description' | translate}}</label>
-                <input id="itemDescription" pInputText [(ngModel)]="newItem.description"
-                  placeholder="{{'enter_item_description' | translate:'placeholder'}}">
-                </div>
-                <div class="field">
-                  <label for="serialNumber">{{'serial_number' | translate}}</label>
-                  <input id="serialNumber" pInputText [(ngModel)]="newItem.serialNumber" placeholder="{{'enter_serial_number' | translate:'placeholder'}}">
-                </div>
-                <div class="field">
-                  <label for="itemDirection">{{'direction' | translate}}</label>
-                  <p-select id="itemDirection" [options]="directionOptions" [(ngModel)]="newItem.direction"
-                    optionLabel="label" optionValue="value" placeholder="{{'select_direction' | translate:'placeholder'}}">
-                  </p-select>
-                </div>
-                <div class="field">
-                  <button pButton label="Add" icon="pi pi-plus" class="p-button-sm mobile-full-width" (click)="addItem()"
-                    [disabled]="!newItem.description">
-                  </button>
-                </div>
+  <div class="title"><span>Supporting</span> <br>Documents</div>
+  <div class="subtitle">Upload identification or supporting documents (Optional)</div>
+
+  <!-- FILE CARDS -->
+  @if (attachmentUploadEnabled && documentTypes.length > 0) {
+    <div class="files-section">
+      @for (doc of documentTypes; track doc.VisitorAttachSeqId) {
+        <div class="file-card" [attr.data-id]="doc.VisitorAttachSeqId">
+          <div class="file-top">
+            <div>
+              <div class="file-name">
+                {{ doc.Caption }}
+                @if (doc.Mandatory) {
+                  <span class="mandatory">*</span>
+                }
               </div>
-              @if (declaredItems && declaredItems.length > 0) {
-                <p-table [value]="declaredItems" class="mt-3">
-                  <ng-template pTemplate="header">
-                    <tr>
-                      <th>{{'item_description' | translate}}</th>
-                      <th>{{'serial_number' | translate}}</th>
-                      <th>{{'direction' | translate}}</th>
-                      <th>{{'actions' | translate}}</th>
-                    </tr>
-                  </ng-template>
-                  <ng-template pTemplate="body" let-item let-rowIndex="rowIndex">
-                    <tr>
-                      <td>{{item.description}}</td>
-                      <td>{{item.serialNumber || '-'}}</td>
-                      <td>{{getDirectionLabel(item.direction)}}</td>
-                      <td>
-                        <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger p-button-text"
-                          (click)="removeItem(rowIndex)">
-                        </button>
-                      </td>
-                    </tr>
-                  </ng-template>
-                </p-table>
+              @if (!attachments[doc.VisitorAttachSeqId].file) {
+                <div class="file-sub">Max size: {{ maxSize / 1000000 }}MB (.pdf, images)</div>
+              } @else {
+                <div class="file-sub success">
+                  ({{ (attachments[doc.VisitorAttachSeqId].file?.size || 0) / 1024 / 1024 | number: '1.1-1' }}MB) 
+                  <span class="success-text">Success</span>
+                </div>
               }
+            </div>
+            <label class="upload-btn">
+              @if (!attachments[doc.VisitorAttachSeqId].file) {
+                <span>📄</span>
+                <input 
+                  type="file" 
+                  hidden 
+                  [accept]="acceptedTypes"
+                  (change)="onFileSelect($event, doc.VisitorAttachSeqId)">
+              } @else {
+                <button 
+                  type="button"
+                  class="delete-btn"
+                  (click)="removeFile(doc.VisitorAttachSeqId)"
+                  title="Delete file">
+                  🗑
+                </button>
+              }
+            </label>
+          </div>
+          @if (attachments[doc.VisitorAttachSeqId].file) {
+            <div class="progress">
+              <div class="bar" [style.width.%]="100"></div>
             </div>
           }
         </div>
-      </p-panel>
-    }
+      }
+    </div>
+  }
+
+  <!-- Items Declaration Section -->
+  @if (materialDeclareEnabled) {
+    <div class="declaration-section">
+      <div class="declaration-header">
+        <h3>{{ 'Item Declaration' | translate }}</h3>
+        <p class="subtitle">Items you wish to declare (Optional)</p>
+      </div>
+
+      <!-- Nothing to Declare -->
+      <div class="checkbox-group">
+        <input 
+          type="checkbox" 
+          id="nothingToDeclare" 
+          [(ngModel)]="nothingToDeclare"
+          (change)="onNothingToDeclareChange()">
+        <label for="nothingToDeclare">{{ 'i_have_nothing_to_declare' | translate }}</label>
+      </div>
+
+      <!-- Item Form (show when not "nothing to declare") -->
+      @if (!nothingToDeclare) {
+        <div class="items-form">
+          <div class="form-row">
+            <input 
+              type="text" 
+              placeholder="{{ 'enter_item_description' | translate }}"
+              [(ngModel)]="newItem.description"
+              class="form-input">
+          </div>
+          <div class="form-row">
+            <input 
+              type="text" 
+              placeholder="{{ 'enter_serial_number' | translate }}"
+              [(ngModel)]="newItem.serialNumber"
+              class="form-input">
+          </div>
+          <div class="form-row">
+            <select [(ngModel)]="newItem.direction" class="form-input">
+              <option value="">{{ 'select_direction' | translate }}</option>
+              @for (dir of directionOptions; track dir.value) {
+                <option [value]="dir.value">{{ dir.label }}</option>
+              }
+            </select>
+          </div>
+          <button 
+            class="btn add-btn" 
+            (click)="addItem()"
+            [disabled]="!newItem.description.trim()">
+            + Add Item
+          </button>
+        </div>
+
+        <!-- Declared Items List -->
+        @if (declaredItems && declaredItems.length > 0) {
+          <div class="items-list">
+            @for (item of declaredItems; track $index) {
+              <div class="item-card">
+                <div class="item-info">
+                  <div class="item-description">{{ item.description }}</div>
+                  <div class="item-meta">
+                    {{ item.serialNumber || '-' }} • {{ getDirectionLabel(item.direction) }}
+                  </div>
+                </div>
+                <button 
+                  class="remove-btn" 
+                  (click)="removeItem($index)"
+                  title="Remove">
+                  ✕
+                </button>
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <div class="bottom">
+    <div class="row">
+      <button class="btn white" (click)="goBack()">← Back</button>
+      <button class="btn white" (click)="skipStep()">Skip →</button>
+    </div>
+    <button class="btn continue" (click)="proceedToNext()">Continue →</button>
   </div>
 
-  <p-confirmDialog [style]="{width: '450px'}"></p-confirmDialog>
+</div>

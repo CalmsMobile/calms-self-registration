@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit, Sanitizer,ChangeDetectorRef } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, ValidatorFn, FormArray } from '@angular/forms';
+import { Component, OnDestroy, OnInit, Sanitizer, ChangeDetectorRef } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { WizardService } from '../../../../../core/services/wizard.service';
@@ -17,13 +17,13 @@ import { filter, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../../core/services/api.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
-
+import { SharedService } from '../../../../../shared/shared.service';
 
 
 @Component({
   selector: 'app-step-general',
   standalone: true,
-  imports: [DatePickerModule, SelectModule, ReactiveFormsModule, InputTextModule, AutoCompleteModule, TranslatePipe, MultiSelectModule, DividerModule, CheckboxModule, ButtonModule, TableModule, DialogModule],
+  imports: [DatePickerModule, SelectModule, ReactiveFormsModule, FormsModule, InputTextModule, AutoCompleteModule, TranslatePipe, MultiSelectModule, DividerModule, CheckboxModule, ButtonModule, TableModule, DialogModule],
   templateUrl: './step-general.component.html',
   styleUrls: ['./step-general.component.scss']
 })
@@ -55,34 +55,35 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   pageSettings: any[] = [];
   udfSettings: any[] = [];
   udfOptions: any[] = [];
-  
+ title = 'Company Title';
+  logo = 'assets/logo.png';
   // New properties for VIMS appointment and facility booking
   localSettings: any = {};
   enableVimsApptTimeSlot = false;
   enableSelfRegistrationHostPreload = false;
-  
+
   // Default host settings
   defaultHostEnabled = false;
   defaultHostId: any = null;
   shouldHideHostControl = false;
-  
+
   // Visitor acknowledgment data
   visitorAckData: any = null;
   isAppointmentFlow = false;
   shouldFilterHostByQueryParam = false; // Flag to indicate if host should be filtered for query param flow
   // Fields that are allowed to be edited in appointment flow (visitor acknowledgment)
   allowedEditableFields = ['fullName', 'visitor_id', 'email', 'phone', 'gender', 'host']; // Temporarily enable host for testing
-  
+
   // Fields that should be hidden in appointment flow
   hiddenFieldsInAppointmentFlow: string[] = []; // Temporarily enable host to test auto-selection
-  
+
   // Singapore PDPA settings
   isSingaporePDPARequired = false;
-  
+
   // Visitor table view properties
   showVisitorTable = false;
   editingVisitorIndex = -1;
-  
+
   // Dialog and popup properties
   showAddVisitorDialog = false;
   currentEditingVisitor: any = null;
@@ -96,11 +97,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   facilityBookingSlots: any[] = [];
   selectedBookingSlot: any = null;
   bookedSlotIds: string = ''; // Track selected slot IDs
-  
+
   // Host search functionality
   hostSearchText: string = '';
+  showReturningVisitorPopup = false;
+  searchQuery = '';
   isHostSearching: boolean = false;
-  
+
   // Original host data for filtering
   originalHostData: any[] = [];
 
@@ -108,10 +111,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   visitors: any[] = [];
   currentVisitorIndex = 0;
   isMultipleVisitorMode = false;
-  
+
   // Saved visitors for single visitor mode
   savedVisitors: any[] = [];
-
+  currentStepIndex = 0;
+  totalSteps = 4;
+  isLastStep = false;
+  submitted = false;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -119,14 +125,21 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     private wizardService: WizardService,
     private messageService: MessageService,
     private sanitizer: DomSanitizer,
+        private sharedService: SharedService,
     private api: ApiService,
     private cdr: ChangeDetectorRef
   ) {
+        this.sharedService.currentTitle.subscribe(title => {
+      this.title = title;
+    });
+    this.sharedService.currentLogo.subscribe(logo => {
+      this.logo = logo;
+    });
   }
 
   ngOnInit(): void {
     console.log('=== STEP-GENERAL INIT START ===');
-    
+
     this.wizardService.getSettings$().pipe(
       filter(settings => settings !== null),
       takeUntil(this.destroy$)
@@ -176,7 +189,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.departmentList = this.masterData.Table5 || [];
       this.hostDepartmentList = this.masterData.Table5 || [];
       // Note: meetingLocList and titleList will be loaded from GetBranchHostDataTable12      this.countryList = this.masterData.Table13 || [];
-      
+
       // Table12 Type list from Table12 correct field mapping
       if (this.masterData && this.masterData.Table12 && this.masterData.Table12.length > 0) {
         this.idTypeList = [...this.masterData.Table12];
@@ -186,7 +199,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       else {
         this.idTypeList = [];
       }
-      
+
       // Set Company list from Table7
       if (this.masterData && this.masterData.Table7 && this.masterData.Table7.length > 0) {
         this.companyList = [...this.masterData.Table7.filter((item: any) => {
@@ -197,7 +210,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       else {
         this.companyList = [];
       }
-      
+
       // Conditionally load hosts based on EnableSelfRegistrationHostPreload setting
       // This will be handled after local settings are loaded
     } else {
@@ -226,7 +239,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         // Keep controls enabled but update validation requirements
         this.setupControl('facilityPurpose', true, value);
         this.setupControl('facilitySelection', true, value);
-        
+
         // Handle shared date validation
         if (this.enableVimsApptTimeSlot && this.enableFBInSelfReg) {
           this.setupControl('sharedDate', true, true);
@@ -239,7 +252,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.wizardService.onValidationRequest.subscribe(() => {
       this.validateForm();
     });
+
+    this.currentStepIndex = this.wizardService.getCurrentStepIndex();
+    this.totalSteps = this.wizardService.getTotalSteps();
+    this.isLastStep = this.currentStepIndex === this.totalSteps - 1;
   }
+
+
 
   onStartDateSelect(selectedDate: Date) {
     const endDateControl = this.generalForm.get('endDate');
@@ -258,12 +277,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   onAppointmentDateSelect(selectedDate: Date) {
     const branchId = this.wizardService.currentBranchID;
     const categoryId = this.wizardService.selectedVisitCategory;
-    
+
     if (selectedDate && branchId && categoryId) {
       const formattedDate = this.formatDateToYYYYMMDD(selectedDate);
       this.loadTimeSlots(formattedDate, branchId, categoryId);
     }
-    
+
     // Clear time slot when date changes
     this.generalForm.patchValue({ timeSlot: '' });
   }
@@ -288,7 +307,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   onFacilitySelectionChange(facilityCode: string) {
     console.log('Facility selected:', facilityCode);
     const sharedDate = this.generalForm.get('sharedDate')?.value;
-    
+
     if (facilityCode && sharedDate) {
       this.loadFacilityBookingSlots(facilityCode, sharedDate);
     }
@@ -298,7 +317,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!selectedDate) return;
 
     const facilityBookingEnabled = this.generalForm.get('facilityBooking')?.value;
-    
+
     if (facilityBookingEnabled) {
       // Handle facility booking flow
       const facilityCode = this.generalForm.get('facilitySelection')?.value;
@@ -309,13 +328,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Handle regular appointment time slot flow
       const branchId = this.wizardService.currentBranchID;
       const categoryId = this.wizardService.selectedVisitCategory;
-      
+
       if (branchId && categoryId) {
         const formattedDate = this.formatDateToYYYYMMDD(selectedDate);
         this.loadTimeSlots(formattedDate, branchId, categoryId);
       }
     }
-    
+
     // Clear related fields when date changes
     this.generalForm.patchValue({ timeSlot: '' });
     this.facilityBookingSlots = [];
@@ -325,7 +344,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   private loadFacilityBookingSlots(facilityCode: string, selectedDate: Date) {
     const dateString = selectedDate.toISOString();
-    
+
     this.api.VimsAppGetBookingSlot(facilityCode, dateString).subscribe((response: any) => {
       console.log('Facility booking slots response:', response);
       if (response?.Table?.length) {
@@ -336,6 +355,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
     });
   }
+
 
   private groupBookingSlotsByTime(slots: any[]): any[] {
     const grouped = slots.reduce((acc, slot) => {
@@ -355,12 +375,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   getSlotCssClass(slot: any): string {
     const dataRef = `${slot.StartTime},${slot.EndTime}`;
-    
+
     // Check if slot is just booked (selected by user)
     if (this.bookedSlotIds.includes(dataRef + '_')) {
       return 'clsbookslot clsJustBooked';
     }
-    
+
     // Use the original logic: getValidateTime(StartTime, ServerTime, bookingId)
     return this.getValidateTime(slot.StartTime, slot.ServerTime, slot.BookingID);
   }
@@ -373,7 +393,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Handle different date formats and potential null/undefined values
       let currentTime: Date;
       let startDate: Date;
-      
+
       try {
         // If no serverTime provided or invalid, use current time
         if (!serverTime || serverTime === 'null' || serverTime === 'undefined') {
@@ -385,14 +405,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             currentTime = new Date();
           }
         }
-        
+
         startDate = new Date(startTime);
         // Check if start date is valid
         if (isNaN(startDate.getTime())) {
           console.warn('Invalid start time:', startTime);
           return 'clsbookslot clsExpired';
         }
-        
+
         // Debug logging (remove this after testing)
         console.log('Time comparison:', {
           serverTime: serverTime,
@@ -401,9 +421,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           isAvailable: currentTime < startDate,
           bookingId: bookingId
         });
-        
+
         return currentTime < startDate ? 'clsbookslot clsAvail' : 'clsbookslot clsExpired';
-        
+
       } catch (error) {
         console.error('Error parsing dates:', error, { startTime, serverTime });
         // Default to expired if there's an error
@@ -415,14 +435,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Replicate the original BookingSlotClick function
   bookingSlotClick(event: Event, slot: any): void {
     const element = event.target as HTMLElement;
-    
+
     // Find the actual slot element (could be nested)
     const slotElement = element.closest('.clsbookslot') as HTMLElement || element;
-    
+
     if (!slotElement || !slotElement.className) return;
-    
+
     const className = slotElement.className;
-    
+
     if (className.indexOf('clsAvail') > -1) {
       const dataRef = slotElement.getAttribute('data-ref');
       if (dataRef) {
@@ -452,16 +472,16 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   getSlotTimeDisplay(startTime: string, endTime: string): string {
     const start = new Date(startTime);
     const end = new Date(endTime);
-    
+
     // Format time as "hh:mm tt" (12-hour format with AM/PM) like the original
     const formatTime = (date: Date) => {
-      return date.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
+      return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
         minute: '2-digit',
-        hour12: true 
+        hour12: true
       });
     };
-    
+
     return `${formatTime(start)} - ${formatTime(end)}`;
   }
 
@@ -491,7 +511,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.udfOptions = udfSettings.Table1;
       this.initializeForm();
       this.setupConditionalControls();
-      
+
       // Set loading to false after everything is initialized
       this.isLoading = false;
     });
@@ -500,7 +520,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   private loadLocalSettings() {
     const branchId = this.wizardService.currentBranchID;
     console.log('Loading local settings for branch:', branchId);
-    
+
     if (branchId) {
       this.api.GetLocalSettingsDataByBranch(branchId).subscribe((response: any) => {
         if (response?.length) {
@@ -508,12 +528,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.enableVimsApptTimeSlot = this.localSettings.EnableVimsApptTimeSlot === true;
           this.enableFBInSelfReg = this.localSettings.EnableFBInSelfReg === true;
           this.enableSelfRegistrationHostPreload = this.localSettings.EnableSelfRegistrationHostPreload === true;
-          
+
           // Handle default host settings
           this.defaultHostEnabled = this.localSettings.DefaultHostEnabled === true;
           this.defaultHostId = this.localSettings.DefaultHostId;
           this.shouldHideHostControl = this.defaultHostEnabled && this.defaultHostId;
-          
+
           console.log('Local settings loaded:', {
             enableVimsApptTimeSlot: this.enableVimsApptTimeSlot,
             enableFBInSelfReg: this.enableFBInSelfReg,
@@ -521,10 +541,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             defaultHostEnabled: this.defaultHostEnabled,
             shouldHideHostControl: this.shouldHideHostControl
           });
-          
+
           // Load hosts immediately when proceeding from homepage (not lazy loading)
           this.loadBranchData();
-          
+
           // Reinitialize form with new controls
           this.initializeForm();
           this.setupConditionalControls();
@@ -551,9 +571,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       console.log('Facility booking is disabled, skipping facility data loading');
       return;
     }
-    
+
     console.log('Loading facility data...');
-    
+
     // Load facility purpose list
     this.api.VimsAppFacilityPurposeList().subscribe((response: any) => {
       if (response?.Table1?.length) {
@@ -575,7 +595,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   private loadBranchData() {
     const branchId = this.wizardService.currentBranchID;
     console.log('Loading branch data with branch ID:', branchId, 'EnableSelfRegistrationHostPreload:', this.enableSelfRegistrationHostPreload, 'IsAppointmentFlow:', this.isAppointmentFlow);
-    
+
     // First check if branch host data is already pre-loaded from home page
     const preLoadedBranchData = this.wizardService.getBranchHostData();
     if (preLoadedBranchData) {
@@ -583,7 +603,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.processBranchHostData(preLoadedBranchData);
       return;
     }
-    
+
     // Only skip host loading in appointment flow when host preload is enabled
     // In normal flow, always load hosts regardless of the preload setting
     if (this.enableSelfRegistrationHostPreload && this.isAppointmentFlow) {
@@ -597,12 +617,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Load complete branch data from GetBranchHostData API (for normal flow or when preload is disabled)
       if (branchId) {
         console.log('Calling GetBranchHostData API for branch:', branchId);
-        
+
         // Pass the inverse of enableSelfRegistrationHostPreload as PreloadHostData
         // If enableSelfRegistrationHostPreload is true, we DON'T want to preload (PreloadHostData = false)
         // If enableSelfRegistrationHostPreload is false, we DO want to preload (PreloadHostData = true)
         const preloadHostData = !this.enableSelfRegistrationHostPreload;
-        
+
         this.api.GetBranchHostData(branchId, preloadHostData).subscribe({
           next: (response: any) => {
             this.processBranchHostData(response);
@@ -628,68 +648,68 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
    */
   private processBranchHostData(response: any): void {
     console.log('GetBranchHostData response:', response);
-    
+
     // Process hosts from main Table (similar to JavaScript uiGetBranchHostDataResponse)
     if (response && response.Table && response.Table.length > 0) {
       console.log('Processing hosts from Table, count:', response.Table.length);
-      
+
       // Store original host data for filtering
       this.originalHostData = [...response.Table];
-      
+
       // Map hosts with proper field names (use HOSTNAME and HOSTIC like JavaScript)
       this.hosts = response.Table.map((host: any) => {
         let formattedHost = { ...host };
-        
+
         // Ensure HOSTNAME field exists for dropdown display
         if (!host.HOSTNAME && host.Name) {
           formattedHost.HOSTNAME = host.Name;
         }
-        
+
         // Ensure HOSTIC field exists for dropdown value
         if (!host.HOSTIC && host.HostIC) {
           formattedHost.HOSTIC = host.HostIC;
         } else if (!host.HOSTIC && host.SeqId) {
           formattedHost.HOSTIC = host.SeqId;
         }
-        
+
         // Format with member ID if enabled (like JavaScript gbShowMemberId logic)
         if (this.gbShowMemberId && host.MemberID) {
           formattedHost.HOSTNAME = `${host.Name || host.HOSTNAME || ''} (${host.MemberID})`.trim();
         }
-        
+
         return formattedHost;
       });
-      
+
       this.hostNameList = [...this.hosts];
       console.log('Hosts processed successfully, count:', this.hosts.length);
       console.log('Sample host data:', this.hosts[0]);
-      
+
       // Create department list from host data for bidirectional filtering
       const uniqueDepartments = [...new Set(response.Table
         .filter((host: any) => host.Department)
         .map((host: any) => host.Department))];
-      
+
       if (uniqueDepartments.length > 0) {
         console.log('Creating department list from host data:', uniqueDepartments.length);
-        
+
         // Create department objects with proper structure for filtering
         const hostDepartments = uniqueDepartments.map(dept => ({
           Department: dept,
           DName: dept,
           DepartmentSeqId: dept // Use department name as ID for filtering
         }));
-        
+
         // Combine with existing Table5 departments (if any)
         this.departmentList = [
           ...(this.masterData?.Table5 || []),
           ...hostDepartments
         ];
-        
+
         // Remove duplicates based on DName
         this.departmentList = this.departmentList.filter((dept, index, self) =>
           index === self.findIndex(d => d.DName === dept.DName)
         );
-        
+
         console.log('Final department list:', this.departmentList);
       }
     } else {
@@ -698,7 +718,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.hostNameList = [];
       this.originalHostData = [];
     }
-    
+
     // Process Room data from Table1 (similar to JavaScript logic)
     if (response && response.Table1 && response.Table1.length > 0) {
       let filteredRooms = [...response.Table1.filter((item: any) => {
@@ -707,7 +727,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.meetingLocList = filteredRooms;
       console.log('Rooms loaded from GetBranchHostData Table1:', filteredRooms.length);
     }
-    
+
     // Process Title data from Table8 or Table9 (exactly like JavaScript logic)
     if (response && response.Table8 && response.Table8.length > 0 && response.Table8[0].Title) {
       this.titleList = [...response.Table8];
@@ -721,12 +741,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.titleList = [];
       console.log('No titles found in GetBranchHostData response');
     }
-    
+
     // Set department for default host if enabled after hosts are loaded
     if (this.shouldHideHostControl && this.defaultHostId) {
       this.setDepartmentForDefaultHost();
     }
-    
+
     // Apply query parameter host filtering for appointment flow
     this.applyQueryParamHostFiltering();
   }
@@ -743,7 +763,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.meetingLocList = filteredRooms;
       console.log('Rooms loaded for host preload mode:', filteredRooms.length);
     }
-    
+
     if (response && response.Table8 && response.Table8.length > 0 && response.Table8[0].Title) {
       this.titleList = [...response.Table8];
       console.log('Titles loaded for host preload mode (Table8):', this.titleList.length);
@@ -757,7 +777,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   private loadOtherBranchData() {
     // Load only titles and rooms when host preload is disabled
     const branchId = this.wizardService.currentBranchID;
-    
+
     // First check if we have pre-loaded branch data
     const preLoadedBranchData = this.wizardService.getBranchHostData();
     if (preLoadedBranchData) {
@@ -765,7 +785,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.processBranchTitlesAndRooms(preLoadedBranchData);
       return;
     }
-    
+
     if (branchId) {
       // When loading other branch data, we don't need host data, so set PreloadHostData to false
       this.api.GetBranchHostData(branchId, false).subscribe({
@@ -789,28 +809,28 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     const hostId = this.visitorAckData.visitorData.hostId;
     console.log('Applying query parameter host filtering for HostId:', hostId);
-    
+
     // Find the host that matches the HostId from visitor ack data
     const matchingHost = this.hosts.find((host: any) => {
-      return host.HOSTIC === hostId || 
-             host.HostIC === hostId || 
-             host.SeqId === hostId;
+      return host.HOSTIC === hostId ||
+        host.HostIC === hostId ||
+        host.SeqId === hostId;
     });
-    
+
     if (matchingHost) {
       console.log('Found matching host for HostId:', hostId, matchingHost);
-      
+
       // Filter hosts to only show the matching host
       this.hosts = [matchingHost];
       this.hostNameList = [matchingHost];
       this.shouldFilterHostByQueryParam = true;
-      
+
       // Auto-select the host in the form
       this.generalForm.get('host')?.setValue(matchingHost.HOSTIC || matchingHost.HostIC || matchingHost.SeqId);
-      
+
       // Disable the host control since it should be fixed for appointment flow (don't hide it)
       this.shouldFilterHostByQueryParam = true;
-      
+
       console.log('Host filtered and auto-selected for appointment flow');
     } else {
       console.warn('No matching host found for HostId:', hostId, 'Available hosts:', this.hosts);
@@ -848,29 +868,29 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           // Map search results with proper field names for consistency
           this.hosts = response.Table.map((host: any) => {
             let formattedHost = { ...host };
-            
+
             // Ensure HOSTNAME field exists for dropdown display
             if (!host.HOSTNAME && host.Name) {
               formattedHost.HOSTNAME = host.Name;
             }
-            
+
             // Ensure HOSTIC field exists for dropdown value
             if (!host.HOSTIC && host.HostIC) {
               formattedHost.HOSTIC = host.HostIC;
             } else if (!host.HOSTIC && host.SeqId) {
               formattedHost.HOSTIC = host.SeqId;
             }
-            
+
             // Format with member ID if enabled
             if (this.gbShowMemberId && host.MemberID) {
               formattedHost.HOSTNAME = `${host.Name || host.HOSTNAME || ''} (${host.MemberID})`.trim();
             }
-            
+
             return formattedHost;
           });
-          
+
           this.hostNameList = [...this.hosts];
-          
+
           // Apply query parameter host filtering for appointment flow even on search results
           this.applyQueryParamHostFiltering();
         } else {
@@ -909,10 +929,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     // Get first name (everything before the first space) and convert to uppercase
     const firstName = fullName.trim().split(' ')[0].toUpperCase();
-    
+
     // Ensure visitor ID is maximum 4 characters
     const truncatedId = visitorId.substring(0, 4);
-    
+
     // Format: 4chars + '_' + firstname
     return `${truncatedId}_${firstName}`;
   }
@@ -934,11 +954,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Find gbShowMemberId setting
       const showMemberIdSetting = pageSettings.find(setting => setting.SettingType === "SM");
       if (showMemberIdSetting) {
-        this.gbShowMemberId = showMemberIdSetting.Caption !== null && 
-                             showMemberIdSetting.Caption !== "" && 
-                             showMemberIdSetting.Caption !== "false";
+        this.gbShowMemberId = showMemberIdSetting.Caption !== null &&
+          showMemberIdSetting.Caption !== "" &&
+          showMemberIdSetting.Caption !== "false";
       }
-      
+
       console.log('gbShowMemberId setting:', this.gbShowMemberId);
     }
   }
@@ -965,11 +985,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (fieldName === 'host' && this.shouldFilterHostByQueryParam) {
       return true;
     }
-    
+
     if (!this.isAppointmentFlow) {
       return false; // In normal flow, no fields are disabled
     }
-    
+
     // In appointment flow, disable fields that are not in the allowed editable list
     return !this.allowedEditableFields.includes(fieldName);
   }
@@ -988,7 +1008,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
    */
   private parseDate(dateString: string): Date | null {
     if (!dateString) return null;
-    
+
     try {
       const date = new Date(dateString);
       return isNaN(date.getTime()) ? null : date;
@@ -1000,7 +1020,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   private initializeForm(): void {
     const savedData = this.wizardService.getFormData('general') || {};
-    
+
     // Check if multiple visitor mode is enabled
     this.isMultipleVisitorMode = this.settings?.MultipleVisitorEnabled || false;
 
@@ -1046,6 +1066,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       remarks: [isPreFilledData ? (visitorData.remarks || '') : (savedData.remarks || '')],
       host: [isPreFilledData ? (visitorData.hostId || '') : (this.shouldHideHostControl ? this.defaultHostId : (savedData.host || ''))], // Prioritize visitor ack data over default host
       startDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.startDate || '')], // Use appointment start time
+      visitDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.visitDate || '')],
+      visitTime: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.visitTime || '')],
       endDate: [isPreFilledData ? (this.parseDate(visitorData.endTime) || '') : (savedData.endDate || '')], // Use appointment end time
       department: [isPreFilledData ? (visitorData.departmentId || '') : (savedData.department || '')], // Use appointment department
       appointmentDate: [savedData.appointmentDate || ''],
@@ -1062,7 +1084,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.udfSettings.forEach((udf: any) => {
         if (udf.Enabled) {
           const controlName = udf.UDFName;
-          
+
           // Get value priority: visitor ack data > saved data > empty
           let controlValue = '';
           if (shouldClearVisitorFields) {
@@ -1112,7 +1134,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           }
         }
       });
-      
+
       console.log('Disabled non-editable fields in appointment flow');
     }
 
@@ -1142,19 +1164,39 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this.isMultipleVisitorMode) {
       this.initializeVisitors(savedData);
     }
+
+    // Sync visitDate and visitTime to startDate
+    this.generalForm.get('visitDate')?.valueChanges.subscribe(() => this.syncStartDate());
+    this.generalForm.get('visitTime')?.valueChanges.subscribe(() => this.syncStartDate());
+  }
+
+  private syncStartDate(): void {
+    const visitDate = this.generalForm.get('visitDate')?.value;
+    const visitTime = this.generalForm.get('visitTime')?.value;
+
+    if (visitDate && visitTime) {
+      const combined = new Date(visitDate);
+      const time = new Date(visitTime);
+      combined.setHours(time.getHours());
+      combined.setMinutes(time.getMinutes());
+      combined.setSeconds(0);
+      this.generalForm.get('startDate')?.setValue(combined, { emitEvent: false });
+    } else if (visitDate) {
+      this.generalForm.get('startDate')?.setValue(visitDate, { emitEvent: false });
+    }
   }
 
   // Multiple visitors functionality
   private initializeVisitors(savedData: any): void {
     const visitorsArray = this.generalForm.get('visitors') as FormArray;
-    
+
     // Initialize with saved visitors or create first visitor
     const savedVisitors = savedData.visitors || [{}];
-    
+
     savedVisitors.forEach((visitor: any, index: number) => {
       visitorsArray.push(this.createVisitorForm(visitor, index === 0));
     });
-    
+
     if (visitorsArray.length === 0) {
       // Add first visitor if none exist
       visitorsArray.push(this.createVisitorForm({}, true));
@@ -1199,120 +1241,121 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.visitorsArray.push(newVisitor);
   }
 
-addVisitorToTable(): void {
-  console.log('=== ADD VISITOR START ===');
-  console.log('MultipleVisitorEnabled:', this.settings?.MultipleVisitorEnabled);
-  console.log('savedVisitors before:', this.savedVisitors);
-  console.log('savedVisitors.length before:', this.savedVisitors.length);
-  
-  // Only allow adding visitors to table if multi-visitor setting is enabled
-  if (!this.settings?.MultipleVisitorEnabled) {
-    console.log('Multiple visitor not enabled, returning');
-    return;
-  }
+  addVisitorToTable(): void {
+    console.log('=== ADD VISITOR START ===');
+    console.log('MultipleVisitorEnabled:', this.settings?.MultipleVisitorEnabled);
+    console.log('savedVisitors before:', this.savedVisitors);
+    console.log('savedVisitors.length before:', this.savedVisitors.length);
 
-  const currentForm = this.getCurrentVisitorForm();
-  console.log('Current form value:', currentForm.value);
-  console.log('Is form valid:', this.isCurrentVisitorFormValid());
-  
-  if (this.isCurrentVisitorFormValid()) {
-    // Save to savedVisitors array for multiple visitor functionality
-    const visitorData = { ...currentForm.value };
-    
-    console.log('Visitor data before processing:', visitorData);
-    
-    // Initialize Visitor_IC and IdentityNo fields
-    visitorData.Visitor_IC = visitorData.visitor_id || '';
-    visitorData.IdentityNo = visitorData.visitor_id || '';
-    
-    // Apply Singapore PDPA formatting for visitor_id if enabled
-    if (this.isSingaporePDPARequired && visitorData.visitor_id && visitorData.fullName) {
-      const formattedId = this.formatVisitorIdForPDPA(visitorData.visitor_id, visitorData.fullName);
-      visitorData.visitor_id = formattedId;
-      visitorData.Visitor_IC = formattedId;
-      visitorData.IdentityNo = formattedId;
+    // Only allow adding visitors to table if multi-visitor setting is enabled
+    if (!this.settings?.MultipleVisitorEnabled) {
+      console.log('Multiple visitor not enabled, returning');
+      return;
     }
-    
-    // Automatically set "myself" flag based on safety briefing and first visitor
-    if (this.settings?.Visitor?.[0]?.SafetyBriefingEnabled && this.savedVisitors.length === 0) {
-      visitorData.myself = true;
-    } else {
-      visitorData.myself = false;
-    }
-    
-    console.log('Visitor data after processing:', visitorData);
-    console.log('Editing index:', this.editingVisitorIndex);
-    
-    if (this.editingVisitorIndex >= 0) {
-      // Update existing visitor
-      this.savedVisitors[this.editingVisitorIndex] = visitorData;
-      this.editingVisitorIndex = -1;
-      
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'Visitor updated successfully'
-      });
-    } else {
-      // Add new visitor - use spread to create new array reference
-      this.savedVisitors = [...this.savedVisitors, visitorData];
-      
-      console.log('savedVisitors after adding:', this.savedVisitors);
-      console.log('savedVisitors.length after:', this.savedVisitors.length);
-      
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'Visitor saved successfully'
-      });
-    }
-    
-    // Force change detection
-    console.log('Calling detectChanges');
-    this.cdr.detectChanges();
-    
-    // Save form data immediately after visitor modification
-    this.saveFormDataToWizard();
-    
-    // Clear only main visitor identification fields: fullName, visitor_id, profile
-    // Keep other information (email, phone, company, vehicle info, UDF fields, etc.)
-    const fieldsToReset = ['fullName', 'visitor_id', 'profile'];
-    
-    fieldsToReset.forEach(field => {
-      if (currentForm.get(field)) {
-        currentForm.get(field)?.reset();
+
+    this.submitted = true;
+    const currentForm = this.getCurrentVisitorForm();
+    console.log('Current form value:', currentForm.value);
+    console.log('Is form valid:', this.isCurrentVisitorFormValid());
+
+    if (this.isCurrentVisitorFormValid()) {
+      // Save to savedVisitors array for multiple visitor functionality
+      const visitorData = { ...currentForm.value };
+
+      console.log('Visitor data before processing:', visitorData);
+
+      // Initialize Visitor_IC and IdentityNo fields
+      visitorData.Visitor_IC = visitorData.visitor_id || '';
+      visitorData.IdentityNo = visitorData.visitor_id || '';
+
+      // Apply Singapore PDPA formatting for visitor_id if enabled
+      if (this.isSingaporePDPARequired && visitorData.visitor_id && visitorData.fullName) {
+        const formattedId = this.formatVisitorIdForPDPA(visitorData.visitor_id, visitorData.fullName);
+        visitorData.visitor_id = formattedId;
+        visitorData.Visitor_IC = formattedId;
+        visitorData.IdentityNo = formattedId;
       }
-    });
-    
-    // Reset profile image display
-    this.profileImage = '';
-    
-    // Reset form touched state for the cleared fields only
-    fieldsToReset.forEach(field => {
-      if (currentForm.get(field)) {
-        currentForm.get(field)?.markAsUntouched();
-        currentForm.get(field)?.markAsPristine();
+
+      // Automatically set "myself" flag based on safety briefing and first visitor
+      if (this.settings?.Visitor?.[0]?.SafetyBriefingEnabled && this.savedVisitors.length === 0) {
+        visitorData.myself = true;
+      } else {
+        visitorData.myself = false;
       }
-    });
-    
-    console.log('=== ADD VISITOR END ===');
-    
-  } else {
-    // Mark only visitor-related required fields as touched to show validation errors
-    const requiredFields = this.getRequiredVisitorFields();
-    
-    // Mark only required visitor fields as touched
-    requiredFields.forEach(field => {
-      currentForm.get(field)?.markAsTouched();
-    });
-    
-    this.messageService.add({
-      severity: 'error',
-      summary: 'Validation Error',
-      detail: 'Please fill all required visitor fields'
-    });
+
+      console.log('Visitor data after processing:', visitorData);
+      console.log('Editing index:', this.editingVisitorIndex);
+
+      if (this.editingVisitorIndex >= 0) {
+        // Update existing visitor
+        this.savedVisitors[this.editingVisitorIndex] = visitorData;
+        this.editingVisitorIndex = -1;
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Visitor updated successfully'
+        });
+      } else {
+        // Add new visitor - use spread to create new array reference
+        this.savedVisitors = [...this.savedVisitors, visitorData];
+
+        console.log('savedVisitors after adding:', this.savedVisitors);
+        console.log('savedVisitors.length after:', this.savedVisitors.length);
+
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Visitor saved successfully'
+        });
+      }
+
+      // Force change detection
+      console.log('Calling detectChanges');
+      this.cdr.detectChanges();
+
+      // Save form data immediately after visitor modification
+      this.saveFormDataToWizard();
+
+      // Clear only main visitor identification fields: fullName, visitor_id, profile
+      // Keep other information (email, phone, company, vehicle info, UDF fields, etc.)
+      const fieldsToReset = ['fullName', 'visitor_id', 'profile'];
+
+      fieldsToReset.forEach(field => {
+        if (currentForm.get(field)) {
+          currentForm.get(field)?.reset();
+        }
+      });
+
+      // Reset profile image display
+      this.profileImage = '';
+
+      // Reset form touched state for the cleared fields only
+      fieldsToReset.forEach(field => {
+        if (currentForm.get(field)) {
+          currentForm.get(field)?.markAsUntouched();
+          currentForm.get(field)?.markAsPristine();
+        }
+      });
+
+      console.log('=== ADD VISITOR END ===');
+
+    } else {
+      // Mark only visitor-related required fields as touched to show validation errors
+      const requiredFields = this.getRequiredVisitorFields();
+
+      // Mark only required visitor fields as touched
+      requiredFields.forEach(field => {
+        currentForm.get(field)?.markAsTouched();
+      });
+
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Validation Error',
+        detail: 'Please fill all required visitor fields'
+      });
+    }
   }
-}
 
   removeVisitor(index: number): void {
     if (this.visitorsArray.length > 1) {
@@ -1324,17 +1367,17 @@ addVisitorToTable(): void {
     const currentVisitor = this.visitorsArray.at(currentIndex);
     const currentIdentity = currentVisitor.get('visitor_id')?.value;
     const currentName = currentVisitor.get('fullName')?.value;
-    
+
     if (!currentIdentity && !currentName) return false;
-    
+
     return this.visitorsArray.controls.some((control, index) => {
       if (index === currentIndex) return false;
-      
+
       const identity = control.get('visitor_id')?.value;
       const name = control.get('fullName')?.value;
-      
+
       return (currentIdentity && identity === currentIdentity) ||
-             (currentName && name === currentName);
+        (currentName && name === currentName);
     });
   }
 
@@ -1354,7 +1397,7 @@ addVisitorToTable(): void {
   // Helper method to get required visitor fields based on settings
   private getRequiredVisitorFields(): string[] {
     const requiredFields = [];
-    
+
     if (this.settings) {
       if (this.settings.NameEnabled && this.settings.NameRequired) requiredFields.push('fullName');
       if (this.settings.EmailEnabled && this.settings.EmailRequired) requiredFields.push('email');
@@ -1367,7 +1410,7 @@ addVisitorToTable(): void {
       if (this.settings.CountryEnabled && this.settings.CountryRequired) requiredFields.push('country');
       if (this.settings.HostNameEnabled && this.settings.HostNameRequired) requiredFields.push('host');
       if (this.settings.ImageUploadEnabled && this.settings.ImageUploadRequired) requiredFields.push('profile');
-      
+
       // Add UDF required fields
       if (this.udfSettings) {
         this.udfSettings.forEach((udf: any) => {
@@ -1377,7 +1420,7 @@ addVisitorToTable(): void {
         });
       }
     }
-    
+
     return requiredFields;
   }
 
@@ -1385,7 +1428,7 @@ addVisitorToTable(): void {
   isCurrentVisitorFormValid(): boolean {
     const currentForm = this.getCurrentVisitorForm();
     const requiredFields = this.getRequiredVisitorFields();
-    
+
     // Check if all required fields are valid and have values
     const invalidFields = [];
     for (const fieldName of requiredFields) {
@@ -1401,7 +1444,7 @@ addVisitorToTable(): void {
         }
       }
     }
-    
+
     // Additional custom validation for visitor ID
     if (invalidFields.length === 0) {
       const idValidation = this.validateVisitorIdAndExpiry();
@@ -1409,7 +1452,7 @@ addVisitorToTable(): void {
         return false;
       }
     }
-    
+
     return invalidFields.length === 0;
   }
 
@@ -1418,7 +1461,7 @@ addVisitorToTable(): void {
     const currentForm = this.getCurrentVisitorForm();
     const fullName = currentForm.get('fullName')?.value?.trim();
     const visitorId = currentForm.get('visitor_id')?.value?.trim();
-    
+
     return !!(fullName && visitorId);
   }
 
@@ -1427,17 +1470,17 @@ addVisitorToTable(): void {
     if (!this.settings?.MultipleVisitorEnabled) {
       return;
     }
-    
+
     if (index >= 0 && index < this.savedVisitors.length) {
       const visitor = this.savedVisitors[index];
       const currentForm = this.getCurrentVisitorForm();
-      
+
       // Populate the form with the selected visitor's data
       currentForm.patchValue(visitor);
-      
+
       // Store the index for updating later
       this.editingVisitorIndex = index;
-      
+
       this.messageService.add({
         severity: 'info',
         summary: 'Edit Mode',
@@ -1451,7 +1494,7 @@ addVisitorToTable(): void {
     if (!this.settings?.MultipleVisitorEnabled) {
       return;
     }
-    
+
     if (index >= 0 && index < this.savedVisitors.length) {
       // If we're deleting the visitor currently being edited, reset editing state
       if (this.editingVisitorIndex === index) {
@@ -1463,12 +1506,12 @@ addVisitorToTable(): void {
         // If we're editing a visitor after the deleted one, adjust the index
         this.editingVisitorIndex--;
       }
-      
+
       this.savedVisitors.splice(index, 1);
-      
+
       // Save form data immediately after visitor deletion
       this.saveFormDataToWizard();
-      
+
       this.messageService.add({
         severity: 'success',
         summary: 'Deleted',
@@ -1483,7 +1526,7 @@ addVisitorToTable(): void {
       this.editingVisitorIndex = -1;
       const currentForm = this.getCurrentVisitorForm();
       currentForm.reset();
-      
+
       this.messageService.add({
         severity: 'info',
         summary: 'Cancelled',
@@ -1499,11 +1542,11 @@ addVisitorToTable(): void {
     this.setupControl('fullName', this.settings.NameEnabled, this.settings.NameRequired, this.settings.NameMinLength);
     this.setupControl('email', this.settings.EmailEnabled, this.settings.EmailRequired);
     this.setupControl('phone', this.settings.ContactNumberEnabled, this.settings.ContactNumberRequired);
-    
+
     // Setup visitor_id with PDPA max length restriction if enabled
     const visitorIdMaxLength = this.isSingaporePDPARequired ? 4 : undefined;
     this.setupControl('visitor_id', this.settings.IdProofEnabled, this.settings.IdProofRequired, undefined, visitorIdMaxLength);
-    
+
     this.setupControl('gender', this.settings.GenderEnabled, this.settings.GenderRequired);
     this.setupControl('visitor_company', this.settings.CompanyEnabled, this.settings.CompanyRequired);
     this.setupControl('vehicle_number', this.settings.VehicleNumberEnabled, this.settings.VehicleNumberRequired);
@@ -1516,6 +1559,8 @@ addVisitorToTable(): void {
     this.setupControl('remarks', this.settings.RemarksEnabled, this.settings.RemarksRequired);
     this.setupControl('host', this.settings.HostNameEnabled, this.settings.HostNameRequired);
     this.setupControl('startDate', this.settings.StartEndDtEnabled, true);
+    this.setupControl('visitDate', this.settings.StartEndDtEnabled, true);
+    this.setupControl('visitTime', this.settings.StartEndDtEnabled, false);
     this.setupControl('endDate', this.settings.StartEndDtEnabled, true);
 
     this.setupControl('profile', this.settings.ImageUploadEnabled, this.settings.ImageUploadRequired);
@@ -1547,8 +1592,8 @@ addVisitorToTable(): void {
     }
 
     // Setup shared date when both features are enabled or facility booking is active
-    if ((this.enableVimsApptTimeSlot && this.enableFBInSelfReg) || 
-        (this.enableFBInSelfReg && this.generalForm.get('facilityBooking')?.value)) {
+    if ((this.enableVimsApptTimeSlot && this.enableFBInSelfReg) ||
+      (this.enableFBInSelfReg && this.generalForm.get('facilityBooking')?.value)) {
       this.setupControl('sharedDate', true, true);
     }
 
@@ -1603,19 +1648,20 @@ addVisitorToTable(): void {
   }
 
   validateForm(): boolean {
+    this.submitted = true;
     // Handle validation based on multiple visitor setting
     if (this.settings?.MultipleVisitorEnabled) {
       // Multiple visitor mode: Check if at least one visitor is saved, or if current form can be auto-added
       let isValid = this.savedVisitors.length > 0;
-      
+
       // If no visitors saved yet, check if current form is valid and has data
-      if (!isValid && this.isCurrentVisitorFormValid() && this.hasFormData()) {
+      if (isValid && this.isCurrentVisitorFormValid() && this.hasFormData()) {
         console.log('Auto-adding visitor before proceeding to next step');
         this.addVisitorToTable();
         isValid = this.savedVisitors.length > 0;
       }
-      
-      if (!isValid) {
+
+      if (isValid) {
         this.messageService.add({
           severity: 'error',
           summary: 'Validation Error',
@@ -1625,10 +1671,10 @@ addVisitorToTable(): void {
         // Save the form data including saved visitors when validation passes
         this.saveFormDataToWizard();
       }
-      
+
       console.log('Multi-visitor validation - Saved visitors count:', this.savedVisitors.length);
       console.log('Multi-visitor validation result:', isValid);
-      
+
       // Set step validity for wizard service
       this.wizardService.setStepValid(isValid);
       return isValid;
@@ -1646,7 +1692,7 @@ addVisitorToTable(): void {
 
       // Force parent form to recalculate validity after all controls updated
       this.generalForm.updateValueAndValidity();
-      
+
       const isValid = this.generalForm.valid;
 
       if (!isValid) {
@@ -1663,7 +1709,7 @@ addVisitorToTable(): void {
         });
         console.log('validateForm() - invalid controls:', invalidControls);
       }
-      
+
       // Additional custom validation for visitor ID and expiry
       if (isValid) {
         const idValidation = this.validateVisitorIdAndExpiry();
@@ -1677,21 +1723,21 @@ addVisitorToTable(): void {
           return false;
         }
       }
-      
+
       if (isValid) {
         // For appointment flow with single visitor, ensure visitor is added to savedVisitors
         if (this.isAppointmentFlow && this.hasFormData() && this.savedVisitors.length === 0) {
           console.log('Auto-adding visitor for appointment flow');
           this.addVisitorToTable();
         }
-        
+
         // Save the form data when validation passes
         this.saveFormDataToWizard();
       }
-      
+
       console.log('Single visitor validation result:', isValid);
       console.log('Form errors:', this.generalForm.errors);
-      
+
       // Set step validity for wizard service
       this.wizardService.setStepValid(isValid);
 
@@ -1712,20 +1758,32 @@ addVisitorToTable(): void {
     // Save current form data and saved visitors to wizard service
     // In appointment flow, include disabled field values too
     let formData: any;
-    
+
     if (this.isAppointmentFlow) {
       // Get both enabled and disabled values for appointment flow
       formData = { ...this.generalForm.getRawValue() }; // getRawValue includes disabled controls
     } else {
       formData = { ...this.generalForm.value }; // Normal flow only includes enabled controls
     }
-    
+
+    // Combine visitDate and visitTime into startDate if they exist
+    if (formData.visitDate && formData.visitTime) {
+      const combined = new Date(formData.visitDate);
+      const time = new Date(formData.visitTime);
+      combined.setHours(time.getHours());
+      combined.setMinutes(time.getMinutes());
+      combined.setSeconds(0);
+      formData.startDate = combined;
+    } else if (formData.visitDate) {
+      formData.startDate = formData.visitDate;
+    }
+
     if (this.settings?.MultipleVisitorEnabled) {
       // Include saved visitors when multiple visitor is enabled
       formData.visitors = this.savedVisitors;
       formData.savedVisitors = this.savedVisitors; // Keep both for compatibility
     }
-    
+
     console.log('=== STEP-GENERAL SAVE DEBUG ===');
     console.log('Form data being saved:', formData);
     console.log('Is appointment flow:', this.isAppointmentFlow);
@@ -1733,7 +1791,7 @@ addVisitorToTable(): void {
     console.log('savedVisitors:', this.savedVisitors);
     console.log('savedVisitors length:', this.savedVisitors?.length);
     console.log('================================');
-    
+
     this.wizardService.updateFormData('general', formData);
     console.log('Form data saved to wizard:', formData);
   }
@@ -1751,26 +1809,29 @@ addVisitorToTable(): void {
   }
 
   onExistingGuestClick(): void {
-  this.messageService.add({
-    severity: 'info',
-    summary: 'Existing Guest',
-    detail: 'Opening existing guest search...'
-  });
-  
+    this.showReturningVisitorPopup = true;
+  }
 
-}
+  searchProfile(): void {
+    console.log('Searching for profile with query:', this.searchQuery);
+    // Add actual search logic here if backend is ready
+    this.messageService.add({
+      severity: 'info',
+      summary: 'Searching',
+      detail: `Looking for profile: ${this.searchQuery}`
+    });
+  }
 
   isFieldInvalid(field: string): boolean {
     const control = this.generalForm.get(field);
     if (!control || !control.enabled) {
       return false;
     }
-    
-    // Show error if: field is invalid AND (touched OR dirty OR has required error and is empty)
+
+    // Show error if: field is invalid AND (submitted OR touched OR dirty)
     const hasBeenInteracted = control.dirty || control.touched;
-    //const isRequiredAndEmpty = control.hasError('required') && !control.value;
-    
-    return control.invalid && (hasBeenInteracted);
+
+    return control.invalid && (this.submitted || hasBeenInteracted);
   }
 
   isFieldRequired(field: string): boolean {
@@ -1778,10 +1839,11 @@ addVisitorToTable(): void {
     if (!control || !control.enabled) {
       return false;
     }
-    
+
+    const hasBeenInteracted = control.dirty || control.touched;
     const isRequiredAndEmpty = control.hasError('required') && !control.value;
-    
-    return control.invalid && (isRequiredAndEmpty);
+
+    return control.invalid && isRequiredAndEmpty && (this.submitted || hasBeenInteracted);
   }
 
   isFieldInvalidRequired(field: string): boolean {
@@ -1789,12 +1851,11 @@ addVisitorToTable(): void {
     if (!control || !control.enabled) {
       return false;
     }
-    
-    // Show error if: field is invalid AND (touched OR dirty OR has required error and is empty)
+
+    // Show error if: field is invalid AND (submitted OR touched OR dirty)
     const hasBeenInteracted = control.dirty || control.touched;
-    const isRequiredAndEmpty = control.hasError('required') && !control.value;
-    
-    return control.invalid && (hasBeenInteracted || isRequiredAndEmpty);
+
+    return control.invalid && (this.submitted || hasBeenInteracted);
   }
 
   handleFileUpload(event: any, visitorIndex?: number): void {
@@ -1814,7 +1875,7 @@ addVisitorToTable(): void {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         const imageUrl = this.sanitizer.bypassSecurityTrustUrl(e.target.result);
-        
+
         if (this.isMultipleVisitorMode && visitorIndex !== undefined) {
           // Update specific visitor's profile
           this.visitorsArray.at(visitorIndex).get('profile')?.setValue(file);
@@ -1837,14 +1898,13 @@ addVisitorToTable(): void {
   }
 
   ngOnDestroy(): void {
-    // Save form data before destroying component
     this.saveFormDataToWizard();
-    
+
     // Clear host search timeout
     if (this.hostSearchTimeout) {
       clearTimeout(this.hostSearchTimeout);
     }
-    
+
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -1907,33 +1967,33 @@ addVisitorToTable(): void {
   onHostChange(event: any): void {
     const selectedHostId = event.value;
     console.log('Host changed to:', selectedHostId);
-    
+
     if (!selectedHostId || !this.originalHostData || this.originalHostData.length === 0) {
       return;
     }
-    
+
     // Find the selected host in original data
-    const selectedHost = this.originalHostData.find((host: any) => 
-      host.HOSTIC === selectedHostId || 
-      host.HostIC === selectedHostId || 
+    const selectedHost = this.originalHostData.find((host: any) =>
+      host.HOSTIC === selectedHostId ||
+      host.HostIC === selectedHostId ||
       host.SeqId === selectedHostId
     );
-    
+
     if (selectedHost) {
       // Get department value from various possible fields
-      const hostDepartment = selectedHost.Department || 
-                            selectedHost.DName || 
-                            selectedHost.DEPARTMENT_REFID || 
-                            selectedHost.DepartmentSeqId;
-      
+      const hostDepartment = selectedHost.Department ||
+        selectedHost.DName ||
+        selectedHost.DEPARTMENT_REFID ||
+        selectedHost.DepartmentSeqId;
+
       if (hostDepartment) {
         const currentDepartment = this.generalForm.get('department')?.value;
-        
+
         // Update department if it's different (bidirectional filtering)
         if (currentDepartment !== hostDepartment) {
           console.log('Updating department to match host:', hostDepartment);
           this.generalForm.get('department')?.setValue(hostDepartment);
-          
+
           // Filter hosts by the host's department
           this.onDepartmentChange({ value: hostDepartment });
         }
@@ -1944,56 +2004,56 @@ addVisitorToTable(): void {
   onDepartmentChange(event: any): void {
     const selectedDepartment = event.value;
     console.log('Department changed to:', selectedDepartment);
-    
+
     if (!selectedDepartment || !this.originalHostData || this.originalHostData.length === 0) {
       // Reset to all hosts if no department selected or no original data
       this.hosts = [...this.hostNameList];
       console.log('No department filter applied, showing all hosts');
       return;
     }
-    
+
     // Filter hosts by selected department (handle both formats)
     const filteredHosts = this.originalHostData.filter((host: any) => {
       // Check multiple possible department field names and values
-      return host.Department === selectedDepartment || 
-             host.DName === selectedDepartment ||
-             host.DEPARTMENT_REFID === selectedDepartment ||
-             host.DepartmentSeqId === selectedDepartment;
+      return host.Department === selectedDepartment ||
+        host.DName === selectedDepartment ||
+        host.DEPARTMENT_REFID === selectedDepartment ||
+        host.DepartmentSeqId === selectedDepartment;
     });
-    
+
     console.log('Filtered hosts by department:', filteredHosts.length, 'out of', this.originalHostData.length);
-    
+
     // Map filtered hosts with proper formatting
     this.hosts = filteredHosts.map((host: any) => {
       let formattedHost = { ...host };
-      
+
       // Ensure HOSTNAME field exists for dropdown display
       if (!host.HOSTNAME && host.Name) {
         formattedHost.HOSTNAME = host.Name;
       }
-      
+
       // Ensure HOSTIC field exists for dropdown value
       if (!host.HOSTIC && host.HostIC) {
         formattedHost.HOSTIC = host.HostIC;
       } else if (!host.HOSTIC && host.SeqId) {
         formattedHost.HOSTIC = host.SeqId;
       }
-      
+
       // Format with member ID if enabled
       if (this.gbShowMemberId && host.MemberID) {
         formattedHost.HOSTNAME = `${host.Name || host.HOSTNAME || ''} (${host.MemberID})`.trim();
       }
-      
+
       return formattedHost;
     });
-    
+
     // Clear current host selection if it's not in the filtered list
     const currentHostId = this.generalForm.get('host')?.value;
     if (currentHostId) {
-      const hostStillAvailable = this.hosts.find(h => 
+      const hostStillAvailable = this.hosts.find(h =>
         h.HOSTIC === currentHostId || h.HostIC === currentHostId || h.SeqId === currentHostId
       );
-      
+
       if (!hostStillAvailable) {
         console.log('Current host not in filtered department, clearing selection');
         this.generalForm.get('host')?.setValue(null);
@@ -2026,17 +2086,17 @@ addVisitorToTable(): void {
   onIdTypeChange(event: any, visitorIndex?: number): void {
     const idTypeCode = event.value;
     console.log('ID Type changed:', idTypeCode);
-    
+
     if (this.settings?.IdExpiredEnabled) {
       if (idTypeCode) {
         const selectedIdType = this.idTypeList.find(item => item.ID_TYPECODE === idTypeCode);
         if (selectedIdType) {
           this.selectedIdTypeData = selectedIdType;
-          
+
           if (selectedIdType.ID_EXPIRED_DATE === true) {
             // Show ID expired date field
             this.showIdExpiryField = true;
-            
+
             // Set validation for expiry date if required
             if (this.settings?.IdExpiredRequired) {
               this.generalForm.get('id_expired_date')?.setValidators([Validators.required]);
@@ -2047,7 +2107,7 @@ addVisitorToTable(): void {
             this.generalForm.get('id_expired_date')?.setValue(null);
             this.generalForm.get('id_expired_date')?.clearValidators();
           }
-          
+
           // Update validators
           this.generalForm.get('id_expired_date')?.updateValueAndValidity();
         }
@@ -2074,8 +2134,8 @@ addVisitorToTable(): void {
       const allCompanies = this.masterData?.Table7?.filter((item: any) => {
         return item.visitor_comp_name !== undefined && item.visitor_comp_name !== null && item.visitor_comp_name !== "";
       }) || [];
-      
-      this.companyList = allCompanies.filter((company: any) => 
+
+      this.companyList = allCompanies.filter((company: any) =>
         company.visitor_comp_name.toLowerCase().includes(query)
       );
     }
@@ -2089,7 +2149,7 @@ addVisitorToTable(): void {
   onTimeslotChange(event: any): void {
     const selectedCode = event.value;
     console.log('Timeslot changed:', selectedCode);
-    
+
     if (selectedCode) {
       const selectedSlot = this.timeSlotList.find(slot => slot.Code === selectedCode && slot.availableCount > 0);
       if (!selectedSlot) {
@@ -2139,39 +2199,39 @@ addVisitorToTable(): void {
         // ID Type specific validation
         if (visitorId !== '' && this.settings?.IdTypeEnabled && idTypeCode && this.selectedIdTypeData) {
           const idTypeData = this.selectedIdTypeData;
-          
+
           // Check input type (Numeric or Alphanumeric)
           if (idTypeData.INPUT_TYPE === 'N') {
             if (isNaN(Number(visitorId))) {
               return { isValid: false, errorMessage: 'Visitor NRIC/Passport should be number only' };
             }
           }
-          
+
           // Check maximum length
           if (visitorId.length > idTypeData.INPUT_MAX_LENGTH) {
             const typeText = idTypeData.INPUT_TYPE === 'N' ? 'digits' : 'characters';
-            return { 
-              isValid: false, 
-              errorMessage: `Visitor NRIC/Passport cannot contain more than ${idTypeData.INPUT_MAX_LENGTH} ${typeText}` 
+            return {
+              isValid: false,
+              errorMessage: `Visitor NRIC/Passport cannot contain more than ${idTypeData.INPUT_MAX_LENGTH} ${typeText}`
             };
           }
-          
+
           // Check minimum length
           if (visitorId.length < idTypeData.INPUT_MIN_LENGTH) {
             const typeText = idTypeData.INPUT_TYPE === 'N' ? 'digits' : 'characters';
-            return { 
-              isValid: false, 
-              errorMessage: `Visitor NRIC/Passport should contain atleast ${idTypeData.INPUT_MIN_LENGTH} ${typeText}` 
+            return {
+              isValid: false,
+              errorMessage: `Visitor NRIC/Passport should contain atleast ${idTypeData.INPUT_MIN_LENGTH} ${typeText}`
             };
           }
         } else {
           // Generic minimum length validation when no ID type is selected
-          if (visitorId && this.settings?.IdProofMinLength && 
-              parseInt(this.settings.IdProofMinLength) > 0 && 
-              visitorId.length < parseInt(this.settings.IdProofMinLength)) {
-            return { 
-              isValid: false, 
-              errorMessage: `Identity Number should contain atleast ${this.settings.IdProofMinLength} characters` 
+          if (visitorId && this.settings?.IdProofMinLength &&
+            parseInt(this.settings.IdProofMinLength) > 0 &&
+            visitorId.length < parseInt(this.settings.IdProofMinLength)) {
+            return {
+              isValid: false,
+              errorMessage: `Identity Number should contain atleast ${this.settings.IdProofMinLength} characters`
             };
           }
         }
@@ -2244,4 +2304,7 @@ addVisitorToTable(): void {
       this.showVisitorDialog = false;
     }
   }
+
+
+
 }

@@ -1,19 +1,11 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
-import { FileUploadModule } from 'primeng/fileupload';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { PanelModule } from 'primeng/panel';
-import { TableModule } from 'primeng/table';
-import { CheckboxModule } from 'primeng/checkbox';
-import { Select } from 'primeng/select';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { MessageService, ConfirmationService } from 'primeng/api';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
-
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { Subject, takeUntil } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 interface DocumentType {
   VisitorAttachSeqId: string;
@@ -32,10 +24,9 @@ interface Attachment {
 @Component({
   selector: 'app-step-attachments',
   standalone: true,
-  imports: [FileUploadModule, InputTextModule, ButtonModule, TableModule, TranslatePipe, FormsModule, ConfirmDialogModule, PanelModule, CheckboxModule, Select],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './step-attachments.component.html',
-  styleUrl: './step-attachments.component.scss',
-  providers: [ConfirmationService]
+  styleUrl: './step-attachments.component.scss'
 })
 export class StepAttachmentsComponent implements OnInit, OnDestroy {
   @Input() stepSettings: any;
@@ -43,18 +34,30 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
 
   attachments: { [key: string]: Attachment } = {};
   maxSize = 2000000;
-  acceptedTypes = 'image/*, .pdf';
+  acceptedTypes = '.pdf,image/*';
   
   attachmentUploadEnabled = false;
   materialDeclareEnabled = false;
-  
+
+  nothingToDeclare: boolean = false;
+  declaredItems: any[] = [];
+  newItem: any = {
+    description: '',
+    serialNumber: '',
+    direction: 'IN'
+  };
+
+  directionOptions = [
+    { label: 'Bringing In', value: 'IN' },
+    { label: 'Taking Out', value: 'OUT' }
+  ];
+
   private destroy$ = new Subject<void>();
 
   constructor(
-    private wizardService: WizardService, 
-    private messageService: MessageService, 
-    private confirmationService: ConfirmationService,
-    private http: HttpClient
+    private wizardService: WizardService,
+    private http: HttpClient,
+    private router: Router
   ) {
     this.wizardService.onValidationRequest.subscribe(() => {
       this.validateStep();
@@ -68,7 +71,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
 
     const settings = this.wizardService.getAttachmentSettings();
 
-    if(!settings || settings.length === 0) {
+    if (!settings || settings.length === 0) {
       this.wizardService.gotoHomePage();
       return;
     }
@@ -95,11 +98,9 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
   private restoreFormData(): void {
     const savedData = this.wizardService.getFormData('attachments');
     if (savedData) {
-      // Restore item declaration data
       this.nothingToDeclare = savedData.nothingToDeclare || false;
       this.declaredItems = savedData.declaredItems || [];
       
-      // Restore attachment captions and file references
       if (savedData.attachments) {
         Object.keys(savedData.attachments).forEach(docId => {
           if (this.attachments[docId]) {
@@ -107,10 +108,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
             this.attachments[docId].trackerId = savedData.attachments[docId].trackerId || undefined;
             this.attachments[docId].uploaded = savedData.attachments[docId].uploaded || false;
             
-            // Note: File objects cannot be restored from storage, 
-            // but we can show that they were uploaded previously
             if (savedData.attachments[docId].fileName) {
-              // Create a placeholder to indicate file was uploaded
               this.attachments[docId].file = {
                 name: savedData.attachments[docId].fileName,
                 size: savedData.attachments[docId].fileSize || 0
@@ -119,6 +117,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
           }
         });
       }
+      console.log('Form data restored:', savedData);
     }
   }
 
@@ -129,7 +128,6 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
       attachments: {} as any
     };
 
-    // Generate UUID for tracker ID
     const generateUID = () => {
       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         const r = Math.random() * 16 | 0;
@@ -138,11 +136,9 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
       });
     };
 
-    // Save attachment data (captions and file info)
     Object.keys(this.attachments).forEach(docId => {
       const attachment = this.attachments[docId];
       if (attachment.file) {
-        // Generate trackerId if not exists
         if (!attachment.trackerId) {
           attachment.trackerId = `${generateUID()}_0`;
         }
@@ -155,7 +151,6 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
           uploaded: attachment.uploaded || false
         };
       } else {
-        // Keep empty structure for documents without files
         formData.attachments[docId] = {
           caption: attachment.caption,
           fileName: null,
@@ -169,41 +164,33 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     this.wizardService.updateFormData('attachments', formData);
   }
 
-  nothingToDeclare: boolean = false;
-  declaredItems: any[] = [];
-  newItem: any = {
-    description: '',
-    serialNumber: '',
-    direction: 'IN'
-  };
-
-  directionOptions = [
-    { label: 'Bringing In', value: 'IN' },
-    { label: 'Taking Out', value: 'OUT' }
-  ];
-
   onNothingToDeclareChange() {
     if (this.nothingToDeclare) {
       this.declaredItems = [];
     }
-    this.saveFormData(); // Save immediately when changed
+    this.saveFormData();
+    console.log('Nothing to declare changed:', this.nothingToDeclare);
   }
 
   addItem() {
-    if (this.newItem.description) {
+    if (this.newItem.description.trim()) {
       this.declaredItems.push({ ...this.newItem });
       this.newItem = {
         description: '',
         serialNumber: '',
         direction: 'IN'
       };
-      this.saveFormData(); // Save immediately when item added
+      this.saveFormData();
+      console.log('Item added to declaration:', this.declaredItems);
     }
   }
 
   removeItem(index: number) {
-    this.declaredItems.splice(index, 1);
-    this.saveFormData(); // Save immediately when item removed
+    if (index >= 0 && index < this.declaredItems.length) {
+      const removed = this.declaredItems.splice(index, 1);
+      this.saveFormData();
+      console.log('Item removed from declaration:', removed);
+    }
   }
 
   getDirectionLabel(value: string): string {
@@ -212,9 +199,22 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
   }
 
   onFileSelect(event: any, docId: string): void {
-    const file = event.files[0];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    
     if (file) {
-      // Generate trackerId
+      // Validate file size
+      if (file.size > this.maxSize) {
+        console.error('File size exceeds limit');
+        return;
+      }
+
+      // Check if file is already selected
+      if (this.attachments[docId].file) {
+        // Delete old file first
+        this.removeFile(docId);
+      }
+
       const generateUID = () => {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
           const r = Math.random() * 16 | 0;
@@ -224,14 +224,14 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
       };
       
       const trackerId = `${generateUID()}_0`;
-      
-      // Store file temporarily
       this.attachments[docId].file = file;
       this.attachments[docId].trackerId = trackerId;
       this.attachments[docId].uploaded = false;
       
-      // Upload to ImageChunkHandler
       this.uploadFileToHandler(file, trackerId, docId);
+      
+      // Reset input value to allow re-selection of same file
+      input.value = '';
     }
   }
 
@@ -240,45 +240,21 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     formData.append('trackerId', trackerId);
     formData.append('temp', file, file.name);
     
-    // Use the endpoint you specified
     const uploadUrl = 'http://localhost:7222/Handler/ImageChunkHandler.ashx?op=profile&ac=upload&nologin=1&isResize=1';
+    
+    console.log(`Starting file upload for docId: ${docId}`, { fileName: file.name, fileSize: file.size, trackerId });
     
     this.http.post(uploadUrl, formData).subscribe({
       next: (response: any) => {
-        // Mark as uploaded
         this.attachments[docId].uploaded = true;
         this.saveFormData();
-        
-        this.messageService.add({
-          severity: 'success',
-          summary: 'File Uploaded',
-          detail: `${file.name} uploaded successfully`
-        });
+        console.log(`File uploaded successfully for docId: ${docId}`, response);
       },
       error: (error) => {
-        console.error('Upload failed:', error);
-        
-        // Remove file on upload failure
+        console.error(`Upload failed for docId: ${docId}`, error);
         this.attachments[docId].file = null;
         this.attachments[docId].trackerId = undefined;
         this.attachments[docId].uploaded = false;
-        
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Upload Failed',
-          detail: `Failed to upload ${file.name}. Please try again.`
-        });
-      }
-    });
-  }
-
-  confirmDelete(docId: string): void {
-    this.confirmationService.confirm({
-      message: 'Are you sure you want to delete this file?',
-      header: 'Confirm Deletion',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        this.removeFile(docId);
       }
     });
   }
@@ -287,12 +263,8 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     this.attachments[docId].file = null;
     this.attachments[docId].trackerId = undefined;
     this.attachments[docId].uploaded = false;
-    this.saveFormData(); // Save immediately when file removed
-    this.messageService.add({
-      severity: 'info',
-      summary: 'File Removed',
-      detail: 'You can upload a new file'
-    });
+    this.saveFormData();
+    console.log(`File removed for document: ${docId}`);
   }
 
   getRequiredDocuments(): DocumentType[] {
@@ -304,6 +276,10 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     return requiredDocs.every(doc => this.attachments[doc.VisitorAttachSeqId].file !== null);
   }
 
+  private validateItemDeclaration(): boolean {
+    return this.nothingToDeclare || this.declaredItems.length > 0;
+  }
+
   validateStep(): void {
     const attachmentsValid = this.attachmentUploadEnabled ? this.validateAttachments() : true;
     const itemDeclarationValid = this.materialDeclareEnabled ? this.validateItemDeclaration() : true;
@@ -311,33 +287,27 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     const isValid = attachmentsValid && itemDeclarationValid;
     this.wizardService.setStepValid(isValid);
 
-    if (!attachmentsValid) {
-      const missingDocs = this.getRequiredDocuments()
-        .filter(doc => !this.attachments[doc.VisitorAttachSeqId].file)
-        .map(doc => doc.Caption);
-
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Missing Documents',
-        detail: `Please upload: ${missingDocs.join(', ')}`
-      });
-    }
-
-    if (!itemDeclarationValid) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Item Declaration Required',
-        detail: 'Please either check "I have nothing to declare" or add items to declare'
-      });
-    }
-
     if (isValid) {
-      this.saveFormData(); // Save when validation passes
+      this.saveFormData();
     }
   }
 
-  private validateItemDeclaration(): boolean {
-    // Valid if either nothing to declare is checked OR items are declared
-    return this.nothingToDeclare || this.declaredItems.length > 0;
+  goBack(): void {
+    this.saveFormData();
+    const previousStep = this.wizardService.getCurrentStepIndex() - 1;
+    if (previousStep >= 0) {
+      this.wizardService.requestStepChange(previousStep);
+    }
+  }
+
+  skipStep(): void {
+    this.saveFormData();
+    this.wizardService.navigateToNextStep();
+  }
+
+  proceedToNext(): void {
+    this.validateStep();
+    this.saveFormData();
+    this.wizardService.navigateToNextStep();
   }
 }

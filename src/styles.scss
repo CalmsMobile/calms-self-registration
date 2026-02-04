@@ -3,16 +3,65 @@
   --theme-bg-color: #D9D9D9;
   --theme-bg-light-color: #f2f2f2;
   --theme-bg-dark-color: #b1b0b0;
-  --theme-primary-text-color: #0D0D0D;
+  --theme-primary-text-color: #4d525c;
   --theme-secondary-text-color: #373737;
-  --theme-primary-green-color: #03a781;
-  ;
-  --theme-green-light-color: #53A67F;
-  --theme-green-color: #027158;
-  ;
+  --theme-primary-yellow: #f5b942;
+  --theme-primary-green-color: var(--theme-primary-yellow);
   --theme-error-color: #e80505;
-  --theme-border-radius: 16px;
+  --theme-border-radius: 20px;
   --theme-glossy-white: rgba(255, 255, 255, 0.85);
+
+  /* PrimeNG aura/material common overrides */
+  --p-primary-color: #f5b942;
+  --p-primary-contrast-color: #000000;
+  --p-primary-hover-color: #e5ab3b;
+  --p-primary-active-color: #d69d2e;
+
+  /* Form controls highlights */
+  --p-inputtext-focus-border-color: #f5b942;
+  --p-select-focus-border-color: #f5b942;
+  --p-datepicker-focus-border-color: #f5b942;
+  --p-checkbox-checked-background: #f5b942;
+  --p-checkbox-checked-border-color: #f5b942;
+  --p-radiobutton-checked-background: #f5b942;
+  --p-radiobutton-checked-border-color: #f5b942;
+
+  /* Selection colors */
+  --p-list-option-selected-background: rgba(245, 185, 66, 0.1);
+  --p-list-option-selected-focus-background: rgba(245, 185, 66, 0.2);
+  --p-list-option-selected-color: #000;
+}
+
+/* Global Progress Bar Overrides */
+::ng-deep {
+  .p-progressbar {
+    background: #f1f5f9 !important; // Track color
+
+    // For indeterminate mode
+    .p-progressbar-value {
+      background: #eab308 !important; // Animated bar color
+    }
+  }
+}
+
+
+// Global PrimeNG overrides for focus rings and highlights
+::ng-deep {
+  .p-focus {
+    box-shadow: 0 0 0 0.2rem rgba(245, 185, 66, 0.25) !important;
+  }
+}
+
+.p-button:not(.p-dialog-close-button):not(.p-panel-header-icon):not(.back-btn):not(.next-btn) {
+  border-radius: var(--theme-border-radius) !important;
+  background-color: var(--theme-primary-yellow) !important;
+  border-color: var(--theme-primary-yellow) !important;
+  color: #000 !important;
+
+  &:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+  }
 }
 
 body {
@@ -21,53 +70,24 @@ body {
   color: var(--theme-primary-text-color);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light !important;
-  }
-}
-
-/***   Header   ***/
 .app-container {
   background-color: var(--theme-bg-color);
 }
 
-.p-button:not(.p-dialog-close-button):not(.p-panel-header-icon) {
-  border-radius: var(--theme-border-radius) !important;
-  background-color: var(--theme-primary-green-color) !important;
-  // border-color: var(--theme-bg-dark-color) !important;
-  color: var(--theme-bg-light-color) !important;
-
-  &:disabled {
-    color: var(--theme-bg-color) !important;
-    cursor: not-allowed !important;
-  }
-}
-
-.p-steps-item-number {
-  background-color: var(--theme-bg-color) !important;
-  color: var(--theme-primary-text-color) !important;
-  border-radius: var(--theme-border-radius) !important;
-}
-
-.p-steps-item-label {
-  color: var(--theme-secondary-text-color) !important;
-}
-
 .p-steps-item-active {
   .p-steps-item-label {
-    color: var(--theme-primary-green-color) !important;
+    color: var(--theme-primary-yellow) !important;
   }
 
   .p-steps-item-number {
-    color: var(--theme-bg-light-color) !important;
-    border-color: var(--theme-primary-green-color) !important;
-    background-color: var(--theme-primary-green-color) !important;
+    color: #000 !important;
+    border-color: var(--theme-primary-yellow) !important;
+    background-color: var(--theme-primary-yellow) !important;
   }
 }
 
 .step-container {
-  max-width: 1200px;
+  max-width: 1250px;
   margin: 0 auto;
   padding: 1rem;
   height: 100%;
@@ -85,18 +105,17 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
-  border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {
   .step-container {
-    padding: 0.5rem;
+    padding: 0;
+    border-radius: 0;
   }
 
   .step-content {
     padding: 1rem;
+    border-radius: 0;
   }
 }

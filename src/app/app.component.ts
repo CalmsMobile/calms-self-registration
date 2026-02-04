@@ -50,6 +50,16 @@ export class AppComponent implements OnInit {
         this.showLanguageSelector = currentUrl === '/' || currentUrl === '/home';
       }
     });
+
+    // Prefer explicit visibility set by pages; fallback to route-based logic when null
+    this.sharedService.languageVisibility$.subscribe(vis => {
+      if (vis !== null && vis !== undefined) {
+        this.showLanguageSelector = vis;
+      } else {
+        const currentUrl = this.router.url.split('?')[0];
+        this.showLanguageSelector = currentUrl === '/' || currentUrl === '/home';
+      }
+    });
   }
 
   onLanguageChange(language: any) {

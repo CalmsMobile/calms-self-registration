@@ -1,0 +1,34 @@
+.branch-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0; // keep header flush above the card
+}
+
+.logo-company {
+  height: 50px;
+  cursor: pointer;
+  object-fit: contain;
+}
+
+.app-title {
+  font-size: 1.4rem;
+  color: #2d3748;
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+  cursor: pointer;
+
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
+
+  @media (max-width: 600px) {
+    font-size: 1.15rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1.05rem;
+  }
+}

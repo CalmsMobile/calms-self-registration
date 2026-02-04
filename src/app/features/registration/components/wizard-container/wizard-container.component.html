@@ -1,40 +1,32 @@
 @if (!isLoading) {
-  <div class="wizard-container">
-    <div class="wizard-card">
-      <!-- Wizard Steps Header -->
-      <div class="wizard-header">
-        <p-steps
-          [model]="items"
-          [activeIndex]="activeIndex"
-          [readonly]="true"
-          (activeIndexChange)="onStepChange({index: $event})">
-        </p-steps>
-      </div>
-      <!-- Wizard Content -->
-      <div class="wizard-content">
-        <router-outlet (activate)="onStepActivated($event)"></router-outlet>
-      </div>
-      <!-- Wizard Navigation -->
-      <div class="wizard-navigation">
-        <div class="step-indicator">
-          Step {{ activeIndex + 1 }} of {{ items.length }}
-        </div>
-        <div class="navigation-button">
-          <p-button [label]="'previous_step' | translate" icon="pi pi-arrow-left" (onClick)="onPrevious()" [disabled]="activeIndex === 0">
-          </p-button>
-          <p-button [label]="activeIndex === items.length - 1 ? ('submit' | translate) : ('next_step' | translate)"
-            [icon]="activeIndex === items.length - 1 ? 'pi pi-check' : 'pi pi-arrow-right'"
-            iconPos="right" (click)="onNext()">
-          </p-button>
-        </div>
+<div class="wizard-container">
+  <div class="wizard-card">
+
+    <!-- Wizard Content -->
+    <div class="wizard-content">
+      <router-outlet (activate)="onStepActivated($event)"></router-outlet>
+    </div>
+    <!-- Wizard Navigation -->
+    <div class="wizard-navigation">
+
+      <div class="navigation-button">
+        <p-button styleClass="back-btn" [label]="'previous_step' | translate" icon="pi pi-arrow-left"
+          (onClick)="onPrevious()" [disabled]="activeIndex === 0">
+        </p-button>
+        <p-button styleClass="next-btn"
+          [label]="activeIndex === items.length - 1 ? ('submit' | translate) : ('next_step' | translate)"
+          [icon]="activeIndex === items.length - 1 ? 'pi pi-check' : 'pi pi-arrow-right'" iconPos="right"
+          (click)="onNext()">
+        </p-button>
       </div>
     </div>
   </div>
+</div>
 }
 @if (isLoading) {
-  <div class="loading-indicator">
-    <p-progressbar mode="indeterminate" [style]="{ height: '6px' }" />
-    <!-- <p>Loading settings...</p> -->
-  </div>
+<div class="loading-indicator">
+  <p-progressbar mode="indeterminate" [style]="{ height: '6px' }" />
+  <!-- <p>Loading settings...</p> -->
+</div>
 }
 <p-toast></p-toast>

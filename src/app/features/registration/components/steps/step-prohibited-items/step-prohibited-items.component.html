@@ -1,0 +1,75 @@
+<div class="wrapper">
+
+  <img src="assets/logo.png" class="header-img" alt="Company Logo">
+
+  <div class="title"><span>Prohibited</span> <br>Items</div>
+  <div class="subtitle">Items and materials that are not allowed inside the premises</div>
+
+  <!-- Prohibited Items Cards -->
+  <div class="items-section">
+    @for (item of prohibitedItems; track $index) {
+      <div class="item-card">
+        <div class="item-top">
+          <div>
+            <div class="item-name">{{ item.name }}</div>
+            <div class="item-sub">{{ item.category }}</div>
+          </div>
+          <button class="remove-btn" (click)="removeItem($index)" title="Remove">✕</button>
+        </div>
+      </div>
+    }
+
+    @if (prohibitedItems.length === 0) {
+      <div class="empty-state">
+        <p>No prohibited items reported</p>
+      </div>
+    }
+  </div>
+
+  <!-- Add Item Form -->
+  @if (prohibitedItems.length < 10) {
+    <div class="add-item-form">
+      <div class="form-row">
+        <input 
+          type="text" 
+          placeholder="Item name" 
+          [(ngModel)]="newItem.name"
+          class="form-input">
+      </div>
+      <div class="form-row">
+        <input 
+          type="text" 
+          placeholder="Category (e.g., Electronic, Weapon)" 
+          [(ngModel)]="newItem.category"
+          class="form-input">
+      </div>
+      <button 
+        class="btn add-btn" 
+        (click)="addItem()"
+        [disabled]="!newItem.name.trim() || !newItem.category.trim()">
+        + Add Item
+      </button>
+    </div>
+  }
+
+  <!-- Acknowledgement -->
+  @if (prohibitedItems.length > 0) {
+    <div class="acknowledgement">
+      <input 
+        type="checkbox" 
+        id="acknowledge" 
+        [(ngModel)]="acknowledgedProhibited"
+        (change)="onAcknowledgeChange()">
+      <label for="acknowledge">I acknowledge and understand the prohibited items policy</label>
+    </div>
+  }
+
+  <div class="bottom">
+    <div class="row">
+      <button class="btn white" (click)="goBack()">← Back</button>
+      <button class="btn white" (click)="skipStep()">Skip →</button>
+    </div>
+    <button class="btn continue" (click)="proceedToNext()">Continue →</button>
+  </div>
+
+</div>

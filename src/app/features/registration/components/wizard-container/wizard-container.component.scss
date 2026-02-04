@@ -1,3 +1,5 @@
+// Wizard Component SCSS - Maximum specificity to override global styles
+
 .wizard-container {
   display: flex;
   justify-content: center;
@@ -5,114 +7,158 @@
   margin: 0 auto;
 }
 
-.wizard-card {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 90%;
-}
 
-.wizard-header {
-  padding: 1.5rem 1.5rem 1rem;
-  background: var(--theme-glossy-white);
-  border-radius: var(--theme-border-radius);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  width: 100%;
-}
 
 .wizard-content {
   min-height: 350px;
   padding: 0 1rem 1.5rem 1rem;
-  background: var(--theme-glossy-white);
-  border-radius: var(--theme-border-radius);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+
   width: 100%;
-  // min-width: 400px;
 }
 
 .wizard-navigation {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem;
-  border-top: 1px solid #f0f0f0;
-  background: #fafafa;
-  gap: 12px;
-  background: var(--theme-glossy-white);
-  border-radius: var(--theme-border-radius);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.step-indicator {
-  color: #666;
-  font-weight: 500;
-}
-
-// Step styles for different states
-:host ::ng-deep {
-  .p-steps {
-    .p-steps-item {
-      &.completed-step {
-        .p-steps-number {
-          background-color: #22c55e !important;
-          border-color: #22c55e !important;
-          color: white !important;
-        }
-        
-        .p-steps-title {
-          color: #22c55e !important;
-          font-weight: 600 !important;
-        }
-      }
-      
-      &.active-step {
-        .p-steps-number {
-          background-color: var(--primary-color, #007bff) !important;
-          border-color: var(--primary-color, #007bff) !important;
-          color: white !important;
-        }
-        
-        .p-steps-title {
-          color: var(--primary-color, #007bff) !important;
-          font-weight: 600 !important;
-        }
-      }
-      
-      &.available-step {
-        .p-steps-number {
-          background-color: #e5e7eb !important;
-          border-color: #d1d5db !important;
-          color: #6b7280 !important;
-        }
-        
-        .p-steps-title {
-          color: #6b7280 !important;
-        }
-        
-        cursor: pointer;
-      }
-      
-      &.disabled-step {
-        .p-steps-number {
-          background-color: #f3f4f6 !important;
-          border-color: #e5e7eb !important;
-          color: #d1d5db !important;
-        }
-        
-        .p-steps-title {
-          color: #d1d5db !important;
-        }
-        
-        cursor: not-allowed;
-        pointer-events: none;
-      }
-    }
-  }
+  padding: 1rem 0;
 }
 
 .navigation-button {
   display: flex;
-  gap: 10px;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
+}
+
+// Use ::ng-deep with component selector for maximum specificity
+::ng-deep {
+  .wizard-navigation .navigation-button {
+
+    // Back button - White background with black border
+    .back-btn.p-button,
+    .back-btn {
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+      background-image: none !important;
+      color: #1f2937 !important;
+      border: 2px solid #1f2937 !important;
+      border-color: #1f2937 !important;
+      border-radius: 50px !important;
+      padding: 0.875rem 2.5rem !important;
+      font-weight: 600 !important;
+      font-size: 1.1rem !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+      transition: all 0.3s ease !important;
+
+      &:hover,
+      &:enabled:hover,
+      &.p-button:hover {
+        background: #f9fafb !important;
+        background-color: #f9fafb !important;
+        background-image: none !important;
+        border-color: #1f2937 !important;
+        color: #1f2937 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+      }
+
+      &:active,
+      &:enabled:active {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        transform: translateY(0) !important;
+      }
+
+      &:disabled,
+      &.p-disabled {
+        opacity: 0.5 !important;
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        border-color: #d1d5db !important;
+        color: #9ca3af !important;
+      }
+
+      .p-button-icon {
+        color: #1f2937 !important;
+        font-size: 1.25rem !important;
+        font-weight: bold !important;
+      }
+
+      .p-button-label {
+        color: #1f2937 !important;
+        font-weight: 600 !important;
+      }
+
+      &:disabled .p-button-icon,
+      &:disabled .p-button-label,
+      &.p-disabled .p-button-icon,
+      &.p-disabled .p-button-label {
+        color: #9ca3af !important;
+      }
+    }
+
+    // Next/Submit button - Yellow background with gray text
+    .next-btn.p-button,
+    .next-btn {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+      background-color: #fbbf24 !important;
+      color: #9ca3af !important;
+      border: none !important;
+      border-color: transparent !important;
+      border-radius: 50px !important;
+      padding: 0.875rem 2.5rem !important;
+      font-weight: 600 !important;
+      font-size: 1.1rem !important;
+      box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3) !important;
+      transition: all 0.3s ease !important;
+
+      &:hover,
+      &:enabled:hover,
+      &.p-button:hover {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        background-color: #f59e0b !important;
+        color: #6b7280 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4) !important;
+      }
+
+      &:active,
+      &:enabled:active {
+        transform: translateY(0) !important;
+        box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3) !important;
+      }
+
+      &:disabled,
+      &.p-disabled {
+        opacity: 0.6 !important;
+        color: #d1d5db !important;
+      }
+
+      .p-button-icon {
+        color: #9ca3af !important;
+        font-size: 1.25rem !important;
+      }
+
+      .p-button-label {
+        color: #9ca3af !important;
+        font-weight: 600 !important;
+      }
+
+      &:hover .p-button-icon,
+      &:hover .p-button-label,
+      &:enabled:hover .p-button-icon,
+      &:enabled:hover .p-button-label {
+        color: #6b7280 !important;
+      }
+
+      &:disabled .p-button-icon,
+      &:disabled .p-button-label,
+      &.p-disabled .p-button-icon,
+      &.p-disabled .p-button-label {
+        color: #d1d5db !important;
+      }
+    }
+  }
 }
 
 .loading-indicator {
@@ -122,8 +168,8 @@
   align-items: center;
   min-height: 100vh;
   padding: 2rem;
-  background: rgba(255, 255, 255, 0.9); // Semi-transparent background
-  
+  background: rgba(255, 255, 255, 0.9);
+
   p {
     margin-top: 1rem;
     color: #666;
@@ -131,8 +177,20 @@
   }
 }
 
+// Responsive design
 @media (max-width: 768px) {
-  ::ng-deep .wizard-header .p-steps .p-steps-item:not(.p-steps-item-active) .p-steps-item-label {
-    display: none !important;
+  .wizard-container {
+    max-width: 100%;
+  }
+
+
+
+  .navigation-button {
+    flex-direction: column;
+    gap: 0.75rem;
+
+    ::ng-deep .p-button {
+      width: 100% !important;
+    }
   }
 }

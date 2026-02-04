@@ -29,7 +29,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
     RouterOutlet,
     ProgressBarModule,
     TranslatePipe
-],
+  ],
   templateUrl: './wizard-container.component.html',
   styleUrls: ['./wizard-container.component.scss']
 })
@@ -50,7 +50,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
   ) {
     this.initializeSteps();
     this.completedSteps = new Array(4).fill(false); // Initialize for 4 steps
-    
+
     if (!this.wizardService.getSettings()) {
       this.api.GetVisitorDeclarationSettings(this.wizardService.currentBranchID, this.wizardService.selectedVisitCategory)
         .subscribe({
@@ -115,7 +115,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     // Only allow navigation to completed steps or the next available step
     const targetStep = event.index;
     const maxAllowedStep = this.getMaxAllowedStep();
-    
+
     if (targetStep <= maxAllowedStep) {
       this.navigateToStep(targetStep);
     } else {
@@ -134,7 +134,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
 
     // For forward navigation (next step), allow if it's just one step ahead
     const isForwardToNextStep = stepIndex === currentStep + 1 && !skipValidation;
-    
+
     // Check if navigation is allowed (but allow forward navigation to immediate next step)
     if (!skipValidation && !isForwardToNextStep && stepIndex > this.getMaxAllowedStep()) {
       console.log('Navigation blocked - step not allowed');
@@ -194,11 +194,11 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
 
   private getStepRoute(stepOrItem: number | MenuItem): string {
     const stepRoutes = ['general-info', 'attachments', 'safety-brief', 'questionnaire'];
-    
+
     if (typeof stepOrItem === 'number') {
       return stepRoutes[stepOrItem] || '';
     }
-    
+
     const label = stepOrItem.label;
     return label?.replace(/\s+/g, '-').toLowerCase() || '';
   }
@@ -207,7 +207,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     const url = this.router.url;
     const stepRoutes = ['general-info', 'attachments', 'safety-brief', 'questionnaire'];
     const stepIndex = stepRoutes.findIndex(route => url.includes(route));
-    
+
     if (stepIndex > -1) {
       this.activeIndex = stepIndex;
       this.wizardService.setCurrentStep(stepIndex);
@@ -218,9 +218,9 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     console.log('onNext called');
     const currentStep = this.wizardService.getCurrentStepIndex();
     const isLastStep = this.activeIndex === this.items.length - 1;
-    
+
     console.log('Current step:', currentStep, 'Active index:', this.activeIndex, 'Is last step:', isLastStep);
-    
+
     if (isLastStep) {
       // Last step - submit the registration
       this.submitRegistration();
@@ -238,37 +238,37 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     this.wizardService.canProceed$.pipe(take(1)).subscribe(canProceed => {
       if (canProceed) {
         this.isLoading = true;
-        
+
         // Get form data in VisitorAck format from wizard service
         const visitorAckData = this.wizardService.getVisitorAckData();
-        
+
         console.log('=== SUBMISSION DEBUG ===');
         console.log('Submitting visitor registration:', visitorAckData);
         console.log('VisitorsList length:', visitorAckData.VisitorsList?.length);
         console.log('VisitorsList content:', visitorAckData.VisitorsList);
         console.log('Form data before submission:', this.wizardService.getFormData());
         console.log('========================');
-        
+
         // Call the new VisitorAckSave API
         this.api.VisitorAckSave(visitorAckData)
           .subscribe({
             next: (response: any) => {
               this.isLoading = false;
-              
+
               console.log('Registration successful:', response);
-              
+
               // Extract data from Table array (api service returns unwrapped data)
               const responseData = response?.Table?.[0];
               const isAutoApproved = responseData?.AutoApprove === 1 || responseData?.AutoApprove === true;
               const isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1;
-              
+
               // Get branch info before clearing session storage
               const branchName = this.wizardService.currentBranchName;
               const branchID = this.wizardService.currentBranchID;
-              
+
               // Clear session storage after successful submission
               this.wizardService.clearSessionStorage();
-              
+
               // Navigate to registration status page with response data
               this.router.navigate(['/registration-status'], {
                 state: {
@@ -294,10 +294,10 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               console.error('Error body:', error.error);
               console.error('Form data at error:', this.wizardService.getFormData());
               console.error('======================');
-              
+
               // Important: Don't clear questionnaire state on error
               // The wizard service should preserve form data for retry
-              
+
               // You might want to show an error message here
             }
           });
