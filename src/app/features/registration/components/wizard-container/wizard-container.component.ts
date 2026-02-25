@@ -11,12 +11,13 @@ import { ProgressBarModule } from 'primeng/progressbar';
 
 // Services
 import { WizardService } from '../../../../core/services/wizard.service';
-import { Router, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { take, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
 import { LabelService } from '../../../../core/services/label.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import { SharedService } from '../../../../shared/shared.service';
 
 @Component({
   selector: 'app-wizard-container',
@@ -27,6 +28,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
     ButtonModule,
     ToastModule,
     RouterOutlet,
+    RouterLink,
     ProgressBarModule,
     TranslatePipe
   ],
@@ -38,7 +40,17 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
   activeIndex: number = 0;
   allSettings: any;
   isLoading = true;
-  completedSteps: boolean[] = []; // Track completed steps
+  completedSteps: boolean[] = [];
+  logo = 'assets/logo.png';
+  title = 'Company Title';
+  showSharedLayout = true;
+  showWizardNav = true;
+
+  /** Routes that manage their own header + navigation */
+  private readonly ownLayoutRoutes = ['attachments', 'prohibited-items'];
+  /** Routes that manage their own nav only (keep shared header) */
+  private readonly ownNavRoutes = ['general-info'];
+
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -46,8 +58,13 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     private router: Router,
     private api: ApiService,
     private labelService: LabelService,
-    private languageService: LanguageService
+    private languageService: LanguageService,
+    private sharedService: SharedService
   ) {
+    this.sharedService.currentTitle.subscribe(t => { this.title = t; });
+    this.sharedService.currentLogo.subscribe(l => { this.logo = l; });
+    this.showSharedLayout = !this.ownLayoutRoutes.some(r => this.router.url.includes(r));
+    this.showWizardNav = this.showSharedLayout && !this.ownNavRoutes.some(r => this.router.url.includes(r));
     this.initializeSteps();
     this.completedSteps = new Array(4).fill(false); // Initialize for 4 steps
 
@@ -74,6 +91,13 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Subscribe to step change requests from child step components
+    this.wizardService.onStepChangeRequest
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(step => {
+        this.navigateToStep(step, step < this.wizardService.getCurrentStepIndex());
+      });
+
     // Subscribe to language changes
     this.languageService.currentLanguage$
       .pipe(takeUntil(this.destroy$))
@@ -193,10 +217,9 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
   }
 
   private getStepRoute(stepOrItem: number | MenuItem): string {
-    const stepRoutes = ['general-info', 'attachments', 'safety-brief', 'questionnaire'];
-
     if (typeof stepOrItem === 'number') {
-      return stepRoutes[stepOrItem] || '';
+      const enabledSteps = this.wizardService.getEnabledSteps();
+      return enabledSteps[stepOrItem]?.routerLink || '';
     }
 
     const label = stepOrItem.label;
@@ -205,8 +228,11 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
 
   onStepActivated(component: any): void {
     const url = this.router.url;
-    const stepRoutes = ['general-info', 'attachments', 'safety-brief', 'questionnaire'];
-    const stepIndex = stepRoutes.findIndex(route => url.includes(route));
+    this.showSharedLayout = !this.ownLayoutRoutes.some(r => url.includes(r));
+    this.showWizardNav = this.showSharedLayout && !this.ownNavRoutes.some(r => url.includes(r));
+
+    const enabledSteps = this.wizardService.getEnabledSteps();
+    const stepIndex = enabledSteps.findIndex(step => url.includes(step.routerLink || ''));
 
     if (stepIndex > -1) {
       this.activeIndex = stepIndex;
@@ -325,18 +351,28 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     this.items = [
       { label: 'General Info', command: (event) => this.navigateToStep(0) },
       { label: 'Attachments', command: (event) => this.navigateToStep(1) },
-      { label: 'Safety Brief', command: (event) => this.navigateToStep(2) },
-      { label: 'Questionnaire', command: (event) => this.navigateToStep(3) }
+      { label: 'Prohibited Items', command: (event) => this.navigateToStep(2) },
+      { label: 'Safety Brief', command: (event) => this.navigateToStep(3) },
+      { label: 'Questionnaire', command: (event) => this.navigateToStep(4) }
     ];
   }
 
   private updateStepLabels(): void {
-    if (this.items && this.items.length > 0) {
-      if (this.items[0]) this.items[0].label = this.labelService.getLabel('general_information', 'caption') || 'General Info';
-      if (this.items[1]) this.items[1].label = this.labelService.getLabel('additional_documents', 'caption') || 'Attachments';
-      if (this.items[2]) this.items[2].label = this.labelService.getLabel('safety_briefing', 'caption') || 'Safety Brief';
-      if (this.items[3]) this.items[3].label = this.labelService.getLabel('questionnaire', 'caption') || 'Questionnaire';
-    }
+    if (!this.items?.length) return;
+    this.items.forEach(item => {
+      switch ((item as any).routerLink) {
+        case 'general-info':
+          item.label = this.labelService.getLabel('general_information', 'caption') || 'General Info'; break;
+        case 'attachments':
+          item.label = this.labelService.getLabel('additional_documents', 'caption') || 'Attachments'; break;
+        case 'prohibited-items':
+          item.label = this.labelService.getLabel('prohibited_items', 'caption') || 'Prohibited Items'; break;
+        case 'safety-brief':
+          item.label = this.labelService.getLabel('safety_briefing', 'caption') || 'Safety Brief'; break;
+        case 'questionnaire':
+          item.label = this.labelService.getLabel('questionnaire', 'caption') || 'Questionnaire'; break;
+      }
+    });
   }
 
   private updateStepStyles(): void {

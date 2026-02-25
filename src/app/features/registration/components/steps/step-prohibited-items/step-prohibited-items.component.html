@@ -2,67 +2,59 @@
 
   <img src="assets/logo.png" class="header-img" alt="Company Logo">
 
-  <div class="title"><span>Prohibited</span> <br>Items</div>
-  <div class="subtitle">Items and materials that are not allowed inside the premises</div>
+  <div class="title"><span>Prohibited</span><br>Items</div>
+  <div class="subtitle">Declare items you are carrying</div>
 
-  <!-- Prohibited Items Cards -->
-  <div class="items-section">
-    @for (item of prohibitedItems; track $index) {
-      <div class="item-card">
-        <div class="item-top">
-          <div>
-            <div class="item-name">{{ item.name }}</div>
-            <div class="item-sub">{{ item.category }}</div>
+  <!-- Input Form -->
+  <div class="form-box">
+
+    <div class="label">Item Description</div>
+    <input
+      class="form-input"
+      [(ngModel)]="newItem.description"
+      (ngModelChange)="checkInputs()"
+      placeholder="Enter the item description">
+
+    <div class="label">Serial Number</div>
+    <input
+      class="form-input"
+      [(ngModel)]="newItem.serialNumber"
+      (ngModelChange)="checkInputs()"
+      placeholder="Enter the serial number">
+
+    <div class="label">Direction</div>
+    <select
+      class="form-input select-input"
+      [(ngModel)]="newItem.direction"
+      (ngModelChange)="checkInputs()">
+      <option value="">In or out</option>
+      <option value="IN">IN</option>
+      <option value="OUT">OUT</option>
+    </select>
+
+    <button
+      class="add-btn"
+      [class.active]="canAdd"
+      [disabled]="!canAdd"
+      (click)="addItem()">
+      Add item
+    </button>
+
+    <!-- Added items -->
+    @if (declaredItems.length > 0) {
+      <div class="added-section">
+        <div class="added-title">Added items</div>
+        @for (item of declaredItems; track $index) {
+          <div class="added-row">
+            <div class="pill">{{ item.description }}</div>
+            <div class="pill direction">{{ item.direction }}</div>
+            <span class="delete" (click)="removeItem($index)">🗑</span>
           </div>
-          <button class="remove-btn" (click)="removeItem($index)" title="Remove">✕</button>
-        </div>
+        }
       </div>
     }
 
-    @if (prohibitedItems.length === 0) {
-      <div class="empty-state">
-        <p>No prohibited items reported</p>
-      </div>
-    }
   </div>
-
-  <!-- Add Item Form -->
-  @if (prohibitedItems.length < 10) {
-    <div class="add-item-form">
-      <div class="form-row">
-        <input 
-          type="text" 
-          placeholder="Item name" 
-          [(ngModel)]="newItem.name"
-          class="form-input">
-      </div>
-      <div class="form-row">
-        <input 
-          type="text" 
-          placeholder="Category (e.g., Electronic, Weapon)" 
-          [(ngModel)]="newItem.category"
-          class="form-input">
-      </div>
-      <button 
-        class="btn add-btn" 
-        (click)="addItem()"
-        [disabled]="!newItem.name.trim() || !newItem.category.trim()">
-        + Add Item
-      </button>
-    </div>
-  }
-
-  <!-- Acknowledgement -->
-  @if (prohibitedItems.length > 0) {
-    <div class="acknowledgement">
-      <input 
-        type="checkbox" 
-        id="acknowledge" 
-        [(ngModel)]="acknowledgedProhibited"
-        (change)="onAcknowledgeChange()">
-      <label for="acknowledge">I acknowledge and understand the prohibited items policy</label>
-    </div>
-  }
 
   <div class="bottom">
     <div class="row">

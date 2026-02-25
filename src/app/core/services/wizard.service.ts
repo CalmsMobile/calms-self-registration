@@ -173,9 +173,6 @@ export class WizardService {
     if (!settings) return;
     
     console.log(settings);
-    // Attachments step is visible only if at least one of the flags is enabled
-    const attachmentsVisible = settings?.AttachmentUploadEnabled || settings?.MaterialDeclareEnabled;
-    
     this.enabledSteps = [
       {
         label: 'General Info',
@@ -185,7 +182,12 @@ export class WizardService {
       {
         label: 'Attachments',
         routerLink: 'attachments',
-        visible: attachmentsVisible
+        visible: settings?.AttachmentUploadEnabled
+      },
+      {
+        label: 'Prohibited Items',
+        routerLink: 'prohibited-items',
+        visible: true
       },
       {
         label: 'Safety Brief',

@@ -32,19 +32,9 @@
   @if (!hasInvalidUrl && !isAccessDenied) {
   <!-- Show illustration only when no branch is selected -->
   @if (!selectedBranch) {
-
   <div class="illustration-container">
     <img src="/assets/illustration.png" alt="abstract">
   </div>
-
-  
-
-
-
-  <div class="language-selector">
-    <app-language-selector></app-language-selector>
-  </div>
-
   }
 
   @if(selectedBranch){
@@ -109,14 +99,7 @@
       <div class="terms-section">
         <h2 class="terms-header">Terms and Condition</h2>
 
-        <div class="terms-content">
-          <h3>For CALMS</h3>
-          <p>
-            By submitting your information, you agree and consent to Calms Technologies Sdn Bhd
-            and its related corporations, and its managing agent, collecting, using and disclosing
-            such information for the purposes of seeking clarification on the information submitted
-            or contacting you in event of any emergencies and related purposes.
-          </p>
+        <div class="terms-content" [innerHTML]="getTermsHtml()">
         </div>
 
         <!-- Hidden terms component for validation -->
@@ -124,15 +107,15 @@
           <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
         </div>
 
-        <!-- Checkbox at bottom -->
+        <!-- Checkbox at bottom right -->
         <div class="terms-checkbox-wrapper">
+          <span class="terms-agree-label">I agree to the terms and conditions</span>
           <div class="checkbox-container">
             <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsAccepted = !termsAccepted">
               @if (termsAccepted) {
               <i class="pi pi-check"></i>
               }
             </div>
-            <span>I agree to the terms and conditions</span>
           </div>
         </div>
       </div>

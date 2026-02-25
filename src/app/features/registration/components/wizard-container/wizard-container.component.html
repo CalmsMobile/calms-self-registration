@@ -1,14 +1,23 @@
 @if (!isLoading) {
-<div class="wizard-container">
+<div class="wizard-container" [class.own-layout]="!showSharedLayout">
   <div class="wizard-card">
 
+    <!-- Branch Header - hidden for pages with own layout -->
+    @if (showSharedLayout) {
+    <div class="branch-header">
+      <img routerLink="/" [src]="logo" alt="Company Logo" class="logo-company">
+      <h1 routerLink="/" class="app-title">{{title}}</h1>
+    </div>
+    }
+
     <!-- Wizard Content -->
-    <div class="wizard-content">
+    <div class="wizard-content" [class.no-padding]="!showSharedLayout">
       <router-outlet (activate)="onStepActivated($event)"></router-outlet>
     </div>
-    <!-- Wizard Navigation -->
-    <div class="wizard-navigation">
 
+    <!-- Wizard Navigation - hidden for pages with own layout or own nav -->
+    @if (showWizardNav) {
+    <div class="wizard-navigation">
       <div class="navigation-button">
         <p-button styleClass="back-btn" [label]="'previous_step' | translate" icon="pi pi-arrow-left"
           (onClick)="onPrevious()" [disabled]="activeIndex === 0">
@@ -20,13 +29,14 @@
         </p-button>
       </div>
     </div>
+    }
+
   </div>
 </div>
 }
 @if (isLoading) {
 <div class="loading-indicator">
   <p-progressbar mode="indeterminate" [style]="{ height: '6px' }" />
-  <!-- <p>Loading settings...</p> -->
 </div>
 }
 <p-toast></p-toast>

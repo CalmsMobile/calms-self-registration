@@ -17,9 +17,21 @@
   --p-primary-hover-color: #e5ab3b;
   --p-primary-active-color: #d69d2e;
 
+  /* Force all primary shades to avoid any green fallback */
+  --p-primary-50: #fffbeb;
+  --p-primary-100: #fef3c7;
+  --p-primary-200: #fde68a;
+  --p-primary-300: #fcd34d;
+  --p-primary-400: #fbbf24;
+  --p-primary-500: #f5b942;
+  --p-primary-600: #d97706;
+  --p-primary-700: #b45309;
+  --p-primary-800: #92400e;
+  --p-primary-900: #78350f;
+
   /* Form controls highlights */
   --p-inputtext-focus-border-color: #f5b942;
-  --p-select-focus-border-color: #f5b942;
+  --p-select-focus-border-color: #f5b942 !important;
   --p-datepicker-focus-border-color: #f5b942;
   --p-checkbox-checked-background: #f5b942;
   --p-checkbox-checked-border-color: #f5b942;
@@ -27,9 +39,11 @@
   --p-radiobutton-checked-border-color: #f5b942;
 
   /* Selection colors */
-  --p-list-option-selected-background: rgba(245, 185, 66, 0.1);
-  --p-list-option-selected-focus-background: rgba(245, 185, 66, 0.2);
+  --p-list-option-selected-background: #fde68a !important;
+  --p-list-option-selected-focus-background: #fde68a !important;
   --p-list-option-selected-color: #000;
+  --p-highlight-background: #fde68a !important;
+  --p-highlight-color: #000 !important;
 }
 
 /* Global Progress Bar Overrides */
@@ -47,12 +61,34 @@
 
 // Global PrimeNG overrides for focus rings and highlights
 ::ng-deep {
-  .p-focus {
-    box-shadow: 0 0 0 0.2rem rgba(245, 185, 66, 0.25) !important;
+
+  .p-focus,
+  .p-inputwrapper-focus,
+  .p-focus-within {
+    box-shadow: 0 0 0 0.15rem rgba(245, 185, 66, 0.3) !important;
+    border-color: #f5b942 !important;
+  }
+
+  .p-select-open {
+    border-color: #f5b942 !important;
+  }
+
+  /* Force background of selected items to yellow */
+  .p-select-option-selected,
+  .p-multiselect-option-selected,
+  .p-listbox-option-selected {
+    background: #fde68a !important;
+    color: #000 !important;
+  }
+
+  /* Ensure no teal/green on hover */
+  .p-select-option:hover,
+  .p-multiselect-option:hover {
+    background: #fffbeb !important;
   }
 }
 
-.p-button:not(.p-dialog-close-button):not(.p-panel-header-icon):not(.back-btn):not(.next-btn) {
+.p-button:not(.p-dialog-close-button):not(.p-panel-header-icon):not(.back-btn):not(.next-btn):not(.p-datepicker-trigger):not(.p-datepicker-button) {
   border-radius: var(--theme-border-radius) !important;
   background-color: var(--theme-primary-yellow) !important;
   border-color: var(--theme-primary-yellow) !important;

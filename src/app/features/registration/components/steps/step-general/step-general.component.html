@@ -1,9 +1,3 @@
-     <div class="branch-header">
-    <img routerLink="/" [src]="logo" alt="Company Logo" class="logo-company">
-    <h1 routerLink="/" class="app-title">{{title}}</h1>
-  </div>
-
-
 <div class="step-container">
   <div class="header-section">
     <div class="title-wrapper">
@@ -99,7 +93,7 @@
         <p-select id="host" [options]="hosts" formControlName="host"
           [placeholder]="'whom_you_would_like_to_visit' | translate:'placeholder'" (onChange)="onHostChange($event)"
           optionLabel="HOSTNAME" optionValue="HOSTIC" [class.error]="isFieldInvalidRequired('host')"
-          [disabled]="isFieldDisabled('host')">
+          [disabled]="isFieldDisabled('host')" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired('host')) {
         <small class="error-message">Please select a host</small>
@@ -181,7 +175,7 @@
         <p-select id="id_type" [options]="idTypeList" formControlName="visitor_id_type"
           [placeholder]="'id_type' | translate:'placeholder'" optionLabel="IDTYPEDESCRIPTION" optionValue="ID_TYPECODE"
           [class.error]="isFieldInvalidRequired('visitor_id_type')" [disabled]="isFieldDisabled('visitor_id_type')"
-          (onChange)="onIdTypeChange($event)">
+          (onChange)="onIdTypeChange($event)" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired('visitor_id_type')) {
         <small class="error-message">ID Type is required</small>
@@ -198,7 +192,7 @@
         </label>
         <p-select id="title_name" [options]="titleList" formControlName="title"
           [placeholder]="'title' | translate:'placeholder'" optionLabel="Title" optionValue="Title"
-          [class.error]="isFieldInvalidRequired('title')" [disabled]="isFieldDisabled('title')">
+          [class.error]="isFieldInvalidRequired('title')" [disabled]="isFieldDisabled('title')" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired('title')) {
         <small class="error-message">Please select a Title</small>
@@ -218,7 +212,7 @@
           [optionLabel]="departmentList[0]?.DName ? 'DName' : 'Department'"
           [optionValue]="departmentList[0]?.DepartmentSeqId ? 'DepartmentSeqId' : 'Department'"
           [class.error]="isFieldInvalidRequired('department')" [disabled]="isFieldDisabled('department')"
-          (onChange)="onDepartmentChange($event)">
+          (onChange)="onDepartmentChange($event)" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired('department')) {
         <small class="error-message">Please select a department</small>
@@ -235,7 +229,7 @@
         </label>
         <p-select id="gender" [options]="genderOptions" formControlName="gender"
           [placeholder]="'gender' | translate:'placeholder'" optionLabel="Name" optionValue="Value"
-          [class.error]="isFieldInvalidRequired('gender')" [disabled]="isFieldDisabled('gender')">
+          [class.error]="isFieldInvalidRequired('gender')" [disabled]="isFieldDisabled('gender')" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired('gender')) {
         <small class="error-message">Please select gender</small>
@@ -254,7 +248,8 @@
           (onSelect)="onCompanySelect($event)" field="visitor_comp_name" optionLabel="visitor_comp_name"
           dataKey="visitor_comp_name" formControlName="visitor_company"
           [placeholder]="'company' | translate:'placeholder'" [dropdown]="true" [forceSelection]="false"
-          [class.error]="isFieldInvalidRequired('visitor_company')" [disabled]="isFieldDisabled('visitor_company')">
+          [class.error]="isFieldInvalidRequired('visitor_company')" [disabled]="isFieldDisabled('visitor_company')"
+          appendTo="body">
         </p-autoComplete>
         @if (isFieldInvalidRequired('visitor_company')) {
         <small class="error-message">Company is required</small>
@@ -287,7 +282,7 @@
         </label>
         <p-select id="country" [options]="countryList" formControlName="country"
           [placeholder]="'country' | translate:'placeholder'" optionLabel="Name" optionValue="CountrySeqId"
-          [class.error]="isFieldInvalidRequired('country')" [disabled]="isFieldDisabled('country')">
+          [class.error]="isFieldInvalidRequired('country')" [disabled]="isFieldDisabled('country')" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired('country')) {
         <small class="error-message">Please select your Country</small>
@@ -337,7 +332,7 @@
         </label>
         <p-select id="timeSlot" [options]="timeSlotList" formControlName="timeSlot" placeholder="Select time slot"
           optionLabel="Name" optionValue="Code" (onChange)="onTimeslotChange($event)"
-          [class.error]="isFieldInvalidRequired('timeSlot')">
+          [class.error]="isFieldInvalidRequired('timeSlot')" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired('timeSlot')) {
         <small class="error-message">Please select a time slot</small>
@@ -369,7 +364,7 @@
         </label>
         <p-select id="facilityPurpose" [options]="facilityPurposeList" formControlName="facilityPurpose"
           placeholder="Select purpose" optionLabel="PurposeName" optionValue="PurposeCode"
-          [class.error]="isFieldInvalidRequired('facilityPurpose')">
+          [class.error]="isFieldInvalidRequired('facilityPurpose')" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired('facilityPurpose')) {
         <small class="error-message">Please select a purpose</small>
@@ -385,7 +380,7 @@
         <p-select id="facilitySelection" [options]="facilityMasterList" formControlName="facilitySelection"
           placeholder="Select facility" optionLabel="FacilityName" optionValue="FacilityCode"
           (onChange)="onFacilitySelectionChange($event.value)"
-          [class.error]="isFieldInvalidRequired('facilitySelection')">
+          [class.error]="isFieldInvalidRequired('facilitySelection')" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired('facilitySelection')) {
         <small class="error-message">Please select a facility</small>
@@ -402,7 +397,7 @@
         </label>
         <p-select id="timeSlot" [options]="timeSlotList" formControlName="timeSlot" placeholder="Select time slot"
           optionLabel="Name" optionValue="Code" (onChange)="onTimeslotChange($event)"
-          [class.error]="isFieldInvalidRequired('timeSlot')">
+          [class.error]="isFieldInvalidRequired('timeSlot')" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired('timeSlot')) {
         <small class="error-message">Please select a time slot</small>
@@ -486,7 +481,7 @@
         </label>
         <p-select [id]="udf.UDFName" [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.UDFName"
           [placeholder]="udf.Placeholder" optionLabel="label" optionValue="value"
-          [class.error]="isFieldInvalidRequired(udf.UDFName)">
+          [class.error]="isFieldInvalidRequired(udf.UDFName)" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired(udf.UDFName)) {
         <small class="error-message">Please select {{udf.Caption}}</small>
@@ -502,7 +497,7 @@
         </label>
         <p-multiSelect [id]="udf.UDFName" [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.UDFName"
           [placeholder]="udf.Placeholder" optionLabel="label" optionValue="value"
-          [class.error]="isFieldInvalidRequired(udf.UDFName)">
+          [class.error]="isFieldInvalidRequired(udf.UDFName)" appendTo="body">
         </p-multiSelect>
         @if (isFieldInvalidRequired(udf.UDFName)) {
         <small class="error-message">Please select at least one {{udf.Caption}}</small>
@@ -512,12 +507,12 @@
       }
       }
 
-      <!-- Add Visitor Button (only when multiple visitor setting is enabled) -->
-      @if (settings?.MultipleVisitorEnabled) {
+      <!-- Add Visitor Button (only when multiple visitor setting is enabled and form is valid) -->
+      @if (settings?.MultipleVisitorEnabled && isCurrentVisitorFormValid()) {
       <div class="add-visitor-section full-width">
         <p-button type="button" icon="pi pi-plus"
           [label]="editingVisitorIndex >= 0 ? ('update_visitor' | translate) : ('add_guest' | translate)"
-          (onClick)="addVisitorToTable()" styleClass="add-guest-btn" [disabled]="!isCurrentVisitorFormValid()">
+          (onClick)="addVisitorToTable()" styleClass="add-guest-btn">
         </p-button>
         @if (editingVisitorIndex >= 0) {
         <p-button type="button" icon="pi pi-times" label="Cancel" (onClick)="cancelEdit()" [outlined]="true"
@@ -564,6 +559,18 @@
     }
   </div>
   }
+
+  <!-- Navigation inside card -->
+  <div class="card-navigation">
+    <button type="button" class="card-nav-btn card-back-btn" (click)="goBack()" disabled>
+      <i class="pi pi-arrow-left"></i>
+      <span>{{ 'previous_step' | translate }}</span>
+    </button>
+    <button type="button" class="card-nav-btn card-next-btn" (click)="goNext()">
+      <span>{{ 'next_step' | translate }}</span>
+      <i class="pi pi-arrow-right"></i>
+    </button>
+  </div>
 
 </div>
 

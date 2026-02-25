@@ -17,7 +17,7 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { StepTermsComponent } from '../steps/step-terms/step-terms.component';
 import { RouterLink } from '@angular/router';
 import { CheckboxModule } from 'primeng/checkbox';
-import { LanguageSelectorComponent } from '../../../../shared/components/language-selector/language-selector.component';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 interface Branch {
   RefBranchSeqID: number;
@@ -40,7 +40,6 @@ interface Category {
     ToastModule,
     ProgressBarModule,
     StepTermsComponent,
-      LanguageSelectorComponent,
     TranslatePipe,
 
   ],
@@ -120,7 +119,8 @@ export class HomePageComponent {
     private wizardService: WizardService,
     private sharedService: SharedService,
     private languageService: LanguageService,
-    private labelService: LabelService
+    private labelService: LabelService,
+    private sanitizer: DomSanitizer
   ) {
     this.wizardService.clearSessionStorage();
     this.sharedService.currentTitle.subscribe(title => {
@@ -614,6 +614,14 @@ export class HomePageComponent {
   shouldShowTerms(): boolean {
     const settings = this.wizardService.getSettings();
     return settings?.TermsnCondEnabled || false;
+  }
+
+  getTermsHtml(): SafeHtml {
+    const settings = this.wizardService.getSettings();
+    if (settings?.TermsnCondTemplate) {
+      return this.sanitizer.bypassSecurityTrustHtml(settings.TermsnCondTemplate);
+    }
+    return '';
   }
   // shouldShowTerms(): boolean {
   //   const settings = this.wizardService.getSettings();

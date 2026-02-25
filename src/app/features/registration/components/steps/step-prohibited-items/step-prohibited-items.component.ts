@@ -2,12 +2,12 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject } from 'rxjs';
 
-interface ProhibitedItem {
-  name: string;
-  category: string;
-  reason?: string;
+interface DeclaredItem {
+  description: string;
+  serialNumber: string;
+  direction: string;
 }
 
 @Component({
@@ -18,10 +18,10 @@ interface ProhibitedItem {
   styleUrl: './step-prohibited-items.component.scss'
 })
 export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
-  prohibitedItems: ProhibitedItem[] = [];
-  newItem = { name: '', category: '' };
-  acknowledgedProhibited = false;
-  
+  declaredItems: DeclaredItem[] = [];
+  newItem = { description: '', serialNumber: '', direction: '' };
+  canAdd = false;
+
   private destroy$ = new Subject<void>();
 
   constructor(private wizardService: WizardService) {
@@ -31,8 +31,10 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Restore saved data
-    this.restoreFormData();
+    const saved = this.wizardService.getFormData('prohibitedItems');
+    if (saved) {
+      this.declaredItems = saved.declaredItems || [];
+    }
   }
 
   ngOnDestroy(): void {
@@ -41,59 +43,39 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private restoreFormData(): void {
-    const savedData = this.wizardService.getFormData('prohibitedItems');
-    if (savedData) {
-      this.prohibitedItems = savedData.prohibitedItems || [];
-      this.acknowledgedProhibited = savedData.acknowledgedProhibited || false;
-      console.log('Prohibited items form data restored:', savedData);
-    }
+  checkInputs(): void {
+    this.canAdd = !!this.newItem.description.trim() &&
+                  !!this.newItem.serialNumber.trim() &&
+                  !!this.newItem.direction;
+  }
+
+  addItem(): void {
+    if (!this.canAdd) return;
+    this.declaredItems.push({ ...this.newItem });
+    this.newItem = { description: '', serialNumber: '', direction: '' };
+    this.canAdd = false;
+    this.saveFormData();
+  }
+
+  removeItem(index: number): void {
+    this.declaredItems.splice(index, 1);
+    this.saveFormData();
   }
 
   private saveFormData(): void {
     this.wizardService.updateFormData('prohibitedItems', {
-      prohibitedItems: this.prohibitedItems,
-      acknowledgedProhibited: this.acknowledgedProhibited
+      declaredItems: this.declaredItems
     });
-    console.log('Prohibited items form data saved:', { items: this.prohibitedItems.length, acknowledged: this.acknowledgedProhibited });
-  }
-
-  addItem(): void {
-    if (this.newItem.name.trim() && this.newItem.category.trim()) {
-      this.prohibitedItems.push({
-        name: this.newItem.name.trim(),
-        category: this.newItem.category.trim()
-      });
-      this.newItem = { name: '', category: '' };
-      this.saveFormData();
-      console.log('Item added:', this.prohibitedItems);
-    }
-  }
-
-  removeItem(index: number): void {
-    if (index >= 0 && index < this.prohibitedItems.length) {
-      const removed = this.prohibitedItems.splice(index, 1);
-      this.saveFormData();
-      console.log('Item removed:', removed);
-    }
-  }
-
-  onAcknowledgeChange(): void {
-    this.saveFormData();
   }
 
   validateStep(): void {
-    const isValid = this.prohibitedItems.length === 0 || this.acknowledgedProhibited;
-    this.wizardService.setStepValid(isValid);
-    console.log('Validation result:', { isValid, itemCount: this.prohibitedItems.length, acknowledged: this.acknowledgedProhibited });
+    this.wizardService.setStepValid(true);
   }
 
   goBack(): void {
     this.saveFormData();
-    const previousStep = this.wizardService.getCurrentStepIndex() - 1;
-    if (previousStep >= 0) {
-      this.wizardService.requestStepChange(previousStep);
-    }
+    const prev = this.wizardService.getCurrentStepIndex() - 1;
+    if (prev >= 0) this.wizardService.requestStepChange(prev);
   }
 
   skipStep(): void {
@@ -102,9 +84,7 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   }
 
   proceedToNext(): void {
-    this.validateStep();
     this.saveFormData();
     this.wizardService.navigateToNextStep();
   }
-  ///test
 }

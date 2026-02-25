@@ -86,17 +86,12 @@
 
 .global-language-icon {
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: 20px;
+  right: 20px;
   z-index: 1000;
 
   @media (max-width: 600px) {
-    top: 40px;
-    right: 30px;
-  }
-
-  @media (max-width: 480px) {
-    top: 40px;
-    right: 30px;
+    top: 16px;
+    right: 16px;
   }
 }

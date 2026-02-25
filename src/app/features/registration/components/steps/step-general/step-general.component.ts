@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Sanitizer, ChangeDetectorRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, Sanitizer } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -17,7 +17,6 @@ import { filter, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../../core/services/api.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
-import { SharedService } from '../../../../../shared/shared.service';
 
 
 @Component({
@@ -55,8 +54,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   pageSettings: any[] = [];
   udfSettings: any[] = [];
   udfOptions: any[] = [];
- title = 'Company Title';
-  logo = 'assets/logo.png';
   // New properties for VIMS appointment and facility booking
   localSettings: any = {};
   enableVimsApptTimeSlot = false;
@@ -114,10 +111,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   // Saved visitors for single visitor mode
   savedVisitors: any[] = [];
-  currentStepIndex = 0;
-  totalSteps = 4;
-  isLastStep = false;
-  submitted = false;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -125,16 +118,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     private wizardService: WizardService,
     private messageService: MessageService,
     private sanitizer: DomSanitizer,
-        private sharedService: SharedService,
-    private api: ApiService,
-    private cdr: ChangeDetectorRef
+    private api: ApiService
   ) {
-        this.sharedService.currentTitle.subscribe(title => {
-      this.title = title;
-    });
-    this.sharedService.currentLogo.subscribe(logo => {
-      this.logo = logo;
-    });
   }
 
   ngOnInit(): void {
@@ -253,9 +238,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.validateForm();
     });
 
-    this.currentStepIndex = this.wizardService.getCurrentStepIndex();
-    this.totalSteps = this.wizardService.getTotalSteps();
-    this.isLastStep = this.currentStepIndex === this.totalSteps - 1;
   }
 
 
@@ -1242,27 +1224,16 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   addVisitorToTable(): void {
-    console.log('=== ADD VISITOR START ===');
-    console.log('MultipleVisitorEnabled:', this.settings?.MultipleVisitorEnabled);
-    console.log('savedVisitors before:', this.savedVisitors);
-    console.log('savedVisitors.length before:', this.savedVisitors.length);
-
     // Only allow adding visitors to table if multi-visitor setting is enabled
     if (!this.settings?.MultipleVisitorEnabled) {
-      console.log('Multiple visitor not enabled, returning');
       return;
     }
 
-    this.submitted = true;
     const currentForm = this.getCurrentVisitorForm();
-    console.log('Current form value:', currentForm.value);
-    console.log('Is form valid:', this.isCurrentVisitorFormValid());
 
     if (this.isCurrentVisitorFormValid()) {
       // Save to savedVisitors array for multiple visitor functionality
       const visitorData = { ...currentForm.value };
-
-      console.log('Visitor data before processing:', visitorData);
 
       // Initialize Visitor_IC and IdentityNo fields
       visitorData.Visitor_IC = visitorData.visitor_id || '';
@@ -1278,18 +1249,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
       // Automatically set "myself" flag based on safety briefing and first visitor
       if (this.settings?.Visitor?.[0]?.SafetyBriefingEnabled && this.savedVisitors.length === 0) {
-        visitorData.myself = true;
+        visitorData.myself = true; // First visitor is always "myself" when safety briefing is enabled
       } else {
-        visitorData.myself = false;
+        visitorData.myself = false; // Subsequent visitors are not "myself"
       }
-
-      console.log('Visitor data after processing:', visitorData);
-      console.log('Editing index:', this.editingVisitorIndex);
 
       if (this.editingVisitorIndex >= 0) {
         // Update existing visitor
         this.savedVisitors[this.editingVisitorIndex] = visitorData;
-        this.editingVisitorIndex = -1;
+        this.editingVisitorIndex = -1; // Reset editing index
 
         this.messageService.add({
           severity: 'success',
@@ -1297,11 +1265,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           detail: 'Visitor updated successfully'
         });
       } else {
-        // Add new visitor - use spread to create new array reference
-        this.savedVisitors = [...this.savedVisitors, visitorData];
-
-        console.log('savedVisitors after adding:', this.savedVisitors);
-        console.log('savedVisitors.length after:', this.savedVisitors.length);
+        // Add new visitor
+        this.savedVisitors.push(visitorData);
 
         this.messageService.add({
           severity: 'success',
@@ -1309,10 +1274,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           detail: 'Visitor saved successfully'
         });
       }
-
-      // Force change detection
-      console.log('Calling detectChanges');
-      this.cdr.detectChanges();
 
       // Save form data immediately after visitor modification
       this.saveFormDataToWizard();
@@ -1337,8 +1298,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           currentForm.get(field)?.markAsPristine();
         }
       });
-
-      console.log('=== ADD VISITOR END ===');
 
     } else {
       // Mark only visitor-related required fields as touched to show validation errors
@@ -1648,20 +1607,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   validateForm(): boolean {
-    this.submitted = true;
     // Handle validation based on multiple visitor setting
     if (this.settings?.MultipleVisitorEnabled) {
       // Multiple visitor mode: Check if at least one visitor is saved, or if current form can be auto-added
       let isValid = this.savedVisitors.length > 0;
 
       // If no visitors saved yet, check if current form is valid and has data
-      if (isValid && this.isCurrentVisitorFormValid() && this.hasFormData()) {
+      if (!isValid && this.isCurrentVisitorFormValid() && this.hasFormData()) {
         console.log('Auto-adding visitor before proceeding to next step');
         this.addVisitorToTable();
         isValid = this.savedVisitors.length > 0;
       }
 
-      if (isValid) {
+      if (!isValid) {
         this.messageService.add({
           severity: 'error',
           summary: 'Validation Error',
@@ -1828,10 +1786,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    // Show error if: field is invalid AND (submitted OR touched OR dirty)
+    // Show error if: field is invalid AND (touched OR dirty OR has required error and is empty)
     const hasBeenInteracted = control.dirty || control.touched;
+    //const isRequiredAndEmpty = control.hasError('required') && !control.value;
 
-    return control.invalid && (this.submitted || hasBeenInteracted);
+    return control.invalid && (hasBeenInteracted);
   }
 
   isFieldRequired(field: string): boolean {
@@ -1842,8 +1801,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     const hasBeenInteracted = control.dirty || control.touched;
     const isRequiredAndEmpty = control.hasError('required') && !control.value;
-
-    return control.invalid && isRequiredAndEmpty && (this.submitted || hasBeenInteracted);
+    return control.invalid && isRequiredAndEmpty && hasBeenInteracted;
   }
 
   isFieldInvalidRequired(field: string): boolean {
@@ -1852,10 +1810,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    // Show error if: field is invalid AND (submitted OR touched OR dirty)
     const hasBeenInteracted = control.dirty || control.touched;
-
-    return control.invalid && (this.submitted || hasBeenInteracted);
+    return control.invalid && hasBeenInteracted;
   }
 
   handleFileUpload(event: any, visitorIndex?: number): void {
@@ -2305,6 +2261,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
   }
 
+  goBack(): void {
+    const prev = this.wizardService.getCurrentStepIndex() - 1;
+    if (prev >= 0) this.wizardService.requestStepChange(prev);
+  }
 
+  goNext(): void {
+    // validateForm() handles markAllAsTouched, setStepValid, and toast errors internally
+    const isValid = this.validateForm();
+    if (isValid) {
+      this.wizardService.navigateToNextStep();
+    }
+  }
 
 }
