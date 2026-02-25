@@ -1047,10 +1047,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       work_permit_ref: [savedData.work_permit_ref || ''],
       remarks: [isPreFilledData ? (visitorData.remarks || '') : (savedData.remarks || '')],
       host: [isPreFilledData ? (visitorData.hostId || '') : (this.shouldHideHostControl ? this.defaultHostId : (savedData.host || ''))], // Prioritize visitor ack data over default host
-      startDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.startDate || '')], // Use appointment start time
+      startDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.startDate || '')],
       visitDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.visitDate || '')],
       visitTime: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.visitTime || '')],
-      endDate: [isPreFilledData ? (this.parseDate(visitorData.endTime) || '') : (savedData.endDate || '')], // Use appointment end time
+      endDate: [isPreFilledData ? (this.parseDate(visitorData.endTime) || '') : (savedData.endDate || '')],
+      endTime: [isPreFilledData ? (this.parseDate(visitorData.endTime) || '') : (savedData.endTime || '')],
       department: [isPreFilledData ? (visitorData.departmentId || '') : (savedData.department || '')], // Use appointment department
       appointmentDate: [savedData.appointmentDate || ''],
       timeSlot: [savedData.timeSlot || ''],
@@ -1150,6 +1151,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Sync visitDate and visitTime to startDate
     this.generalForm.get('visitDate')?.valueChanges.subscribe(() => this.syncStartDate());
     this.generalForm.get('visitTime')?.valueChanges.subscribe(() => this.syncStartDate());
+
+    // Sync endDate and endTime to combined endDate
+    this.generalForm.get('endDate')?.valueChanges.subscribe(() => this.syncEndDate());
+    this.generalForm.get('endTime')?.valueChanges.subscribe(() => this.syncEndDate());
   }
 
   private syncStartDate(): void {
@@ -1165,6 +1170,20 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.generalForm.get('startDate')?.setValue(combined, { emitEvent: false });
     } else if (visitDate) {
       this.generalForm.get('startDate')?.setValue(visitDate, { emitEvent: false });
+    }
+  }
+
+  private syncEndDate(): void {
+    const endDate = this.generalForm.get('endDate')?.value;
+    const endTime = this.generalForm.get('endTime')?.value;
+
+    if (endDate && endTime) {
+      const combined = new Date(endDate);
+      const time = new Date(endTime);
+      combined.setHours(time.getHours());
+      combined.setMinutes(time.getMinutes());
+      combined.setSeconds(0);
+      this.generalForm.get('endDate')?.setValue(combined, { emitEvent: false });
     }
   }
 
@@ -1521,6 +1540,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('visitDate', this.settings.StartEndDtEnabled, true);
     this.setupControl('visitTime', this.settings.StartEndDtEnabled, false);
     this.setupControl('endDate', this.settings.StartEndDtEnabled, true);
+    this.setupControl('endTime', this.settings.StartEndDtEnabled, false);
 
     this.setupControl('profile', this.settings.ImageUploadEnabled, this.settings.ImageUploadRequired);
 
@@ -1724,7 +1744,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       formData = { ...this.generalForm.value }; // Normal flow only includes enabled controls
     }
 
-    // Combine visitDate and visitTime into startDate if they exist
+    // Combine visitDate and visitTime into startDate
     if (formData.visitDate && formData.visitTime) {
       const combined = new Date(formData.visitDate);
       const time = new Date(formData.visitTime);
@@ -1734,6 +1754,16 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       formData.startDate = combined;
     } else if (formData.visitDate) {
       formData.startDate = formData.visitDate;
+    }
+
+    // Combine endDate and endTime into endDate
+    if (formData.endDate && formData.endTime) {
+      const combined = new Date(formData.endDate);
+      const time = new Date(formData.endTime);
+      combined.setHours(time.getHours());
+      combined.setMinutes(time.getMinutes());
+      combined.setSeconds(0);
+      formData.endDate = combined;
     }
 
     if (this.settings?.MultipleVisitorEnabled) {

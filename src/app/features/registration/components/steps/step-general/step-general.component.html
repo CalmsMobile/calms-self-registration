@@ -120,7 +120,7 @@
       @if (settings?.StartEndDtEnabled) {
       <div class="form-field">
         <label class="field-label" for="visitDate">
-          {{'visit_date' | translate}}
+          {{'appointment_start_date_&_time' | translate}}
           <span class="required-star">*</span>
         </label>
         <p-datepicker id="visitDate" formControlName="visitDate" [showIcon]="true"
@@ -141,6 +141,44 @@
         </label>
         <p-datepicker id="visitTime" formControlName="visitTime" [showIcon]="true" iconDisplay="input" [timeOnly]="true"
           hourFormat="12" [placeholder]="'--:-- --'" [class.error]="isFieldInvalidRequired('visitTime')"
+          appendTo="body">
+          <ng-template #inputicon let-clickcallback="clickCallback">
+            <i class="pi pi-clock" (click)="clickcallback($event)"></i>
+          </ng-template>
+        </p-datepicker>
+      </div>
+      }
+
+      <!-- End Date -->
+      @if (settings?.StartEndDtEnabled) {
+      <div class="form-field">
+        <label class="field-label" for="endDate">
+          {{'appointment_end_date_&_time' | translate}}
+          <span class="required-star">*</span>
+        </label>
+        <p-datepicker id="endDate" formControlName="endDate" [showIcon]="true"
+          [showTime]="false" [class.error]="isFieldInvalidRequired('endDate')"
+          [minDate]="generalForm.get('visitDate')?.value || minDate"
+          [disabled]="!generalForm.get('visitDate')?.value"
+          [placeholder]="'appointment_end_date_&_time' | translate:'placeholder'"
+          appendTo="body">
+        </p-datepicker>
+        @if (isFieldInvalidRequired('endDate')) {
+        <small class="error-message">Please select end date</small>
+        }
+      </div>
+      }
+
+      <!-- End Time -->
+      @if (settings?.StartEndDtEnabled) {
+      <div class="form-field">
+        <label class="field-label" for="endTime">
+          {{'appointment_end_time' | translate}}
+        </label>
+        <p-datepicker id="endTime" formControlName="endTime" [showIcon]="true" iconDisplay="input"
+          [timeOnly]="true" hourFormat="12" [placeholder]="'--:-- --'"
+          [disabled]="!generalForm.get('endDate')?.value"
+          [class.error]="isFieldInvalidRequired('endTime')"
           appendTo="body">
           <ng-template #inputicon let-clickcallback="clickCallback">
             <i class="pi pi-clock" (click)="clickcallback($event)"></i>
@@ -312,7 +350,7 @@
       @if (enableVimsApptTimeSlot && !enableFBInSelfReg) {
       <div class="form-field">
         <label class="field-label" for="appointmentDate">
-          Appointment Date <span class="required-star">*</span>
+          {{'appointment_date' | translate}} <span class="required-star">*</span>
         </label>
         <p-datepicker id="appointmentDate" formControlName="appointmentDate" [showIcon]="true"
           [class.error]="isFieldInvalidRequired('appointmentDate')" [minDate]="minDate"
@@ -328,7 +366,7 @@
       @if (enableVimsApptTimeSlot && !enableFBInSelfReg && timeSlotList.length > 0) {
       <div class="form-field">
         <label class="field-label" for="timeSlot">
-          Time Slot <span class="required-star">*</span>
+          {{'time_slot' | translate}} <span class="required-star">*</span>
         </label>
         <p-select id="timeSlot" [options]="timeSlotList" formControlName="timeSlot" placeholder="Select time slot"
           optionLabel="Name" optionValue="Code" (onChange)="onTimeslotChange($event)"
@@ -345,7 +383,7 @@
       generalForm.get('facilityBooking')?.value)) {
       <div class="form-field">
         <label class="field-label" for="sharedDate">
-          Date <span class="required-star">*</span>
+          {{'date' | translate}} <span class="required-star">*</span>
         </label>
         <p-datepicker id="sharedDate" formControlName="sharedDate" [showIcon]="true"
           [class.error]="isFieldInvalidRequired('sharedDate')" [minDate]="minDate" placeholder="Select date"
@@ -360,7 +398,7 @@
       @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value) {
       <div class="form-field">
         <label class="field-label" for="facilityPurpose">
-          Purpose <span class="required-star">*</span>
+          {{'purpose' | translate}} <span class="required-star">*</span>
         </label>
         <p-select id="facilityPurpose" [options]="facilityPurposeList" formControlName="facilityPurpose"
           placeholder="Select purpose" optionLabel="PurposeName" optionValue="PurposeCode"
@@ -375,7 +413,7 @@
       @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value) {
       <div class="form-field">
         <label class="field-label" for="facilitySelection">
-          Facility <span class="required-star">*</span>
+          {{'facility' | translate}} <span class="required-star">*</span>
         </label>
         <p-select id="facilitySelection" [options]="facilityMasterList" formControlName="facilitySelection"
           placeholder="Select facility" optionLabel="FacilityName" optionValue="FacilityCode"
@@ -393,7 +431,7 @@
       timeSlotList.length > 0) {
       <div class="form-field">
         <label class="field-label" for="timeSlot">
-          Time Slot <span class="required-star">*</span>
+          {{'time_slot' | translate}} <span class="required-star">*</span>
         </label>
         <p-select id="timeSlot" [options]="timeSlotList" formControlName="timeSlot" placeholder="Select time slot"
           optionLabel="Name" optionValue="Code" (onChange)="onTimeslotChange($event)"
@@ -408,7 +446,7 @@
       <!-- Facility Booking Slots Display -->
       @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value && facilityBookingSlots.length > 0) {
       <div class="form-field full-width">
-        <label class="field-label">Available Booking Slots</label>
+        <label class="field-label">{{'available_booking_slots' | translate}}</label>
         <div class="booking-legend">
           <div class="legend-item">
             <div class="legend-color available"></div>
