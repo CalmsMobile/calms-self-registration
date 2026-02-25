@@ -545,12 +545,13 @@
       }
       }
 
-      <!-- Add Visitor Button (only when multiple visitor setting is enabled and form is valid) -->
-      @if (settings?.MultipleVisitorEnabled && isCurrentVisitorFormValid()) {
+      <!-- Add Visitor Button (only when multiple visitor setting is enabled) -->
+      @if (isMultipleVisitorMode) {
       <div class="add-visitor-section full-width">
         <p-button type="button" icon="pi pi-plus"
           [label]="editingVisitorIndex >= 0 ? ('update_visitor' | translate) : ('add_guest' | translate)"
-          (onClick)="addVisitorToTable()" styleClass="add-guest-btn">
+          (onClick)="addVisitorToTable()" styleClass="add-guest-btn"
+          [disabled]="!isCurrentVisitorFormValid()">
         </p-button>
         @if (editingVisitorIndex >= 0) {
         <p-button type="button" icon="pi pi-times" label="Cancel" (onClick)="cancelEdit()" [outlined]="true"
@@ -563,7 +564,7 @@
     </form>
 
     <!-- Saved Visitors Table -->
-    @if (settings?.MultipleVisitorEnabled && savedVisitors.length > 0) {
+    @if (isMultipleVisitorMode && savedVisitors.length > 0) {
     <div class="saved-visitors-section">
       <h4 class="saved-title">{{'saved_visitors' | translate}}</h4>
 

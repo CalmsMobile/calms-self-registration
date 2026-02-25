@@ -1003,8 +1003,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   private initializeForm(): void {
     const savedData = this.wizardService.getFormData('general') || {};
 
-    // Check if multiple visitor mode is enabled
-    this.isMultipleVisitorMode = this.settings?.MultipleVisitorEnabled || false;
+    // Check if multiple visitor mode is enabled (check both flat and nested path)
+    this.isMultipleVisitorMode = this.settings?.MultipleVisitorEnabled || this.settings?.Visitor?.[0]?.MultipleVisitorEnabled || false;
 
     // For multiple visitor mode, if we have saved visitors, don't pre-fill individual fields
     // This prevents showing previous visitor data when navigating back
@@ -1244,7 +1244,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   addVisitorToTable(): void {
     // Only allow adding visitors to table if multi-visitor setting is enabled
-    if (!this.settings?.MultipleVisitorEnabled) {
+    if (!this.isMultipleVisitorMode) {
       return;
     }
 
@@ -1445,7 +1445,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   editSavedVisitor(index: number): void {
     // Only allow editing if multi-visitor setting is enabled
-    if (!this.settings?.MultipleVisitorEnabled) {
+    if (!this.isMultipleVisitorMode) {
       return;
     }
 
@@ -1469,7 +1469,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   deleteSavedVisitor(index: number): void {
     // Only allow deleting if multi-visitor setting is enabled
-    if (!this.settings?.MultipleVisitorEnabled) {
+    if (!this.isMultipleVisitorMode) {
       return;
     }
 
@@ -1628,7 +1628,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   validateForm(): boolean {
     // Handle validation based on multiple visitor setting
-    if (this.settings?.MultipleVisitorEnabled) {
+    if (this.isMultipleVisitorMode) {
       // Multiple visitor mode: Check if at least one visitor is saved, or if current form can be auto-added
       let isValid = this.savedVisitors.length > 0;
 
@@ -1766,7 +1766,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       formData.endDate = combined;
     }
 
-    if (this.settings?.MultipleVisitorEnabled) {
+    if (this.isMultipleVisitorMode) {
       // Include saved visitors when multiple visitor is enabled
       formData.visitors = this.savedVisitors;
       formData.savedVisitors = this.savedVisitors; // Keep both for compatibility

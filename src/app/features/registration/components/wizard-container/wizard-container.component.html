@@ -19,9 +19,11 @@
     @if (showWizardNav) {
     <div class="wizard-navigation">
       <div class="navigation-button">
+        @if (activeIndex > 0) {
         <p-button styleClass="back-btn" [label]="'previous_step' | translate" icon="pi pi-arrow-left"
-          (onClick)="onPrevious()" [disabled]="activeIndex === 0">
+          (onClick)="onPrevious()">
         </p-button>
+        }
         <p-button styleClass="next-btn"
           [label]="activeIndex === items.length - 1 ? ('submit' | translate) : ('next_step' | translate)"
           [icon]="activeIndex === items.length - 1 ? 'pi pi-check' : 'pi pi-arrow-right'" iconPos="right"
