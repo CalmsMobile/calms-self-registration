@@ -66,7 +66,6 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     this.showSharedLayout = !this.ownLayoutRoutes.some(r => this.router.url.includes(r));
     this.showWizardNav = this.showSharedLayout && !this.ownNavRoutes.some(r => this.router.url.includes(r));
     this.initializeSteps();
-    this.completedSteps = new Array(4).fill(false); // Initialize for 4 steps
 
     if (!this.wizardService.getSettings()) {
       this.api.GetVisitorDeclarationSettings(this.wizardService.currentBranchID, this.wizardService.selectedVisitCategory)
@@ -75,6 +74,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
             this.wizardService.setSettings(allSettings);
             this.wizardService.updateEnabledSteps(this.wizardService.getSettings());
             this.items = this.wizardService.getEnabledSteps();
+            this.completedSteps = new Array(this.items.length).fill(false);
             this.isLoading = false;
           },
           error: (error) => {
@@ -86,6 +86,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
       // Settings already exist, update enabled steps and stop loading
       this.wizardService.updateEnabledSteps(this.wizardService.getSettings());
       this.items = this.wizardService.getEnabledSteps();
+      this.completedSteps = new Array(this.items.length).fill(false);
       this.isLoading = false;
     }
   }

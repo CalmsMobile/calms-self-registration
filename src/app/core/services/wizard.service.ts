@@ -86,13 +86,15 @@ export class WizardService {
   }
 
   clearSessionStorage() {
-    sessionStorage.removeItem('currentBranchID'); 
+    sessionStorage.removeItem('currentBranchID');
     sessionStorage.removeItem('selectedVisitCategory');
     sessionStorage.removeItem('currentBranchName');
-    sessionStorage.removeItem('wizardFormData');
     this.currentBranchID = '';
     this.selectedVisitCategory = '';
     this.currentBranchName = '';
+    this.formDataStore.next({});
+    this.visitorAckData = null;
+    this.masterData = null;
     this.updateHeader();
   }
 
@@ -171,7 +173,7 @@ export class WizardService {
 
   updateEnabledSteps(settings: any): void {
     if (!settings) return;
-    
+
     console.log(settings);
     this.enabledSteps = [
       {
@@ -187,7 +189,7 @@ export class WizardService {
       {
         label: 'Prohibited Items',
         routerLink: 'prohibited-items',
-        visible: true
+        visible: settings?.MaterialDeclareEnabled
       },
       {
         label: 'Safety Brief',
@@ -222,35 +224,10 @@ export class WizardService {
       ...currentData,
       [step]: data
     };
-    
-    console.log(`=== WIZARD SERVICE UPDATE [${step}] ===`);
-    console.log('Previous data:', currentData);
-    console.log('New data for step:', data);
-    console.log('Updated combined data:', updatedData);
-    console.log('==========================================');
-    
     this.formDataStore.next(updatedData);
-    
-    // Also save to sessionStorage for persistence across page refreshes
-    sessionStorage.setItem('wizardFormData', JSON.stringify(updatedData));
   }
 
   getFormData(step?: string): any {
-    // Try to restore from sessionStorage if formDataStore is empty
-    const currentData = this.formDataStore.value;
-    if (Object.keys(currentData).length === 0) {
-      const savedData = sessionStorage.getItem('wizardFormData');
-      if (savedData) {
-        try {
-          const parsedData = JSON.parse(savedData);
-          this.formDataStore.next(parsedData);
-          return step ? parsedData[step] : parsedData;
-        } catch (e) {
-          console.error('Error parsing saved form data:', e);
-        }
-      }
-    }
-    
     return step ? this.formDataStore.value[step] : this.formDataStore.value;
   }
 
