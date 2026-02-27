@@ -1829,9 +1829,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    const hasBeenInteracted = control.dirty || control.touched;
     const isRequiredAndEmpty = control.hasError('required') && !control.value;
-    return control.invalid && isRequiredAndEmpty && hasBeenInteracted;
+    return control.invalid && isRequiredAndEmpty;
   }
 
   isFieldInvalidRequired(field: string): boolean {
@@ -1841,7 +1840,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     const hasBeenInteracted = control.dirty || control.touched;
-    return control.invalid && hasBeenInteracted;
+    const isRequiredAndEmpty = control.hasError('required') && !control.value;
+    return control.invalid && (hasBeenInteracted || isRequiredAndEmpty);
   }
 
   handleFileUpload(event: any, visitorIndex?: number): void {
