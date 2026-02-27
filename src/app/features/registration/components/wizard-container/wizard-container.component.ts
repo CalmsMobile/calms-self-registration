@@ -125,15 +125,29 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
       this.wizardService.setPageSettings(pageSettings);
     });*/
 
-    this.api.GetEnabledAppointmentUDFCtrlData(this.wizardService.currentBranchID)
-      .subscribe({
-        next: (udfSettings: any) => {
-          this.wizardService.setUdfSettings(udfSettings);
-        },
-        error: (error) => {
-          console.error('Error loading UDF settings:', error);
-        }
-      });
+    // forkJoin({
+    //   existing: this.api.GetEnabledAppointmentUDFCtrlData(this.wizardService.currentBranchID),
+    //   mock: this.api.GetUDFDetails(this.wizardService.currentBranchID)
+    // }).subscribe({
+    //   next: ({ existing, mock }: any) => {
+    //     const merged = {
+    //       Table: [...(existing?.Table || []), ...(mock?.Table || [])],
+    //       Table1: [...(existing?.Table1 || []), ...(mock?.Table1 || [])]
+    //     };
+    //     this.wizardService.setUdfSettings(merged);
+    //   },
+    //   error: (error) => {
+    //     console.error('Error loading UDF settings:', error);
+    //   }
+    // });
+    this.api.GetUDFDetails(this.wizardService.currentBranchID).subscribe({
+      next: (data: any) => {
+        this.wizardService.setUdfSettings(data);
+      },
+      error: (error) => {
+        console.error('Error loading UDF settings:', error);
+      }
+    });
   }
 
   onStepChange(event: any): void {

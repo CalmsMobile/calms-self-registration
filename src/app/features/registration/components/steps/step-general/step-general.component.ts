@@ -45,6 +45,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   settings: any = {};
   minDate = new Date();
+  minVisitTime: Date | undefined = undefined;
+  minEndTime: Date | undefined = undefined;
   showIdExpiryField = false;
   selectedIdTypeData: any = null;
   gbShowMemberId = false;
@@ -478,8 +480,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.api.GetApptTimeSlot(currentDate, branchId, categoryId).subscribe((response: any) => {
       if (response?.Table?.length) {
         this.timeSlotList = response.Table;
+        // Now that slots are available, make timeSlot required
+        this.setupControl('timeSlot', true, true);
       } else {
         this.timeSlotList = [];
+        // No slots available, timeSlot not required
+        this.setupControl('timeSlot', true, false);
       }
     });
   }
@@ -1087,7 +1093,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           if (udf.UDFCtrlType === 10 && udf.MaxLength) {
             validators.push(Validators.maxLength(udf.MaxLength));
           }
-          if (this.settings && this.settings[udf.UDFName + "Required"]) {
+          if ((this.settings && this.settings[udf.UDFName + "Required"]) || udf.Required) {
             validators.push(Validators.required);
           }
 
@@ -1149,8 +1155,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     // Sync visitDate and visitTime to startDate
-    this.generalForm.get('visitDate')?.valueChanges.subscribe(() => this.syncStartDate());
-    this.generalForm.get('visitTime')?.valueChanges.subscribe(() => this.syncStartDate());
+    this.generalForm.get('visitDate')?.valueChanges.subscribe((visitDate) => {
+      this.syncStartDate();
+      this.updateMinVisitTime(visitDate);
+    });
+    this.generalForm.get('visitTime')?.valueChanges.subscribe((visitTime) => {
+      this.syncStartDate();
+      this.updateMinEndTime(visitTime);
+    });
 
     // Sync endDate and endTime to combined endDate
     this.generalForm.get('endDate')?.valueChanges.subscribe(() => this.syncEndDate());
@@ -1184,6 +1196,36 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       combined.setMinutes(time.getMinutes());
       combined.setSeconds(0);
       this.generalForm.get('endDate')?.setValue(combined, { emitEvent: false });
+    }
+  }
+
+  private updateMinVisitTime(visitDate: Date | null): void {
+    if (!visitDate) {
+      this.minVisitTime = undefined;
+      return;
+    }
+    const today = new Date();
+    const isToday =
+      visitDate.getFullYear() === today.getFullYear() &&
+      visitDate.getMonth() === today.getMonth() &&
+      visitDate.getDate() === today.getDate();
+    this.minVisitTime = isToday ? new Date() : undefined;
+  }
+
+  private updateMinEndTime(visitTime: Date | null): void {
+    if (!visitTime) {
+      this.minEndTime = undefined;
+      return;
+    }
+    this.minEndTime = visitTime;
+    // Clear endTime if it is no longer after visitTime
+    const endTimeCtrl = this.generalForm.get('endTime');
+    if (endTimeCtrl?.value) {
+      const endVal: Date = endTimeCtrl.value;
+      if (endVal.getHours() < visitTime.getHours() ||
+        (endVal.getHours() === visitTime.getHours() && endVal.getMinutes() <= visitTime.getMinutes())) {
+        endTimeCtrl.setValue(null);
+      }
     }
   }
 
@@ -1392,7 +1434,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Add UDF required fields
       if (this.udfSettings) {
         this.udfSettings.forEach((udf: any) => {
-          if (udf.Enabled && this.settings[udf.UDFName + "Required"]) {
+          if (udf.Enabled && (this.settings[udf.UDFName + "Required"] || udf.Required)) {
             requiredFields.push(udf.UDFName);
           }
         });
@@ -1517,15 +1559,22 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!this.settings) return;
 
     // Setup each control based on settings
+    this.setupControl('title', this.settings.TitleEnabled, this.settings.TitleRequired);
     this.setupControl('fullName', this.settings.NameEnabled, this.settings.NameRequired, this.settings.NameMinLength);
     this.setupControl('email', this.settings.EmailEnabled, this.settings.EmailRequired);
+    if (this.settings.EmailEnabled) {
+      this.generalForm.get('email')?.addValidators(Validators.email);
+      this.generalForm.get('email')?.updateValueAndValidity();
+    }
     this.setupControl('phone', this.settings.ContactNumberEnabled, this.settings.ContactNumberRequired);
 
     // Setup visitor_id with PDPA max length restriction if enabled
     const visitorIdMaxLength = this.isSingaporePDPARequired ? 4 : undefined;
     this.setupControl('visitor_id', this.settings.IdProofEnabled, this.settings.IdProofRequired, undefined, visitorIdMaxLength);
+    this.setupControl('visitor_id_type', this.settings.IdTypeEnabled, this.settings.IdTypeRequired);
 
     this.setupControl('gender', this.settings.GenderEnabled, this.settings.GenderRequired);
+    this.setupControl('department', this.settings.HostDepartmentEnabled, this.settings.HostDepartmentRequired);
     this.setupControl('visitor_company', this.settings.CompanyEnabled, this.settings.CompanyRequired);
     this.setupControl('vehicle_number', this.settings.VehicleNumberEnabled, this.settings.VehicleNumberRequired);
     this.setupControl('vehicle_brand', this.settings.VehicleBrandModelEnabled, this.settings.VehicleBrandModelRequired);
@@ -1549,7 +1598,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.setupControl(
           udf.UDFName,
           true,
-          this.settings[udf.UDFName + "Required"],
+          this.settings[udf.UDFName + "Required"] || udf.Required,
           udf.UDFCtrlType === 10 ? udf.MinLength : undefined,
           udf.UDFCtrlType === 10 ? udf.MaxLength : undefined
         );
@@ -1560,7 +1609,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this.enableVimsApptTimeSlot && !this.enableFBInSelfReg) {
       // Only appointment flow - use separate date picker
       this.setupControl('appointmentDate', true, true);
-      this.setupControl('timeSlot', true, true);
+      // timeSlot is only required when slots have been loaded (user must pick a date first)
+      this.setupControl('timeSlot', true, this.timeSlotList.length > 0);
     }
 
     if (this.enableFBInSelfReg) {
@@ -1578,7 +1628,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     // Setup time slot for VIMS when both features are enabled and facility booking is not checked
     if (this.enableVimsApptTimeSlot && this.enableFBInSelfReg && !this.generalForm.get('facilityBooking')?.value) {
-      this.setupControl('timeSlot', true, true);
+      // timeSlot is only required when slots have been loaded (user must pick a date first)
+      this.setupControl('timeSlot', true, this.timeSlotList.length > 0);
     }
   }
 
@@ -1829,7 +1880,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return false;
     }
 
-    const isRequiredAndEmpty = control.hasError('required') && !control.value;
+    const isEmpty = !control.value || (Array.isArray(control.value) && control.value.length === 0);
+    const isRequiredAndEmpty = control.hasError('required') && isEmpty;
     return control.invalid && isRequiredAndEmpty;
   }
 
@@ -1840,8 +1892,27 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     const hasBeenInteracted = control.dirty || control.touched;
-    const isRequiredAndEmpty = control.hasError('required') && !control.value;
+    const isEmpty = !control.value || (Array.isArray(control.value) && control.value.length === 0);
+    const isRequiredAndEmpty = control.hasError('required') && isEmpty;
     return control.invalid && (hasBeenInteracted || isRequiredAndEmpty);
+  }
+
+  isEmailFormatError(): boolean {
+    const ctrl = this.generalForm.get('email');
+    if (!ctrl || !ctrl.enabled) return false;
+    return ctrl.hasError('email') && (ctrl.dirty || ctrl.touched);
+  }
+
+  isFieldMinLengthError(field: string): boolean {
+    const control = this.generalForm.get(field);
+    if (!control || !control.enabled) return false;
+    return control.hasError('minlength') && (control.dirty || control.touched);
+  }
+
+  isFieldMaxLengthError(field: string): boolean {
+    const control = this.generalForm.get(field);
+    if (!control || !control.enabled) return false;
+    return control.hasError('maxlength') && (control.dirty || control.touched);
   }
 
   handleFileUpload(event: any, visitorIndex?: number): void {

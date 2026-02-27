@@ -1,4 +1,6 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
 import { ApiBaseService } from './api-base.service';
 import { environment } from '../../../environments/environment';
 import { VisitorAck, VisitorAckResponse } from '../models/visitor-ack.model';
@@ -9,7 +11,7 @@ import { VisitorAck, VisitorAckResponse } from '../models/visitor-ack.model';
 export class ApiService {
   private baseUrl = environment.apiURL;
   private deviceParams = { "Authorize": { "AuDeviceUID": "WEB", "AuHostSeqId": "291" } };
-  constructor(private apiBase: ApiBaseService) { }
+  constructor(private apiBase: ApiBaseService, private http: HttpClient) { }
 
   getMasterDetails() {
     const loParam = { ...this.deviceParams, "RefBranchSeqId": "" };
@@ -34,6 +36,44 @@ export class ApiService {
   GetEnabledAppointmentUDFCtrlData(psBranch: string) {
     const loParam = { "RefBranchSeqId": psBranch };
     return this.apiBase.post(`${this.baseUrl}/GetEnabledAppointmentUDFCtrlData`, loParam);
+  }
+
+  GetUDFDetails(_psBranch: string) {
+    return this.http.get<any[]>('assets/mock/GetUDFDetails.json').pipe(
+      map((response: any[]) => {
+        const visitorSettings: any[] = response[0].Data.VisitorUDFSettings || [];
+
+        const table: any[] = [];
+        const table1: any[] = [];
+
+        visitorSettings.forEach((udf: any, index: number) => {
+          table.push({
+            UDFName: udf.UDFName,
+            UDFCtrlType: udf.UDFCtrlType,
+            Enabled: true,
+            MinLength: udf.MinLength,
+            MaxLength: udf.MaxLength,
+            Required: udf.Required || false,
+            IsAnyDateRange: udf.IsAnyDateRange || 0,
+            Caption: udf.UDFName,
+            Placeholder: '',
+            apptUDFSetSeqId: index
+          });
+
+          if (udf.dropdown) {
+            udf.dropdown.split(',').forEach((opt: string, optIndex: number) => {
+              table1.push({
+                RefApptUDFSetSeqId: index,
+                ApptUDFDetSetSeqId: optIndex + 1,
+                Name: opt.trim()
+              });
+            });
+          }
+        });
+
+        return { Table: table, Table1: table1 };
+      })
+    );
   }
 
   GetActiveLanguages() {
