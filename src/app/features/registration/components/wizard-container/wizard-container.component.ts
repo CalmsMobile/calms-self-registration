@@ -18,6 +18,7 @@ import { LabelService } from '../../../../core/services/label.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { SharedService } from '../../../../shared/shared.service';
+import { getSortedSteps } from '../../../../core/models/step-config.model';
 
 @Component({
   selector: 'app-wizard-container',
@@ -349,29 +350,20 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
   }
 
   private initializeSteps(): void {
-    this.items = [
-      { label: 'General Info', command: (event) => this.navigateToStep(0) },
-      { label: 'Attachments', command: (event) => this.navigateToStep(1) },
-      { label: 'Prohibited Items', command: (event) => this.navigateToStep(2) },
-      { label: 'Safety Brief', command: (event) => this.navigateToStep(3) },
-      { label: 'Questionnaire', command: (event) => this.navigateToStep(4) }
-    ];
+    this.items = getSortedSteps().map((step, index) => ({
+      label: step.defaultLabel,
+      command: () => this.navigateToStep(index)
+    }));
   }
 
   private updateStepLabels(): void {
     if (!this.items?.length) return;
-    this.items.forEach(item => {
-      switch ((item as any).routerLink) {
-        case 'general-info':
-          item.label = this.labelService.getLabel('general_information', 'caption') || 'General Info'; break;
-        case 'attachments':
-          item.label = this.labelService.getLabel('additional_documents', 'caption') || 'Attachments'; break;
-        case 'prohibited-items':
-          item.label = this.labelService.getLabel('prohibited_items', 'caption') || 'Prohibited Items'; break;
-        case 'safety-brief':
-          item.label = this.labelService.getLabel('safety_briefing', 'caption') || 'Safety Brief'; break;
-        case 'questionnaire':
-          item.label = this.labelService.getLabel('questionnaire', 'caption') || 'Questionnaire'; break;
+    const enabledSteps = this.wizardService.getEnabledSteps();
+    enabledSteps.forEach((menuItem, index) => {
+      const stepConfig = getSortedSteps().find(s => s.routerLink === (menuItem as any).routerLink);
+      if (stepConfig && this.items[index]) {
+        const translated = this.labelService.getLabel(stepConfig.translationKey, 'caption');
+        this.items[index].label = translated || stepConfig.defaultLabel;
       }
     });
   }

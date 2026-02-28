@@ -82,12 +82,12 @@
       }
 
       <!-- Category Selection -->
-      @if (selectedBranch && categories.length !== 1) {
+      @if (selectedBranch && categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
       <div class="form-field">
         <label for="category_input">{{ 'category' | translate }}</label>
         <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
           [placeholder]="'category' | translate:'placeholder'" optionLabel="visitor_ctg_desc" inputId="category_input"
-          optionValue="visitor_ctg_id" [showClear]="!isAppointmentFlow" [disabled]="isAppointmentFlow"
+          optionValue="visitor_ctg_id" [showClear]="true"
           [autofocus]="false" appendTo="body">
         </p-select>
       </div>

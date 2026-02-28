@@ -59,6 +59,7 @@ export class HomePageComponent {
   selectedCategory: any | null = null;
   private _isLoading = true;
   isBranchFromQuery = false;
+  isCategoryFromQuery = false;
   hasInvalidUrl = false;
   errorMessage = '';
   bgImageUrl = '';
@@ -180,6 +181,18 @@ export class HomePageComponent {
         this.selectedBranch = parseInt(decryptedBranch);
         this.isBranchFromQuery = true;
 
+        // Check for category query parameter (c)
+        if (params['c']) {
+          const decryptedCategory = this.decryptParam(params['c']);
+          if (decryptedCategory) {
+            // Use numeric ID if it's a number, otherwise use as string code
+            this.selectedCategory = !isNaN(Number(decryptedCategory))
+              ? parseInt(decryptedCategory)
+              : decryptedCategory;
+            this.isCategoryFromQuery = true;
+          }
+        }
+
         // Trigger branch change after branches are loaded
         this.loadBranches().then(() => {
           if (this.selectedBranch && this.branchList.some(b => b.RefBranchSeqID === this.selectedBranch)) {
@@ -218,6 +231,14 @@ export class HomePageComponent {
 
   private getDencryptedStr(encodedStr: string): string {
     return encodedStr.replace(/\D/g, "");
+  }
+
+  private decryptParam(encodedStr: string): string {
+    try {
+      return atob(encodedStr);
+    } catch {
+      return encodedStr;
+    }
   }
 
   /**
@@ -507,8 +528,8 @@ export class HomePageComponent {
     if (this.categories.length === 1) {
       this.selectedCategory = this.categories[0].visitor_ctg_id;
       this.onCategoryChange(this.selectedCategory);
-    } else if (this.isAppointmentFlow && this.selectedCategory) {
-      // In appointment flow, ensure the selected category is valid
+    } else if ((this.isAppointmentFlow || this.isCategoryFromQuery) && this.selectedCategory) {
+      // In appointment flow or category from query param, ensure the selected category is valid
       const validCategory = this.categories.find(c => c.visitor_ctg_id === this.selectedCategory);
       if (validCategory) {
         this.onCategoryChange(this.selectedCategory);
@@ -520,8 +541,8 @@ export class HomePageComponent {
     this.isLoading = true;
     let lsBranchName = this.getBranchName(newValue);
 
-    // Don't reset category in appointment flow as it's pre-selected
-    if (!this.isAppointmentFlow) {
+    // Don't reset category in appointment flow or when set from query param
+    if (!this.isAppointmentFlow && !this.isCategoryFromQuery) {
       this.selectedCategory = null;
       this.categories = [];
     }

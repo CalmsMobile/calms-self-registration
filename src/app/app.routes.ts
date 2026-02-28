@@ -8,6 +8,28 @@ import { StepQuestionnaireComponent } from './features/registration/components/s
 import { HomePageComponent } from './features/registration/components/home-page/home-page.component';
 import { WizardContainerComponent } from './features/registration/components/wizard-container/wizard-container.component';
 import { RegistrationStatusPageComponent } from './features/registration/components/registration-status/registration-status-page.component';
+import { getSortedSteps } from './core/models/step-config.model';
+
+/**
+ * Map step IDs to their Angular components.
+ * When adding a new step, register its component here.
+ */
+const STEP_COMPONENT_MAP: Record<string, any> = {
+  'general-info': StepGeneralComponent,
+  'attachments': StepAttachmentsComponent,
+  'prohibited-items': StepProhibitedItemsComponent,
+  'safety-brief': StepSafetyBriefComponent,
+  'questionnaire': StepQuestionnaireComponent,
+};
+
+/** Generate child routes from STEP_CONFIG */
+const stepChildRoutes = getSortedSteps()
+  .filter(step => STEP_COMPONENT_MAP[step.id])
+  .map((step, index) => ({
+    path: step.routerLink,
+    component: STEP_COMPONENT_MAP[step.id],
+    data: { stepIndex: index }
+  }));
 
 export const routes: Routes = [
   { 
@@ -18,33 +40,8 @@ export const routes: Routes = [
     path: 'register',
     component: WizardContainerComponent,
     children: [
-      { path: '', redirectTo: 'general-info', pathMatch: 'full' },
-      { 
-        path: 'general-info',
-        component: StepGeneralComponent,
-        data: { stepIndex: 0 }
-      },
-      { 
-        path: 'attachments',
-        component: StepAttachmentsComponent,
-        data: { stepIndex: 1 }
-      },
-      { 
-        path: 'prohibited-items',
-        component: StepProhibitedItemsComponent,
-        data: { stepIndex: 2 }
-      },
-      { 
-        path: 'safety-brief',
-        component: StepSafetyBriefComponent,
-        data: { stepIndex: 3 }
-      },
-      { 
-        path: 'questionnaire',
-        component: StepQuestionnaireComponent,
-        data: { stepIndex: 4 }
-      },
-      // Add other steps similarly...
+      { path: '', redirectTo: getSortedSteps()[0]?.routerLink || 'general-info', pathMatch: 'full' },
+      ...stepChildRoutes
     ]
   },
   {

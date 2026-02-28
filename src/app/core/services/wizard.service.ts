@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { SharedService } from '../../shared/shared.service';
 import { Router } from '@angular/router';
 import { VisitorAck, VisitorSelfData } from '../models/visitor-ack.model';
+import { getEnabledSteps, StepConfig } from '../models/step-config.model';
 
 @Injectable({
   providedIn: 'root'
@@ -174,34 +175,12 @@ export class WizardService {
   updateEnabledSteps(settings: any): void {
     if (!settings) return;
 
-    console.log(settings);
-    this.enabledSteps = [
-      {
-        label: 'General Info',
-        routerLink: 'general-info',
-        visible: true
-      },
-      {
-        label: 'Attachments',
-        routerLink: 'attachments',
-        visible: settings?.AttachmentUploadEnabled
-      },
-      {
-        label: 'Prohibited Items',
-        routerLink: 'prohibited-items',
-        visible: settings?.MaterialDeclareEnabled
-      },
-      {
-        label: 'Safety Brief',
-        routerLink: 'safety-brief',
-        visible: settings?.SafetyBriefVideoEnabled
-      },
-      {
-        label: 'Questionnaire',
-        routerLink: 'questionnaire',
-        visible: settings?.QuestionnaireEnabled
-      }
-    ].filter(step => step.visible);
+    const enabledConfigs: StepConfig[] = getEnabledSteps(settings);
+
+    this.enabledSteps = enabledConfigs.map(step => ({
+      label: step.defaultLabel,
+      routerLink: step.routerLink
+    }));
 
     this.totalSteps = this.enabledSteps.length;
   }
