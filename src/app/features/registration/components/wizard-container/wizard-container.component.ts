@@ -100,6 +100,20 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
         this.navigateToStep(step, step < this.wizardService.getCurrentStepIndex());
       });
 
+    // Subscribe to skip requests (bypasses validation)
+    this.wizardService.onSkipRequest
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(step => {
+        this.navigateToStep(step, true);
+      });
+
+    // Subscribe to submission requests from child components
+    this.wizardService.onSubmitRequest
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.submitRegistration();
+      });
+
     // Subscribe to language changes
     this.languageService.currentLanguage$
       .pipe(takeUntil(this.destroy$))
@@ -126,15 +140,29 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
       this.wizardService.setPageSettings(pageSettings);
     });*/
 
-    this.api.GetEnabledAppointmentUDFCtrlData(this.wizardService.currentBranchID)
-      .subscribe({
-        next: (udfSettings: any) => {
-          this.wizardService.setUdfSettings(udfSettings);
-        },
-        error: (error) => {
-          console.error('Error loading UDF settings:', error);
-        }
-      });
+    // forkJoin({
+    //   existing: this.api.GetEnabledAppointmentUDFCtrlData(this.wizardService.currentBranchID),
+    //   mock: this.api.GetUDFDetails(this.wizardService.currentBranchID)
+    // }).subscribe({
+    //   next: ({ existing, mock }: any) => {
+    //     const merged = {
+    //       Table: [...(existing?.Table || []), ...(mock?.Table || [])],
+    //       Table1: [...(existing?.Table1 || []), ...(mock?.Table1 || [])]
+    //     };
+    //     this.wizardService.setUdfSettings(merged);
+    //   },
+    //   error: (error) => {
+    //     console.error('Error loading UDF settings:', error);
+    //   }
+    // });
+    this.api.GetUDFDetails(this.wizardService.currentBranchID).subscribe({
+      next: (data: any) => {
+        this.wizardService.setUdfSettings(data);
+      },
+      error: (error) => {
+        console.error('Error loading UDF settings:', error);
+      }
+    });
   }
 
   onStepChange(event: any): void {

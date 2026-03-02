@@ -195,7 +195,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
 
   skipStep(): void {
     this.saveFormData();
-    this.wizardService.navigateToNextStep();
+    this.wizardService.skipToNextStep();
   }
 
   proceedToNext(): void {

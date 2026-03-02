@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { map } from 'rxjs/operators';
 import { ApiBaseService } from './api-base.service';
 import { environment } from '../../../environments/environment';
 import { VisitorAck, VisitorAckResponse } from '../models/visitor-ack.model';
@@ -36,8 +37,47 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/GetEnabledAppointmentUDFCtrlData`, loParam);
   }
 
+  GetUDFDetails(psBranch: string) {
+    const loParam = { "RefBranchSeqId": psBranch };
+    return this.apiBase.post(`${this.baseUrl}/GetUDFDetails`, loParam).pipe(
+      map((data: any) => {
+        const visitorSettings: any[] = data.WalkinUDFSettings || [];
+
+        const table: any[] = [];
+        const table1: any[] = [];
+
+        visitorSettings.forEach((udf: any, index: number) => {
+          table.push({
+            UDFName: udf.UDFName,
+            UDFCtrlType: udf.UDFCtrlType,
+            Enabled: true,
+            MinLength: udf.MinLength,
+            MaxLength: udf.MaxLength,
+            Required: udf.Required || false,
+            IsAnyDateRange: udf.IsAnyDateRange || 0,
+            Caption: udf.UDFName,
+            Placeholder: '',
+            apptUDFSetSeqId: index
+          });
+
+          if (udf.dropdown) {
+            udf.dropdown.split(',').forEach((opt: string, optIndex: number) => {
+              table1.push({
+                RefApptUDFSetSeqId: index,
+                ApptUDFDetSetSeqId: optIndex + 1,
+                Name: opt.trim()
+              });
+            });
+          }
+        });
+
+        return { Table: table, Table1: table1 };
+      })
+    );
+  }
+
   GetActiveLanguages() {
-    return this.apiBase.post(`${environment.portalApiURL}/GetLanguages`,'');
+    return this.apiBase.post(`${environment.portalApiURL}/GetLanguages`, '');
   }
 
   SaveVisitorRegistration(registrationData: any) {
@@ -64,10 +104,10 @@ export class ApiService {
     // Format current date as "MM/dd/yyyy HH:mm:ss"
     const now = new Date();
     const formattedCurrentDate = this.formatCurrentDate(now);
-    
-    const loParam = { 
-      SEQ_ID: encryptedAppointmentCode, 
-      CurrentDate: formattedCurrentDate 
+
+    const loParam = {
+      SEQ_ID: encryptedAppointmentCode,
+      CurrentDate: formattedCurrentDate
     };
     return this.apiBase.post(`${this.baseUrl}/GetVisitorAck`, loParam);
   }
@@ -78,8 +118,8 @@ export class ApiService {
   }
 
   GetBranchHostData(psBranch: string, preloadHostData: boolean = true) {
-    const loParam = { 
-      ...this.deviceParams, 
+    const loParam = {
+      ...this.deviceParams,
       "SEQ_ID": psBranch,
       "PreloadHostData": preloadHostData ? 1 : 0
     };
@@ -87,7 +127,7 @@ export class ApiService {
   }
 
   GetApptTimeSlot(CurrentDate: string, psBranch: string, CategoryId: string) {
-    const loParam = { ...this.deviceParams, "RefBranchSeqId": psBranch, "CurrentDate": CurrentDate, "CategoryId": CategoryId };
+    const loParam = { ...this.deviceParams, "Branch": psBranch, "CurrentDate": CurrentDate, "CategoryId": CategoryId };
     return this.apiBase.post(`${this.baseUrl}/GetApptTimeSlot`, loParam);
   }
 
@@ -146,7 +186,7 @@ export class ApiService {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const seconds = String(date.getSeconds()).padStart(2, '0');
-    
+
     return `${month}/${day}/${year} ${hours}:${minutes}:${seconds}`;
   }
 
