@@ -166,9 +166,9 @@ export class HomePageComponent {
           this.errorMessage = 'Invalid visitor acknowledgment link: Failed to process appointment data';
           this.isLoading = false;
         }
-      } else if (params['b']) {
+      } else if (params['bc']) {
         // Branch flow: decrypt branch parameter
-        const decryptedBranch = this.getDencryptedStr(params['b']);
+        const decryptedBranch = this.getDencryptedStr(params['bc']);
         if (!decryptedBranch || isNaN(parseInt(decryptedBranch))) {
           // Invalid decryption result
           this.hasInvalidUrl = true;
@@ -182,8 +182,8 @@ export class HomePageComponent {
         this.isBranchFromQuery = true;
 
         // Check for category query parameter (c)
-        if (params['c']) {
-          const decryptedCategory = this.decryptParam(params['c']);
+        if (params['vc']) {
+          const decryptedCategory = this.decryptParam(params['vc']);
           if (decryptedCategory) {
             // Use numeric ID if it's a number, otherwise use as string code
             this.selectedCategory = !isNaN(Number(decryptedCategory))
