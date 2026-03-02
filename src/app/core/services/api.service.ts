@@ -17,18 +17,24 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/GetMasterDetails`, loParam);
   }
 
-  GetVisitorDeclarationSettings(psBranch: string, psVisitorCtg: string) {
-    const loParam = { ...this.deviceParams, "Branch": psBranch, "RefVisitorCateg": psVisitorCtg };
+  GetVisitorDeclarationSettings(psBranch: string, psVisitorCtg: string, refCode?: string, refCatCode?: string) {
+    const loParam = refCode
+      ? { ...this.deviceParams, "RefCode": refCode, ...(refCatCode ? { "RefCatCode": refCatCode } : { "RefVisitorCateg": psVisitorCtg }) }
+      : { ...this.deviceParams, "Branch": psBranch, "RefVisitorCateg": psVisitorCtg };
     return this.apiBase.post(`${this.baseUrl}/GetVisitorDeclarationSettings`, loParam);
   }
 
-  GetVisitorSelfRegistrationPageSetup(psBranch: string) {
-    const loParam = { "RefBranchSeqId": psBranch };
+  GetVisitorSelfRegistrationPageSetup(psBranch: string, refCode?: string) {
+    const loParam = refCode
+      ? { "RefCode": refCode }
+      : { "RefBranchSeqId": psBranch };
     return this.apiBase.post(`${this.baseUrl}/GetVisitorSelfRegistrationPageSetup`, loParam);
   }
 
-  GetSelfRegistrationPageSettingData(psBranch: string, psLanguage?: number) {
-    const loParam = { "RefBranchSeqId": psBranch, "RefLanguageId": psLanguage };
+  GetSelfRegistrationPageSettingData(psBranch: string, psLanguage?: number, refCode?: string) {
+    const loParam = refCode
+      ? { "RefCode": refCode, "RefLanguageId": psLanguage }
+      : { "RefBranchSeqId": psBranch, "RefLanguageId": psLanguage };
     return this.apiBase.post(`${this.baseUrl}/GetSelfRegistrationPageSettingData`, loParam);
   }
 
@@ -117,12 +123,18 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/SearchExistHost`, loParam);
   }
 
-  GetBranchHostData(psBranch: string, preloadHostData: boolean = true) {
-    const loParam = {
-      ...this.deviceParams,
-      "SEQ_ID": psBranch,
-      "PreloadHostData": preloadHostData ? 1 : 0
-    };
+  GetBranchHostData(psBranch: string, preloadHostData: boolean = true, refCode?: string) {
+    const loParam = refCode
+      ? {
+          ...this.deviceParams,
+          "RefCode": refCode,
+          "PreloadHostData": preloadHostData ? 1 : 0
+        }
+      : {
+          ...this.deviceParams,
+          "SEQ_ID": psBranch,
+          "PreloadHostData": preloadHostData ? 1 : 0
+        };
     return this.apiBase.post(`${this.baseUrl}/GetBranchHostDataForSelf`, loParam);
   }
 

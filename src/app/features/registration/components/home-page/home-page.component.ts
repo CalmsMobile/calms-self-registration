@@ -135,11 +135,18 @@ export class HomePageComponent {
   ngOnInit() {
     // Check for query parameters and handle different flows
     this.route.queryParams.subscribe(async params => {
-      if (params['q']) {
+      // Normalize query param keys to lowercase for case-insensitive matching
+      const p: { [key: string]: string } = {};
+      Object.keys(params).forEach(key => p[key.toLowerCase()] = params[key]);
+
+      if (p['q']) {
         // Appointment flow: use encrypted appointment code directly
         try {
           this.isAppointmentFlow = true;
-          const encryptedCode = params['q'];
+          const encryptedCode = p['q'];
+
+          // Store raw encrypted param
+          this.wizardService.appointmentCode = encryptedCode || '';
 
           if (!encryptedCode) {
             this.hasInvalidUrl = true;
@@ -166,24 +173,21 @@ export class HomePageComponent {
           this.errorMessage = 'Invalid visitor acknowledgment link: Failed to process appointment data';
           this.isLoading = false;
         }
-      } else if (params['bc']) {
-        // Branch flow: decrypt branch parameter
-        const decryptedBranch = this.getDencryptedStr(params['bc']);
-        if (!decryptedBranch || isNaN(parseInt(decryptedBranch))) {
-          // Invalid decryption result
-          this.hasInvalidUrl = true;
-          this.errorMessage = 'Invalid URL: Unable to decrypt branch parameter';
-          this.isLoading = false;
-          return;
-        }
-
-        // Set the decrypted branch value
-        this.selectedBranch = parseInt(decryptedBranch);
+      } else if (p['bc']) {
+        const bcParam = p['bc'];
+        // Branch flow: pass encrypted code directly to APIs, let API resolve the branch
         this.isBranchFromQuery = true;
 
-        // Check for category query parameter (c)
-        if (params['vc']) {
-          const decryptedCategory = this.decryptParam(params['vc']);
+        // Store raw encrypted branch param
+        this.wizardService.refCode = bcParam;
+
+        // Check for category query parameter (vc)
+        const vcParam = p['vc'];
+        if (vcParam) {
+          // Store raw encrypted category param
+          this.wizardService.refCatCode = vcParam;
+
+          const decryptedCategory = this.decryptParam(vcParam);
           if (decryptedCategory) {
             // Use numeric ID if it's a number, otherwise use as string code
             this.selectedCategory = !isNaN(Number(decryptedCategory))
@@ -193,16 +197,11 @@ export class HomePageComponent {
           }
         }
 
-        // Trigger branch change after branches are loaded
+        // Directly call APIs using RefCode (don't use onBranchChange which needs a resolved branch)
         this.loadBranches().then(() => {
-          if (this.selectedBranch && this.branchList.some(b => b.RefBranchSeqID === this.selectedBranch)) {
-            this.onBranchChange(this.selectedBranch);
-          } else {
-            // Branch not found in available branches
-            this.hasInvalidUrl = true;
-            this.errorMessage = 'Invalid URL: Branch not found or not available';
-            this.isLoading = false;
-          }
+          this.getPageSettings();
+          this.loadBranchHostDataAsync(null);
+          this.sharedService.setLanguageVisibility(false);
         });
       } else {
         // Normal flow without query parameter
@@ -225,6 +224,13 @@ export class HomePageComponent {
         // Only update labels if we have a selected branch
         if (this.selectedBranch) {
           await this.getSelfRegistrationSettings();
+
+          // For query param flow: language may arrive after onBranchChange already ran,
+          // so re-trigger the APIs that depend on language being set
+          if (this.isBranchFromQuery && !this.isAppointmentFlow) {
+            this.getPageSettings();
+            this.loadBranchHostDataAsync(this.selectedBranch);
+          }
         }
       });
   }
@@ -380,10 +386,10 @@ export class HomePageComponent {
   }
 
   async getSelfRegistrationSettings() {
-    if (this.selectedBranch) {
+    if (this.selectedBranch && this.currentLanguage) {
       try {
         // Load labels through the centralized service and get the response data
-        const responseData = await this.labelService.loadLabels(this.selectedBranch, this.currentLanguage.LanguageId);
+        const responseData = await this.labelService.loadLabels(this.selectedBranch, this.currentLanguage.LanguageId, this.wizardService.refCode || undefined);
 
         // Update page title based on the loaded labels
         const wizardTitle = this.labelService.getLabel('wizardTitle', 'caption');
@@ -478,7 +484,7 @@ export class HomePageComponent {
             if (data.Table10.length) {
               this.branchList = data.Table10;
 
-              if (data.Table10.length == 1) {
+              if (data.Table10.length == 1 && !this.isBranchFromQuery) {
                 this.selectedBranch = data.Table10[0];
                 this.wizardService.currentBranchID = this.selectedBranch;
                 this.loadCategories();
@@ -548,16 +554,16 @@ export class HomePageComponent {
     }
 
     try {
-      // Load labels first (this will handle branch translation too)
-      await this.getSelfRegistrationSettings();
+      // Fire all API calls in parallel for faster loading
+      const settingsPromise = this.getSelfRegistrationSettings();
+      this.getPageSettings();
+      this.loadBranchHostDataAsync(newValue);
 
-      // Then load categories after labels are ready
+      // Load categories (uses already-loaded master data, no API dependency)
       this.loadCategories();
 
-      this.getPageSettings();
-
-      // Load branch host data asynchronously in the background
-      this.loadBranchHostDataAsync(newValue);
+      // Await settings to ensure labels are ready for UI
+      await settingsPromise;
 
       this.sharedService.updateHeader(
         lsBranchName,
@@ -578,7 +584,7 @@ export class HomePageComponent {
   onCategoryChange(newValue: any) {
     this.isLoading = true;
 
-    this.api.GetVisitorDeclarationSettings(this.selectedBranch, newValue)
+    this.api.GetVisitorDeclarationSettings(this.selectedBranch, newValue, this.wizardService.refCode || undefined, this.wizardService.refCatCode || undefined)
       .subscribe({
         next: (allSettings: any) => {
           this.wizardService.setSettings(allSettings);
@@ -595,16 +601,40 @@ export class HomePageComponent {
   }
 
   getPageSettings() {
-    this.api.GetVisitorSelfRegistrationPageSetup(this.selectedBranch)
+    this.api.GetVisitorSelfRegistrationPageSetup(this.selectedBranch, this.wizardService.refCode || undefined)
       .subscribe((pageSettings: any) => {
         this.wizardService.setPageSettings(pageSettings);
         if (pageSettings?.Table?.length) {
+          // Update selectedBranch with the resolved RefBranchSeqId from API
+          if (pageSettings.Table[0].RefBranchSeqId) {
+            this.selectedBranch = pageSettings.Table[0].RefBranchSeqId;
+            this.wizardService.currentBranchID = this.selectedBranch;
+          }
+
           this.sharedService.updateHeader(
             pageSettings.Table[0].SchoolName,
             environment.proURL + "Handler/PortalImageHandler.ashx?ScreenType=20&RefSlno=" + this.selectedBranch
           );
 
           this.bgImageUrl = environment.proURL + "FS/" + pageSettings.Table[0].ImgPathUrl;
+
+          // Once branch is resolved from API, load categories and handle auto-selection
+          if (this.isBranchFromQuery) {
+            // Now that branch is resolved, load labels/settings
+            this.getSelfRegistrationSettings();
+
+            this.loadCategories();
+
+            if (this.isCategoryFromQuery && this.selectedCategory) {
+              // vc param exists: trigger category settings
+              this.onCategoryChange(this.selectedCategory);
+            }
+
+            // Turn off loading for bc flow
+            setTimeout(() => {
+              this.isLoading = false;
+            }, 300);
+          }
         }
       });
   }
@@ -688,17 +718,17 @@ export class HomePageComponent {
    * Load branch host data asynchronously in the background
    * This prevents loading delay when user navigates to general step
    */
-  private loadBranchHostDataAsync(branchId: string): void {
-    // Only load if we have a valid branch ID
-    if (!branchId) {
-      console.log('No branch ID provided for async host data loading');
+  private loadBranchHostDataAsync(branchId: string | null): void {
+    // Only load if we have a valid branch ID or refCode
+    if (!branchId && !this.wizardService.refCode) {
+      console.log('No branch ID or refCode provided for async host data loading');
       return;
     }
 
     console.log('Loading branch host data asynchronously for branch:', branchId);
 
     // Load branch host data in the background without blocking UI
-    this.api.GetBranchHostData(branchId, true).subscribe({
+    this.api.GetBranchHostData(branchId || '', true, this.wizardService.refCode || undefined).subscribe({
       next: (response: any) => {
         console.log('Branch host data loaded asynchronously:', response);
         // Store the data in wizard service for use in general step

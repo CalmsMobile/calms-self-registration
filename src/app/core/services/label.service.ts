@@ -54,7 +54,7 @@ export class LabelService {
     return this.labels$.value;
   }
 
-  async loadLabels(branchId: any, languageId: number): Promise<any> {
+  async loadLabels(branchId: any, languageId: number, refCode?: string): Promise<any> {
     // Skip if same branch and language ID
     if (branchId === this.currentBranch && languageId === this.currentLanguage) {
       return null; // Return null when cached
@@ -64,7 +64,7 @@ export class LabelService {
     this.currentLanguage = languageId;
 
     return new Promise((resolve) => {
-      this.api.GetSelfRegistrationPageSettingData(branchId, languageId)
+      this.api.GetSelfRegistrationPageSettingData(branchId, languageId, refCode)
         .subscribe((settings: any) => {
           if (settings?.Table?.length) {
             this.updateLabels(settings.Table);
