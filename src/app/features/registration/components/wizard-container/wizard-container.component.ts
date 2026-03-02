@@ -99,6 +99,20 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
         this.navigateToStep(step, step < this.wizardService.getCurrentStepIndex());
       });
 
+    // Subscribe to skip requests (bypasses validation)
+    this.wizardService.onSkipRequest
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(step => {
+        this.navigateToStep(step, true);
+      });
+
+    // Subscribe to submission requests from child components
+    this.wizardService.onSubmitRequest
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.submitRegistration();
+      });
+
     // Subscribe to language changes
     this.languageService.currentLanguage$
       .pipe(takeUntil(this.destroy$))

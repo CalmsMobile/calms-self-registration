@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, Sanitizer } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { WizardService } from '../../../../../core/services/wizard.service';
@@ -91,6 +91,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   dialogVisitorForm: FormGroup = new FormGroup({});
   enableFBInSelfReg = false;
   timeSlotList: any[] = [];
+  timeSlotsLoaded = false;
   facilityPurposeList: any[] = [];
   facilityMasterList: any[] = [];
   facilityBookingSlots: any[] = [];
@@ -126,6 +127,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     console.log('=== STEP-GENERAL INIT START ===');
+
+    // Set up validation request handler once (not inside initializeForm which may be called multiple times)
+    this.wizardService.onValidationRequest.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.validateForm();
+    });
 
     this.wizardService.getSettings$().pipe(
       filter(settings => settings !== null),
@@ -173,8 +181,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this.masterData) {
       this.meetingFloorList = this.masterData.Table2 || [];
       this.purposeList = this.masterData.Table3 || [];
-      this.departmentList = this.masterData.Table5 || [];
-      this.hostDepartmentList = this.masterData.Table5 || [];
+      this.departmentList = (this.masterData.Table5 || []).map((d: any) => ({
+        ...d,
+        DName: d.DName || d.dept_desc || d.Department || '',
+        DepartmentSeqId: d.DepartmentSeqId ?? d.dept_id ?? d.DName ?? d.Department ?? ''
+      }));
+      this.hostDepartmentList = [...this.departmentList];
       // Note: meetingLocList and titleList will be loaded from GetBranchHostDataTable12      this.countryList = this.masterData.Table13 || [];
 
       // Table12 Type list from Table12 correct field mapping
@@ -236,10 +248,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.wizardService.onValidationRequest.subscribe(() => {
-      this.validateForm();
-    });
-
   }
 
 
@@ -268,6 +276,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     // Clear time slot when date changes
+    this.timeSlotsLoaded = false;
+    this.timeSlotList = [];
     this.generalForm.patchValue({ timeSlot: '' });
   }
 
@@ -477,16 +487,16 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   private loadTimeSlots(currentDate: string, branchId: string, categoryId: string) {
+    this.timeSlotsLoaded = false;
     this.api.GetApptTimeSlot(currentDate, branchId, categoryId).subscribe((response: any) => {
       if (response?.Table?.length) {
         this.timeSlotList = response.Table;
-        // Now that slots are available, make timeSlot required
         this.setupControl('timeSlot', true, true);
       } else {
         this.timeSlotList = [];
-        // No slots available, timeSlot not required
         this.setupControl('timeSlot', true, false);
       }
+      this.timeSlotsLoaded = true;
     });
   }
 
@@ -693,7 +703,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           ...hostDepartments
         ];
 
-        // Remove duplicates based on DName
+        // Normalize first — Table5 uses dept_id/dept_desc; hostDepartments use DName/DepartmentSeqId.
+        // Map all to consistent DName + DepartmentSeqId so p-select never writes undefined.
+        this.departmentList = this.departmentList.map((d: any) => ({
+          ...d,
+          DName: d.DName || d.dept_desc || d.Department || d.DeptName || d.Name || '',
+          DepartmentSeqId: d.DepartmentSeqId ?? d.dept_id ?? d.DName ?? d.Department ?? ''
+        }));
+
+        // Remove duplicates based on normalized DName
         this.departmentList = this.departmentList.filter((dept, index, self) =>
           index === self.findIndex(d => d.DName === dept.DName)
         );
@@ -1095,6 +1113,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           }
           if ((this.settings && this.settings[udf.UDFName + "Required"]) || udf.Required) {
             validators.push(Validators.required);
+          }
+          if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
+            validators.push(this.dateRangeValidator);
           }
 
           formControls[controlName] = [controlValue, validators];
@@ -1585,7 +1606,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('work_permit_ref', this.settings.WorkPermitRefEnabled, false);
     this.setupControl('remarks', this.settings.RemarksEnabled, this.settings.RemarksRequired);
     this.setupControl('host', this.settings.HostNameEnabled, this.settings.HostNameRequired);
-    this.setupControl('startDate', this.settings.StartEndDtEnabled, true);
+    this.setupControl('startDate', this.settings.StartEndDtEnabled, false); // derived from visitDate+visitTime, not user-facing
     this.setupControl('visitDate', this.settings.StartEndDtEnabled, true);
     this.setupControl('visitTime', this.settings.StartEndDtEnabled, false);
     this.setupControl('endDate', this.settings.StartEndDtEnabled, true);
@@ -1602,6 +1623,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           udf.UDFCtrlType === 10 ? udf.MinLength : undefined,
           udf.UDFCtrlType === 10 ? udf.MaxLength : undefined
         );
+        if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
+          const ctrl = this.generalForm.get(udf.UDFName);
+          if (ctrl) {
+            ctrl.addValidators(this.dateRangeValidator);
+            ctrl.updateValueAndValidity();
+          }
+        }
       }
     });
 
@@ -1678,122 +1706,85 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   validateForm(): boolean {
-    // Handle validation based on multiple visitor setting
-    if (this.isMultipleVisitorMode) {
-      // Multiple visitor mode: Check if at least one visitor is saved, or if current form can be auto-added
-      let isValid = this.savedVisitors.length > 0;
-
-      // If no visitors saved yet, check if current form is valid and has data
-      if (!isValid && this.isCurrentVisitorFormValid() && this.hasFormData()) {
-        console.log('Auto-adding visitor before proceeding to next step');
-        this.addVisitorToTable();
-        isValid = this.savedVisitors.length > 0;
+    // Mark all enabled non-FormArray controls as touched/dirty to trigger error display.
+    // FormArrays (e.g. visitors) are validated separately — skip them here.
+    Object.keys(this.generalForm.controls).forEach(controlName => {
+      const control = this.generalForm.get(controlName);
+      if (control?.enabled && !(control instanceof FormArray)) {
+        control.markAsTouched();
+        control.markAsDirty();
+        control.updateValueAndValidity({ onlySelf: true });
       }
+    });
 
-      if (!isValid) {
+    // Compute validity across non-FormArray controls only.
+    // The visitors FormArray validity depends on its children (visitor sub-forms),
+    // which are validated separately via isCurrentVisitorFormValid().
+    const isValid = Object.keys(this.generalForm.controls).every(name => {
+      const c = this.generalForm.get(name);
+      if (!c || c instanceof FormArray) return true; // Skip FormArrays
+      return !c.enabled || c.valid;
+    });
+
+    // Additional custom validation for visitor ID and expiry
+    if (isValid) {
+      const idValidation = this.validateVisitorIdAndExpiry();
+      if (!idValidation.isValid) {
         this.messageService.add({
           severity: 'error',
           summary: 'Validation Error',
-          detail: 'Please add at least one visitor to proceed'
+          detail: idValidation.errorMessage
         });
-      } else {
-        // Save the form data including saved visitors when validation passes
-        this.saveFormDataToWizard();
+        this.wizardService.setStepValid(false);
+        return false;
       }
-
-      console.log('Multi-visitor validation - Saved visitors count:', this.savedVisitors.length);
-      console.log('Multi-visitor validation result:', isValid);
-
-      // Set step validity for wizard service
-      this.wizardService.setStepValid(isValid);
-      return isValid;
-    } else {
-      // Single visitor mode: Validate current form only (normal wizard behavior)
-      // Only validate enabled controls
-      Object.keys(this.generalForm.controls).forEach(controlName => {
-        const control = this.generalForm.get(controlName);
-        if (control?.enabled) {
-          control.markAsTouched();
-          control.markAsDirty();
-          control.updateValueAndValidity({ onlySelf: true });
-        }
-      });
-
-      // Force parent form to recalculate validity after all controls updated
-      this.generalForm.updateValueAndValidity();
-
-      const isValid = this.generalForm.valid;
-
-      if (!isValid) {
-        const invalidControls: Record<string, any> = {};
-        Object.keys(this.generalForm.controls).forEach(name => {
-          const c = this.generalForm.get(name);
-          if (c && c.invalid && c.enabled) {
-            invalidControls[name] = {
-              errors: c.errors,
-              value: c.value,
-              validators: c.validator ? 'has validators' : 'no validators'
-            };
-          }
-        });
-        console.log('validateForm() - invalid controls:', invalidControls);
-      }
-
-      // Additional custom validation for visitor ID and expiry
-      if (isValid) {
-        const idValidation = this.validateVisitorIdAndExpiry();
-        if (!idValidation.isValid) {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Validation Error',
-            detail: idValidation.errorMessage
-          });
-          this.wizardService.setStepValid(false);
-          return false;
-        }
-      }
-
-      if (isValid) {
-        // For appointment flow with single visitor, ensure visitor is added to savedVisitors
-        if (this.isAppointmentFlow && this.hasFormData() && this.savedVisitors.length === 0) {
-          console.log('Auto-adding visitor for appointment flow');
-          this.addVisitorToTable();
-        }
-
-        // Save the form data when validation passes
-        this.saveFormDataToWizard();
-      }
-
-      console.log('Single visitor validation result:', isValid);
-      console.log('Form errors:', this.generalForm.errors);
-
-      // Set step validity for wizard service
-      this.wizardService.setStepValid(isValid);
-
-      if (!isValid) {
-        this.scrollToFirstError();
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Validation Error',
-          detail: 'Please fill all required fields correctly'
-        });
-      }
-
-      return isValid;
     }
+
+    if (isValid) {
+      // In multiple visitor mode, auto-save the current form as a visitor entry if none saved yet
+      if (this.isMultipleVisitorMode && this.savedVisitors.length === 0) {
+        console.log('Auto-saving visitor entry before proceeding');
+        const visitorData = { ...this.generalForm.value };
+        visitorData.Visitor_IC = visitorData.visitor_id || '';
+        visitorData.IdentityNo = visitorData.visitor_id || '';
+        if (this.settings?.Visitor?.[0]?.SafetyBriefingEnabled) {
+          visitorData.myself = true;
+        }
+        this.savedVisitors.push(visitorData);
+      }
+
+      // Save the form data when validation passes
+      this.saveFormDataToWizard();
+    }
+
+    console.log('Form validation result:', isValid, '| isMultipleVisitorMode:', this.isMultipleVisitorMode);
+    console.log('Form errors:', this.generalForm.errors);
+
+    this.wizardService.setStepValid(isValid);
+
+    if (!isValid) {
+      this.scrollToFirstError();
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Validation Error',
+        detail: 'Please fill all required fields correctly'
+      });
+    }
+
+    return isValid;
   }
 
   private saveFormDataToWizard(): void {
     // Save current form data and saved visitors to wizard service
-    // In appointment flow, include disabled field values too
-    let formData: any;
+    // Only include enabled controls — disabled controls are hidden by settings and should not appear in saved data
+    let formData: any = {};
 
-    if (this.isAppointmentFlow) {
-      // Get both enabled and disabled values for appointment flow
-      formData = { ...this.generalForm.getRawValue() }; // getRawValue includes disabled controls
-    } else {
-      formData = { ...this.generalForm.value }; // Normal flow only includes enabled controls
-    }
+    Object.keys(this.generalForm.controls).forEach(key => {
+      const ctrl = this.generalForm.get(key);
+      if (ctrl && ctrl.enabled) {
+        formData[key] = ctrl.value;
+      }
+    });
 
     // Combine visitDate and visitTime into startDate
     if (formData.visitDate && formData.visitTime) {
@@ -1895,6 +1886,21 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const isEmpty = !control.value || (Array.isArray(control.value) && control.value.length === 0);
     const isRequiredAndEmpty = control.hasError('required') && isEmpty;
     return control.invalid && (hasBeenInteracted || isRequiredAndEmpty);
+  }
+
+  private readonly dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (!value || !Array.isArray(value)) return null;
+    if (value[0] && !value[1]) {
+      return { dateRange: true };
+    }
+    return null;
+  };
+
+  isDateRangeIncomplete(field: string): boolean {
+    const ctrl = this.generalForm.get(field);
+    if (!ctrl || !ctrl.enabled) return false;
+    return ctrl.hasError('dateRange') && (ctrl.dirty || ctrl.touched);
   }
 
   isEmailFormatError(): boolean {
@@ -2069,14 +2075,23 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Filter hosts by selected department (handle both formats)
+    // Filter hosts by selected department — case-insensitive to handle mismatches
+    // between Table5 dept_id (e.g. "ADMIN") and host DEPARTMENT_REFID (e.g. "admin")
+    const deptLower = selectedDepartment.toLowerCase();
     const filteredHosts = this.originalHostData.filter((host: any) => {
-      // Check multiple possible department field names and values
-      return host.Department === selectedDepartment ||
-        host.DName === selectedDepartment ||
-        host.DEPARTMENT_REFID === selectedDepartment ||
-        host.DepartmentSeqId === selectedDepartment;
+      return (host.Department || '').toLowerCase() === deptLower ||
+        (host.DName || '').toLowerCase() === deptLower ||
+        (host.DEPARTMENT_REFID || '').toLowerCase() === deptLower ||
+        (host.DepartmentSeqId || '').toLowerCase() === deptLower;
     });
+
+    // If no hosts match the department, fall back to showing all hosts
+    // so the user can still select a host (and the previous selection is preserved)
+    if (filteredHosts.length === 0) {
+      console.log('No hosts found for department, showing all hosts');
+      this.hosts = [...this.hostNameList];
+      return;
+    }
 
     console.log('Filtered hosts by department:', filteredHosts.length, 'out of', this.originalHostData.length);
 
@@ -2203,20 +2218,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     console.log('Company selected:', event);
   }
 
-  onTimeslotChange(event: any): void {
-    const selectedCode = event.value;
-    console.log('Timeslot changed:', selectedCode);
-
-    if (selectedCode) {
-      const selectedSlot = this.timeSlotList.find(slot => slot.Code === selectedCode && slot.availableCount > 0);
-      if (!selectedSlot) {
-        // Clear the selection and show alert
-        this.generalForm.get('timeSlot')?.setValue('');
-        // Show alert message - you might want to use a proper alert service
-        alert('Oops.. This slots appointment is full or not available now');
-        console.log('Selected timeslot is not available');
-      }
+  selectTimeSlot(slot: any): void {
+    if (slot.availableCount === 0) {
+      this.showError('Oops.. This slot\'s appointment is full or not available now');
+      return;
     }
+    this.generalForm.get('timeSlot')?.setValue(slot.Code);
+    this.generalForm.get('timeSlot')?.markAsTouched();
   }
 
   validateVisitorIdAndExpiry(): { isValid: boolean; errorMessage?: string } {
