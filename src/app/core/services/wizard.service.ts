@@ -159,11 +159,12 @@ export class WizardService {
     if (allSettings.Table5?.length) {
       settingsData.VideoUrl = allSettings.Table5[0]?.VideoUrl;
     }
+    /* debugger
     if (allSettings.Table6?.length) {
       
-      settingsData.NDATemplate = allSettings.Table6[0]?.NDATemplate || '';
+      settingsData.NdaTemplate = allSettings.Table6[0]?.NdaTemplate || '';
       settingsData.NDAEnabled = allSettings.Table6[0]?.NDAEnabled ?? settingsData.NDAEnabled;
-    }
+    } */
 
     // Apply defaults for field-enable flags so core fields are visible when the branch
     // settings haven't been fully configured. API-returned values always take precedence.

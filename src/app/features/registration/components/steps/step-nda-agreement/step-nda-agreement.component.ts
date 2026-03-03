@@ -69,8 +69,8 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
 
   getNdaHtml(): SafeHtml {
     const settings = this.wizardService.getSettings();
-    if (settings?.NDATemplate) {
-      return this.sanitizer.bypassSecurityTrustHtml(settings.NDATemplate);
+    if (settings?.NdaTemplate) {
+      return this.sanitizer.bypassSecurityTrustHtml(settings.NdaTemplate);
     }
     return '';
   }
