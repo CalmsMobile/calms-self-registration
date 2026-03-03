@@ -66,8 +66,9 @@ export class LabelService {
     return new Promise((resolve) => {
       this.api.GetSelfRegistrationPageSettingData(branchId, languageId, refCode)
         .subscribe((settings: any) => {
-          if (settings?.Table?.length) {
-            this.updateLabels(settings.Table);
+          const allItems = [...(settings?.Table || []), ...(settings?.Table2 || [])];
+          if (allItems.length) {
+            this.updateLabels(allItems);
           }
           resolve(settings); // Return the full response
         });

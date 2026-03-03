@@ -119,10 +119,10 @@
       }
 
       <!-- Visit Date -->
-      @if (settings?.StartEndDtEnabled) {
+      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
       <div class="form-field">
         <label class="field-label" for="visitDate">
-          {{'appointment_start_date_&_time' | translate}}
+          {{'appointment_start_date' | translate}}
           <span class="required-star">*</span>
         </label>
         <p-datepicker id="visitDate" formControlName="visitDate" [showIcon]="true"
@@ -130,16 +130,16 @@
           [showTime]="false" appendTo="body">
         </p-datepicker>
         @if (isFieldInvalidRequired('visitDate')) {
-        <small class="error-message">{{'appointment_start_date_&_time' | translate}} is required</small>
+        <small class="error-message">{{'appointment_start_date' | translate}} is required</small>
         }
       </div>
       }
 
       <!-- Visit Time -->
-      @if (settings?.StartEndDtEnabled) {
+      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
       <div class="form-field">
         <label class="field-label" for="visitTime">
-          {{'visit_time' | translate}}
+          {{'appointment_start_time' | translate}}
         </label>
         <p-datepicker id="visitTime" formControlName="visitTime" [showIcon]="true" iconDisplay="input" [timeOnly]="true"
           hourFormat="12" [placeholder]="'--:-- --'" [class]="{'ng-invalid': isFieldInvalidRequired('visitTime')}"
@@ -152,25 +152,25 @@
       }
 
       <!-- End Date -->
-      @if (settings?.StartEndDtEnabled) {
+      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
       <div class="form-field">
         <label class="field-label" for="endDate">
-          {{'appointment_end_date_&_time' | translate}}
+          {{'appointment_end_date' | translate}}
           <span class="required-star">*</span>
         </label>
         <p-datepicker id="endDate" formControlName="endDate" [showIcon]="true" [showTime]="false"
           [class]="{'ng-invalid': isFieldInvalidRequired('endDate')}"
           [minDate]="generalForm.get('visitDate')?.value || minDate" [disabled]="!generalForm.get('visitDate')?.value"
-          [placeholder]="'appointment_end_date_&_time' | translate:'placeholder'" appendTo="body">
+          [placeholder]="'appointment_end_date' | translate:'placeholder'" appendTo="body">
         </p-datepicker>
         @if (isFieldInvalidRequired('endDate')) {
-        <small class="error-message">{{'appointment_end_date_&_time' | translate}} is required</small>
+        <small class="error-message">{{'appointment_end_date' | translate}} is required</small>
         }
       </div>
       }
 
       <!-- End Time -->
-      @if (settings?.StartEndDtEnabled) {
+      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
       <div class="form-field">
         <label class="field-label" for="endTime">
           {{'appointment_end_time' | translate}}

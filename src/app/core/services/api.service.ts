@@ -47,35 +47,39 @@ export class ApiService {
     const loParam = { "RefBranchSeqId": psBranch };
     return this.apiBase.post(`${this.baseUrl}/GetUDFDetails`, loParam).pipe(
       map((data: any) => {
-        const visitorSettings: any[] = data.WalkinUDFSettings || [];
-
         const table: any[] = [];
         const table1: any[] = [];
+        let globalIndex = 0;
 
-        visitorSettings.forEach((udf: any, index: number) => {
-          table.push({
-            UDFName: udf.UDFName,
-            UDFCtrlType: udf.UDFCtrlType,
-            Enabled: true,
-            MinLength: udf.MinLength,
-            MaxLength: udf.MaxLength,
-            Required: udf.Required || false,
-            IsAnyDateRange: udf.IsAnyDateRange || 0,
-            Caption: udf.UDFName,
-            Placeholder: '',
-            apptUDFSetSeqId: index
-          });
-
-          if (udf.dropdown) {
-            udf.dropdown.split(',').forEach((opt: string, optIndex: number) => {
-              table1.push({
-                RefApptUDFSetSeqId: index,
-                ApptUDFDetSetSeqId: optIndex + 1,
-                Name: opt.trim()
-              });
+        const processUDFs = (udfs: any[], settingsPrefix: string) => {
+          (udfs || []).forEach((udf: any) => {
+            table.push({
+              UDFName: udf.UDFName,
+              UDFCtrlType: udf.UDFCtrlType,
+              MinLength: udf.MinLength,
+              MaxLength: udf.MaxLength,
+              IsAnyDateRange: udf.IsAnyDateRange || 0,
+              Caption: udf.Caption || udf.UDFName,
+              Placeholder: udf.Placeholder || '',
+              apptUDFSetSeqId: globalIndex,
+              settingsPrefix
             });
-          }
-        });
+
+            if (udf.dropdown) {
+              udf.dropdown.split(',').forEach((opt: string, optIndex: number) => {
+                table1.push({
+                  RefApptUDFSetSeqId: globalIndex,
+                  ApptUDFDetSetSeqId: optIndex + 1,
+                  Name: opt.trim()
+                });
+              });
+            }
+            globalIndex++;
+          });
+        };
+
+        processUDFs(data.AppointmentUDFSettings, '');
+        processUDFs(data.VisitorUDFSettings, 'V');
 
         return { Table: table, Table1: table1 };
       })

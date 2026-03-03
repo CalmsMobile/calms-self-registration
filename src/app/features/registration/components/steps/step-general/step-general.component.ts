@@ -15,6 +15,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { ButtonModule } from 'primeng/button';
 import { filter, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../../core/services/api.service';
+import { LabelService } from '../../../../../core/services/label.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
 
@@ -121,7 +122,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     private wizardService: WizardService,
     private messageService: MessageService,
     private sanitizer: DomSanitizer,
-    private api: ApiService
+    private api: ApiService,
+    private labelService: LabelService
   ) {
   }
 
@@ -505,7 +507,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       filter(udfSettings => udfSettings !== null),
       takeUntil(this.destroy$)
     ).subscribe((udfSettings: any) => {
-      this.udfSettings = udfSettings.Table;
+      this.udfSettings = (udfSettings.Table || []).map((udf: any) => ({
+        ...udf,
+        Enabled: this.settings?.[udf.settingsPrefix + udf.UDFName + 'Enabled'] === true,
+        Required: this.settings?.[udf.settingsPrefix + udf.UDFName + 'Required'] === true,
+        Caption: this.labelService.getLabel(udf.UDFName.toLowerCase()) || udf.Caption || udf.UDFName
+      }));
       this.udfOptions = udfSettings.Table1;
       this.initializeForm();
       this.setupConditionalControls();
@@ -1111,7 +1118,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           if (udf.UDFCtrlType === 10 && udf.MaxLength) {
             validators.push(Validators.maxLength(udf.MaxLength));
           }
-          if ((this.settings && this.settings[udf.UDFName + "Required"]) || udf.Required) {
+          if (udf.Required) {
             validators.push(Validators.required);
           }
           if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
@@ -1455,7 +1462,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Add UDF required fields
       if (this.udfSettings) {
         this.udfSettings.forEach((udf: any) => {
-          if (udf.Enabled && (this.settings[udf.UDFName + "Required"] || udf.Required)) {
+          if (udf.Enabled && udf.Required) {
             requiredFields.push(udf.UDFName);
           }
         });
@@ -1606,11 +1613,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('work_permit_ref', this.settings.WorkPermitRefEnabled, false);
     this.setupControl('remarks', this.settings.RemarksEnabled, this.settings.RemarksRequired);
     this.setupControl('host', this.settings.HostNameEnabled, this.settings.HostNameRequired);
-    this.setupControl('startDate', this.settings.StartEndDtEnabled, false); // derived from visitDate+visitTime, not user-facing
-    this.setupControl('visitDate', this.settings.StartEndDtEnabled, true);
-    this.setupControl('visitTime', this.settings.StartEndDtEnabled, false);
-    this.setupControl('endDate', this.settings.StartEndDtEnabled, true);
-    this.setupControl('endTime', this.settings.StartEndDtEnabled, false);
+    const showStartEnd = this.settings.StartEndDtEnabled && !this.enableVimsApptTimeSlot;
+    this.setupControl('startDate', showStartEnd, false);
+    this.setupControl('visitDate', showStartEnd, true);
+    this.setupControl('visitTime', showStartEnd, false);
+    this.setupControl('endDate', showStartEnd, true);
+    this.setupControl('endTime', showStartEnd, false);
 
     this.setupControl('profile', this.settings.ImageUploadEnabled, this.settings.ImageUploadRequired);
 
@@ -1619,7 +1627,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.setupControl(
           udf.UDFName,
           true,
-          this.settings[udf.UDFName + "Required"] || udf.Required,
+          udf.Required,
           udf.UDFCtrlType === 10 ? udf.MinLength : undefined,
           udf.UDFCtrlType === 10 ? udf.MaxLength : undefined
         );
