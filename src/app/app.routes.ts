@@ -5,6 +5,7 @@ import { StepAttachmentsComponent } from './features/registration/components/ste
 import { StepProhibitedItemsComponent } from './features/registration/components/steps/step-prohibited-items/step-prohibited-items.component';
 import { StepSafetyBriefComponent } from './features/registration/components/steps/step-safety-brief/step-safety-brief.component';
 import { StepQuestionnaireComponent } from './features/registration/components/steps/step-questionnaire/step-questionnaire.component';
+import { StepNdaAgreementComponent } from './features/registration/components/steps/step-nda-agreement/step-nda-agreement.component';
 import { HomePageComponent } from './features/registration/components/home-page/home-page.component';
 import { WizardContainerComponent } from './features/registration/components/wizard-container/wizard-container.component';
 import { RegistrationStatusPageComponent } from './features/registration/components/registration-status/registration-status-page.component';
@@ -20,6 +21,7 @@ const STEP_COMPONENT_MAP: Record<string, any> = {
   'prohibited-items': StepProhibitedItemsComponent,
   'safety-brief': StepSafetyBriefComponent,
   'questionnaire': StepQuestionnaireComponent,
+  'nda-agreement': StepNdaAgreementComponent,
 };
 
 /** Generate child routes from STEP_CONFIG */

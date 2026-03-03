@@ -159,6 +159,11 @@ export class WizardService {
     if (allSettings.Table5?.length) {
       settingsData.VideoUrl = allSettings.Table5[0]?.VideoUrl;
     }
+    if (allSettings.Table6?.length) {
+      
+      settingsData.NDATemplate = allSettings.Table6[0]?.NDATemplate || '';
+      settingsData.NDAEnabled = allSettings.Table6[0]?.NDAEnabled ?? settingsData.NDAEnabled;
+    }
 
     // Apply defaults for field-enable flags so core fields are visible when the branch
     // settings haven't been fully configured. API-returned values always take precedence.
@@ -183,6 +188,7 @@ export class WizardService {
       ImageUploadEnabled: false,
       WorkPermitRefEnabled: false,
       RemarksEnabled: false,
+      NDAEnabled: false,
     };
     settingsData = { ...fieldEnableDefaults, ...settingsData };
 
@@ -398,7 +404,11 @@ export class WizardService {
       // Pass encrypted query params from URL
       RefCode: this.refCode || '',
       RefCatCode: this.refCatCode || '',
-      q: this.appointmentCode || ''
+      q: this.appointmentCode || '',
+
+      // NDA Agreement signature (base64 PNG)
+      NDASignature: formData['nda-agreement']?.ndaSignature || '',
+      NDAAccepted: formData['nda-agreement']?.ndaAccepted || false
     };
 
     return visitorAck;

@@ -1,0 +1,105 @@
+.step-container {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── NDA HTML content ── */
+.nda-text {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 40vh;
+  padding: 1rem;
+  border: 1px solid var(--p-surface-200, #e5e7eb);
+  border-radius: 8px;
+  background: var(--p-surface-0, #fff);
+  font-size: 0.95rem;
+  line-height: 1.7;
+
+  h3 {
+    color: var(--theme-primary-text-color);
+    margin: 1.5rem 0 0.5rem;
+  }
+
+  p {
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
+}
+
+/* ── Signature section ── */
+.signature-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.signature-title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--theme-primary-text-color, #1e293b);
+}
+
+.signature-instruction {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--p-surface-500, #6b7280);
+}
+
+.signature-pad-wrapper {
+  border: 2px dashed var(--p-surface-300, #d1d5db);
+  border-radius: 8px;
+  background: var(--p-surface-50, #f9fafb);
+  overflow: hidden;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: var(--p-primary-400, #60a5fa);
+  }
+
+  &.error {
+    border-color: var(--p-red-400, #f87171);
+    background: var(--p-red-50, #fef2f2);
+  }
+}
+
+.signature-canvas {
+  display: block;
+  width: 100%;
+  height: 200px;
+  cursor: crosshair;
+  touch-action: none;         /* Prevent scroll while drawing */
+}
+
+.error-message {
+  color: var(--p-red-500, #ef4444);
+  font-size: 0.8rem;
+}
+
+.signature-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+
+::ng-deep .clear-btn {
+  font-size: 0.85rem;
+}
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  .nda-text {
+    max-height: 35vh;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .signature-canvas {
+    height: 160px;
+  }
+}

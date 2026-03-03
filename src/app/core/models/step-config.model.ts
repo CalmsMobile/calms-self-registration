@@ -78,6 +78,15 @@ export const STEP_CONFIG: StepConfig[] = [
     translationKey: 'questionnaire',
     settingsKey: 'QuestionnaireEnabled',
     alwaysEnabled: false
+  },
+  {
+    id: 'nda-agreement',
+    order: 6,
+    routerLink: 'nda-agreement',
+    defaultLabel: 'NDA Agreement',
+    translationKey: 'nda_agreement',
+    settingsKey: 'NDAEnabled',
+    alwaysEnabled: false
   }
 ];
 
