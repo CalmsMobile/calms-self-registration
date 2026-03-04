@@ -70,6 +70,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Visitor acknowledgment data
   visitorAckData: any = null;
   isAppointmentFlow = false;
+  isVisitorBlacklisted = false;
   shouldFilterHostByQueryParam = false; // Flag to indicate if host should be filtered for query param flow
   // Fields that are allowed to be edited in appointment flow (visitor acknowledgment)
   allowedEditableFields = ['fullName', 'visitor_id', 'email', 'phone', 'gender', 'host']; // Temporarily enable host for testing
@@ -1851,12 +1852,43 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   searchProfile(): void {
-    console.log('Searching for profile with query:', this.searchQuery);
-    // Add actual search logic here if backend is ready
-    this.messageService.add({
-      severity: 'info',
-      summary: 'Searching',
-      detail: `Looking for profile: ${this.searchQuery}`
+    const query = this.searchQuery?.trim();
+    if (!query) return;
+
+    const branchId = this.wizardService.currentBranchID;
+    this.api.SearchVisitor(query, branchId).subscribe({
+      next: (response: any) => {
+        const visitor = response?.Table1?.[0];
+        if (!visitor) {
+          this.messageService.add({ severity: 'warn', summary: 'Not Found', detail: 'No visitor found with the given details.' });
+          return;
+        }
+
+        this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
+
+        this.generalForm.patchValue({
+          fullName: visitor.VisitorName || '',
+          title: visitor.Title || '',
+          visitor_id: visitor.att_visitor_id || '',
+          visitor_company: visitor.VisitorCompany || '',
+          email: visitor.Email || '',
+          phone: visitor.ContactNo || '',
+          country: visitor.Country || '',
+          vehicle_number: visitor.VehicleNo || ''
+        });
+
+        // Patch UDF fields
+        this.udfSettings.forEach((udf: any) => {
+          if (udf.Enabled && visitor[udf.UDFName] != null) {
+            this.generalForm.patchValue({ [udf.UDFName]: visitor[udf.UDFName] });
+          }
+        });
+
+        this.showReturningVisitorPopup = false;
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to search visitor.' });
+      }
     });
   }
 
@@ -2139,6 +2171,39 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.generalForm.get('host')?.setValue(null);
       }
     }
+  }
+
+  onVisitorIdBlur(): void {
+    const visitorId = this.generalForm.get('visitor_id')?.value?.trim();
+    if (!visitorId) return;
+
+    const branchId = this.wizardService.currentBranchID;
+    this.api.SearchVisitor(visitorId, branchId).subscribe({
+      next: (response: any) => {
+        const visitor = response?.Table1?.[0];
+        if (!visitor) return;
+
+        this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
+
+        this.generalForm.patchValue({
+          fullName: visitor.VisitorName || '',
+          title: visitor.Title || '',
+          visitor_company: visitor.VisitorCompany || '',
+          email: visitor.Email || '',
+          phone: visitor.ContactNo || '',
+          country: visitor.Country || '',
+          vehicle_number: visitor.VehicleNo || ''
+        });
+
+        // Patch UDF fields
+        this.udfSettings.forEach((udf: any) => {
+          if (udf.Enabled && visitor[udf.UDFName] != null) {
+            this.generalForm.patchValue({ [udf.UDFName]: visitor[udf.UDFName] });
+          }
+        });
+      },
+      error: () => {}
+    });
   }
 
   onStartDateChange(event: any): void {

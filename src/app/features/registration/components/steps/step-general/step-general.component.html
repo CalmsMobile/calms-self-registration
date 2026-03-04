@@ -194,12 +194,35 @@
         </label>
         <input pInputText id="visitor_id" [placeholder]="'identity_number' | translate:'placeholder'"
           formControlName="visitor_id" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id')}"
-          [disabled]="isFieldDisabled('visitor_id')">
+          [disabled]="isFieldDisabled('visitor_id')" (blur)="onVisitorIdBlur()">
         @if (isFieldInvalidRequired('visitor_id')) {
         <small class="error-message">{{'identity_number' | translate}} is required</small>
         }
+        @if (isVisitorBlacklisted) {
+        <small class="error-message">This visitor is blacklisted and cannot proceed.</small>
+        }
       </div>
       }
+
+
+      <!-- ID Type -->
+      @if (settings?.IdTypeEnabled) {
+      <div class="form-field">
+        <label class="field-label" for="id_type">
+          {{'id_type' | translate}}
+          <span class="required-star">{{settings?.IdTypeRequired ? '*' : ''}}</span>
+        </label>
+        <p-select id="id_type" [options]="idTypeList" formControlName="visitor_id_type"
+          [placeholder]="'id_type' | translate:'placeholder'" optionLabel="IDTYPEDESCRIPTION" optionValue="ID_TYPECODE"
+          [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id_type')}"
+          [disabled]="isFieldDisabled('visitor_id_type')" (onChange)="onIdTypeChange($event)" appendTo="body">
+        </p-select>
+        @if (isFieldInvalidRequired('visitor_id_type')) {
+        <small class="error-message">{{'id_type' | translate}} is required</small>
+        }
+      </div>
+      }
+
 
       <!-- ID Expiry Date -->
       @if (settings?.IdProofEnabled && showIdExpiryField) {
@@ -217,24 +240,6 @@
         </p-datepicker>
         @if (isFieldInvalidRequired('id_expired_date')) {
         <small class="error-message">{{'id_expiry_date' | translate}} is required</small>
-        }
-      </div>
-      }
-
-      <!-- ID Type -->
-      @if (settings?.IdTypeEnabled) {
-      <div class="form-field">
-        <label class="field-label" for="id_type">
-          {{'id_type' | translate}}
-          <span class="required-star">{{settings?.IdTypeRequired ? '*' : ''}}</span>
-        </label>
-        <p-select id="id_type" [options]="idTypeList" formControlName="visitor_id_type"
-          [placeholder]="'id_type' | translate:'placeholder'" optionLabel="IDTYPEDESCRIPTION" optionValue="ID_TYPECODE"
-          [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id_type')}"
-          [disabled]="isFieldDisabled('visitor_id_type')" (onChange)="onIdTypeChange($event)" appendTo="body">
-        </p-select>
-        @if (isFieldInvalidRequired('visitor_id_type')) {
-        <small class="error-message">{{'id_type' | translate}} is required</small>
         }
       </div>
       }

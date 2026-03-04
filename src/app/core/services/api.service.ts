@@ -127,6 +127,15 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/SearchExistHost`, loParam);
   }
 
+  SearchVisitor(searchText: string, branchSeqId: string) {
+    const loParam = {
+      SearchText: searchText,
+      CheckBlackList: true,
+      RefBranchSeqId: branchSeqId
+    };
+    return this.apiBase.post(`${this.baseUrl}/SearchVisitor`, loParam);
+  }
+
   GetBranchHostData(psBranch: string, preloadHostData: boolean = true, refCode?: string) {
     const loParam = refCode
       ? {
