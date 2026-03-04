@@ -53,7 +53,7 @@
     @if (!selectedBranch) {
     <div class="header-container">
 
-      <h1 class="welcome-title">Welcome to CALMS</h1>
+      <h1 class="welcome-title">{{ welcomeText || 'Welcome' }}</h1>
     </div>}
     <!-- Show page title when branch is selected -->
     @if (selectedBranch) {

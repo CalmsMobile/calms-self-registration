@@ -12,9 +12,8 @@ export class ApiService {
   private deviceParams = { "Authorize": { "AuDeviceUID": "WEB", "AuHostSeqId": "291" } };
   constructor(private apiBase: ApiBaseService) { }
 
-  getMasterDetails() {
-    const loParam = { ...this.deviceParams, "RefBranchSeqId": "" };
-    return this.apiBase.post(`${this.baseUrl}/GetMasterDetails`, loParam);
+  GetSelfRegistrationWelcomePageData() {
+    return this.apiBase.post(`${this.baseUrl}/GetSelfRegistrationWelcomePageData`, '');
   }
 
   GetVisitorDeclarationSettings(psBranch: string, psVisitorCtg: string, refCode?: string, refCatCode?: string) {

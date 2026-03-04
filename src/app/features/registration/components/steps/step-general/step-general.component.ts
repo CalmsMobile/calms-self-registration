@@ -170,14 +170,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     if (!this.masterData) {
-      console.log('No master data found, redirecting to home page');
-      this.wizardService.gotoHomePage();
-      /*this.api.getMasterDetails().subscribe((data: any) => {
-        if (data?.Table?.length && data.Table[0].Code == '10') {
-          this.wizardService.setmasterData(data);
-          this.masterData = data;
-        }
-      });*/
+      console.log('No master data found, continuing with empty lists');
     }
 
     if (this.masterData) {

@@ -68,6 +68,9 @@ export class HomePageComponent {
   branchTranslation: any = {};
   pageTitle = '';
 
+  // Welcome page data from API
+  welcomeText = '';
+
   // Base URL access control
   isBaseUrlAccessDisabled = false;
   baseUrlAccessDeniedInstruction = '';
@@ -467,34 +470,45 @@ export class HomePageComponent {
 
   private loadBranches(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.api.getMasterDetails().subscribe({
+      this.api.GetSelfRegistrationWelcomePageData().subscribe({
         next: async (data: any) => {
-          if (data?.Table?.length && data.Table[0].Code == '10') {
-            this.wizardService.setmasterData(data);
+          // Map branches from Table
+          if (data?.Table?.length) {
+            this.branchList = data.Table.map((b: any) => ({
+              RefBranchSeqID: b.BranchSeqId,
+              Branch_Name: b.Name
+            }));
 
-            // Log available tables for debugging
-            console.log('Master data tables:', {
-              branches: data.Table10?.length || 0,
-              categories: data.Table4?.length || 0,
-              countries: data.Table13?.length || 0,
-              purposes: data.Table3?.length || 0,
-              floors: data.Table2?.length || 0
-            });
-
-            if (data.Table10.length) {
-              this.branchList = data.Table10;
-
-              if (data.Table10.length == 1 && !this.isBranchFromQuery) {
-                this.selectedBranch = data.Table10[0];
-                this.wizardService.currentBranchID = this.selectedBranch;
-                this.loadCategories();
-              }
-
-              // Load branch translation after branches are loaded
-              if (this.currentLanguage) {
-                await this.getSelfRegistrationSettings();
-              }
+            // Auto-select when only one branch and not from query
+            if (this.branchList.length === 1 && !this.isBranchFromQuery) {
+              this.selectedBranch = this.branchList[0].RefBranchSeqID;
+              this.wizardService.currentBranchID = this.selectedBranch;
             }
+
+            // Load branch translation after branches are loaded
+            if (this.currentLanguage) {
+              await this.getSelfRegistrationSettings();
+            }
+          }
+
+          // Extract welcome page settings from Table1
+          if (data?.Table1?.length) {
+            const settings = data.Table1[0];
+            // Logo URL
+            const logoUrl = settings.LogoUrl || settings.Logo || settings.ImgPathUrl;
+            if (logoUrl) {
+              this.logo = environment.proURL + logoUrl;
+              this.sharedService.updateHeader(this.title, this.logo);
+            }
+            // Welcome text
+            if (settings.WelcomeText || settings.WelcomPageText || settings.Caption) {
+              this.welcomeText = settings.WelcomeText || settings.WelcomPageText || settings.Caption;
+            }
+            // Branch selection caption and placeholder
+            this.branchTranslation = {
+              caption: settings.BranchCaption || settings.BranchLabel || settings.Caption || 'Branch',
+              placeholder: settings.BranchPlaceholder || settings.Placeholder || 'Select Branch'
+            };
           }
 
           // Only set loading to false if not from query (query flow handles it separately)
@@ -506,7 +520,7 @@ export class HomePageComponent {
           resolve();
         },
         error: (error) => {
-          console.error('Error loading branches:', error);
+          console.error('Error loading welcome page data:', error);
           this.isLoading = false;
           reject(error);
         }
@@ -514,20 +528,23 @@ export class HomePageComponent {
     });
   }
 
-  loadCategories() {
-    const data = this.wizardService.getmasterData();
-    if (data.Table4.length) {
-      let loFilterCategory: any[] = [...data.Table4.filter((item: any) => {
-        return !item.IsForPatientVisit
-        //&& item.RefBranchSeqId === this.selectedBranch;
+  loadCategories(categoryData?: any[]) {
+    // Use provided category data or fall back to stored branch host data Table2
+    const rawCategories = categoryData || this.wizardService.getBranchHostData()?.Table2 || [];
+
+    if (rawCategories.length) {
+      let loFilterCategory: any[] = [...rawCategories.filter((item: any) => {
+        return !item.IsForPatientVisit;
       })];
 
       this.categories = loFilterCategory;
 
-      if (data.Table4.length == 1) {
-        this.selectedCategory = data.Table4[0];
+      if (loFilterCategory.length === 1) {
+        this.selectedCategory = loFilterCategory[0].visitor_ctg_id;
         this.wizardService.selectedVisitCategory = this.selectedCategory;
       }
+    } else {
+      this.categories = [];
     }
 
     // Auto-select category based on different scenarios
@@ -559,8 +576,7 @@ export class HomePageComponent {
       this.getPageSettings();
       this.loadBranchHostDataAsync(newValue);
 
-      // Load categories (uses already-loaded master data, no API dependency)
-      this.loadCategories();
+      // Categories will be loaded inside loadBranchHostDataAsync from Table2 after host data arrives
 
       // Await settings to ensure labels are ready for UI
       await settingsPromise;
@@ -623,7 +639,7 @@ export class HomePageComponent {
             // Now that branch is resolved, load labels/settings
             this.getSelfRegistrationSettings();
 
-            this.loadCategories();
+            // Categories are loaded by loadBranchHostDataAsync via Table2
 
             if (this.isCategoryFromQuery && this.selectedCategory) {
               // vc param exists: trigger category settings
@@ -715,28 +731,45 @@ export class HomePageComponent {
   }
 
   /**
-   * Load branch host data asynchronously in the background
-   * This prevents loading delay when user navigates to general step
+   * Load branch host data and extract Table2 as categories
    */
   private loadBranchHostDataAsync(branchId: string | null): void {
     // Only load if we have a valid branch ID or refCode
     if (!branchId && !this.wizardService.refCode) {
-      console.log('No branch ID or refCode provided for async host data loading');
+      console.log('No branch ID or refCode provided for host data loading');
       return;
     }
 
-    console.log('Loading branch host data asynchronously for branch:', branchId);
+    console.log('Loading branch host data for branch:', branchId);
 
-    // Load branch host data in the background without blocking UI
     this.api.GetBranchHostData(branchId || '', true, this.wizardService.refCode || undefined).subscribe({
       next: (response: any) => {
-        console.log('Branch host data loaded asynchronously:', response);
+        console.log('Branch host data loaded:', response);
         // Store the data in wizard service for use in general step
         this.wizardService.setBranchHostData(response);
+
+        // Determine allowed categories using Table6.SelfVisitorCategories
+        const allCategories: any[] = response?.Table2 || [];
+        const selfVisitorCategories: string = response?.Table6?.[0]?.SelfVisitorCategories ?? '0';
+
+        let categoryData: any[];
+        if (selfVisitorCategories === '0') {
+          // "0" means load all categories
+          categoryData = allCategories;
+        } else {
+          // Comma-separated codes — filter to matching categories
+          const allowedCodes = selfVisitorCategories.split(',').map((c: string) => c.trim());
+          categoryData = allCategories.filter((cat: any) =>
+            allowedCodes.includes(String(cat.visitor_ctg_id)) ||
+            allowedCodes.includes(String(cat.visitor_ctg_code))
+          );
+        }
+
+        console.log(`Categories: SelfVisitorCategories="${selfVisitorCategories}", total=${allCategories.length}, filtered=${categoryData.length}`);
+        this.loadCategories(categoryData);
       },
       error: (error) => {
-        console.error('Error loading branch host data asynchronously:', error);
-        // Don't show error to user as this is background loading
+        console.error('Error loading branch host data:', error);
       }
     });
   }
