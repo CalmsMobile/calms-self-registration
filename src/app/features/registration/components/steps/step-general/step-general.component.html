@@ -697,21 +697,19 @@
         }
       </div>
       }
-      <!-- Date Range (UDFCtrlType = 40, IsAnyDateRange = 20) -->
+      <!-- Current/Future Date only (UDFCtrlType = 40, IsAnyDateRange = 20) -->
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="form-field">
         <label class="field-label" [for]="udf.UDFName">
           {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <p-datepicker [id]="udf.UDFName" [formControlName]="udf.UDFName" [showIcon]="true" selectionMode="range"
-          iconDisplay="input" dateFormat="dd/mm/yy" appendTo="body"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.UDFName) || isDateRangeIncomplete(udf.UDFName)}">
+        <p-datepicker [id]="udf.UDFName" [formControlName]="udf.UDFName" [showIcon]="true"
+          iconDisplay="input" dateFormat="dd/mm/yy" appendTo="body" [minDate]="minDate"
+          [class]="{'ng-invalid': isFieldInvalidRequired(udf.UDFName)}">
         </p-datepicker>
         @if (isFieldInvalidRequired(udf.UDFName)) {
         <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
-        } @else if (isDateRangeIncomplete(udf.UDFName)) {
-        <small class="error-message">Please select both start and end dates for {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
       </div>
       }
