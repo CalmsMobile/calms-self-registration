@@ -510,7 +510,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         ...udf,
         Enabled: this.settings?.[udf.UDFName + 'Enabled'] === true,
         Required: this.settings?.[udf.UDFName + 'Required'] === true,
-        translateKey: udf.UDFName.toLowerCase()
+        translateKey: (udf.udfPrefix || 'a') + udf.UDFName.toLowerCase()
       }));
       this.udfOptions = udfSettings.Table1;
       this.initializeForm();

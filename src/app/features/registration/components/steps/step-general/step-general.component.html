@@ -633,14 +633,14 @@
       @if (udf.UDFCtrlType === 10) {
       <div class="form-field">
         <label class="field-label" [for]="udf.UDFName">
-          {{udf.translateKey | translate}}
+          {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <input pInputText [id]="udf.UDFName" [placeholder]="udf.translateKey | translate:'placeholder'"
+        <input pInputText [id]="udf.UDFName" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
           [formControlName]="udf.UDFName" [maxlength]="udf.MaxLength"
           [class]="{'ng-invalid': isFieldInvalidRequired(udf.UDFName)}">
         @if (isFieldRequired(udf.UDFName)) {
-        <small class="error-message">{{udf.translateKey | translate}} is required</small>
+        <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
         @if (isFieldMinLengthError(udf.UDFName)) {
         <small class="error-message">Minimum {{udf.MinLength}} characters required</small>
@@ -654,15 +654,15 @@
       @if (udf.UDFCtrlType === 20) {
       <div class="form-field">
         <label class="field-label" [for]="udf.UDFName">
-          {{udf.translateKey | translate}}
+          {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <p-select [id]="udf.UDFName" [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.UDFName"
-          [placeholder]="udf.translateKey | translate:'placeholder'" optionLabel="label" optionValue="value"
+          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label" optionValue="value"
           [class]="{'ng-invalid': isFieldInvalidRequired(udf.UDFName)}" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired(udf.UDFName)) {
-        <small class="error-message">Please select {{udf.translateKey | translate}}</small>
+        <small class="error-message">Please select {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
       </div>
       }
@@ -670,15 +670,15 @@
       @if (udf.UDFCtrlType === 30) {
       <div class="form-field">
         <label class="field-label" [for]="udf.UDFName">
-          {{udf.translateKey | translate}}
+          {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <p-multiSelect [id]="udf.UDFName" [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.UDFName"
-          [placeholder]="udf.translateKey | translate:'placeholder'" optionLabel="label" optionValue="value"
+          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label" optionValue="value"
           [class]="{'ng-invalid': isFieldInvalidRequired(udf.UDFName)}" appendTo="body">
         </p-multiSelect>
         @if (isFieldInvalidRequired(udf.UDFName)) {
-        <small class="error-message">Please select at least one {{udf.translateKey | translate}}</small>
+        <small class="error-message">Please select at least one {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
       </div>
       }
@@ -686,14 +686,14 @@
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
       <div class="form-field">
         <label class="field-label" [for]="udf.UDFName">
-          {{udf.translateKey | translate}}
+          {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <p-datepicker [id]="udf.UDFName" [formControlName]="udf.UDFName" [showIcon]="true" iconDisplay="input"
           dateFormat="dd/mm/yy" appendTo="body" [class]="{'ng-invalid': isFieldInvalidRequired(udf.UDFName)}">
         </p-datepicker>
         @if (isFieldInvalidRequired(udf.UDFName)) {
-        <small class="error-message">{{udf.translateKey | translate}} is required</small>
+        <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
       </div>
       }
@@ -701,7 +701,7 @@
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="form-field">
         <label class="field-label" [for]="udf.UDFName">
-          {{udf.translateKey | translate}}
+          {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <p-datepicker [id]="udf.UDFName" [formControlName]="udf.UDFName" [showIcon]="true" selectionMode="range"
@@ -709,9 +709,9 @@
           [class]="{'ng-invalid': isFieldInvalidRequired(udf.UDFName) || isDateRangeIncomplete(udf.UDFName)}">
         </p-datepicker>
         @if (isFieldInvalidRequired(udf.UDFName)) {
-        <small class="error-message">{{udf.translateKey | translate}} is required</small>
+        <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         } @else if (isDateRangeIncomplete(udf.UDFName)) {
-        <small class="error-message">Please select both start and end dates for {{udf.translateKey | translate}}</small>
+        <small class="error-message">Please select both start and end dates for {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
       </div>
       }
