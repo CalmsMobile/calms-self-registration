@@ -51,7 +51,7 @@ export class ApiService {
         const table1: any[] = [];
         let globalIndex = 0;
 
-        const processUDFs = (udfs: any[], settingsPrefix: string) => {
+        const processUDFs = (udfs: any[]) => {
           (udfs || []).forEach((udf: any) => {
             table.push({
               UDFName: udf.UDFName,
@@ -61,8 +61,7 @@ export class ApiService {
               IsAnyDateRange: udf.IsAnyDateRange || 0,
               Caption: udf.Caption || udf.UDFName,
               Placeholder: udf.Placeholder || '',
-              apptUDFSetSeqId: globalIndex,
-              settingsPrefix
+              apptUDFSetSeqId: globalIndex
             });
 
             if (udf.dropdown) {
@@ -78,8 +77,8 @@ export class ApiService {
           });
         };
 
-        processUDFs(data.AppointmentUDFSettings, '');
-        processUDFs(data.VisitorUDFSettings, 'V');
+        processUDFs(data.AppointmentUDFSettings);
+        processUDFs(data.VisitorUDFSettings);
 
         return { Table: table, Table1: table1 };
       })

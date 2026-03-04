@@ -15,7 +15,6 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { ButtonModule } from 'primeng/button';
 import { filter, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../../core/services/api.service';
-import { LabelService } from '../../../../../core/services/label.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
 
@@ -123,8 +122,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     private wizardService: WizardService,
     private messageService: MessageService,
     private sanitizer: DomSanitizer,
-    private api: ApiService,
-    private labelService: LabelService
+    private api: ApiService
   ) {
   }
 
@@ -190,7 +188,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         DepartmentSeqId: d.DepartmentSeqId ?? d.dept_id ?? d.DName ?? d.Department ?? ''
       }));
       this.hostDepartmentList = [...this.departmentList];
-      // Note: meetingLocList and titleList will be loaded from GetBranchHostDataTable12      this.countryList = this.masterData.Table13 || [];
+      this.countryList = this.masterData.Table13 || [];
 
       // Table12 Type list from Table12 correct field mapping
       if (this.masterData && this.masterData.Table12 && this.masterData.Table12.length > 0) {
@@ -510,9 +508,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     ).subscribe((udfSettings: any) => {
       this.udfSettings = (udfSettings.Table || []).map((udf: any) => ({
         ...udf,
-        Enabled: this.settings?.[udf.settingsPrefix + udf.UDFName + 'Enabled'] === true,
-        Required: this.settings?.[udf.settingsPrefix + udf.UDFName + 'Required'] === true,
-        Caption: this.labelService.getLabel(udf.UDFName.toLowerCase()) || udf.Caption || udf.UDFName
+        Enabled: this.settings?.[udf.UDFName + 'Enabled'] === true,
+        Required: this.settings?.[udf.UDFName + 'Required'] === true,
+        translateKey: udf.UDFName.toLowerCase()
       }));
       this.udfOptions = udfSettings.Table1;
       this.initializeForm();
@@ -754,6 +752,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     else {
       this.titleList = [];
       console.log('No titles found in GetBranchHostData response');
+    }
+
+    // Process Country list from Table13
+    if (response && response.Table13 && response.Table13.length > 0) {
+      this.countryList = [...response.Table13];
     }
 
     // Set department for default host if enabled after hosts are loaded
