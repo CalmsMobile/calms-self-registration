@@ -50,7 +50,7 @@ export class ApiService {
         const table1: any[] = [];
         let globalIndex = 0;
 
-        const processUDFs = (udfs: any[], settingsPrefix: string) => {
+        const processUDFs = (udfs: any[], udfPrefix: string) => {
           (udfs || []).forEach((udf: any) => {
             table.push({
               UDFName: udf.UDFName,
@@ -61,7 +61,7 @@ export class ApiService {
               Caption: udf.Caption || udf.UDFName,
               Placeholder: udf.Placeholder || '',
               apptUDFSetSeqId: globalIndex,
-              settingsPrefix
+              udfPrefix: udfPrefix
             });
 
             if (udf.dropdown) {
@@ -77,8 +77,8 @@ export class ApiService {
           });
         };
 
-        processUDFs(data.AppointmentUDFSettings, '');
-        processUDFs(data.VisitorUDFSettings, 'V');
+        processUDFs(data.AppointmentUDFSettings, 'a');
+        processUDFs(data.VisitorUDFSettings, 'v');
 
         return { Table: table, Table1: table1 };
       })
@@ -124,6 +124,15 @@ export class ApiService {
   SearchExistHost(searchParams: any) {
     const loParam = { ...this.deviceParams, ...searchParams };
     return this.apiBase.post(`${this.baseUrl}/SearchExistHost`, loParam);
+  }
+
+  SearchVisitor(searchText: string, branchSeqId: string) {
+    const loParam = {
+      SearchText: searchText,
+      CheckBlackList: true,
+      RefBranchSeqId: branchSeqId
+    };
+    return this.apiBase.post(`${this.baseUrl}/SearchVisitor`, loParam);
   }
 
   GetBranchHostData(psBranch: string, preloadHostData: boolean = true, refCode?: string) {

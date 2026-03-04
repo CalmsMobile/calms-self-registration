@@ -33,7 +33,7 @@
       @if (settings?.ImageUploadEnabled) {
       <div class="form-field">
         <label class="field-label">
-          {{'upload_photo' | translate}}
+          {{'profile_picture' | translate}}
           <span class="required-star">{{settings?.ImageUploadRequired ? '*' : ''}}</span>
         </label>
         <div class="profile-upload" (click)="fileInput.click()" [class.invalid]="isFieldInvalidRequired('profile')">
@@ -48,7 +48,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('profile')) {
-        <small class="error-message">{{'upload_photo' | translate}} is required</small>
+        <small class="error-message">{{'profile_picture' | translate}} is required</small>
         }
       </div>
       }
@@ -194,32 +194,16 @@
         </label>
         <input pInputText id="visitor_id" [placeholder]="'identity_number' | translate:'placeholder'"
           formControlName="visitor_id" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id')}"
-          [disabled]="isFieldDisabled('visitor_id')">
+          [disabled]="isFieldDisabled('visitor_id')" (blur)="onVisitorIdBlur()">
         @if (isFieldInvalidRequired('visitor_id')) {
         <small class="error-message">{{'identity_number' | translate}} is required</small>
+        }
+        @if (isVisitorBlacklisted) {
+        <small class="error-message">This visitor is blacklisted and cannot proceed.</small>
         }
       </div>
       }
 
-      <!-- ID Expiry Date -->
-      @if (settings?.IdProofEnabled && showIdExpiryField) {
-      <div class="form-field">
-        <label class="field-label" for="id_expired">
-          {{'id_expiry_date' | translate}}
-          @if (settings?.IdExpiredRequired) {
-          <span class="required-star">*</span>
-          }
-        </label>
-        <p-datepicker id="id_expired" formControlName="id_expired_date" [showIcon]="true"
-          [placeholder]="'id_expiry_date' | translate:'placeholder'" [minDate]="minDate" dateFormat="dd/mm/yy"
-          [class]="{'ng-invalid': isFieldInvalidRequired('id_expired_date')}"
-          [disabled]="isFieldDisabled('id_expired_date')" appendTo="body">
-        </p-datepicker>
-        @if (isFieldInvalidRequired('id_expired_date')) {
-        <small class="error-message">{{'id_expiry_date' | translate}} is required</small>
-        }
-      </div>
-      }
 
       <!-- ID Type -->
       @if (settings?.IdTypeEnabled) {
@@ -235,6 +219,27 @@
         </p-select>
         @if (isFieldInvalidRequired('visitor_id_type')) {
         <small class="error-message">{{'id_type' | translate}} is required</small>
+        }
+      </div>
+      }
+
+
+      <!-- ID Expiry Date -->
+      @if (settings?.IdProofEnabled && showIdExpiryField) {
+      <div class="form-field">
+        <label class="field-label" for="id_expired">
+          {{'id_expired_date' | translate}}
+          @if (settings?.IdExpiredRequired) {
+          <span class="required-star">*</span>
+          }
+        </label>
+        <p-datepicker id="id_expired" formControlName="id_expired_date" [showIcon]="true"
+          [placeholder]="'id_expired_date' | translate:'placeholder'" [minDate]="minDate" dateFormat="dd/mm/yy"
+          [class]="{'ng-invalid': isFieldInvalidRequired('id_expired_date')}"
+          [disabled]="isFieldDisabled('id_expired_date')" appendTo="body">
+        </p-datepicker>
+        @if (isFieldInvalidRequired('id_expired_date')) {
+        <small class="error-message">{{'id_expired_date' | translate}} is required</small>
         }
       </div>
       }
@@ -297,18 +302,18 @@
       @if (settings?.CompanyEnabled) {
       <div class="form-field">
         <label class="field-label" for="visitor_company">
-          {{'company' | translate}}
+          {{'my_company' | translate}}
           <span class="required-star">{{settings?.CompanyRequired ? '*' : ''}}</span>
         </label>
         <p-autoComplete id="visitor_company" [suggestions]="companyList" (completeMethod)="searchCompany($event)"
           (onSelect)="onCompanySelect($event)" field="visitor_comp_name" optionLabel="visitor_comp_name"
           dataKey="visitor_comp_name" formControlName="visitor_company"
-          [placeholder]="'company' | translate:'placeholder'" [dropdown]="true" [forceSelection]="false"
+          [placeholder]="'my_company' | translate:'placeholder'" [dropdown]="true" [forceSelection]="false"
           [class]="{'ng-invalid': isFieldInvalidRequired('visitor_company')}"
           [disabled]="isFieldDisabled('visitor_company')" appendTo="body">
         </p-autoComplete>
         @if (isFieldInvalidRequired('visitor_company')) {
-        <small class="error-message">{{'company' | translate}} is required</small>
+        <small class="error-message">{{'my_company' | translate}} is required</small>
         }
       </div>
       }
@@ -628,14 +633,14 @@
       @if (udf.UDFCtrlType === 10) {
       <div class="form-field">
         <label class="field-label" [for]="udf.UDFName">
-          {{udf.Caption}}
+          {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <input pInputText [id]="udf.UDFName" [placeholder]="udf.Placeholder | translate:'placeholder'"
+        <input pInputText [id]="udf.UDFName" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
           [formControlName]="udf.UDFName" [maxlength]="udf.MaxLength"
           [class]="{'ng-invalid': isFieldInvalidRequired(udf.UDFName)}">
         @if (isFieldRequired(udf.UDFName)) {
-        <small class="error-message">{{udf.Caption}} is required</small>
+        <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
         @if (isFieldMinLengthError(udf.UDFName)) {
         <small class="error-message">Minimum {{udf.MinLength}} characters required</small>
@@ -649,15 +654,15 @@
       @if (udf.UDFCtrlType === 20) {
       <div class="form-field">
         <label class="field-label" [for]="udf.UDFName">
-          {{udf.Caption}}
+          {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <p-select [id]="udf.UDFName" [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.UDFName"
-          [placeholder]="udf.Placeholder" optionLabel="label" optionValue="value"
+          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label" optionValue="value"
           [class]="{'ng-invalid': isFieldInvalidRequired(udf.UDFName)}" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired(udf.UDFName)) {
-        <small class="error-message">Please select {{udf.Caption}}</small>
+        <small class="error-message">Please select {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
       </div>
       }
@@ -665,15 +670,15 @@
       @if (udf.UDFCtrlType === 30) {
       <div class="form-field">
         <label class="field-label" [for]="udf.UDFName">
-          {{udf.Caption}}
+          {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <p-multiSelect [id]="udf.UDFName" [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.UDFName"
-          [placeholder]="udf.Placeholder" optionLabel="label" optionValue="value"
+          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label" optionValue="value"
           [class]="{'ng-invalid': isFieldInvalidRequired(udf.UDFName)}" appendTo="body">
         </p-multiSelect>
         @if (isFieldInvalidRequired(udf.UDFName)) {
-        <small class="error-message">Please select at least one {{udf.Caption}}</small>
+        <small class="error-message">Please select at least one {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
       </div>
       }
@@ -681,14 +686,14 @@
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
       <div class="form-field">
         <label class="field-label" [for]="udf.UDFName">
-          {{udf.Caption}}
+          {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <p-datepicker [id]="udf.UDFName" [formControlName]="udf.UDFName" [showIcon]="true" iconDisplay="input"
           dateFormat="dd/mm/yy" appendTo="body" [class]="{'ng-invalid': isFieldInvalidRequired(udf.UDFName)}">
         </p-datepicker>
         @if (isFieldInvalidRequired(udf.UDFName)) {
-        <small class="error-message">{{udf.Caption}} is required</small>
+        <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
       </div>
       }
@@ -696,7 +701,7 @@
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="form-field">
         <label class="field-label" [for]="udf.UDFName">
-          {{udf.Caption}}
+          {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <p-datepicker [id]="udf.UDFName" [formControlName]="udf.UDFName" [showIcon]="true" selectionMode="range"
@@ -704,9 +709,9 @@
           [class]="{'ng-invalid': isFieldInvalidRequired(udf.UDFName) || isDateRangeIncomplete(udf.UDFName)}">
         </p-datepicker>
         @if (isFieldInvalidRequired(udf.UDFName)) {
-        <small class="error-message">{{udf.Caption}} is required</small>
+        <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         } @else if (isDateRangeIncomplete(udf.UDFName)) {
-        <small class="error-message">Please select both start and end dates for {{udf.Caption}}</small>
+        <small class="error-message">Please select both start and end dates for {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
       </div>
       }
@@ -717,7 +722,7 @@
       @if (isMultipleVisitorMode) {
       <div class="add-visitor-section full-width">
         <p-button type="button" icon="pi pi-plus"
-          [label]="editingVisitorIndex >= 0 ? ('update_visitor' | translate) : ('add_guest' | translate)"
+          [label]="editingVisitorIndex >= 0 ? ('update_visitor' | translate) : ('add_visitor' | translate)"
           (onClick)="addVisitorToTable()" styleClass="add-guest-btn" [disabled]="!isCurrentVisitorFormValid()">
         </p-button>
         @if (editingVisitorIndex >= 0) {
