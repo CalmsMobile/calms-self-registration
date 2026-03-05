@@ -61,7 +61,8 @@ export class ApiService {
               Caption: udf.Caption || udf.UDFName,
               Placeholder: udf.Placeholder || '',
               apptUDFSetSeqId: globalIndex,
-              udfPrefix: udfPrefix
+              udfPrefix: udfPrefix,
+              formControlName: udfPrefix.toUpperCase() + udf.UDFName  // e.g. 'AUDF1' or 'VUDF1'
             });
 
             if (udf.dropdown) {
