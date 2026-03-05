@@ -47,6 +47,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   minDate = new Date();
   minVisitTime: Date | undefined = undefined;
   minEndTime: Date | undefined = undefined;
+  endBeforeStartError = false;
   showIdExpiryField = false;
   selectedIdTypeData: any = null;
   gbShowMemberId = false;
@@ -501,8 +502,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     ).subscribe((udfSettings: any) => {
       this.udfSettings = (udfSettings.Table || []).map((udf: any) => ({
         ...udf,
-        Enabled: this.settings?.[udf.UDFName + 'Enabled'] === true,
-        Required: this.settings?.[udf.UDFName + 'Required'] === true,
+        Enabled: !!this.settings?.[udf.UDFName + 'Enabled'],
+        Required: !!this.settings?.[udf.UDFName + 'Required'],
         translateKey: (udf.udfPrefix || 'a') + udf.UDFName.toLowerCase()
       }));
       this.udfOptions = udfSettings.Table1;
@@ -1094,16 +1095,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       console.log('Adding UDF controls to main form:', this.udfSettings);
       this.udfSettings.forEach((udf: any) => {
         if (udf.Enabled) {
-          const controlName = udf.UDFName;
+          const controlName = udf.formControlName;  // e.g. 'AUDF1' or 'VUDF1'
 
           // Get value priority: visitor ack data > saved data > empty
           let controlValue = '';
           if (shouldClearVisitorFields) {
             controlValue = '';
           } else if (isPreFilledData && visitorData) {
-            // Try to get UDF value from visitor acknowledgment data
-            const udfKey = controlName.toLowerCase();
-            controlValue = visitorData[udfKey] || savedData[controlName] || '';
+            controlValue = visitorData[controlName] || savedData[controlName] || '';
           } else {
             controlValue = savedData[controlName] || '';
           }
@@ -1183,15 +1182,36 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.generalForm.get('visitDate')?.valueChanges.subscribe((visitDate) => {
       this.syncStartDate();
       this.updateMinVisitTime(visitDate);
+
+      // Default endDate to visitDate if not set
+      const endDateCtrl = this.generalForm.get('endDate');
+      if (visitDate && endDateCtrl && !endDateCtrl.value) {
+        endDateCtrl.setValue(visitDate);
+      }
+
+      const visitTime = this.generalForm.get('visitTime')?.value;
+      this.updateMinEndTime(visitTime);
+      this.checkEndBeforeStart();
     });
+
     this.generalForm.get('visitTime')?.valueChanges.subscribe((visitTime) => {
       this.syncStartDate();
       this.updateMinEndTime(visitTime);
+      this.checkEndBeforeStart();
     });
 
     // Sync endDate and endTime to combined endDate
-    this.generalForm.get('endDate')?.valueChanges.subscribe(() => this.syncEndDate());
-    this.generalForm.get('endTime')?.valueChanges.subscribe(() => this.syncEndDate());
+    this.generalForm.get('endDate')?.valueChanges.subscribe(() => {
+      this.syncEndDate();
+      const visitTime = this.generalForm.get('visitTime')?.value;
+      this.updateMinEndTime(visitTime);
+      this.checkEndBeforeStart();
+    });
+
+    this.generalForm.get('endTime')?.valueChanges.subscribe(() => {
+      this.syncEndDate();
+      this.checkEndBeforeStart();
+    });
   }
 
   private syncStartDate(): void {
@@ -1210,17 +1230,51 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
   }
 
-  private syncEndDate(): void {
+  private checkEndBeforeStart(): void {
+    const visitDate = this.generalForm.get('visitDate')?.value;
+    const visitTime = this.generalForm.get('visitTime')?.value;
     const endDate = this.generalForm.get('endDate')?.value;
     const endTime = this.generalForm.get('endTime')?.value;
 
-    if (endDate && endTime) {
-      const combined = new Date(endDate);
-      const time = new Date(endTime);
-      combined.setHours(time.getHours());
-      combined.setMinutes(time.getMinutes());
-      combined.setSeconds(0);
-      this.generalForm.get('endDate')?.setValue(combined, { emitEvent: false });
+    if (!visitDate || !endDate) {
+      this.endBeforeStartError = false;
+      return;
+    }
+
+    const startDt = new Date(visitDate);
+    if (visitTime) {
+      const vTime = new Date(visitTime);
+      startDt.setHours(vTime.getHours(), vTime.getMinutes(), 0, 0);
+    } else {
+      startDt.setHours(0, 0, 0, 0);
+    }
+
+    const endDt = new Date(endDate);
+    if (endTime) {
+      const eTime = new Date(endTime);
+      endDt.setHours(eTime.getHours(), eTime.getMinutes(), 0, 0);
+    } else {
+      endDt.setHours(23, 59, 59, 999);
+    }
+
+    this.endBeforeStartError = endDt.getTime() < startDt.getTime() + (60 * 60 * 1000);
+  }
+
+  private syncEndDate(): void {
+    const endDateCtrl = this.generalForm.get('endDate');
+    const endTimeCtrl = this.generalForm.get('endTime');
+
+    if (endDateCtrl?.value && endTimeCtrl?.value) {
+      const combined = new Date(endDateCtrl.value);
+      const time = new Date(endTimeCtrl.value);
+
+      // Only update if time parts are actually different to avoid unnecessary events/loops
+      if (combined.getHours() !== time.getHours() || combined.getMinutes() !== time.getMinutes()) {
+        combined.setHours(time.getHours());
+        combined.setMinutes(time.getMinutes());
+        combined.setSeconds(0);
+        endDateCtrl.setValue(combined, { emitEvent: false });
+      }
     }
   }
 
@@ -1242,15 +1296,65 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.minEndTime = undefined;
       return;
     }
-    this.minEndTime = visitTime;
-    // Clear endTime if it is no longer after visitTime
+
+    const visitDate = this.generalForm.get('visitDate')?.value;
+    const endDateCtrl = this.generalForm.get('endDate');
     const endTimeCtrl = this.generalForm.get('endTime');
-    if (endTimeCtrl?.value) {
-      const endVal: Date = endTimeCtrl.value;
-      if (endVal.getHours() < visitTime.getHours() ||
-        (endVal.getHours() === visitTime.getHours() && endVal.getMinutes() <= visitTime.getMinutes())) {
-        endTimeCtrl.setValue(null);
+
+    if (!visitDate || !endDateCtrl || !endTimeCtrl) {
+      this.minEndTime = undefined;
+      return;
+    }
+
+    // Combine visitDate and visitTime to get a full Start DateTime
+    const startDt = new Date(visitDate);
+    startDt.setHours(visitTime.getHours(), visitTime.getMinutes(), 0, 0);
+
+    // Calculate minimum end time as start time + 1 hour
+    const minEndDateTime = new Date(startDt.getTime() + (60 * 60 * 1000));
+
+    // Determine if midnight was crossed
+    const crossedDay = minEndDateTime.getDate() !== startDt.getDate();
+
+    // If endDate is empty, default it
+    if (!endDateCtrl.value) {
+      const defaultEndDate = new Date(minEndDateTime);
+      defaultEndDate.setHours(0, 0, 0, 0);
+      endDateCtrl.setValue(defaultEndDate, { emitEvent: false });
+    }
+
+    const currentEndDate = new Date(endDateCtrl.value);
+    const isSameDayAsStart = currentEndDate.getFullYear() === startDt.getFullYear() &&
+      currentEndDate.getMonth() === startDt.getMonth() &&
+      currentEndDate.getDate() === startDt.getDate();
+
+    // Set minEndTime for the picker based on whether it's the same day
+    if (isSameDayAsStart) {
+      // In same day, min selectable time is the visit time
+      this.minEndTime = visitTime;
+    } else {
+      this.minEndTime = undefined;
+    }
+
+    // Proactive defaulting of endTime: if empty or invalid, set to +1 hour
+    const currentEndTime = endTimeCtrl.value;
+    const endDt = new Date(currentEndDate);
+    if (currentEndTime) {
+      const eVal = new Date(currentEndTime);
+      endDt.setHours(eVal.getHours(), eVal.getMinutes(), 0, 0);
+    }
+
+    // If endTime is missing or combined datetime is less than 1 hour after start
+    if (!currentEndTime || endDt.getTime() < minEndDateTime.getTime()) {
+      endTimeCtrl.setValue(new Date(minEndDateTime));
+
+      // If this shift caused a day change that contradicts current endDate, update endDate
+      if (crossedDay && isSameDayAsStart) {
+        const nextDay = new Date(minEndDateTime);
+        nextDay.setHours(0, 0, 0, 0);
+        endDateCtrl.setValue(nextDay);
       }
+      endTimeCtrl.markAsTouched();
     }
   }
 
@@ -1460,7 +1564,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (this.udfSettings) {
         this.udfSettings.forEach((udf: any) => {
           if (udf.Enabled && udf.Required) {
-            requiredFields.push(udf.UDFName);
+            requiredFields.push(udf.formControlName);
           }
         });
       }
@@ -1622,14 +1726,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.udfSettings.forEach((udf: any) => {
       if (udf.Enabled) {
         this.setupControl(
-          udf.UDFName,
+          udf.formControlName,
           true,
           udf.Required,
           udf.UDFCtrlType === 10 ? udf.MinLength : undefined,
           udf.UDFCtrlType === 10 ? udf.MaxLength : undefined
         );
         if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
-          const ctrl = this.generalForm.get(udf.UDFName);
+          const ctrl = this.generalForm.get(udf.formControlName);
           if (ctrl) {
             ctrl.addValidators(this.dateRangeValidator);
             ctrl.updateValueAndValidity();
@@ -1730,6 +1834,25 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (!c || c instanceof FormArray) return true; // Skip FormArrays
       return !c.enabled || c.valid;
     });
+
+    // Validate end datetime is after start datetime
+    const visitDate = this.generalForm.get('visitDate')?.value;
+    const visitTime = this.generalForm.get('visitTime')?.value;
+    const endDate = this.generalForm.get('endDate')?.value;
+    const endTime = this.generalForm.get('endTime')?.value;
+    if (visitDate && endDate) {
+      const startDt = visitTime ? new Date(new Date(visitDate).setHours(new Date(visitTime).getHours(), new Date(visitTime).getMinutes(), 0)) : new Date(visitDate);
+      const endDt = endTime ? new Date(new Date(endDate).setHours(new Date(endTime).getHours(), new Date(endTime).getMinutes(), 0)) : new Date(endDate);
+      if (endDt <= startDt) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Validation Error',
+          detail: 'End date/time must be after start date/time'
+        });
+        this.wizardService.setStepValid(false);
+        return false;
+      }
+    }
 
     // Additional custom validation for visitor ID and expiry
     if (isValid) {
@@ -1875,8 +1998,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
         // Patch UDF fields
         this.udfSettings.forEach((udf: any) => {
-          if (udf.Enabled && visitor[udf.UDFName] != null) {
-            this.generalForm.patchValue({ [udf.UDFName]: visitor[udf.UDFName] });
+          if (udf.Enabled && visitor[udf.formControlName] != null) {
+            this.generalForm.patchValue({ [udf.formControlName]: visitor[udf.formControlName] });
           }
         });
 
@@ -2193,12 +2316,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
         // Patch UDF fields
         this.udfSettings.forEach((udf: any) => {
-          if (udf.Enabled && visitor[udf.UDFName] != null) {
-            this.generalForm.patchValue({ [udf.UDFName]: visitor[udf.UDFName] });
+          if (udf.Enabled && visitor[udf.formControlName] != null) {
+            this.generalForm.patchValue({ [udf.formControlName]: visitor[udf.formControlName] });
           }
         });
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
