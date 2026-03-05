@@ -1985,6 +1985,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
         this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
 
+        // Match country code to CountrySeqId in countryList
+        const matchedCountry = this.countryList.find((c: any) =>
+          c.CountrySeqId === visitor.Country || c.Code === visitor.Country ||
+          c.CountryCode === visitor.Country || c.ShortName === visitor.Country
+        );
+        const countryValue = matchedCountry?.CountrySeqId ?? visitor.Country ?? '';
+
         this.generalForm.patchValue({
           fullName: visitor.VisitorName || '',
           title: visitor.Title || '',
@@ -1992,14 +1999,21 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           visitor_company: visitor.VisitorCompany || '',
           email: visitor.Email || '',
           phone: visitor.ContactNo || '',
-          country: visitor.Country || '',
+          country: countryValue,
           vehicle_number: visitor.VehicleNo || ''
         });
 
-        // Patch UDF fields
+        // Patch visitor UDF fields only — API returns UDF1/UDF2 mapped to VUDF controls
         this.udfSettings.forEach((udf: any) => {
-          if (udf.Enabled && visitor[udf.formControlName] != null) {
-            this.generalForm.patchValue({ [udf.formControlName]: visitor[udf.formControlName] });
+          if (udf.udfPrefix !== 'v') return;  // skip appointment UDFs
+          const apiValue = visitor[udf.UDFName];  // e.g. visitor['UDF1']
+          if (udf.Enabled && apiValue != null) {
+            let value: any = apiValue;
+            if (udf.UDFCtrlType === 40 && typeof apiValue === 'string' && apiValue.includes('/')) {
+              const parts = apiValue.split('/');
+              if (parts.length === 3) value = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+            }
+            this.generalForm.patchValue({ [udf.formControlName]: value });
           }
         });
 
@@ -2304,20 +2318,32 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
         this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
 
+        const matchedCountry = this.countryList.find((c: any) =>
+          c.CountrySeqId === visitor.Country || c.Code === visitor.Country ||
+          c.CountryCode === visitor.Country || c.ShortName === visitor.Country
+        );
+        const countryValue = matchedCountry?.CountrySeqId ?? visitor.Country ?? '';
+
         this.generalForm.patchValue({
           fullName: visitor.VisitorName || '',
           title: visitor.Title || '',
           visitor_company: visitor.VisitorCompany || '',
           email: visitor.Email || '',
           phone: visitor.ContactNo || '',
-          country: visitor.Country || '',
+          country: countryValue,
           vehicle_number: visitor.VehicleNo || ''
         });
 
-        // Patch UDF fields
+        // Patch UDF fields — API returns UDF1/UDF2, form controls are AUDF1/VUDF1
         this.udfSettings.forEach((udf: any) => {
-          if (udf.Enabled && visitor[udf.formControlName] != null) {
-            this.generalForm.patchValue({ [udf.formControlName]: visitor[udf.formControlName] });
+          const apiValue = visitor[udf.UDFName];
+          if (udf.Enabled && apiValue != null) {
+            let value: any = apiValue;
+            if (udf.UDFCtrlType === 40 && typeof apiValue === 'string' && apiValue.includes('/')) {
+              const parts = apiValue.split('/');
+              if (parts.length === 3) value = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+            }
+            this.generalForm.patchValue({ [udf.formControlName]: value });
           }
         });
       },

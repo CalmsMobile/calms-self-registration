@@ -19,6 +19,9 @@ export const appConfig: ApplicationConfig = {
       theme: {
         preset: Material,
       },
+      translation: {
+        dateFormat: 'dd/mm/yy'
+      }
     }),
     provideClientHydration(),
     provideHttpClient(),
