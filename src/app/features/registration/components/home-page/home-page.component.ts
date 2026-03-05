@@ -405,6 +405,15 @@ export class HomePageComponent {
           this.processAdditionalPageSettings(responseData.Table);
         }
 
+        // Store T&C settings from Table1
+        if (responseData?.Table1?.length) {
+          const tcSettings = responseData.Table1[0];
+          this.wizardService.setSelfRegistrationSettings({
+            TermsnCondEnabled: tcSettings.TermsnCondEnabled ?? false,
+            TermsnCondTemplate: tcSettings.TermsnCond || ''
+          });
+        }
+
       } catch (error) {
         console.error('Error loading labels:', error);
       }
@@ -679,14 +688,14 @@ export class HomePageComponent {
   }
 
   shouldShowTerms(): boolean {
-    const settings = this.wizardService.getSettings();
-    return settings?.TermsnCondEnabled || false;
+    const selfRegSettings = this.wizardService.getSelfRegistrationSettings();
+    return selfRegSettings?.TermsnCondEnabled ?? false;
   }
 
   getTermsHtml(): SafeHtml {
-    const settings = this.wizardService.getSettings();
-    if (settings?.TermsnCondTemplate) {
-      return this.sanitizer.bypassSecurityTrustHtml(settings.TermsnCondTemplate);
+    const selfRegSettings = this.wizardService.getSelfRegistrationSettings();
+    if (selfRegSettings?.TermsnCondTemplate) {
+      return this.sanitizer.bypassSecurityTrustHtml(selfRegSettings.TermsnCondTemplate);
     }
     return '';
   }

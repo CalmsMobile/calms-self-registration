@@ -130,8 +130,64 @@ export class WizardService {
     return this.masterData;
   }
 
+  /**
+   * Stores master data from the GetBranchHostDataForSelf API response.
+   * The response Data object uses the following table mapping:
+   *   Table   → hosts (HOSTIC, HOSTNAME, HostFloor, DEPARTMENT_REFID)
+   *   Table1  → meeting rooms (MeetingRoomSeqId, MeetingRoomDesc)
+   *   Table2  → visitor categories (visitor_ctg_id, visitor_ctg_desc)
+   *   Table3  → visit purposes (empty placeholder)
+   *   Table4  → ID types (ID_TYPECODE, IDTYPEDESCRIPTION)
+   *   Table5  → visitor IC
+   *   Table6  → SelfVisitorCategories setting
+   *   Table7  → patient name
+   *   Table8  → floors (floor_id, floor_desc)
+   *   Table9  → titles (TitleSeqId, Title)
+   *   Table10 → purposes with details (visitpurpose_id, visitpurpose_desc)
+   *   Table11 → departments (dept_id, dept_desc)
+   *   Table12 → companies (visitor_comp_code, visitor_comp_name)
+   *   Table13 → countries (CountrySeqId, ShortName, Name)
+   *
+   * The stored masterData remaps these so downstream consumers (e.g. step-general) can
+   * access data through the stable table keys they already use:
+   *   masterData.Table  → hosts
+   *   masterData.Table1 → meeting rooms / locations
+   *   masterData.Table2 → floors       (previously Table8)
+   *   masterData.Table3 → purposes     (previously Table10)
+   *   masterData.Table4 → ID types     (unchanged)
+   *   masterData.Table5 → departments  (previously Table11)
+   *   masterData.Table6 → SelfVisitorCategories setting
+   *   masterData.Table7 → companies    (previously Table12)
+   *   masterData.Table8 → floors raw   (unchanged)
+   *   masterData.Table9 → titles       (unchanged)
+   *   masterData.Table10 → purposes raw (unchanged)
+   *   masterData.Table11 → departments raw (unchanged)
+   *   masterData.Table12 → ID types    (previously Table4)
+   *   masterData.Table13 → countries   (unchanged)
+   */
   setmasterData(data: any) {
-    this.masterData = data;
+    if (!data) {
+      this.masterData = null;
+      return;
+    }
+
+    // Store the raw response and add remapped aliases so existing consumers
+    // that reference Table2/Table3/Table5/Table7/Table12 still work correctly.
+    this.masterData = {
+      ...data,
+      // meetingFloorList ← Table8 (floors)
+      Table2: data.Table8 || data.Table2 || [],
+      // purposeList ← Table10 (purposes with details)
+      Table3: data.Table10 || data.Table3 || [],
+      // departmentList ← Table11 (departments)
+      Table5: data.Table11 || data.Table5 || [],
+      // companyList ← Table12 (companies)
+      Table7: data.Table12 || data.Table7 || [],
+      // idTypeList ← Table4 (ID types)
+      Table12: data.Table4 || data.Table12 || [],
+      // Keep Table13 (countries) as-is
+      Table13: data.Table13 || [],
+    };
   }
 
   setVisitorAckData(data: any) {
@@ -144,6 +200,9 @@ export class WizardService {
 
   setBranchHostData(data: any) {
     this.branchHostData = data;
+    // Also populate masterData so step-general and other consumers
+    // can access the full table set via getmasterData().
+    this.setmasterData(data);
   }
 
   getBranchHostData() {
@@ -219,6 +278,10 @@ export class WizardService {
 
   setSelfRegistrationSettings(selfRegSettings: any) {
     this.selfRegistrationSetting$.next(selfRegSettings);
+  }
+
+  getSelfRegistrationSettings(): any {
+    return this.selfRegistrationSetting$.value;
   }
 
   getPageSettings() {
