@@ -1419,6 +1419,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.isVisitorBlacklisted) {
+      this.messageService.add({
+        severity: 'error', summary: 'Blacklisted',
+        detail: 'This visitor is blacklisted and cannot be added.', life: 5000
+      });
+      return;
+    }
+
     const currentForm = this.getCurrentVisitorForm();
 
     if (this.isCurrentVisitorFormValid()) {
@@ -1835,6 +1843,16 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return !c.enabled || c.valid;
     });
 
+    // Block if visitor is blacklisted
+    if (this.isVisitorBlacklisted) {
+      this.messageService.add({
+        severity: 'error', summary: 'Blacklisted',
+        detail: 'This visitor is blacklisted and cannot proceed.', life: 5000
+      });
+      this.wizardService.setStepValid(false);
+      return false;
+    }
+
     // Validate end datetime is after start datetime
     const visitDate = this.generalForm.get('visitDate')?.value;
     const visitTime = this.generalForm.get('visitTime')?.value;
@@ -1970,6 +1988,44 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.showReturningVisitorPopup = true;
   }
 
+  private applyVisitorToForm(visitor: any): void {
+    const matchedCountry = this.countryList.find((c: any) =>
+      c.CountrySeqId === visitor.Country || c.Code === visitor.Country ||
+      c.CountryCode === visitor.Country || c.ShortName === visitor.Country ||
+      c.Name === visitor.Country || c.CountryName === visitor.Country
+    );
+    const countryValue = matchedCountry?.CountrySeqId ?? visitor.Country ?? '';
+    const idExpired = visitor.IDExpired ? new Date(visitor.IDExpired) : null;
+
+    this.generalForm.patchValue({
+      fullName: visitor.VisitorName || '',
+      title: visitor.Title || visitor.Title1 || '',
+      visitor_id: visitor.att_visitor_id || '',
+      visitor_company: visitor.VisitorCompany || '',
+      email: visitor.Email || '',
+      phone: visitor.ContactNo || '',
+      country: countryValue,
+      vehicle_number: visitor.VehicleNo || '',
+      id_expired_date: idExpired,
+      visitor_id_type: visitor.IDType || ''
+    });
+
+    this.udfSettings.forEach((udf: any) => {
+      if (udf.udfPrefix !== 'v') return;
+      const apiValue = visitor[udf.UDFName];
+      if (udf.Enabled && apiValue != null && apiValue !== '') {
+        let value: any = apiValue;
+        if (udf.UDFCtrlType === 40 && typeof apiValue === 'string') {
+          const parts = apiValue.split(/[\/\-]/);
+          if (parts.length === 3) value = new Date(+parts[2], +parts[1] - 1, +parts[0]);
+        } else if (udf.UDFCtrlType === 30 && typeof apiValue === 'string') {
+          value = apiValue.split(',').map((v: string) => v.trim()).filter(Boolean);
+        }
+        this.generalForm.patchValue({ [udf.formControlName]: value });
+      }
+    });
+  }
+
   searchProfile(): void {
     const query = this.searchQuery?.trim();
     if (!query) return;
@@ -1984,39 +2040,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         }
 
         this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
+        if (this.isVisitorBlacklisted) {
+          this.messageService.add({
+            severity: 'error', summary: 'Blacklisted',
+            detail: 'This visitor is blacklisted and cannot proceed.', life: 5000
+          });
+          return;
+        }
 
-        // Match country code to CountrySeqId in countryList
-        const matchedCountry = this.countryList.find((c: any) =>
-          c.CountrySeqId === visitor.Country || c.Code === visitor.Country ||
-          c.CountryCode === visitor.Country || c.ShortName === visitor.Country
-        );
-        const countryValue = matchedCountry?.CountrySeqId ?? visitor.Country ?? '';
-
-        this.generalForm.patchValue({
-          fullName: visitor.VisitorName || '',
-          title: visitor.Title || '',
-          visitor_id: visitor.att_visitor_id || '',
-          visitor_company: visitor.VisitorCompany || '',
-          email: visitor.Email || '',
-          phone: visitor.ContactNo || '',
-          country: countryValue,
-          vehicle_number: visitor.VehicleNo || ''
-        });
-
-        // Patch visitor UDF fields only — API returns UDF1/UDF2 mapped to VUDF controls
-        this.udfSettings.forEach((udf: any) => {
-          if (udf.udfPrefix !== 'v') return;  // skip appointment UDFs
-          const apiValue = visitor[udf.UDFName];  // e.g. visitor['UDF1']
-          if (udf.Enabled && apiValue != null) {
-            let value: any = apiValue;
-            if (udf.UDFCtrlType === 40 && typeof apiValue === 'string' && apiValue.includes('/')) {
-              const parts = apiValue.split('/');
-              if (parts.length === 3) value = new Date(+parts[2], +parts[1] - 1, +parts[0]);
-            }
-            this.generalForm.patchValue({ [udf.formControlName]: value });
-          }
-        });
-
+        this.applyVisitorToForm(visitor);
         this.showReturningVisitorPopup = false;
       },
       error: () => {
@@ -2308,7 +2340,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   onVisitorIdBlur(): void {
     const visitorId = this.generalForm.get('visitor_id')?.value?.trim();
-    if (!visitorId) return;
+    if (!visitorId) { this.isVisitorBlacklisted = false; return; }
 
     const branchId = this.wizardService.currentBranchID;
     this.api.SearchVisitor(visitorId, branchId).subscribe({
@@ -2317,35 +2349,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         if (!visitor) return;
 
         this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
-
-        const matchedCountry = this.countryList.find((c: any) =>
-          c.CountrySeqId === visitor.Country || c.Code === visitor.Country ||
-          c.CountryCode === visitor.Country || c.ShortName === visitor.Country
-        );
-        const countryValue = matchedCountry?.CountrySeqId ?? visitor.Country ?? '';
-
-        this.generalForm.patchValue({
-          fullName: visitor.VisitorName || '',
-          title: visitor.Title || '',
-          visitor_company: visitor.VisitorCompany || '',
-          email: visitor.Email || '',
-          phone: visitor.ContactNo || '',
-          country: countryValue,
-          vehicle_number: visitor.VehicleNo || ''
-        });
-
-        // Patch UDF fields — API returns UDF1/UDF2, form controls are AUDF1/VUDF1
-        this.udfSettings.forEach((udf: any) => {
-          const apiValue = visitor[udf.UDFName];
-          if (udf.Enabled && apiValue != null) {
-            let value: any = apiValue;
-            if (udf.UDFCtrlType === 40 && typeof apiValue === 'string' && apiValue.includes('/')) {
-              const parts = apiValue.split('/');
-              if (parts.length === 3) value = new Date(+parts[2], +parts[1] - 1, +parts[0]);
-            }
-            this.generalForm.patchValue({ [udf.formControlName]: value });
-          }
-        });
+        if (this.isVisitorBlacklisted) {
+          this.messageService.add({
+            severity: 'error', summary: 'Blacklisted',
+            detail: 'This visitor is blacklisted and cannot proceed.', life: 5000
+          });
+          return;
+        }
+        this.applyVisitorToForm(visitor);
       },
       error: () => { }
     });

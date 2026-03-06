@@ -202,9 +202,6 @@
         @if (isFieldInvalidRequired('visitor_id')) {
         <small class="error-message">{{'identity_number' | translate}} is required</small>
         }
-        @if (isVisitorBlacklisted) {
-        <small class="error-message">This visitor is blacklisted and cannot proceed.</small>
-        }
       </div>
       }
 

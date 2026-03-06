@@ -155,3 +155,59 @@ body {
     border-radius: 0;
   }
 }
+/* ── Toast responsive overrides ── */
+.p-toast {
+  max-width: calc(100vw - 2rem) !important;
+  width: auto !important;
+}
+
+.p-toast-message {
+  font-size: 0.85rem !important;
+}
+
+.p-toast-message-content {
+  padding: 0.6rem 0.75rem !important;
+  gap: 0.5rem !important;
+}
+
+.p-toast-summary {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+}
+
+.p-toast-detail {
+  font-size: 0.8rem !important;
+  margin-top: 0.15rem !important;
+}
+
+@media (max-width: 480px) {
+  .p-toast {
+    width: calc(100vw - 1rem) !important;
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+    top: 0.5rem !important;
+    transform: none !important;
+  }
+
+  .p-toast-message {
+    font-size: 0.8rem !important;
+    border-radius: 8px !important;
+  }
+
+  .p-toast-message-content {
+    padding: 0.5rem 0.6rem !important;
+  }
+
+  .p-toast-summary {
+    font-size: 0.8rem !important;
+  }
+
+  .p-toast-detail {
+    font-size: 0.75rem !important;
+  }
+
+  .p-toast-icon-close {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+  }
+}
