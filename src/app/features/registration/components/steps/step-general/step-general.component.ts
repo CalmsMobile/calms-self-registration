@@ -2048,6 +2048,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           return;
         }
 
+        // Extract and store safety briefing data from API response
+        if (visitor.SafetyBriefing_Date !== undefined) {
+          this.wizardService.SafetyBriefing_Date = visitor.SafetyBriefing_Date;
+        }
+        if (visitor.SafetyBriefVideoViewed !== undefined) {
+          this.wizardService.SafetyBriefVideoViewed = visitor.SafetyBriefVideoViewed;
+        }
+
+        console.log('Safety briefing data from visitor:', {
+          SafetyBriefing_Date: visitor.SafetyBriefing_Date,
+          SafetyBriefVideoViewed: visitor.SafetyBriefVideoViewed
+        });
+
         this.applyVisitorToForm(visitor);
         this.showReturningVisitorPopup = false;
       },
@@ -2356,6 +2369,20 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           });
           return;
         }
+
+        // Extract and store safety briefing data from API response
+        if (visitor.SafetyBriefing_Date !== undefined) {
+          this.wizardService.SafetyBriefing_Date = visitor.SafetyBriefing_Date;
+        }
+        if (visitor.SafetyBriefVideoViewed !== undefined) {
+          this.wizardService.SafetyBriefVideoViewed = visitor.SafetyBriefVideoViewed;
+        }
+
+        console.log('Safety briefing data from visitor:', {
+          SafetyBriefing_Date: visitor.SafetyBriefing_Date,
+          SafetyBriefVideoViewed: visitor.SafetyBriefVideoViewed
+        });
+
         this.applyVisitorToForm(visitor);
       },
       error: () => { }
