@@ -2354,9 +2354,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             severity: 'error', summary: 'Blacklisted',
             detail: 'This visitor is blacklisted and cannot proceed.', life: 5000
           });
-          return;
         }
-        this.applyVisitorToForm(visitor);
       },
       error: () => { }
     });
