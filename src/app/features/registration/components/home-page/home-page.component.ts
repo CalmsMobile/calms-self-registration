@@ -75,6 +75,10 @@ export class HomePageComponent {
   isBaseUrlAccessDisabled = false;
   baseUrlAccessDeniedInstruction = '';
   isAccessDenied = false;
+  
+  // SRWithoutBC flag control
+  srWithoutBC = '1'; // Default: allow access without BC param
+  srWithoutBCBlockMessage = 'Access denied. Please use the proper registration link with branch code.';
 
   // Appointment data handling
   isAppointmentFlow = false;
@@ -518,6 +522,21 @@ export class HomePageComponent {
               caption: settings.BranchCaption || settings.BranchLabel || settings.Caption || 'Branch',
               placeholder: settings.BranchPlaceholder || settings.Placeholder || 'Select Branch'
             };
+            
+            // Check SRWithoutBC flag
+            if (settings.SRWithoutBC !== undefined) {
+              this.srWithoutBC = settings.SRWithoutBC;
+            }
+            
+            // Check if access should be blocked when no BC query param
+            if (this.srWithoutBC !== '1' && !this.isBranchFromQuery && !this.isAppointmentFlow) {
+              this.isAccessDenied = true;
+              this.hasInvalidUrl = true;
+              this.errorMessage = this.srWithoutBCBlockMessage;
+              this.isLoading = false;
+              this.sharedService.setAccessDenied(true);
+              return;
+            }
           }
 
           // Only set loading to false if not from query (query flow handles it separately)
@@ -613,10 +632,19 @@ export class HomePageComponent {
       .subscribe({
         next: (allSettings: any) => {
           this.wizardService.setSettings(allSettings);
-          // Add small delay to ensure smooth loading transition
-          setTimeout(() => {
-            this.isLoading = false;
-          }, 300);
+          
+          // Check if terms are disabled - if so, auto-proceed to wizard
+          if (!this.shouldShowTerms()) {
+            console.log('Terms disabled - auto-proceeding to wizard');
+            setTimeout(() => {
+              this.proceedToWizard();
+            }, 300);
+          } else {
+            // Add small delay to ensure smooth loading transition
+            setTimeout(() => {
+              this.isLoading = false;
+            }, 300);
+          }
         },
         error: (error) => {
           console.error('Error loading category settings:', error);

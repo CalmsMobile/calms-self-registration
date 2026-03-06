@@ -186,6 +186,23 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     const currentStep = this.wizardService.getCurrentStepIndex();
     console.log('Current wizard step:', currentStep);
 
+    // Check if this step should be auto-skipped (e.g., safety brief)
+    const stepRoute = this.getStepRoute(stepIndex);
+    if (this.wizardService.shouldSkipSafetyBrief(stepRoute)) {
+      console.log('Auto-skipping step:', stepRoute);
+      // Mark step as valid and completed
+      this.wizardService.setStepValid(true);
+      this.completedSteps[stepIndex] = true;
+      // Navigate to next step
+      const nextStepIndex = stepIndex + 1;
+      if (nextStepIndex < this.items.length) {
+        this.navigateToStep(nextStepIndex, true);
+      } else {
+        this.submitRegistration();
+      }
+      return;
+    }
+
     // For forward navigation (next step), allow if it's just one step ahead
     const isForwardToNextStep = stepIndex === currentStep + 1 && !skipValidation;
 

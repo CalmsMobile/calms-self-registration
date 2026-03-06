@@ -62,6 +62,10 @@ export class WizardService {
   refCatCode = '';    // encrypted category code (vc param)
   appointmentCode = ''; // appointment code (q param)
 
+  // Static variables for safety brief - will be replaced with dynamic data later
+  SafetyBriefing_Date = "2026-03-03T14:02:43.957";
+  SafetyBriefVideoViewed = false;
+
   constructor(private sharedService: SharedService, private router: Router) {
     if (!this.currentBranchID) {
       this.currentBranchID = sessionStorage.getItem('currentBranchID') || '';
@@ -693,6 +697,41 @@ export class WizardService {
     // For forward navigation, require validation
     this.requestValidation();
     return false;
+  }
+
+  /**
+   * Check if the SafetyBriefing_Date has expired (older than current date/time)
+   */
+  private isSafetyBriefingExpired(): boolean {
+    const briefingDate = new Date(this.SafetyBriefing_Date);
+    const currentDate = new Date();
+    return briefingDate < currentDate;
+  }
+
+  /**
+   * Determine if safety brief step should be skipped
+   * - If SafetyBriefVideoViewed is false → show step
+   * - If SafetyBriefVideoViewed is true AND SafetyBriefing_Date expired → show step
+   * - Otherwise → skip step
+   */
+  shouldSkipSafetyBrief(stepRoute: string): boolean {
+    // Only apply logic to safety-brief step
+    if (stepRoute !== 'safety-brief') {
+      return false;
+    }
+
+    // Show step if video not viewed
+    if (!this.SafetyBriefVideoViewed) {
+      return false;
+    }
+
+    // Show step if viewed but expired
+    if (this.SafetyBriefVideoViewed && this.isSafetyBriefingExpired()) {
+      return false;
+    }
+
+    // Skip step if viewed and not expired
+    return true;
   }
 
   navigateToNextStep(): void {
