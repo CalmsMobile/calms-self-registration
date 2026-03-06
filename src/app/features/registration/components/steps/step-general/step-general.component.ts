@@ -2367,7 +2367,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             severity: 'error', summary: 'Blacklisted',
             detail: 'This visitor is blacklisted and cannot proceed.', life: 5000
           });
-          return;
         }
 
         // Extract and store safety briefing data from API response
