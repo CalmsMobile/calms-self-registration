@@ -1134,3 +1134,12 @@ textarea {
     }
   }
 }
+
+/* ============================================
+   TIME PICKER ICON POSITION FIX
+   Only applies to timeOnly datepickers (visitTime, endTime)
+   ============================================ */
+::ng-deep #visitTime .p-datepicker-input-icon-container,
+::ng-deep #endTime .p-datepicker-input-icon-container {
+  top: 7px !important;
+}

@@ -183,7 +183,7 @@
     -webkit-backdrop-filter: blur(10px);
     padding: 32px 40px;
     max-height: calc(100vh - 160px);
-    overflow: hidden;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
   }
@@ -281,7 +281,7 @@ h1 {
   @media (min-width: 969px) {
     flex: 1;
     min-height: 0;
-    overflow: hidden; // Disable scroll for the whole form
+    overflow: visible; // Allow button-container to be fully visible
     padding-right: 0;
   }
 
