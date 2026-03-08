@@ -103,3 +103,20 @@
     height: 160px;
   }
 }
+
+@media (max-width: 480px) {
+  .step-content { gap: 1rem; }
+
+  .nda-text {
+    max-height: 30vh;
+    padding: 0.6rem;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .signature-title { font-size: 0.95rem; }
+
+  .signature-instruction { font-size: 0.78rem; }
+
+  .signature-canvas { height: 130px; }
+}

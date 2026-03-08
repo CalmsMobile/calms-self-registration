@@ -1932,6 +1932,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Always include host — defaultHostId must be sent even when host control is hidden/disabled
+    if (!formData.host && this.defaultHostId) {
+      formData.host = this.defaultHostId;
+    }
+
     // Combine visitDate and visitTime into startDate
     if (formData.visitDate && formData.visitTime) {
       const combined = new Date(formData.visitDate);
@@ -2367,6 +2372,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             severity: 'error', summary: 'Blacklisted',
             detail: 'This visitor is blacklisted and cannot proceed.', life: 5000
           });
+          return;
         }
 
         // Extract and store safety briefing data from API response
@@ -2381,8 +2387,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           SafetyBriefing_Date: visitor.SafetyBriefing_Date,
           SafetyBriefVideoViewed: visitor.SafetyBriefVideoViewed
         });
-
-        this.applyVisitorToForm(visitor);
       },
       error: () => { }
     });

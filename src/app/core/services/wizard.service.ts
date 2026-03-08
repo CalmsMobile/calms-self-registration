@@ -360,7 +360,7 @@ export class WizardService {
       loFinalData.HostDeptId = visitorSettings.HostDepartmentEnabled ? (formData.general?.hostDepartment || '') : '';
       loFinalData.HostDeptDesc = visitorSettings.HostDepartmentEnabled ? (formData.general?.hostDepartmentDesc || '') : '';
 
-      loFinalData.HostId = visitorSettings.HostNameEnabled ? (formData.general?.hostName || '') : '';
+      loFinalData.HostId = visitorSettings.HostNameEnabled ? (formData.general?.hostName || '') : (visitorSettings.DefaultHostId?.toString() || '');
       loFinalData.HostDesc = visitorSettings.HostNameEnabled ? (formData.general?.hostNameDesc || '') : '';
 
       loFinalData.WorkPermitRef = visitorSettings.WorkPermitRefEnabled ? (formData.general?.workPermitRef || null) : null;
@@ -442,7 +442,7 @@ export class WizardService {
       RefBranchDesc: this.currentBranchName || '',
       CategoryId: this.selectedVisitCategory?.toString() || '',
       HostDeptId: generalData.department?.toString() || '',
-      HostId: generalData.host?.toString() || '',
+      HostId: generalData.host?.toString() || settings?.DefaultHostId?.toString() || '',
       WorkPermitRef: generalData.work_permit_ref || null,
       PurposeId: generalData.Reason?.toString() || '',
       PurposeDesc: '', // Will be populated from master data

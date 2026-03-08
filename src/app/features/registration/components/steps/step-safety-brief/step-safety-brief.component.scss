@@ -140,3 +140,62 @@
         }
     }
 }
+
+@media (max-width: 480px) {
+    .video-instructions p {
+        font-size: 0.8rem;
+    }
+
+    .video-complete {
+        padding: 1rem;
+
+        .completion-message {
+            h3 {
+                font-size: 1rem;
+                margin-bottom: 0.5rem;
+            }
+
+            p {
+                font-size: 0.8rem;
+                margin-bottom: 1rem;
+            }
+
+            ::ng-deep .p-button {
+                font-size: 0.8rem !important;
+                padding: 0.5rem 1rem !important;
+            }
+        }
+    }
+}
+
+.video-container {
+    position: relative;
+
+    .play-button {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        padding: 1rem 2rem;
+        font-size: 1.2rem;
+
+        .pi {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+    }
+}
+
+.safety-video {
+
+    /* Prevent native controls from showing */
+    &::-webkit-media-controls {
+        display: none !important;
+    }
+
+    /* Hide controls in other browsers */
+    &::-webkit-media-controls-enclosure {
+        display: none !important;
+    }
+}
