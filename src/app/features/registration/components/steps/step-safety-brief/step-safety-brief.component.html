@@ -9,6 +9,11 @@
           Press the replay button after the video completes to exit fullscreen
         </p>
       }
+      @if (isReplaying && !videoEnded && !isFullscreen) {
+        <p class="replay-message" style="color: var(--primary-color); font-weight: 500; margin-top: 0.5rem;">
+          Replaying video (scroll available)
+        </p>
+      }
     </div>
 
     <div #videoContainer class="video-container">

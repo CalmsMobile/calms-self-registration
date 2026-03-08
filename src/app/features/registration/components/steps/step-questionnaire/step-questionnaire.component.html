@@ -4,35 +4,67 @@
     <div class="step-content">
       <form [formGroup]="questionnaireForm" class="questionnaire-form">
         @for (question of questions; track question) {
-          <div class="question-item">
+          <div class="question-item" [class.has-error]="validationErrors[question.QuestionariesSeqId]">
             <div class="question-header">
               @if (question.ShortName) {
                 <h3>{{ question.ShortName }}</h3>
               }
-              <p class="question-text">{{ question.Description }}</p>
+              <p class="question-text">
+                {{ question.Description }}
+                @if (question.ValidationRequired) {
+                  <span class="required-indicator">*</span>
+                }
+              </p>
             </div>
+            
             <div class="answer-options">
-              <div class="p-field-radiobutton">
-                @if (getQuestionControl(question.QuestionariesSeqId)) {
-                  <p-radioButton
-                    name="q{{question.QuestionariesSeqId}}" value="1"
-                    [formControl]="getQuestionControl(question.QuestionariesSeqId)" label="Yes"
-                    [inputId]="'yes_' + question.QuestionariesSeqId" />
-                }
-                <label [for]="'yes_' + question.QuestionariesSeqId" class="ml-2">Yes</label>
-              </div>
-              <div class="p-field-radiobutton">
-                @if (getQuestionControl(question.QuestionariesSeqId)) {
-                  <p-radioButton
-                    name="q{{question.QuestionariesSeqId}}" value="0"
-                    [formControl]="getQuestionControl(question.QuestionariesSeqId)" label="No"
-                    [inputId]="'no_' + question.QuestionariesSeqId" />
-                }
-                <label [for]="'no_' + question.QuestionariesSeqId" class="ml-2">No</label>
-              </div>
-              @if (getQuestionError(question.QuestionariesSeqId)) {
+              <!-- Multiple Choice (Checkbox) Questions -->
+              @if (isMultipleAnswerQuestion(question)) {
+                <div class="checkbox-group">
+                  @for (option of getQuestionOptions(question); track option.value) {
+                    <div class="p-field-checkbox">
+                      <p-checkbox
+                        [inputId]="'q' + question.QuestionariesSeqId + '_opt' + option.value"
+                        [value]="option.value"
+                        [binary]="true"
+                        [ngModel]="isCheckboxSelected(question.QuestionariesSeqId, option.value)"
+                        (onChange)="onCheckboxChange(question.QuestionariesSeqId, option.value, $event)"
+                        [ngModelOptions]="{standalone: true}"
+                        />
+                      <label [for]="'q' + question.QuestionariesSeqId + '_opt' + option.value" class="ml-2">
+                        {{ option.label }}
+                      </label>
+                    </div>
+                  }
+                </div>
+              }
+              
+              <!-- Single Choice (Radio Button) Questions -->
+              @else {
+                <div class="radio-group">
+                  @for (option of getQuestionOptions(question); track option.value) {
+                    <div class="p-field-radiobutton">
+                      <p-radioButton
+                        name="q{{question.QuestionariesSeqId}}"
+                        [value]="option.value"
+                        [formControl]="getQuestionControl(question.QuestionariesSeqId)"
+                        [inputId]="'q' + question.QuestionariesSeqId + '_opt' + option.value" />
+                      <label [for]="'q' + question.QuestionariesSeqId + '_opt' + option.value" class="ml-2">
+                        {{ option.label }}
+                      </label>
+                    </div>
+                  }
+                </div>
+              }
+              
+              <!-- Error Message -->
+              @if (validationErrors[question.QuestionariesSeqId]) {
                 <small class="p-error">
-                  Your answer doesn't match the required response
+                  @if (question.ValidationRequired) {
+                    This question requires the correct answer to proceed
+                  } @else {
+                    Please answer this question
+                  }
                 </small>
               }
             </div>
@@ -42,3 +74,49 @@
     </div>
   </div>
 }
+
+<!-- Safety Brief Rewatch Dialog -->
+<p-dialog 
+  [(visible)]="showSafetyBriefDialog" 
+  [modal]="true" 
+  [closable]="true"
+  [draggable]="false"
+  [resizable]="false"
+  styleClass="safety-brief-dialog"
+  header="Safety Briefing Required"
+  (onHide)="closeSafetyBriefDialog()">
+  
+  <div class="dialog-content">
+    <p class="dialog-message">
+      <i class="pi pi-exclamation-triangle" style="font-size: 2rem; color: #f59e0b; margin-bottom: 1rem;"></i>
+    </p>
+    <p class="dialog-message">
+      Your answer to the safety briefing question is incorrect. 
+      Would you like to rewatch the safety briefing video to review the information?
+    </p>
+    
+    @if (currentSafetyQuestion) {
+      <div class="question-reference">
+        <strong>Question:</strong>
+        <p>{{ currentSafetyQuestion.Description }}</p>
+      </div>
+    }
+  </div>
+  
+  <ng-template pTemplate="footer">
+    <div class="dialog-footer">
+      <p-button 
+        label="Review My Answer" 
+        icon="pi pi-pencil"
+        severity="secondary"
+        (onClick)="closeSafetyBriefDialog()">
+      </p-button>
+      <p-button 
+        label="Rewatch Safety Brief" 
+        icon="pi pi-play"
+        severity="warn"
+        (onClick)="rewatchSafetyBrief()">
+      </p-button>
+    </div>
+  </ng-template>
+</p-dialog>

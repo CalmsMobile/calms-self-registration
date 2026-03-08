@@ -1,9 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormArray, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { ToastModule } from 'primeng/toast';
 import { RadioButtonModule } from 'primeng/radiobutton';
+import { CheckboxModule } from 'primeng/checkbox';
+import { DialogModule } from 'primeng/dialog';
+import { ButtonModule } from 'primeng/button';
 
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { Subject, takeUntil } from 'rxjs';
@@ -13,7 +16,17 @@ interface Question {
   ShortName?: string;
   Description: string;
   ValidationRequired: boolean;
-  AcceptedAns: number; // 0 for No, 1 for Yes
+  AcceptedAns: number; // 0 for No, 1 for Yes (legacy)
+  Option1?: string;
+  Option2?: string;
+  Option3?: string;
+  Option4?: string;
+  CrtAnswers?: string; // Comma-separated correct answer indices (e.g., "1,2,3")
+  IsSafetyBriefQuest?: boolean;
+  VisitorCategories?: string;
+  MAppId?: string;
+  Active?: boolean;
+  RefHostAppSeqId?: number;
 }
 
 @Component({
@@ -21,7 +34,7 @@ interface Question {
   templateUrl: './step-questionnaire.component.html',
   styleUrls: ['./step-questionnaire.component.scss'],
   standalone: true,
-  imports: [FormsModule, ToastModule, RadioButtonModule, ReactiveFormsModule, TranslatePipe]
+  imports: [FormsModule, ToastModule, RadioButtonModule, CheckboxModule, DialogModule, ButtonModule, ReactiveFormsModule, TranslatePipe]
 })
 export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   questions: Question[] = [];
@@ -29,6 +42,8 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   questionnaireForm: FormGroup;
   validationErrors: { [key: number]: boolean } = {};
   isLoading = true;
+  showSafetyBriefDialog = false;
+  currentSafetyQuestion: Question | null = null;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -58,6 +73,19 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     this.questionnaireForm.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.saveFormData();
     });
+
+    // Subscribe to each question control to clear validation errors on change
+    this.questions.forEach(question => {
+      const control = this.questionnaireForm.get(`q${question.QuestionariesSeqId}`);
+      if (control) {
+        control.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+          // Clear validation error when user interacts with radio buttons
+          if (this.validationErrors[question.QuestionariesSeqId]) {
+            delete this.validationErrors[question.QuestionariesSeqId];
+          }
+        });
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -72,7 +100,26 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     console.log('Saved data from wizard:', savedData);
     console.log('=============================');
     if (savedData) {
-      this.questionnaireForm.patchValue(savedData);
+      // Restore form data - handle both radio buttons and checkboxes
+      Object.keys(savedData).forEach(key => {
+        const control = this.questionnaireForm.get(key);
+        if (control) {
+          const value = savedData[key];
+          
+          // If it's a FormArray (checkbox group), populate it properly
+          if (control instanceof FormArray) {
+            control.clear();
+            if (Array.isArray(value)) {
+              value.forEach((v: string) => {
+                control.push(this.fb.control(v));
+              });
+            }
+          } else {
+            // Regular FormControl (radio button)
+            control.setValue(value);
+          }
+        }
+      });
     }
   }
 
@@ -86,13 +133,24 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
 
   private buildFormControls(): void {
     try {
-      const formGroupConfig: Record<string, FormControl<string | null>> = {};
+      const formGroupConfig: Record<string, FormControl<string | null> | FormArray> = {};
 
       this.questions.forEach(question => {
-        formGroupConfig[`q${question.QuestionariesSeqId}`] = new FormControl<string | null>(
-          null,
-          question.ValidationRequired ? Validators.required : null
-        );
+        const isMultipleChoice = this.isMultipleAnswerQuestion(question);
+        
+        if (isMultipleChoice) {
+          // Use FormArray for checkbox questions (multiple selections)
+          formGroupConfig[`q${question.QuestionariesSeqId}`] = this.fb.array(
+            [],
+            question.ValidationRequired ? Validators.required : null
+          );
+        } else {
+          // Use FormControl for radio button questions (single selection)
+          formGroupConfig[`q${question.QuestionariesSeqId}`] = new FormControl<string | null>(
+            null,
+            question.ValidationRequired ? Validators.required : null
+          );
+        }
       });
 
       this.questionnaireForm = this.fb.group(formGroupConfig);
@@ -111,19 +169,168 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     return control ? (control as FormControl<string | null>) : this.fb.control(null);
   }
 
+  getQuestionArray(questionId: number): FormArray {
+    const control = this.questionnaireForm.get(`q${questionId}`);
+    return control ? (control as FormArray) : this.fb.array([]);
+  }
+
+  /**
+   * Determine if a question has multiple correct answers (checkbox)
+   * or single correct answer (radio button)
+   */
+  isMultipleAnswerQuestion(question: Question): boolean {
+    if (!question.CrtAnswers) return false;
+    const correctAnswers = question.CrtAnswers.split(',').map(a => a.trim()).filter(a => a);
+    return correctAnswers.length > 1;
+  }
+
+  /**
+   * Get available options for a question
+   */
+  getQuestionOptions(question: Question): Array<{ value: string; label: string }> {
+    const options: Array<{ value: string; label: string }> = [];
+    
+    if (question.Option1) options.push({ value: '1', label: question.Option1 });
+    if (question.Option2) options.push({ value: '2', label: question.Option2 });
+    if (question.Option3) options.push({ value: '3', label: question.Option3 });
+    if (question.Option4) options.push({ value: '4', label: question.Option4 });
+    
+    return options;
+  }
+
+  /**
+   * Get correct answers for a question as an array
+   */
+  getCorrectAnswers(question: Question): string[] {
+    if (!question.CrtAnswers) return [];
+    return question.CrtAnswers.split(',').map(a => a.trim()).filter(a => a);
+  }
+
+  /**
+   * Check if checkbox option is selected
+   */
+  isCheckboxSelected(questionId: number, optionValue: string): boolean {
+    const formArray = this.getQuestionArray(questionId);
+    return formArray.value.includes(optionValue);
+  }
+
+  /**
+   * Get checkbox model value for two-way binding
+   */
+  getCheckboxModel(questionId: number, optionValue: string): boolean {
+    return this.isCheckboxSelected(questionId, optionValue);
+  }
+
+  /**
+   * Handle checkbox change event
+   */
+  onCheckboxChange(questionId: number, optionValue: string, event: any): void {
+    const formArray = this.getQuestionArray(questionId);
+    const isChecked = event.checked;
+    
+    if (isChecked) {
+      // Add the value if checked
+      if (!formArray.value.includes(optionValue)) {
+        formArray.push(this.fb.control(optionValue));
+      }
+    } else {
+      // Remove the value if unchecked
+      const index = formArray.value.indexOf(optionValue);
+      if (index >= 0) {
+        formArray.removeAt(index);
+      }
+    }
+    
+    // Clear validation error when user interacts
+    if (this.validationErrors[questionId]) {
+      delete this.validationErrors[questionId];
+    }
+    
+    formArray.markAsTouched();
+    this.saveFormData();
+  }
+
   validateQuestionnaire(): void {
     this.validationErrors = {};
     let isValid = true;
+    let hasSafetyBriefError = false;
+    let firstSafetyQuestion: Question | null = null;
 
     this.questions.forEach(question => {
-      const control = this.getQuestionControl(question.QuestionariesSeqId);
-      const userAnswer = control?.value;
+      const isMultipleChoice = this.isMultipleAnswerQuestion(question);
+      const correctAnswers = this.getCorrectAnswers(question);
+      let userAnswers: string[] = [];
+      let isAnswerCorrect = false;
 
-      if (question.ValidationRequired && userAnswer !== String(question.AcceptedAns)) {
+      if (isMultipleChoice) {
+        // Checkbox question - multiple answers
+        const formArray = this.getQuestionArray(question.QuestionariesSeqId);
+        userAnswers = formArray.value || [];
+        
+        // Check if required field has answers
+        if (question.ValidationRequired && userAnswers.length === 0) {
+          this.validationErrors[question.QuestionariesSeqId] = true;
+          isValid = false;
+          
+          if (question.IsSafetyBriefQuest && !hasSafetyBriefError) {
+            hasSafetyBriefError = true;
+            firstSafetyQuestion = question;
+          }
+          return;
+        }
+        
+        // Check if answers match correct answers (must match exactly)
+        if (question.ValidationRequired && correctAnswers.length > 0) {
+          const sortedUserAnswers = [...userAnswers].sort();
+          const sortedCorrectAnswers = [...correctAnswers].sort();
+          isAnswerCorrect = JSON.stringify(sortedUserAnswers) === JSON.stringify(sortedCorrectAnswers);
+        } else {
+          isAnswerCorrect = true; // No validation required
+        }
+      } else {
+        // Radio button question - single answer
+        const control = this.getQuestionControl(question.QuestionariesSeqId);
+        const userAnswer = control?.value;
+        
+        // Check if required field has answer
+        if (question.ValidationRequired && !userAnswer) {
+          this.validationErrors[question.QuestionariesSeqId] = true;
+          isValid = false;
+          
+          if (question.IsSafetyBriefQuest && !hasSafetyBriefError) {
+            hasSafetyBriefError = true;
+            firstSafetyQuestion = question;
+          }
+          return;
+        }
+        
+        // Check if answer matches correct answer
+        if (question.ValidationRequired && correctAnswers.length > 0) {
+          isAnswerCorrect = correctAnswers.includes(userAnswer || '');
+        } else {
+          isAnswerCorrect = true; // No validation required
+        }
+      }
+
+      if (question.ValidationRequired && !isAnswerCorrect) {
         this.validationErrors[question.QuestionariesSeqId] = true;
         isValid = false;
+        
+        // Track first safety brief question with error
+        if (question.IsSafetyBriefQuest && !hasSafetyBriefError) {
+          hasSafetyBriefError = true;
+          firstSafetyQuestion = question;
+        }
       }
     });
+
+    // If there's a safety brief question with wrong answer, show rewatch dialog
+    if (hasSafetyBriefError && firstSafetyQuestion) {
+      this.currentSafetyQuestion = firstSafetyQuestion;
+      this.showSafetyBriefDialog = true;
+      this.wizardService.setStepValid(false);
+      return;
+    }
 
     this.wizardService.setStepValid(isValid);
 
@@ -133,10 +340,51 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
       this.messageService.add({
         severity: 'error',
         summary: 'Validation Error',
-        detail: 'Please correct your answers before proceeding',
+        detail: 'Please answer all required questions correctly before proceeding',
         life: 5000
       });
     }
+  }
+
+  /**
+   * Navigate back to safety brief step to rewatch video
+   */
+  rewatchSafetyBrief(): void {
+    this.showSafetyBriefDialog = false;
+    
+    // CRITICAL: PrimeNG modal dialog adds 'p-overflow-hidden' to body.
+    // When we navigate away before dialog fully closes, it stays forever.
+    // Manually clean up all PrimeNG dialog artifacts.
+    document.body.classList.remove('p-overflow-hidden');
+    
+    // Remove any leftover PrimeNG dialog mask overlays
+    document.querySelectorAll('.p-dialog-mask').forEach(mask => mask.remove());
+    
+    // Find the safety brief step index
+    const steps = this.wizardService.getEnabledSteps();
+    const safetyBriefStepIndex = steps.findIndex(step => 
+      step.routerLink === '/register/safety-brief' || 
+      step.routerLink === 'safety-brief'
+    );
+    
+    if (safetyBriefStepIndex >= 0) {
+      this.wizardService.requestStepChange(safetyBriefStepIndex);
+    } else {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Warning',
+        detail: 'Safety brief step not found',
+        life: 3000
+      });
+    }
+  }
+
+  /**
+   * Close the safety brief dialog and allow user to review answers
+   */
+  closeSafetyBriefDialog(): void {
+    this.showSafetyBriefDialog = false;
+    this.currentSafetyQuestion = null;
   }
 
   getQuestionError(questionId: number): string | null {
