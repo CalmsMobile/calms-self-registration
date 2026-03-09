@@ -160,7 +160,7 @@
         </label>
         <p-datepicker id="endDate" formControlName="endDate" [showIcon]="true" [showTime]="false"
           [class]="{'ng-invalid': isFieldInvalidRequired('endDate')}"
-          [minDate]="generalForm.get('visitDate')?.value || minDate" [disabled]="!generalForm.get('visitDate')?.value"
+          [minDate]="generalForm.get('visitDate')?.value || minDate" [disabled]="!generalForm.get('visitDate')?.value || !generalForm.get('visitTime')?.value"
           [placeholder]="'appointment_end_date' | translate:'placeholder'" appendTo="body" dateFormat="dd/mm/yy">
         </p-datepicker>
         @if (isFieldInvalidRequired('endDate')) {

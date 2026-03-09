@@ -1193,10 +1193,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.syncStartDate();
       this.updateMinVisitTime(visitDate);
 
-      // Default endDate to visitDate if not set
-      const endDateCtrl = this.generalForm.get('endDate');
-      if (visitDate && endDateCtrl && !endDateCtrl.value) {
-        endDateCtrl.setValue(visitDate);
+      if (visitDate) {
+        // Default endDate to visitDate if not set
+        const endDateCtrl = this.generalForm.get('endDate');
+        if (endDateCtrl && !endDateCtrl.value) {
+          endDateCtrl.setValue(visitDate);
+        }
+      } else {
+        // visitDate cleared — reset visitTime, endDate, endTime
+        this.generalForm.get('visitTime')?.setValue(null, { emitEvent: false });
+        this.generalForm.get('endDate')?.setValue(null, { emitEvent: false });
+        this.generalForm.get('endTime')?.setValue(null, { emitEvent: false });
       }
 
       const visitTime = this.generalForm.get('visitTime')?.value;
@@ -1208,14 +1215,25 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.syncStartDate();
       this.updateMinEndTime(visitTime);
       this.checkEndBeforeStart();
+
+      if (!visitTime) {
+        // visitTime cleared — reset endDate and endTime
+        this.generalForm.get('endDate')?.setValue(null, { emitEvent: false });
+        this.generalForm.get('endTime')?.setValue(null, { emitEvent: false });
+      }
     });
 
     // Sync endDate and endTime to combined endDate
-    this.generalForm.get('endDate')?.valueChanges.subscribe(() => {
+    this.generalForm.get('endDate')?.valueChanges.subscribe((endDate) => {
       this.syncEndDate();
       const visitTime = this.generalForm.get('visitTime')?.value;
       this.updateMinEndTime(visitTime);
       this.checkEndBeforeStart();
+
+      if (!endDate) {
+        // endDate cleared — reset endTime
+        this.generalForm.get('endTime')?.setValue(null, { emitEvent: false });
+      }
     });
 
     this.generalForm.get('endTime')?.valueChanges.subscribe(() => {
