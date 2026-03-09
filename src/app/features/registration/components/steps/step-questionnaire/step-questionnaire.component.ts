@@ -42,8 +42,9 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   questionnaireForm: FormGroup;
   validationErrors: { [key: number]: boolean } = {};
   isLoading = true;
-  showSafetyBriefDialog = false;
-  currentSafetyQuestion: Question | null = null;
+  showAlertDialog = false;
+  alertMessage = '';
+  showRewatchButton = false;
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -253,6 +254,8 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   validateQuestionnaire(): void {
     this.validationErrors = {};
     let isValid = true;
+    let hasUnanswered = false;
+    let hasWrongAnswer = false;
     let hasSafetyBriefError = false;
     let firstSafetyQuestion: Question | null = null;
 
@@ -271,6 +274,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
         if (question.ValidationRequired && userAnswers.length === 0) {
           this.validationErrors[question.QuestionariesSeqId] = true;
           isValid = false;
+          hasUnanswered = true;
           
           if (question.IsSafetyBriefQuest && !hasSafetyBriefError) {
             hasSafetyBriefError = true;
@@ -296,6 +300,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
         if (question.ValidationRequired && !userAnswer) {
           this.validationErrors[question.QuestionariesSeqId] = true;
           isValid = false;
+          hasUnanswered = true;
           
           if (question.IsSafetyBriefQuest && !hasSafetyBriefError) {
             hasSafetyBriefError = true;
@@ -315,6 +320,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
       if (question.ValidationRequired && !isAnswerCorrect) {
         this.validationErrors[question.QuestionariesSeqId] = true;
         isValid = false;
+        hasWrongAnswer = true;
         
         // Track first safety brief question with error
         if (question.IsSafetyBriefQuest && !hasSafetyBriefError) {
@@ -324,10 +330,11 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
       }
     });
 
-    // If there's a safety brief question with wrong answer, show rewatch dialog
+    // Safety brief wrong answer → show unified alert dialog with rewatch button
     if (hasSafetyBriefError && firstSafetyQuestion) {
-      this.currentSafetyQuestion = firstSafetyQuestion;
-      this.showSafetyBriefDialog = true;
+      this.alertMessage = 'Your answer to the safety briefing question is incorrect. Please rewatch the safety briefing video and try again.';
+      this.showRewatchButton = true;
+      this.showAlertDialog = true;
       this.wizardService.setStepValid(false);
       return;
     }
@@ -335,14 +342,15 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     this.wizardService.setStepValid(isValid);
 
     if (isValid) {
-      this.saveFormData(); // Save when validation passes
-    } else {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Validation Error',
-        detail: 'Please answer all required questions correctly before proceeding',
-        life: 5000
-      });
+      this.saveFormData();
+    } else if (hasUnanswered) {
+      this.alertMessage = 'Please answer all required questions before proceeding.';
+      this.showRewatchButton = false;
+      this.showAlertDialog = true;
+    } else if (hasWrongAnswer) {
+      this.alertMessage = 'One or more answers are incorrect. Please review your answers and try again.';
+      this.showRewatchButton = false;
+      this.showAlertDialog = true;
     }
   }
 
@@ -350,14 +358,10 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
    * Navigate back to safety brief step to rewatch video
    */
   rewatchSafetyBrief(): void {
-    this.showSafetyBriefDialog = false;
+    this.showAlertDialog = false;
     
-    // CRITICAL: PrimeNG modal dialog adds 'p-overflow-hidden' to body.
-    // When we navigate away before dialog fully closes, it stays forever.
-    // Manually clean up all PrimeNG dialog artifacts.
+    // PrimeNG modal dialog adds 'p-overflow-hidden' to body; clean up before navigating.
     document.body.classList.remove('p-overflow-hidden');
-    
-    // Remove any leftover PrimeNG dialog mask overlays
     document.querySelectorAll('.p-dialog-mask').forEach(mask => mask.remove());
     
     // Find the safety brief step index
@@ -379,12 +383,8 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Close the safety brief dialog and allow user to review answers
-   */
-  closeSafetyBriefDialog(): void {
-    this.showSafetyBriefDialog = false;
-    this.currentSafetyQuestion = null;
+  closeAlertDialog(): void {
+    this.showAlertDialog = false;
   }
 
   getQuestionError(questionId: number): string | null {

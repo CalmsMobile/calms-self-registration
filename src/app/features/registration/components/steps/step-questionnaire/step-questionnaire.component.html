@@ -4,7 +4,7 @@
     <div class="step-content">
       <form [formGroup]="questionnaireForm" class="questionnaire-form">
         @for (question of questions; track question) {
-          <div class="question-item" [class.has-error]="validationErrors[question.QuestionariesSeqId]">
+          <div class="question-item">
             <div class="question-header">
               @if (question.ShortName) {
                 <h3>{{ question.ShortName }}</h3>
@@ -57,16 +57,7 @@
                 </div>
               }
               
-              <!-- Error Message -->
-              @if (validationErrors[question.QuestionariesSeqId]) {
-                <small class="p-error">
-                  @if (question.ValidationRequired) {
-                    This question requires the correct answer to proceed
-                  } @else {
-                    Please answer this question
-                  }
-                </small>
-              }
+              <!-- Error Message removed: validation shown as common toast alert -->
             </div>
           </div>
         }
@@ -75,47 +66,37 @@
   </div>
 }
 
-<!-- Safety Brief Rewatch Dialog -->
-<p-dialog 
-  [(visible)]="showSafetyBriefDialog" 
-  [modal]="true" 
+<!-- Unified Validation Alert Dialog -->
+<p-dialog
+  [(visible)]="showAlertDialog"
+  [modal]="true"
   [closable]="true"
   [draggable]="false"
   [resizable]="false"
-  styleClass="safety-brief-dialog"
-  header="Safety Briefing Required"
-  (onHide)="closeSafetyBriefDialog()">
-  
-  <div class="dialog-content">
-    <p class="dialog-message">
-      <i class="pi pi-exclamation-triangle" style="font-size: 2rem; color: #f59e0b; margin-bottom: 1rem;"></i>
-    </p>
-    <p class="dialog-message">
-      Your answer to the safety briefing question is incorrect. 
-      Would you like to rewatch the safety briefing video to review the information?
-    </p>
-    
-    @if (currentSafetyQuestion) {
-      <div class="question-reference">
-        <strong>Question:</strong>
-        <p>{{ currentSafetyQuestion.Description }}</p>
-      </div>
-    }
+  [showHeader]="false"
+  styleClass="validation-alert-dialog"
+  (onHide)="closeAlertDialog()">
+
+  <div class="alert-dialog-content">
+    <i class="pi pi-exclamation-circle alert-icon"></i>
+    <p class="alert-message">{{ alertMessage }}</p>
   </div>
-  
+
   <ng-template pTemplate="footer">
-    <div class="dialog-footer">
-      <p-button 
-        label="Review My Answer" 
+    <div class="alert-dialog-footer">
+      @if (showRewatchButton) {
+        <p-button
+          label="Rewatch Safety Brief"
+          icon="pi pi-play"
+          severity="warn"
+          (onClick)="rewatchSafetyBrief()">
+        </p-button>
+      }
+      <p-button
+        label="Review Answers"
         icon="pi pi-pencil"
         severity="secondary"
-        (onClick)="closeSafetyBriefDialog()">
-      </p-button>
-      <p-button 
-        label="Rewatch Safety Brief" 
-        icon="pi pi-play"
-        severity="warn"
-        (onClick)="rewatchSafetyBrief()">
+        (onClick)="closeAlertDialog()">
       </p-button>
     </div>
   </ng-template>

@@ -507,9 +507,14 @@ export class WizardService {
           // Find the question to get ValidationRequired
           const question = questions.find((q: any) => q.QuestionariesSeqId.toString() === questionId);
 
+          // Always store value as a string; arrays (multiple checkbox answers) become comma-separated
+          const valueStr = Array.isArray(value)
+            ? value.join(',')
+            : (value !== null && value !== undefined ? String(value) : '');
+
           answers.push({
             id: questionId,
-            value: value || 0,
+            value: valueStr,
             ValidationRequired: question?.ValidationRequired || false
           });
         }
