@@ -4,11 +4,11 @@
   @if (isAccessDenied) {
   <div class="error-container">
     <div class="error-card">
-      <h1>Access Restricted</h1>
+      <h1>{{ 'access_restricted' | translate }}</h1>
       <div class="error-content">
         <i class="pi pi-ban error-icon"></i>
         <p class="error-message">{{ baseUrlAccessDeniedInstruction }}</p>
-        <p class="error-subtitle">Please contact your administrator for a valid registration link.</p>
+        <p class="error-subtitle">{{ 'please_contact_your_administrator_for_a_valid_registration_link.' | translate }}</p>
       </div>
     </div>
   </div>
@@ -18,11 +18,11 @@
   @if (hasInvalidUrl && !isAccessDenied) {
   <div class="error-container">
     <div class="error-card">
-      <h1>Invalid URL</h1>
+      <h1>{{ 'invalid_url' | translate }}</h1>
       <div class="error-content">
         <i class="pi pi-exclamation-triangle error-icon"></i>
         <p class="error-message">{{ errorMessage }}</p>
-        <p class="error-subtitle">Please contact your administrator for a valid registration link.</p>
+        <p class="error-subtitle">{{ 'please_contact_your_administrator_for_a_valid_registration_link.' | translate }}</p>
       </div>
     </div>
   </div>
@@ -109,7 +109,7 @@
 
         <!-- Checkbox at bottom right -->
         <div class="terms-checkbox-wrapper">
-          <span class="terms-agree-label">I agree to the terms and conditions</span>
+          <span class="terms-agree-label">{{ 'i_agree_to_the_terms_and_conditions' | translate }}</span>
           <div class="checkbox-container">
             <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsAccepted = !termsAccepted">
               @if (termsAccepted) {
@@ -126,7 +126,7 @@
       <div class="button-container">
         <button class="back-button" (click)="goBack()">
           <i class="pi pi-arrow-left"></i>
-          <span>Back</span>
+          <span>{{ 'back' | translate }}</span>
         </button>
         <p-button [label]="'agree_and_proceed' | translate" icon="pi pi-arrow-right" iconPos="right"
           [disabled]="!termsAccepted || !termsValid" (onClick)="proceedToWizard()">
