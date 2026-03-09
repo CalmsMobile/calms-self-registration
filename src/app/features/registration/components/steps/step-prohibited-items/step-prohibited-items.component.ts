@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
+import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { Subject } from 'rxjs';
 
 interface DeclaredItem {
@@ -13,7 +14,7 @@ interface DeclaredItem {
 @Component({
   selector: 'app-step-prohibited-items',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './step-prohibited-items.component.html',
   styleUrl: './step-prohibited-items.component.scss'
 })

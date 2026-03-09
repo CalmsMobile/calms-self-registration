@@ -6,12 +6,12 @@
       <p style="margin: 0;">{{'watch_safety_briefing_video_before_proceeding' | translate}}</p>
       @if (isFullscreen && !videoEnded) {
         <p class="fullscreen-message">
-          Press the replay button after the video completes to exit fullscreen
+          {{ 'press_the_replay_button_after_the_video_completes_to_exit_fullscreen' | translate }}
         </p>
       }
       @if (isReplaying && !videoEnded && !isFullscreen) {
         <p class="replay-message" style="color: var(--primary-color); font-weight: 500; margin-top: 0.5rem;">
-          Replaying video (scroll available)
+          {{ 'replaying_video' | translate }} (scroll available)
         </p>
       }
     </div>

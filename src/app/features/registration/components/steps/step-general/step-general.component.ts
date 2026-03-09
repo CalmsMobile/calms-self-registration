@@ -15,6 +15,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { ButtonModule } from 'primeng/button';
 import { filter, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../../core/services/api.service';
+import { LabelService } from '../../../../../core/services/label.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
 
@@ -123,8 +124,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     private wizardService: WizardService,
     private messageService: MessageService,
     private sanitizer: DomSanitizer,
-    private api: ApiService
+    private api: ApiService,
+    private labelService: LabelService
   ) {
+  }
+
+  private getAlert(key: string): { summary: string; detail: string } {
+    const caption = this.labelService.getLabel(key, 'caption');
+    const idx = caption.indexOf(' / ');
+    return idx !== -1
+      ? { summary: caption.substring(0, idx), detail: caption.substring(idx + 3) }
+      : { summary: '', detail: caption };
   }
 
   ngOnInit(): void {
@@ -1420,10 +1430,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     if (this.isVisitorBlacklisted) {
-      this.messageService.add({
-        severity: 'error', summary: 'Blacklisted',
-        detail: 'This visitor is blacklisted and cannot be added.', life: 5000
-      });
+      this.messageService.add({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
       return;
     }
 
@@ -1506,11 +1513,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         currentForm.get(field)?.markAsTouched();
       });
 
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Validation Error',
-        detail: 'Please fill all required visitor fields'
-      });
+      this.messageService.add({ severity: 'error', ...this.getAlert('all_visitor_fields_required') });
     }
   }
 
@@ -1638,11 +1641,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Store the index for updating later
       this.editingVisitorIndex = index;
 
-      this.messageService.add({
-        severity: 'info',
-        summary: 'Edit Mode',
-        detail: 'Visitor loaded for editing. Update and click "Add Visitor" to save changes.'
-      });
+      this.messageService.add({ severity: 'info', ...this.getAlert('edit_mode_message') });
     }
   }
 
@@ -1684,11 +1683,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       const currentForm = this.getCurrentVisitorForm();
       currentForm.reset();
 
-      this.messageService.add({
-        severity: 'info',
-        summary: 'Cancelled',
-        detail: 'Edit cancelled'
-      });
+      this.messageService.add({ severity: 'info', ...this.getAlert('cancellation_message') });
     }
   }
 
@@ -1845,10 +1840,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     // Block if visitor is blacklisted
     if (this.isVisitorBlacklisted) {
-      this.messageService.add({
-        severity: 'error', summary: 'Blacklisted',
-        detail: 'This visitor is blacklisted and cannot proceed.', life: 5000
-      });
+      this.messageService.add({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
       this.wizardService.setStepValid(false);
       return false;
     }
@@ -1862,11 +1854,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       const startDt = visitTime ? new Date(new Date(visitDate).setHours(new Date(visitTime).getHours(), new Date(visitTime).getMinutes(), 0)) : new Date(visitDate);
       const endDt = endTime ? new Date(new Date(endDate).setHours(new Date(endTime).getHours(), new Date(endTime).getMinutes(), 0)) : new Date(endDate);
       if (endDt <= startDt) {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Validation Error',
-          detail: 'End date/time must be after start date/time'
-        });
+        this.messageService.add({ severity: 'error', ...this.getAlert('end_date_validation') });
         this.wizardService.setStepValid(false);
         return false;
       }
@@ -1910,11 +1898,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     if (!isValid) {
       this.scrollToFirstError();
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Validation Error',
-        detail: 'Please fill all required fields correctly'
-      });
+      this.messageService.add({ severity: 'error', ...this.getAlert('all_fields_required') });
     }
 
     return isValid;
@@ -2040,16 +2024,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       next: (response: any) => {
         const visitor = response?.Table1?.[0];
         if (!visitor) {
-          this.messageService.add({ severity: 'warn', summary: 'Not Found', detail: 'No visitor found with the given details.' });
+          this.messageService.add({ severity: 'warn', ...this.getAlert('no_visitor_found_alert') });
           return;
         }
 
         this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
         if (this.isVisitorBlacklisted) {
-          this.messageService.add({
-            severity: 'error', summary: 'Blacklisted',
-            detail: 'This visitor is blacklisted and cannot proceed.', life: 5000
-          });
+          this.messageService.add({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
           return;
         }
 
@@ -2368,10 +2349,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
         this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
         if (this.isVisitorBlacklisted) {
-          this.messageService.add({
-            severity: 'error', summary: 'Blacklisted',
-            detail: 'This visitor is blacklisted and cannot proceed.', life: 5000
-          });
+          this.messageService.add({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
           return;
         }
 

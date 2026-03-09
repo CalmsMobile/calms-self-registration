@@ -2,18 +2,18 @@
 
   <img src="assets/logo.png" class="header-img" alt="Company Logo">
 
-  <div class="title"><span>Prohibited</span><br>Items</div>
-  <div class="subtitle">Declare items you are carrying</div>
+  <div class="title">{{ 'item_declaration' | translate }}</div>
+  <div class="subtitle">{{ 'em_instruction' | translate }}</div>
 
   <!-- Input Form -->
   <div class="form-box">
 
-    <div class="label">Item Description</div>
+    <div class="label">{{ 'item_description' | translate }}</div>
     <input
       class="form-input"
       [(ngModel)]="newItem.description"
       (ngModelChange)="checkInputs()"
-      placeholder="Enter the item description">
+      [placeholder]="'item_description' | translate:'placeholder'">
 
     <div class="label">Serial Number</div>
     <input
@@ -22,7 +22,7 @@
       (ngModelChange)="checkInputs()"
       placeholder="Enter the serial number">
 
-    <div class="label">Direction</div>
+    <div class="label">{{ 'em_direction' | translate }}</div>
     <select
       class="form-input select-input"
       [(ngModel)]="newItem.direction"
@@ -37,7 +37,7 @@
       [class.active]="canAdd"
       [disabled]="!canAdd"
       (click)="addItem()">
-      Add item
+      {{ 'add_item' | translate }}
     </button>
 
     <!-- Added items -->
@@ -58,10 +58,10 @@
 
   <div class="bottom">
     <div class="row">
-      <button class="btn white" (click)="goBack()">← Back</button>
-      <button class="btn white" (click)="skipStep()">Skip →</button>
+      <button class="btn white" (click)="goBack()">← {{ 'back' | translate }}</button>
+      <button class="btn white" (click)="skipStep()">{{ 'em_skip' | translate }} →</button>
     </div>
-    <button class="btn continue" (click)="proceedToNext()">Continue →</button>
+    <button class="btn continue" (click)="proceedToNext()">{{ 'em_continue' | translate }} →</button>
   </div>
 
 </div>

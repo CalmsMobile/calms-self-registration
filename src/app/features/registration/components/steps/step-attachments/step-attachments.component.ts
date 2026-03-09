@@ -2,6 +2,7 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
+import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { Subject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../../environments/environment';
@@ -23,7 +24,7 @@ interface Attachment {
 @Component({
   selector: 'app-step-attachments',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './step-attachments.component.html',
   styleUrl: './step-attachments.component.scss'
 })

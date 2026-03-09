@@ -3,7 +3,7 @@
   <img src="assets/logo.png" class="header-img" alt="Company Logo">
 
   <div class="title"><span>Supporting</span> <br>Documents</div>
-  <div class="subtitle">Upload identification or supporting documents (Optional)</div>
+  <div class="subtitle">{{ 'instruction' | translate }}</div>
 
   <!-- FILE CARDS -->
   @if (attachmentUploadEnabled && documentTypes.length > 0) {
@@ -58,10 +58,10 @@
 
   <div class="bottom">
     <div class="row">
-      <button class="btn white" (click)="goBack()">← Back</button>
-      <button class="btn white" (click)="skipStep()">Skip →</button>
+      <button class="btn white" (click)="goBack()">← {{ 'back' | translate }}</button>
+      <button class="btn white" (click)="skipStep()">{{ 'em_skip' | translate }} →</button>
     </div>
-    <button class="btn continue" (click)="proceedToNext()">Continue →</button>
+    <button class="btn continue" (click)="proceedToNext()">{{ 'continue' | translate }} →</button>
   </div>
 
 </div>

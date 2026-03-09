@@ -42,7 +42,7 @@
           <img [src]="profileImage" class="profile-image" alt="Profile">
           } @else {
           <div class="upload-placeholder">
-            <button type="button" pButton label="Choose file" class="p-button-outlined"></button>
+            <button type="button" pButton [label]="'profile_picture' | translate:'placeholder'" class="p-button-outlined"></button>
             <span>No file chosen</span>
           </div>
           }
