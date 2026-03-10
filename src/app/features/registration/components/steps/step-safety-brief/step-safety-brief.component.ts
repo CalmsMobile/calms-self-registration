@@ -1,5 +1,6 @@
 import { Component, ElementRef, ViewChild, AfterViewInit, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { WizardService } from '../../../../../core/services/wizard.service';
+import { LabelService } from '../../../../../core/services/label.service';
 
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -28,7 +29,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
 
   constructor(
     private wizardService: WizardService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private labelService: LabelService
   ) {
     // Subscribe to validation requests from wizard
     this.wizardService.onValidationRequest.subscribe(() => {
@@ -200,8 +202,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     if (!isValid) {
       this.messageService.add({
         severity: 'error',
-        summary: 'Safety Briefing Required',
-        detail: 'Please watch the complete safety briefing video to proceed'
+        summary: this.labelService.getLabel('safety_briefing_required', 'caption'),
+        detail: this.labelService.getLabel('sbv_instruction', 'caption')
       });
     }
   }
@@ -395,6 +397,13 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     }
   }
 
+  goBack(): void {
+    const prevStep = this.wizardService.getCurrentStepIndex() - 1;
+    if (prevStep >= 0) {
+      this.wizardService.requestStepChange(prevStep);
+    }
+  }
+
   onNext(): void {
     // Validate before proceeding
     this.validateStep();
@@ -409,8 +418,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     } else {
       this.messageService.add({
         severity: 'error',
-        summary: 'Safety Briefing Required',
-        detail: 'Please watch the complete safety briefing video to proceed'
+        summary: this.labelService.getLabel('safety_briefing_required', 'caption'),
+        detail: this.labelService.getLabel('sbv_instruction', 'caption')
       });
     }
   }

@@ -380,54 +380,39 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return 'clsbookslot clsJustBooked';
     }
 
-    // Use the original logic: getValidateTime(StartTime, ServerTime, bookingId)
-    return this.getValidateTime(slot.StartTime, slot.ServerTime, slot.BookingID);
+    // Booked by someone else
+    if (slot.BookingID) {
+      return 'clsbookslot clsBooked';
+    }
+
+    // Use API-provided expiry flag if available, fallback to time comparison
+    if (slot.Is_Expired === true) {
+      return 'clsbookslot clsExpired';
+    }
+
+    if (slot.Is_Expired === false) {
+      return 'clsbookslot clsAvail';
+    }
+
+    // Fallback: compare ServerTime vs StartTime
+    return this.getValidateTime(slot.StartTime, slot.ServerTime);
   }
 
-  // Replicate the original getValidateTime function
-  getValidateTime(startTime: string, serverTime: string, bookingId: any): string {
-    if (bookingId) {
-      return 'clsbookslot clsBooked';
-    } else {
-      // Handle different date formats and potential null/undefined values
-      let currentTime: Date;
-      let startDate: Date;
+  getValidateTime(startTime: string, serverTime: string): string {
+    try {
+      const currentTime = (serverTime && serverTime !== 'null')
+        ? new Date(serverTime)
+        : new Date();
 
-      try {
-        // If no serverTime provided or invalid, use current time
-        if (!serverTime || serverTime === 'null' || serverTime === 'undefined') {
-          currentTime = new Date();
-        } else {
-          currentTime = new Date(serverTime);
-          // Check if date is valid
-          if (isNaN(currentTime.getTime())) {
-            currentTime = new Date();
-          }
-        }
+      const startDate = new Date(startTime);
 
-        startDate = new Date(startTime);
-        // Check if start date is valid
-        if (isNaN(startDate.getTime())) {
-          console.warn('Invalid start time:', startTime);
-          return 'clsbookslot clsExpired';
-        }
-
-        // Debug logging (remove this after testing)
-        console.log('Time comparison:', {
-          serverTime: serverTime,
-          currentTime: currentTime.toISOString(),
-          startTime: startDate.toISOString(),
-          isAvailable: currentTime < startDate,
-          bookingId: bookingId
-        });
-
-        return currentTime < startDate ? 'clsbookslot clsAvail' : 'clsbookslot clsExpired';
-
-      } catch (error) {
-        console.error('Error parsing dates:', error, { startTime, serverTime });
-        // Default to expired if there's an error
+      if (isNaN(startDate.getTime())) {
         return 'clsbookslot clsExpired';
       }
+
+      return currentTime < startDate ? 'clsbookslot clsAvail' : 'clsbookslot clsExpired';
+    } catch {
+      return 'clsbookslot clsExpired';
     }
   }
 
@@ -763,6 +748,24 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.countryList = [...response.Table13];
     }
 
+    // Process visit purposes from Table10 (or Table3 as fallback)
+    const purposes = response?.Table10 || response?.Table3 || [];
+    if (purposes.length > 0) {
+      this.purposeList = purposes;
+      console.log('Visit purposes loaded from branch data:', this.purposeList.length);
+    } else if (this.settings?.PurposeEnabled) {
+      // Fallback: load from VimsAppFacilityPurposeList if no purposes in branch data
+      this.api.VimsAppFacilityPurposeList().subscribe((purposeResponse: any) => {
+        if (purposeResponse?.Table1?.length) {
+          this.purposeList = purposeResponse.Table1.map((p: any) => ({
+            visitpurpose_id: p.PurposeCode,
+            visitpurpose_desc: p.PurposeName
+          }));
+          console.log('Visit purposes loaded from VimsAppFacilityPurposeList:', this.purposeList.length);
+        }
+      });
+    }
+
     // Set department for default host if enabled after hosts are loaded
     if (this.shouldHideHostControl && this.defaultHostId) {
       this.setDepartmentForDefaultHost();
@@ -1064,6 +1067,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     const formControls: any = {
       profile: [shouldClearVisitorFields ? null : (isPreFilledData ? null : (savedData.profile || null))],
+      profilePreview: [shouldClearVisitorFields ? '' : (savedData.profilePreview || '')],
       title: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.titleId || '') : (savedData.title || ''))],
       fullName: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.fullName || '') : (savedData.fullName || ''))],
       email: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.email || '') : (savedData.email || ''))],
@@ -1097,7 +1101,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       facilityBooking: [savedData.facilityBooking || false],
       facilityPurpose: [savedData.facilityPurpose || ''],
       facilitySelection: [savedData.facilitySelection || ''],
-      sharedDate: [savedData.sharedDate || '']
+      sharedDate: [savedData.sharedDate || ''],
+      purpose: [savedData.purpose || ''],
+      purposeDesc: [savedData.purposeDesc || '']
     };
 
     // Add UDF controls to main form (now applies to both single and multiple visitor modes)
@@ -1482,20 +1488,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.savedVisitors[this.editingVisitorIndex] = visitorData;
         this.editingVisitorIndex = -1; // Reset editing index
 
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Visitor updated successfully'
-        });
+        this.messageService.add({ severity: 'success', ...this.getAlert('visitor_update_message') });
       } else {
         // Add new visitor
         this.savedVisitors.push(visitorData);
 
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Visitor saved successfully'
-        });
+        this.messageService.add({ severity: 'success', ...this.getAlert('visitor_save_message') });
       }
 
       // Save form data immediately after visitor modification
@@ -1686,11 +1684,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Save form data immediately after visitor deletion
       this.saveFormDataToWizard();
 
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Deleted',
-        detail: 'Visitor removed successfully'
-      });
+      this.messageService.add({ severity: 'success', ...this.getAlert('visitor_delete_message') });
     }
   }
 
@@ -1725,6 +1719,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     this.setupControl('gender', this.settings.GenderEnabled, this.settings.GenderRequired);
     this.setupControl('department', this.settings.HostDepartmentEnabled, this.settings.HostDepartmentRequired);
+    this.setupControl('purpose', this.settings.PurposeEnabled, this.settings.PurposeRequired);
     this.setupControl('visitor_company', this.settings.CompanyEnabled, this.settings.CompanyRequired);
     this.setupControl('vehicle_number', this.settings.VehicleNumberEnabled, this.settings.VehicleNumberRequired);
     this.setupControl('vehicle_brand', this.settings.VehicleBrandModelEnabled, this.settings.VehicleBrandModelRequired);
@@ -1861,6 +1856,22 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.messageService.add({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
       this.wizardService.setStepValid(false);
       return false;
+    }
+
+    // Block if time slot is enabled but no slots available for selected date
+    if (this.enableVimsApptTimeSlot && this.timeSlotsLoaded && this.timeSlotList.length === 0) {
+      const dateField = this.enableFBInSelfReg ? 'sharedDate' : 'appointmentDate';
+      const hasDate = !!this.generalForm.get(dateField)?.value;
+      if (hasDate) {
+        const noSlotAlert = this.getAlert('no_time_slots_available');
+        this.messageService.add({
+          severity: 'error',
+          summary: noSlotAlert.summary || 'No Slots Available',
+          detail: noSlotAlert.detail || 'No time slots available for the selected date'
+        });
+        this.wizardService.setStepValid(false);
+        return false;
+      }
     }
 
     // Validate end datetime is after start datetime
@@ -2069,7 +2080,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.showReturningVisitorPopup = false;
       },
       error: () => {
-        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to search visitor.' });
+        this.messageService.add({ severity: 'error', ...this.getAlert('search_failed_message') });
       }
     });
   }
@@ -2167,7 +2178,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         } else {
           // Single visitor mode
           this.profileImage = imageUrl;
-          this.generalForm.patchValue({ profile: file });
+          this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
         }
       };
       reader.readAsDataURL(file);
@@ -2284,6 +2295,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         }
       }
     }
+  }
+
+  onPurposeChange(event: any): void {
+    const selectedId = event.value;
+    const selected = this.purposeList.find((p: any) => p.visitpurpose_id === selectedId);
+    this.generalForm.get('purposeDesc')?.setValue(selected?.visitpurpose_desc || '', { emitEvent: false });
   }
 
   onDepartmentChange(event: any): void {

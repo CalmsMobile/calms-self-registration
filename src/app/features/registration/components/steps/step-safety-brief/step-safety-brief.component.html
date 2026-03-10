@@ -1,9 +1,9 @@
 <div class="step-container">
-  <h2>{{ 'safety_briefing' | translate }}</h2>
+  <h2>{{ 'sbv_title' | translate }}</h2>
 
   <div class="step-content">
     <div class="video-instructions">
-      <p style="margin: 0;">{{'watch_safety_briefing_video_before_proceeding' | translate}}</p>
+      <p style="margin: 0;">{{'sbv_instruction' | translate}}</p>
       @if (isFullscreen && !videoEnded) {
         <p class="fullscreen-message">
           {{ 'press_the_replay_button_after_the_video_completes_to_exit_fullscreen' | translate }}
@@ -20,13 +20,13 @@
       <video #safetyVideo class="safety-video" [hidden]="videoEnded && showReplay" disablePictureInPicture
         controlsList="nodownload nofullscreen noremoteplayback">
         <source [src]="videoSource" type="video/mp4">
-        Your browser does not support HTML5 video.
+        {{ 'your_browser_does_not_support_html5_video.' | translate }}
       </video>
 
       @if (showPlayButton) {
         <button #playButton pButton class="play-button" icon="pi pi-play"
           (click)="startPlayback()">
-          {{'play_safety_video' | translate}}
+          {{'play_safety_briefing_video' | translate}}
         </button>
       }
 
@@ -44,5 +44,14 @@
         </div>
       }
     </div>
+  </div>
+
+  <div class="step-navigation">
+    <p-button styleClass="back-btn" [label]="'sbv_previous_step' | translate" icon="pi pi-arrow-left"
+      (onClick)="goBack()">
+    </p-button>
+    <p-button styleClass="next-btn" [label]="'sbv_next_step' | translate" icon="pi pi-arrow-right" iconPos="right"
+      (onClick)="onNext()">
+    </p-button>
   </div>
 </div>
