@@ -50,7 +50,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
   /** Routes that manage their own header + navigation */
   private readonly ownLayoutRoutes = ['attachments', 'prohibited-items'];
   /** Routes that manage their own nav only (keep shared header) */
-  private readonly ownNavRoutes = ['general-info'];
+  private readonly ownNavRoutes = ['general-info', 'safety-brief'];
 
   private destroy$ = new Subject<void>();
 

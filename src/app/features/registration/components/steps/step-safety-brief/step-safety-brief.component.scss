@@ -4,6 +4,62 @@
     overflow: visible;
 }
 
+.step-navigation {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem 0;
+  gap: 1rem;
+}
+
+::ng-deep {
+  .step-navigation {
+    .back-btn.p-button,
+    .back-btn {
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+      background-image: none !important;
+      color: #1f2937 !important;
+      border: 2px solid #1f2937 !important;
+      border-radius: 50px !important;
+      padding: 0.875rem 2.5rem !important;
+      font-weight: 600 !important;
+      font-size: 1.1rem !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+      transition: all 0.3s ease !important;
+
+      &:hover, &:enabled:hover {
+        background: #f9fafb !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+      }
+
+      .p-button-icon, .p-button-label { color: #1f2937 !important; font-weight: 600 !important; }
+    }
+
+    .next-btn.p-button,
+    .next-btn {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+      color: #9ca3af !important;
+      border: none !important;
+      border-radius: 50px !important;
+      padding: 0.875rem 2.5rem !important;
+      font-weight: 600 !important;
+      font-size: 1.1rem !important;
+      box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3) !important;
+      transition: all 0.3s ease !important;
+
+      &:hover, &:enabled:hover {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4) !important;
+      }
+
+      .p-button-icon, .p-button-label { color: #9ca3af !important; font-weight: 600 !important; }
+    }
+  }
+}
+
 .step-container {
     overflow: visible;
     min-height: 100vh;

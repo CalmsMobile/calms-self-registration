@@ -1,6 +1,6 @@
 @if (!isLoading) {
   <div class="step-container">
-    <h2>{{ 'questionnaire' | translate }}</h2>
+    <h2>{{ 'questionnaire_title' | translate }}</h2>
     <div class="step-content">
       <form [formGroup]="questionnaireForm" class="questionnaire-form">
         @for (question of questions; track question) {
@@ -86,14 +86,14 @@
     <div class="alert-dialog-footer">
       @if (showRewatchButton) {
         <p-button
-          label="Rewatch Safety Brief"
+          [label]="'rewatch_safety_brief' | translate"
           icon="pi pi-play"
           severity="warn"
           (onClick)="rewatchSafetyBrief()">
         </p-button>
       }
       <p-button
-        label="Review Answers"
+        [label]="'review_my_answer' | translate"
         icon="pi pi-pencil"
         severity="secondary"
         (onClick)="closeAlertDialog()">

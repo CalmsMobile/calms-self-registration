@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormArray, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { WizardService } from '../../../../../core/services/wizard.service';
+import { LabelService } from '../../../../../core/services/label.service';
 import { ToastModule } from 'primeng/toast';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -50,7 +51,8 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private wizardService: WizardService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private labelService: LabelService
   ) {
     this.questionnaireForm = this.fb.group({});
   }
@@ -332,7 +334,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
 
     // Safety brief wrong answer → show unified alert dialog with rewatch button
     if (hasSafetyBriefError && firstSafetyQuestion) {
-      this.alertMessage = 'Your answer to the safety briefing question is incorrect. Please rewatch the safety briefing video and try again.';
+      this.alertMessage = this.labelService.getLabel('incorrect_safety_briefing_answer', 'caption');
       this.showRewatchButton = true;
       this.showAlertDialog = true;
       this.wizardService.setStepValid(false);
@@ -344,11 +346,11 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     if (isValid) {
       this.saveFormData();
     } else if (hasUnanswered) {
-      this.alertMessage = 'Please answer all required questions before proceeding.';
+      this.alertMessage = this.labelService.getLabel('please_answer_this_question', 'caption');
       this.showRewatchButton = false;
       this.showAlertDialog = true;
     } else if (hasWrongAnswer) {
-      this.alertMessage = 'One or more answers are incorrect. Please review your answers and try again.';
+      this.alertMessage = this.labelService.getLabel('this_question_requires_the_correct_answer_to_proceed', 'caption');
       this.showRewatchButton = false;
       this.showAlertDialog = true;
     }

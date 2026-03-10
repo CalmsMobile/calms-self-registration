@@ -184,7 +184,7 @@
           </ng-template>
         </p-datepicker>
         @if (endBeforeStartError) {
-        <small class="error-message">End date/time must be after start date/time</small>
+        <small class="error-message">{{ 'end_date_error_message' | translate }}</small>
         }
       </div>
       }
@@ -277,6 +277,25 @@
         </p-select>
         @if (isFieldInvalidRequired('department')) {
         <small class="error-message">{{'department' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Purpose of Visit -->
+      @if (settings?.PurposeEnabled) {
+      <div class="form-field">
+        <label class="field-label" for="purpose">
+          {{'purpose_of_your_visit?' | translate}}
+          <span class="required-star">{{settings?.PurposeRequired ? '*' : ''}}</span>
+        </label>
+        <p-select id="purpose" [options]="purposeList" formControlName="purpose"
+          [placeholder]="'purpose_of_your_visit?' | translate:'placeholder'"
+          optionLabel="visitpurpose_desc" optionValue="visitpurpose_id"
+          [class]="{'ng-invalid': isFieldInvalidRequired('purpose')}"
+          (onChange)="onPurposeChange($event)" appendTo="body">
+        </p-select>
+        @if (isFieldInvalidRequired('purpose')) {
+        <small class="error-message">{{'purpose_of_your_visit?' | translate}} is required</small>
         }
       </div>
       }
@@ -745,8 +764,11 @@
         <div class="saved-content">
           @if (settings?.ImageUploadEnabled) {
           <div class="saved-photo">
+            @if (visitor.profilePreview) {
+            <img [src]="visitor.profilePreview" alt="Visitor photo" class="saved-photo-img" />
+            } @else {
             <i class="pi pi-camera"></i>
-            <span>Upload Your Photo</span>
+            }
           </div>
           }
           <div class="saved-info">
@@ -791,12 +813,12 @@
     <button type="button" class="close-btn" (click)="showReturningVisitorPopup = false">
       <i class="pi pi-times"></i>
     </button>
-    <h2 class="dialog-title">Search Profile</h2>
+    <h2 class="dialog-title">{{ 'search_profile' | translate }}</h2>
     <div class="search-input-wrapper">
-      <input pInputText type="text" [(ngModel)]="searchQuery" [placeholder]="'Enter Phone Number, Email, or NRIC ...'"
+      <input pInputText type="text" [(ngModel)]="searchQuery" [placeholder]="'search_profile' | translate:'placeholder'"
         (keyup.enter)="searchProfile()">
     </div>
-    <button pButton type="button" class="search-btn" label="Search Profile" (click)="searchProfile()">
+    <button pButton type="button" class="search-btn" [label]="'search_profile_button' | translate" (click)="searchProfile()">
     </button>
   </div>
 </p-dialog>

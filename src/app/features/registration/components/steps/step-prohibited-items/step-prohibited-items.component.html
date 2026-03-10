@@ -2,7 +2,7 @@
 
   <img src="assets/logo.png" class="header-img" alt="Company Logo">
 
-  <div class="title">{{ 'item_declaration' | translate }}</div>
+  <div class="title">{{ 'equipment_movement' | translate }}</div>
   <div class="subtitle">{{ 'em_instruction' | translate }}</div>
 
   <!-- Input Form -->
@@ -15,19 +15,19 @@
       (ngModelChange)="checkInputs()"
       [placeholder]="'item_description' | translate:'placeholder'">
 
-    <div class="label">Serial Number</div>
+    <div class="label">{{ 'serial_number' | translate }}</div>
     <input
       class="form-input"
       [(ngModel)]="newItem.serialNumber"
       (ngModelChange)="checkInputs()"
-      placeholder="Enter the serial number">
+      [placeholder]="'serial_number' | translate:'placeholder'">
 
     <div class="label">{{ 'em_direction' | translate }}</div>
     <select
       class="form-input select-input"
       [(ngModel)]="newItem.direction"
       (ngModelChange)="checkInputs()">
-      <option value="">In or out</option>
+      <option value="">{{ 'em_direction' | translate:'placeholder' }}</option>
       <option value="IN">IN</option>
       <option value="OUT">OUT</option>
     </select>
@@ -43,7 +43,7 @@
     <!-- Added items -->
     @if (declaredItems.length > 0) {
       <div class="added-section">
-        <div class="added-title">Added items</div>
+        <div class="added-title">{{ 'added_items' | translate }}</div>
         @for (item of declaredItems; track $index) {
           <div class="added-row">
             <div class="pill">{{ item.description }}</div>
@@ -58,7 +58,7 @@
 
   <div class="bottom">
     <div class="row">
-      <button class="btn white" (click)="goBack()">← {{ 'back' | translate }}</button>
+      <button class="btn white" (click)="goBack()">← {{ 'em_back' | translate }}</button>
       <button class="btn white" (click)="skipStep()">{{ 'em_skip' | translate }} →</button>
     </div>
     <button class="btn continue" (click)="proceedToNext()">{{ 'em_continue' | translate }} →</button>
