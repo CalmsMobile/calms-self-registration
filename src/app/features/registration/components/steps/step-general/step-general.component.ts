@@ -1735,7 +1735,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('work_permit_ref', this.settings.WorkPermitRefEnabled, false);
     this.setupControl('remarks', this.settings.RemarksEnabled, this.settings.RemarksRequired);
     this.setupControl('host', this.settings.HostNameEnabled, this.settings.HostNameRequired);
-    const showStartEnd = this.settings.StartEndDtEnabled && !this.enableVimsApptTimeSlot;
+    // In appointment flow, always show date/time fields (they carry pre-filled data)
+    const showStartEnd = this.isAppointmentFlow || (this.settings.StartEndDtEnabled && !this.enableVimsApptTimeSlot);
     this.setupControl('startDate', showStartEnd, false);
     this.setupControl('visitDate', showStartEnd, true);
     this.setupControl('visitTime', showStartEnd, false);
@@ -1789,6 +1790,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // timeSlot is only required when slots have been loaded (user must pick a date first)
       this.setupControl('timeSlot', true, this.timeSlotList.length > 0);
     }
+
+    // In appointment flow, re-disable non-editable fields after all setup
+    // (setupControl may have re-enabled them)
+    if (this.isAppointmentFlow) {
+      Object.keys(this.generalForm.controls).forEach(controlName => {
+        if (!this.allowedEditableFields.includes(controlName)) {
+          const control = this.generalForm.get(controlName);
+          if (control) {
+            control.disable({ emitEvent: false });
+          }
+        }
+      });
+    }
   }
 
   getUdfOptions(apptUDFSetSeqId: number): any[] {
@@ -1828,7 +1842,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     control.setValidators(validators);
     enabled ? control.enable() : control.disable();
 
-    if (!enabled) {
+    if (!enabled && !this.isAppointmentFlow) {
+      // Only reset value when not in appointment flow — in appointment flow we
+      // must preserve pre-filled values even for settings-disabled fields so
+      // the appointment data is retained in the API payload.
       control.reset();
     }
 
@@ -1924,15 +1941,20 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   private saveFormDataToWizard(): void {
     // Save current form data and saved visitors to wizard service
-    // Only include enabled controls — disabled controls are hidden by settings and should not appear in saved data
+    // In appointment flow, use getRawValue() to include disabled (pre-filled) controls
+    // Otherwise, only include enabled controls — disabled controls are hidden by settings
     let formData: any = {};
 
-    Object.keys(this.generalForm.controls).forEach(key => {
-      const ctrl = this.generalForm.get(key);
-      if (ctrl && ctrl.enabled) {
-        formData[key] = ctrl.value;
-      }
-    });
+    if (this.isAppointmentFlow) {
+      formData = { ...this.generalForm.getRawValue() };
+    } else {
+      Object.keys(this.generalForm.controls).forEach(key => {
+        const ctrl = this.generalForm.get(key);
+        if (ctrl && ctrl.enabled) {
+          formData[key] = ctrl.value;
+        }
+      });
+    }
 
     // Always include host — defaultHostId must be sent even when host control is hidden/disabled
     if (!formData.host && this.defaultHostId) {

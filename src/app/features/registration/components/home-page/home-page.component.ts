@@ -26,6 +26,7 @@ interface Branch {
 
 interface Category {
   visitor_ctg_id: number;
+  visitor_ctg_code?: string;
   Name: string;
 }
 
@@ -146,11 +147,11 @@ export class HomePageComponent {
       const p: { [key: string]: string } = {};
       Object.keys(params).forEach(key => p[key.toLowerCase()] = params[key]);
 
-      if (p['q']) {
+      if (p['ac']) {
         // Appointment flow: use encrypted appointment code directly
         try {
           this.isAppointmentFlow = true;
-          const encryptedCode = p['q'];
+          const encryptedCode = p['ac'];
 
           // Store raw encrypted param
           this.wizardService.appointmentCode = encryptedCode || '';
@@ -271,10 +272,24 @@ export class HomePageComponent {
       if (response) {
         this.appointmentData = response;
 
-        // Parse the response structure
-        const table1Data = (response as any).Table1;
-        const table2Data = (response as any).Table2; // Image details
-        const table3Data = (response as any).Table3; // Item declaration data
+        // Parse the response structure: response is [{ Data: { Table, Table1, ... }, Status, ErrorLog }]
+        const responseArray = Array.isArray(response) ? response : [response];
+        const firstEntry = responseArray[0];
+        const data = firstEntry?.Data || firstEntry;
+
+        // Check API status
+        if (firstEntry?.Status === false) {
+          const errorMsg = firstEntry?.ErrorLog?.length ? firstEntry.ErrorLog.join(', ') : 'Unknown error';
+          console.error('GetVisitorAck API returned error:', errorMsg);
+          this.hasInvalidUrl = true;
+          this.errorMessage = 'Invalid visitor acknowledgment link: ' + errorMsg;
+          this.isLoading = false;
+          return;
+        }
+
+        const table1Data = data?.Table1;
+        const table2Data = data?.Table2 || []; // Image details
+        const table3Data = data?.Table3 || []; // Item declaration data
 
         if (table1Data && table1Data.length > 0) {
           const visitorData = table1Data[0]; // Get first row
@@ -310,16 +325,31 @@ export class HomePageComponent {
             categoryDesc: visitorData.CategoryDesc,
             appTimeSlotSeqID: visitorData.AppTimeSlotSeqID,
             refWardRoomSeqId: visitorData.RefWardRoomSeqId,
-            udf1: visitorData.UDF1,
-            udf2: visitorData.UDF2,
-            udf3: visitorData.UDF3,
-            udf4: visitorData.UDF4,
-            udf5: visitorData.UDF5,
-            udf6: visitorData.UDF6,
-            udf7: visitorData.UDF7,
-            udf8: visitorData.UDF8,
-            udf9: visitorData.UDF9,
-            udf10: visitorData.UDF10
+            idType: visitorData.ID_TYPE,
+            idTypeDescription: visitorData.IDTYPEDESCRIPTION,
+            expiredDate: visitorData.ID_EXPIRED_DATE,
+            // Map UDF fields with AUDF prefix to match form control names (e.g. 'AUDF1')
+            AUDF1: visitorData.UDF1,
+            AUDF2: visitorData.UDF2,
+            AUDF3: visitorData.UDF3,
+            AUDF4: visitorData.UDF4,
+            AUDF5: visitorData.UDF5,
+            AUDF6: visitorData.UDF6,
+            AUDF7: visitorData.UDF7,
+            AUDF8: visitorData.UDF8,
+            AUDF9: visitorData.UDF9,
+            AUDF10: visitorData.UDF10,
+            // Map VUDF fields to match form control names (e.g. 'VUDF1')
+            VUDF1: visitorData.VUDF1,
+            VUDF2: visitorData.VUDF2,
+            VUDF3: visitorData.VUDF3,
+            VUDF4: visitorData.VUDF4,
+            VUDF5: visitorData.VUDF5,
+            VUDF6: visitorData.VUDF6,
+            VUDF7: visitorData.VUDF7,
+            VUDF8: visitorData.VUDF8,
+            VUDF9: visitorData.VUDF9,
+            VUDF10: visitorData.VUDF10
           };
 
           // Store visitor data in wizard service for use in step-general
@@ -332,12 +362,19 @@ export class HomePageComponent {
 
           // Set branch and category from visitor data
           if (parsedVisitorData.branchId) {
-            this.selectedBranch = parseInt(parsedVisitorData.branchId.toString());
+            const branchIdStr = parsedVisitorData.branchId.toString();
+            const branchIdNum = parseInt(branchIdStr);
+            // Use numeric ID if parseable, otherwise keep as string
+            this.selectedBranch = !isNaN(branchIdNum) ? branchIdNum : branchIdStr;
             this.isBranchFromQuery = true;
           }
 
           if (parsedVisitorData.categoryId) {
-            this.selectedCategory = parseInt(parsedVisitorData.categoryId.toString());
+            const catIdStr = parsedVisitorData.categoryId.toString();
+            const catIdNum = parseInt(catIdStr);
+            // CategoryId can be a code like "GUST" or numeric — store as-is for matching
+            this.selectedCategory = !isNaN(catIdNum) ? catIdNum : catIdStr;
+            this.isCategoryFromQuery = true;
           }
 
           console.log('Visitor acknowledgment data parsed:', parsedVisitorData);
@@ -580,9 +617,16 @@ export class HomePageComponent {
       this.selectedCategory = this.categories[0].visitor_ctg_id;
       this.onCategoryChange(this.selectedCategory);
     } else if ((this.isAppointmentFlow || this.isCategoryFromQuery) && this.selectedCategory) {
-      // In appointment flow or category from query param, ensure the selected category is valid
-      const validCategory = this.categories.find(c => c.visitor_ctg_id === this.selectedCategory);
+      // In appointment flow or category from query param, match by ID or code
+      const validCategory = this.categories.find(c =>
+        c.visitor_ctg_id === this.selectedCategory ||
+        String(c.visitor_ctg_id) === String(this.selectedCategory) ||
+        c.visitor_ctg_code === this.selectedCategory ||
+        String(c.visitor_ctg_code) === String(this.selectedCategory)
+      );
       if (validCategory) {
+        // Use the numeric visitor_ctg_id for downstream APIs
+        this.selectedCategory = validCategory.visitor_ctg_id;
         this.onCategoryChange(this.selectedCategory);
       }
     }
