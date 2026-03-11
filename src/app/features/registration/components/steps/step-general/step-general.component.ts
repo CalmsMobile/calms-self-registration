@@ -232,10 +232,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.hostNameList = [];
     }
 
-    this.generalForm.valueChanges.subscribe(() => {
-      // Auto-save form data including saved visitors
-      this.saveFormDataToWizard();
-    });
+
 
     // Watch for facility booking changes to update validation
     this.generalForm.get('facilityBooking')?.valueChanges.subscribe((value: boolean) => {
@@ -1048,54 +1045,38 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Check if multiple visitor mode is enabled (check both flat and nested path)
     this.isMultipleVisitorMode = this.settings?.MultipleVisitorEnabled || this.settings?.Visitor?.[0]?.MultipleVisitorEnabled || false;
 
-    // For multiple visitor mode, if we have saved visitors, don't pre-fill individual fields
-    // This prevents showing previous visitor data when navigating back
-    const shouldClearVisitorFields = this.isMultipleVisitorMode && this.savedVisitors && this.savedVisitors.length > 0;
-
     // Get visitor acknowledgment data if available
     const visitorData = this.visitorAckData?.visitorData;
     const isPreFilledData = this.isAppointmentFlow && visitorData;
 
-    // Debug logging
-    if (isPreFilledData) {
-      console.log('Initializing form with visitor acknowledgment data:', visitorData);
-      console.log('Host ID from visitor data:', visitorData.hostId);
-      console.log('Start time from visitor data:', visitorData.startTime);
-      console.log('End time from visitor data:', visitorData.endTime);
-      console.log('Department ID from visitor data:', visitorData.departmentId);
-    }
-
     const formControls: any = {
-      profile: [shouldClearVisitorFields ? null : (isPreFilledData ? null : (savedData.profile || null))],
-      profilePreview: [shouldClearVisitorFields ? '' : (savedData.profilePreview || '')],
-      title: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.titleId || '') : (savedData.title || ''))],
-      fullName: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.fullName || '') : (savedData.fullName || ''))],
-      email: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.email || '') : (savedData.email || ''))],
-      phone: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.phone || '') : (savedData.phone || ''))],
-      visitor_id_type: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.idType || '') : (savedData.visitor_id_type || ''))],
-      visitor_id: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.identityNo || '') : (savedData.visitor_id || ''))],
-      id_expired_date: [shouldClearVisitorFields ? null : (isPreFilledData ? (visitorData.expiredDate ? this.parseDate(visitorData.expiredDate) : null) : (savedData.id_expired_date || null))],
-      gender: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.genderId || '') : (savedData.gender || ''))],
-      visitor_company: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.company || '') : (savedData.visitor_company || ''))],
-      vehicle_number: [isPreFilledData ? (visitorData.vehicleNumber || '') : (savedData.vehicle_number || '')], // Keep vehicle info as it's shared
-      vehicle_brand: [isPreFilledData ? (visitorData.vehicleBrand || '') : (savedData.vehicle_brand || '')],
-      vehicle_model: [isPreFilledData ? (visitorData.vehicleModel || '') : (savedData.vehicle_model || '')],
-      vehicle_color: [isPreFilledData ? (visitorData.vehicleColor || '') : (savedData.vehicle_color || '')],
+      profile: [savedData.profile || null],
+      profilePreview: [savedData.profilePreview || ''],
+      title: [savedData.title || ''],
+      fullName: [savedData.fullName || ''],
+      email: [savedData.email || ''],
+      phone: [savedData.phone || ''],
+      visitor_id_type: [savedData.visitor_id_type || ''],
+      visitor_id: [savedData.visitor_id || ''],
+      id_expired_date: [savedData.id_expired_date || null],
+      gender: [savedData.gender || ''],
+      visitor_company: [savedData.visitor_company || ''],
+      vehicle_number: [savedData.vehicle_number || ''],
+      vehicle_brand: [savedData.vehicle_brand || ''],
+      vehicle_model: [savedData.vehicle_model || ''],
+      vehicle_color: [savedData.vehicle_color || ''],
       expired_date: [savedData.expired_date || ''],
-      Reason: [isPreFilledData ? (visitorData.remarks || '') : (savedData.Reason || '')], // Keep reason as it's shared
-      meeting_location: [isPreFilledData ? (visitorData.meetingLocation || '') : (savedData.meeting_location || '')],
-      floor: [isPreFilledData ? (visitorData.floorId || '') : (savedData.floor || '')],
-      visitor_address: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.address || '') : (savedData.visitor_address || ''))],
-      country: [shouldClearVisitorFields ? '' : (isPreFilledData ? (visitorData.countryId || '') : (savedData.country || ''))],
+      Reason: [savedData.Reason || ''],
+      meeting_location: [savedData.meeting_location || ''],
+      floor: [savedData.floor || ''],
+      visitor_address: [savedData.visitor_address || ''],
+      country: [savedData.country || ''],
       work_permit_ref: [savedData.work_permit_ref || ''],
-      remarks: [isPreFilledData ? (visitorData.remarks || '') : (savedData.remarks || '')],
-      host: [isPreFilledData ? (visitorData.hostId || '') : (this.shouldHideHostControl ? this.defaultHostId : (savedData.host || ''))], // Prioritize visitor ack data over default host
+      remarks: [savedData.remarks || ''],
+      host: [savedData.host || (this.shouldHideHostControl ? this.defaultHostId : '')],
       startDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.startDate || '')],
-      visitDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.visitDate || '')],
-      visitTime: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.visitTime || '')],
       endDate: [isPreFilledData ? (this.parseDate(visitorData.endTime) || '') : (savedData.endDate || '')],
-      endTime: [isPreFilledData ? (this.parseDate(visitorData.endTime) || '') : (savedData.endTime || '')],
-      department: [isPreFilledData ? (visitorData.departmentId || '') : (savedData.department || '')], // Use appointment department
+      department: [savedData.department || ''],
       appointmentDate: [savedData.appointmentDate || ''],
       timeSlot: [savedData.timeSlot || ''],
       facilityBooking: [savedData.facilityBooking || false],
@@ -1113,15 +1094,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         if (udf.Enabled) {
           const controlName = udf.formControlName;  // e.g. 'AUDF1' or 'VUDF1'
 
-          // Get value priority: visitor ack data > saved data > empty
-          let controlValue = '';
-          if (shouldClearVisitorFields) {
-            controlValue = '';
-          } else if (isPreFilledData && visitorData) {
-            controlValue = visitorData[controlName] || savedData[controlName] || '';
-          } else {
-            controlValue = savedData[controlName] || '';
-          }
+          // Get value from saved data
+          const controlValue = savedData[controlName] || '';
 
           const validators = [];
           if (udf.UDFCtrlType === 10 && udf.MinLength) {
@@ -1152,40 +1126,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     this.generalForm = this.fb.group(formControls);
 
-    // Disable fields in appointment flow that shouldn't be editable
-    if (isPreFilledData) {
-      // Disable all non-editable fields
-      Object.keys(this.generalForm.controls).forEach(controlName => {
-        if (!this.allowedEditableFields.includes(controlName)) {
-          const control = this.generalForm.get(controlName);
-          if (control) {
-            control.disable();
-          }
-        }
-      });
-
-      console.log('Disabled non-editable fields in appointment flow');
-    }
-
-    // Trigger ID Type change for appointment flow if ID Type is pre-filled
-    if (isPreFilledData && visitorData.idType) {
-      setTimeout(() => {
-        this.onIdTypeChange({ value: visitorData.idType });
-      }, 100);
-    }
-
-    // Set department for default host if enabled (but not in appointment flow)
-    if (this.shouldHideHostControl && this.defaultHostId && !isPreFilledData) {
-      this.setDepartmentForDefaultHost();
-    }
-
     // Restore saved visitors for display in table
     if (this.isMultipleVisitorMode && savedData.savedVisitors) {
       this.savedVisitors = savedData.savedVisitors;
     }
 
     // Clear profile image display in multiple visitor mode if visitors exist
-    if (shouldClearVisitorFields) {
+    if (this.isMultipleVisitorMode && this.savedVisitors.length > 0) {
       this.profileImage = '';
     }
 
@@ -1194,201 +1141,91 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.initializeVisitors(savedData);
     }
 
-    // Sync visitDate and visitTime to startDate
-    this.generalForm.get('visitDate')?.valueChanges.subscribe((visitDate) => {
-      this.syncStartDate();
-      this.updateMinVisitTime(visitDate);
+    // Subscriptions for combined date-time logic
+    this.generalForm.get('startDate')?.valueChanges.subscribe((startDate) => {
+      this.updateMinVisitTime(startDate);
+      this.updateMinEndTime(startDate);
+      this.checkEndBeforeStart();
 
-      if (visitDate) {
-        // Default endDate to visitDate if not set
+      if (startDate) {
+        // Default endDate based on startDate if not set
         const endDateCtrl = this.generalForm.get('endDate');
         if (endDateCtrl && !endDateCtrl.value) {
-          endDateCtrl.setValue(visitDate);
+          const oneHourLater = new Date(startDate.getTime() + (60 * 60 * 1000));
+          endDateCtrl.setValue(oneHourLater);
         }
-      } else {
-        // visitDate cleared — reset visitTime, endDate, endTime
-        this.generalForm.get('visitTime')?.setValue(null, { emitEvent: false });
-        this.generalForm.get('endDate')?.setValue(null, { emitEvent: false });
-        this.generalForm.get('endTime')?.setValue(null, { emitEvent: false });
-      }
-
-      const visitTime = this.generalForm.get('visitTime')?.value;
-      this.updateMinEndTime(visitTime);
-      this.checkEndBeforeStart();
-    });
-
-    this.generalForm.get('visitTime')?.valueChanges.subscribe((visitTime) => {
-      this.syncStartDate();
-      this.updateMinEndTime(visitTime);
-      this.checkEndBeforeStart();
-
-      if (!visitTime) {
-        // visitTime cleared — reset endDate and endTime
-        this.generalForm.get('endDate')?.setValue(null, { emitEvent: false });
-        this.generalForm.get('endTime')?.setValue(null, { emitEvent: false });
       }
     });
 
-    // Sync endDate and endTime to combined endDate
-    this.generalForm.get('endDate')?.valueChanges.subscribe((endDate) => {
-      this.syncEndDate();
-      const visitTime = this.generalForm.get('visitTime')?.value;
-      this.updateMinEndTime(visitTime);
-      this.checkEndBeforeStart();
-
-      if (!endDate) {
-        // endDate cleared — reset endTime
-        this.generalForm.get('endTime')?.setValue(null, { emitEvent: false });
-      }
-    });
-
-    this.generalForm.get('endTime')?.valueChanges.subscribe(() => {
-      this.syncEndDate();
+    this.generalForm.get('endDate')?.valueChanges.subscribe(() => {
       this.checkEndBeforeStart();
     });
-  }
-
-  private syncStartDate(): void {
-    const visitDate = this.generalForm.get('visitDate')?.value;
-    const visitTime = this.generalForm.get('visitTime')?.value;
-
-    if (visitDate && visitTime) {
-      const combined = new Date(visitDate);
-      const time = new Date(visitTime);
-      combined.setHours(time.getHours());
-      combined.setMinutes(time.getMinutes());
-      combined.setSeconds(0);
-      this.generalForm.get('startDate')?.setValue(combined, { emitEvent: false });
-    } else if (visitDate) {
-      this.generalForm.get('startDate')?.setValue(visitDate, { emitEvent: false });
-    }
   }
 
   private checkEndBeforeStart(): void {
-    const visitDate = this.generalForm.get('visitDate')?.value;
-    const visitTime = this.generalForm.get('visitTime')?.value;
+    const startDate = this.generalForm.get('startDate')?.value;
     const endDate = this.generalForm.get('endDate')?.value;
-    const endTime = this.generalForm.get('endTime')?.value;
 
-    if (!visitDate || !endDate) {
+    if (!startDate || !endDate) {
       this.endBeforeStartError = false;
       return;
     }
 
-    const startDt = new Date(visitDate);
-    if (visitTime) {
-      const vTime = new Date(visitTime);
-      startDt.setHours(vTime.getHours(), vTime.getMinutes(), 0, 0);
-    } else {
-      startDt.setHours(0, 0, 0, 0);
-    }
-
+    const startDt = new Date(startDate);
     const endDt = new Date(endDate);
-    if (endTime) {
-      const eTime = new Date(endTime);
-      endDt.setHours(eTime.getHours(), eTime.getMinutes(), 0, 0);
-    } else {
-      endDt.setHours(23, 59, 59, 999);
-    }
 
+    // End must be at least 1 hour after start
     this.endBeforeStartError = endDt.getTime() < startDt.getTime() + (60 * 60 * 1000);
   }
 
-  private syncEndDate(): void {
-    const endDateCtrl = this.generalForm.get('endDate');
-    const endTimeCtrl = this.generalForm.get('endTime');
-
-    if (endDateCtrl?.value && endTimeCtrl?.value) {
-      const combined = new Date(endDateCtrl.value);
-      const time = new Date(endTimeCtrl.value);
-
-      // Only update if time parts are actually different to avoid unnecessary events/loops
-      if (combined.getHours() !== time.getHours() || combined.getMinutes() !== time.getMinutes()) {
-        combined.setHours(time.getHours());
-        combined.setMinutes(time.getMinutes());
-        combined.setSeconds(0);
-        endDateCtrl.setValue(combined, { emitEvent: false });
-      }
-    }
-  }
-
-  private updateMinVisitTime(visitDate: Date | null): void {
-    if (!visitDate) {
+  private updateMinVisitTime(startDate: Date | null): void {
+    if (!startDate) {
       this.minVisitTime = undefined;
       return;
     }
     const today = new Date();
     const isToday =
-      visitDate.getFullYear() === today.getFullYear() &&
-      visitDate.getMonth() === today.getMonth() &&
-      visitDate.getDate() === today.getDate();
+      startDate.getFullYear() === today.getFullYear() &&
+      startDate.getMonth() === today.getMonth() &&
+      startDate.getDate() === today.getDate();
     this.minVisitTime = isToday ? new Date() : undefined;
   }
 
-  private updateMinEndTime(visitTime: Date | null): void {
-    if (!visitTime) {
+  private updateMinEndTime(startDate: Date | null): void {
+    if (!startDate) {
       this.minEndTime = undefined;
       return;
     }
 
-    const visitDate = this.generalForm.get('visitDate')?.value;
     const endDateCtrl = this.generalForm.get('endDate');
-    const endTimeCtrl = this.generalForm.get('endTime');
 
-    if (!visitDate || !endDateCtrl || !endTimeCtrl) {
+    if (!endDateCtrl) {
       this.minEndTime = undefined;
       return;
     }
 
-    // Combine visitDate and visitTime to get a full Start DateTime
-    const startDt = new Date(visitDate);
-    startDt.setHours(visitTime.getHours(), visitTime.getMinutes(), 0, 0);
+    const minEndDateTime = new Date(startDate.getTime() + (60 * 60 * 1000));
 
-    // Calculate minimum end time as start time + 1 hour
-    const minEndDateTime = new Date(startDt.getTime() + (60 * 60 * 1000));
+    // In same day as start, min selectable time is the start time
+    // Primeng p-datepicker minDate handles the date part. For the same day,
+    // minDate set to startDate will also restrict time if the date matches.
 
-    // Determine if midnight was crossed
-    const crossedDay = minEndDateTime.getDate() !== startDt.getDate();
+    const currentEndDate = endDateCtrl.value ? new Date(endDateCtrl.value) : null;
+    const isSameDayAsStart = currentEndDate &&
+      currentEndDate.getFullYear() === startDate.getFullYear() &&
+      currentEndDate.getMonth() === startDate.getMonth() &&
+      currentEndDate.getDate() === startDate.getDate();
 
-    // If endDate is empty, default it
-    if (!endDateCtrl.value) {
-      const defaultEndDate = new Date(minEndDateTime);
-      defaultEndDate.setHours(0, 0, 0, 0);
-      endDateCtrl.setValue(defaultEndDate, { emitEvent: false });
-    }
-
-    const currentEndDate = new Date(endDateCtrl.value);
-    const isSameDayAsStart = currentEndDate.getFullYear() === startDt.getFullYear() &&
-      currentEndDate.getMonth() === startDt.getMonth() &&
-      currentEndDate.getDate() === startDt.getDate();
-
-    // Set minEndTime for the picker based on whether it's the same day
     if (isSameDayAsStart) {
-      // In same day, min selectable time is the visit time
-      this.minEndTime = visitTime;
+      this.minEndTime = startDate;
     } else {
       this.minEndTime = undefined;
     }
 
-    // Proactive defaulting of endTime: if empty or invalid, set to +1 hour
-    const currentEndTime = endTimeCtrl.value;
-    const endDt = new Date(currentEndDate);
-    if (currentEndTime) {
-      const eVal = new Date(currentEndTime);
-      endDt.setHours(eVal.getHours(), eVal.getMinutes(), 0, 0);
-    }
-
-    // If endTime is missing or combined datetime is less than 1 hour after start
-    if (!currentEndTime || endDt.getTime() < minEndDateTime.getTime()) {
-      endTimeCtrl.setValue(new Date(minEndDateTime));
-
-      // If this shift caused a day change that contradicts current endDate, update endDate
-      if (crossedDay && isSameDayAsStart) {
-        const nextDay = new Date(minEndDateTime);
-        nextDay.setHours(0, 0, 0, 0);
-        endDateCtrl.setValue(nextDay);
-      }
-      endTimeCtrl.markAsTouched();
+    // Defaulting: if current end is less than 1 hour after start, update it
+    if (currentEndDate && currentEndDate.getTime() < minEndDateTime.getTime()) {
+      endDateCtrl.setValue(minEndDateTime);
+      endDateCtrl.markAsTouched();
     }
   }
 
@@ -1732,11 +1569,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('host', this.settings.HostNameEnabled, this.settings.HostNameRequired);
     // In appointment flow, always show date/time fields (they carry pre-filled data)
     const showStartEnd = this.isAppointmentFlow || (this.settings.StartEndDtEnabled && !this.enableVimsApptTimeSlot);
-    this.setupControl('startDate', showStartEnd, false);
-    this.setupControl('visitDate', showStartEnd, true);
-    this.setupControl('visitTime', showStartEnd, false);
+    this.setupControl('startDate', showStartEnd, true);
     this.setupControl('endDate', showStartEnd, true);
-    this.setupControl('endTime', showStartEnd, false);
 
     this.setupControl('profile', this.settings.ImageUploadEnabled, this.settings.ImageUploadRequired);
 
@@ -1892,18 +1726,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     // Validate end datetime is after start datetime
-    const visitDate = this.generalForm.get('visitDate')?.value;
-    const visitTime = this.generalForm.get('visitTime')?.value;
-    const endDate = this.generalForm.get('endDate')?.value;
-    const endTime = this.generalForm.get('endTime')?.value;
-    if (visitDate && endDate) {
-      const startDt = visitTime ? new Date(new Date(visitDate).setHours(new Date(visitTime).getHours(), new Date(visitTime).getMinutes(), 0)) : new Date(visitDate);
-      const endDt = endTime ? new Date(new Date(endDate).setHours(new Date(endTime).getHours(), new Date(endTime).getMinutes(), 0)) : new Date(endDate);
-      if (endDt <= startDt) {
-        this.messageService.add({ severity: 'error', ...this.getAlert('end_date_validation') });
-        this.wizardService.setStepValid(false);
-        return false;
-      }
+    this.checkEndBeforeStart();
+    if (this.endBeforeStartError) {
+      this.messageService.add({ severity: 'error', ...this.getAlert('end_date_validation') });
+      this.wizardService.setStepValid(false);
+      return false;
     }
 
     // Additional custom validation for visitor ID and expiry
@@ -1951,65 +1778,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   private saveFormDataToWizard(): void {
-    // Save current form data and saved visitors to wizard service
-    // In appointment flow, use getRawValue() to include disabled (pre-filled) controls
-    // Otherwise, only include enabled controls — disabled controls are hidden by settings
-    let formData: any = {};
-
-    if (this.isAppointmentFlow) {
-      formData = { ...this.generalForm.getRawValue() };
-    } else {
-      Object.keys(this.generalForm.controls).forEach(key => {
-        const ctrl = this.generalForm.get(key);
-        if (ctrl && ctrl.enabled) {
-          formData[key] = ctrl.value;
-        }
-      });
-    }
-
-    // Always include host — defaultHostId must be sent even when host control is hidden/disabled
-    if (!formData.host && this.defaultHostId) {
-      formData.host = this.defaultHostId;
-    }
-
-    // Combine visitDate and visitTime into startDate
-    if (formData.visitDate && formData.visitTime) {
-      const combined = new Date(formData.visitDate);
-      const time = new Date(formData.visitTime);
-      combined.setHours(time.getHours());
-      combined.setMinutes(time.getMinutes());
-      combined.setSeconds(0);
-      formData.startDate = combined;
-    } else if (formData.visitDate) {
-      formData.startDate = formData.visitDate;
-    }
-
-    // Combine endDate and endTime into endDate
-    if (formData.endDate && formData.endTime) {
-      const combined = new Date(formData.endDate);
-      const time = new Date(formData.endTime);
-      combined.setHours(time.getHours());
-      combined.setMinutes(time.getMinutes());
-      combined.setSeconds(0);
-      formData.endDate = combined;
-    }
-
-    if (this.isMultipleVisitorMode) {
-      // Include saved visitors when multiple visitor is enabled
-      formData.visitors = this.savedVisitors;
-      formData.savedVisitors = this.savedVisitors; // Keep both for compatibility
-    }
-
-    console.log('=== STEP-GENERAL SAVE DEBUG ===');
-    console.log('Form data being saved:', formData);
-    console.log('Is appointment flow:', this.isAppointmentFlow);
-    console.log('MultipleVisitorEnabled:', this.settings?.MultipleVisitorEnabled);
-    console.log('savedVisitors:', this.savedVisitors);
-    console.log('savedVisitors length:', this.savedVisitors?.length);
-    console.log('================================');
-
+    const formData = this.generalForm.value;
     this.wizardService.updateFormData('general', formData);
-    console.log('Form data saved to wizard:', formData);
   }
 
   private scrollToFirstError(): void {

@@ -42,7 +42,8 @@
           <img [src]="profileImage" class="profile-image" alt="Profile">
           } @else {
           <div class="upload-placeholder">
-            <button type="button" pButton [label]="'profile_picture' | translate:'placeholder'" class="p-button-outlined"></button>
+            <button type="button" pButton [label]="'profile_picture' | translate:'placeholder'"
+              class="p-button-outlined"></button>
             <span>No file chosen</span>
           </div>
           }
@@ -118,73 +119,39 @@
       </div>
       }
 
-      <!-- Visit Date -->
+      <!-- Start Date & Time -->
       @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
       <div class="form-field">
-        <label class="field-label" for="visitDate">
-          {{'appointment_start_date' | translate}}
+        <label class="field-label" for="startDate">
+          {{'appointment_start_date_time' | translate}}
           <span class="required-star">*</span>
         </label>
-        <p-datepicker id="visitDate" formControlName="visitDate" [showIcon]="true"
-          [class]="{'ng-invalid': isFieldInvalidRequired('visitDate')}" [minDate]="minDate" [placeholder]="'dd/mm/yyyy'"
-          [showTime]="false" appendTo="body" dateFormat="dd/mm/yy">
+        <p-datepicker id="startDate" formControlName="startDate" [showIcon]="true"
+          [class]="{'ng-invalid': isFieldInvalidRequired('startDate')}" [minDate]="minDate"
+          [placeholder]="'dd/mm/yyyy --:-- --'" [showTime]="true" hourFormat="12" appendTo="body" dateFormat="dd/mm/yy">
         </p-datepicker>
-        @if (isFieldInvalidRequired('visitDate')) {
-        <small class="error-message">{{'appointment_start_date' | translate}} is required</small>
+        @if (isFieldInvalidRequired('startDate')) {
+        <small class="error-message">{{'appointment_start_date_time' | translate}} is required</small>
         }
       </div>
       }
 
-      <!-- Visit Time -->
-      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
-      <div class="form-field">
-        <label class="field-label" for="visitTime">
-          {{'appointment_start_time' | translate}}
-        </label>
-        <p-datepicker id="visitTime" formControlName="visitTime" [showIcon]="true" iconDisplay="input" [timeOnly]="true"
-          hourFormat="12" [placeholder]="'--:-- --'" [class]="{'ng-invalid': isFieldInvalidRequired('visitTime')}"
-          [minDate]="minVisitTime" appendTo="body">
-          <ng-template #inputicon let-clickcallback="clickCallback">
-            <i class="pi pi-clock" (click)="clickcallback($event)"></i>
-          </ng-template>
-        </p-datepicker>
-      </div>
-      }
-
-      <!-- End Date -->
+      <!-- End Date & Time -->
       @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
       <div class="form-field">
         <label class="field-label" for="endDate">
-          {{'appointment_end_date' | translate}}
+          {{'appointment_end_date_time' | translate}}
           <span class="required-star">*</span>
         </label>
-        <p-datepicker id="endDate" formControlName="endDate" [showIcon]="true" [showTime]="false"
-          [class]="{'ng-invalid': isFieldInvalidRequired('endDate')}"
-          [minDate]="generalForm.get('visitDate')?.value || minDate" [disabled]="!generalForm.get('visitDate')?.value || !generalForm.get('visitTime')?.value"
-          [placeholder]="'appointment_end_date' | translate:'placeholder'" appendTo="body" dateFormat="dd/mm/yy">
-        </p-datepicker>
-        @if (isFieldInvalidRequired('endDate')) {
-        <small class="error-message">{{'appointment_end_date' | translate}} is required</small>
-        }
-      </div>
-      }
-
-      <!-- End Time -->
-      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
-      <div class="form-field">
-        <label class="field-label" for="endTime">
-          {{'appointment_end_time' | translate}}
-        </label>
-        <p-datepicker id="endTime" formControlName="endTime" [showIcon]="true" iconDisplay="input" [timeOnly]="true"
-          hourFormat="12" [placeholder]="'--:-- --'" [disabled]="!generalForm.get('endDate')?.value"
-          [class]="{'ng-invalid': isFieldInvalidRequired('endTime') || endBeforeStartError}" [minDate]="minEndTime"
-          appendTo="body">
-          <ng-template #inputicon let-clickcallback="clickCallback">
-            <i class="pi pi-clock" (click)="clickcallback($event)"></i>
-          </ng-template>
+        <p-datepicker id="endDate" formControlName="endDate" [showIcon]="true" [showTime]="true" hourFormat="12"
+          [class]="{'ng-invalid': isFieldInvalidRequired('endDate') || endBeforeStartError}"
+          [minDate]="generalForm.get('startDate')?.value || minDate" [disabled]="!generalForm.get('startDate')?.value"
+          [placeholder]="'dd/mm/yyyy --:-- --'" appendTo="body" dateFormat="dd/mm/yy">
         </p-datepicker>
         @if (endBeforeStartError) {
         <small class="error-message">{{ 'end_date_error_message' | translate }}</small>
+        } @else if (isFieldInvalidRequired('endDate')) {
+        <small class="error-message">{{'appointment_end_date_time' | translate}} is required</small>
         }
       </div>
       }
@@ -289,9 +256,8 @@
           <span class="required-star">{{settings?.PurposeRequired ? '*' : ''}}</span>
         </label>
         <p-select id="purpose" [options]="purposeList" formControlName="purpose"
-          [placeholder]="'purpose_of_your_visit?' | translate:'placeholder'"
-          optionLabel="visitpurpose_desc" optionValue="visitpurpose_id"
-          [class]="{'ng-invalid': isFieldInvalidRequired('purpose')}"
+          [placeholder]="'purpose_of_your_visit?' | translate:'placeholder'" optionLabel="visitpurpose_desc"
+          optionValue="visitpurpose_id" [class]="{'ng-invalid': isFieldInvalidRequired('purpose')}"
           (onChange)="onPurposeChange($event)" appendTo="body">
         </p-select>
         @if (isFieldInvalidRequired('purpose')) {
@@ -815,7 +781,8 @@
       <input pInputText type="text" [(ngModel)]="searchQuery" [placeholder]="'search_profile' | translate:'placeholder'"
         (keyup.enter)="searchProfile()">
     </div>
-    <button pButton type="button" class="search-btn" [label]="'search_profile_button' | translate" (click)="searchProfile()">
+    <button pButton type="button" class="search-btn" [label]="'search_profile_button' | translate"
+      (click)="searchProfile()">
     </button>
   </div>
 </p-dialog>
