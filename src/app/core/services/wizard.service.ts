@@ -61,6 +61,9 @@ export class WizardService {
   refCode = '';      // encrypted branch code (bc param)
   refCatCode = '';    // encrypted category code (vc param)
   appointmentCode = ''; // appointment code (q param)
+  hcParam = '';       // raw hc query param value (persisted so step-general can resolve it)
+  hostCodeFromQuery = ''; // host IC resolved from hc param (GetSelfRegShareURLData response)
+  isHostFromQuery = false; // true when hc query param was used to pre-fill host
 
   // Static variables for safety brief - will be replaced with dynamic data later
   SafetyBriefing_Date = "2026-03-03T14:02:43.957";
@@ -84,6 +87,12 @@ export class WizardService {
     }
     if (!this.appointmentCode) {
       this.appointmentCode = sessionStorage.getItem('appointmentCode') || '';
+    }
+    if (!this.hcParam) {
+      this.hcParam = sessionStorage.getItem('hcParam') || '';
+    }
+    if (this.hcParam) {
+      this.isHostFromQuery = true;
     }
 
     if (this.currentBranchID && this.currentBranchName) {
@@ -109,6 +118,7 @@ export class WizardService {
     if (this.refCode) sessionStorage.setItem('refCode', this.refCode);
     if (this.refCatCode) sessionStorage.setItem('refCatCode', this.refCatCode);
     if (this.appointmentCode) sessionStorage.setItem('appointmentCode', this.appointmentCode);
+    if (this.hcParam) sessionStorage.setItem('hcParam', this.hcParam);
   }
 
   clearSessionStorage() {
@@ -118,12 +128,16 @@ export class WizardService {
     sessionStorage.removeItem('refCode');
     sessionStorage.removeItem('refCatCode');
     sessionStorage.removeItem('appointmentCode');
+    sessionStorage.removeItem('hcParam');
     this.currentBranchID = '';
     this.selectedVisitCategory = '';
     this.currentBranchName = '';
     this.refCode = '';
     this.refCatCode = '';
     this.appointmentCode = '';
+    this.hcParam = '';
+    this.hostCodeFromQuery = '';
+    this.isHostFromQuery = false;
     this.formDataStore.next({});
     this.visitorAckData = null;
     this.masterData = null;

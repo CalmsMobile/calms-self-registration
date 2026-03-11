@@ -189,6 +189,25 @@ export class HomePageComponent {
         // Store raw encrypted branch param
         this.wizardService.refCode = bcParam;
 
+        // Check for host code query parameter (hc) alongside bc
+        const hcParam = p['hc'];
+        if (hcParam) {
+          this.wizardService.hcParam = hcParam;
+          this.wizardService.isHostFromQuery = true;
+          this.api.GetSelfRegShareURLData(hcParam).subscribe({
+            next: (response: any) => {
+              const responseArray = Array.isArray(response) ? response : [response];
+              const hostic = responseArray[0]?.Data?.Table?.[0]?.HOSTIC;
+              if (hostic) {
+                this.wizardService.hostCodeFromQuery = hostic;
+              }
+            },
+            error: (err) => {
+              console.error('Error fetching host code from hc param:', err);
+            }
+          });
+        }
+
         // Check for category query parameter (vc)
         const vcParam = p['vc'];
         if (vcParam) {
@@ -216,6 +235,26 @@ export class HomePageComponent {
         this.isBranchFromQuery = false;
         this.isAppointmentFlow = false;
         this.hasInvalidUrl = false;
+
+        // Check for standalone hc param (without bc)
+        const hcParam = p['hc'];
+        if (hcParam) {
+          this.wizardService.hcParam = hcParam;
+          this.wizardService.isHostFromQuery = true;
+          this.api.GetSelfRegShareURLData(hcParam).subscribe({
+            next: (response: any) => {
+              const responseArray = Array.isArray(response) ? response : [response];
+              const hostic = responseArray[0]?.Data?.Table?.[0]?.HOSTIC;
+              if (hostic) {
+                this.wizardService.hostCodeFromQuery = hostic;
+              }
+            },
+            error: (err) => {
+              console.error('Error fetching host code from hc param:', err);
+            }
+          });
+        }
+
         this.loadBranches();
       }
     });
@@ -551,8 +590,8 @@ export class HomePageComponent {
               this.sharedService.updateHeader(this.title, this.logo);
             }
             // Welcome text
-            if (settings.WelcomeText || settings.WelcomPageText || settings.Caption) {
-              this.welcomeText = settings.WelcomeText || settings.WelcomPageText || settings.Caption;
+            if (settings.WelcomeText || settings.OrgName) {
+              this.welcomeText = (settings.WelcomeText ? settings.WelcomeText : '') + (settings.OrgName ?settings.OrgName : '');
             }
             // Branch selection caption and placeholder
             this.branchTranslation = {

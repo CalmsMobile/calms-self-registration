@@ -224,4 +224,13 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/GetVisitorDataForQRCode`, finalParam);
   }
 
+  /**
+   * Get host data from a shared/short URL host code
+   * @param refHostCode The host code from the hc query parameter
+   */
+  GetSelfRegShareURLData(refHostCode: string) {
+    const loParam = { RefHostCode: refHostCode };
+    return this.apiBase.post(`${this.baseUrl}/GetSelfRegShareURLData`, loParam);
+  }
+
 }
