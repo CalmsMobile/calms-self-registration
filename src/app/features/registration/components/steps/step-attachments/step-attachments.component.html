@@ -59,7 +59,9 @@
   <div class="bottom">
     <div class="row">
       <button class="btn white" (click)="goBack()">← {{ 'back' | translate }}</button>
-      <button class="btn white" (click)="skipStep()">{{ 'em_skip' | translate }} →</button>
+@if (!hasMandatoryDocuments) {
+  <button class="btn white" (click)="skipStep()">{{ 'em_skip' | translate }} →</button>
+}
     </div>
     <button class="btn continue" (click)="proceedToNext()">{{ 'continue' | translate }} →</button>
   </div>

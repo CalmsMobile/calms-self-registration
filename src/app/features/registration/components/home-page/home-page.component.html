@@ -124,10 +124,7 @@
       <!-- Back button and Continue button -->
       @if (selectedBranch && selectedCategory) {
       <div class="button-container">
-        <button class="back-button" (click)="goBack()">
-          <i class="pi pi-arrow-left"></i>
-          <span>{{ 'back' | translate }}</span>
-        </button>
+ 
         <p-button [label]="'agree_and_proceed' | translate" icon="pi pi-arrow-right" iconPos="right"
           [disabled]="!termsAccepted || !termsValid" (onClick)="proceedToWizard()">
         </p-button>

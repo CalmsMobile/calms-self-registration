@@ -169,7 +169,7 @@
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 14px;
   margin-bottom: 14px;
 
@@ -1062,6 +1062,7 @@ textarea {
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
+    margin-left: auto;
     padding-top: 14px;
     flex-shrink: 0;
   }

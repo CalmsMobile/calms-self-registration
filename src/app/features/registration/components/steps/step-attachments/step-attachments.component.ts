@@ -199,6 +199,10 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     this.wizardService.skipToNextStep();
   }
 
+  get hasMandatoryDocuments(): boolean {
+  return this.documentTypes.some(d => d.Mandatory);
+}
+
   proceedToNext(): void {
     this.validateStep();
     this.saveFormData();
