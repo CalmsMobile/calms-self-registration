@@ -25,6 +25,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
   isFullscreen = false;
   videoSource = '';
   isReplaying = false; // Track if user is replaying video
+  videoDuration = 0;       // total duration in seconds (loaded from metadata)
+  currentTime = 0;         // current playback position in seconds
   private bodyStyleObserver?: MutationObserver;
 
   constructor(
@@ -87,6 +89,14 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     video.setAttribute('webkit-playsinline', '');
     video.setAttribute('muted', ''); // Helps with autoplay on some browsers
 
+    video.addEventListener('loadedmetadata', () => {
+      this.videoDuration = video.duration || 0;
+    });
+
+    video.addEventListener('timeupdate', () => {
+      this.currentTime = video.currentTime || 0;
+    });
+
     video.addEventListener('ended', () => {
       this.handleVideoEnd();
     });
@@ -128,16 +138,12 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
       // Must be triggered by user gesture
       await video.play();
 
-      // Only enter fullscreen if NOT replaying (to avoid scroll issues)
-      if (!this.isReplaying) {
-        await this.requestFullscreen(container);
-        // Hide cursor after 3 seconds (for desktop)
-        setTimeout(() => {
-          container.style.cursor = 'none';
-        }, 3000);
-      } else {
-        console.log('Replaying without fullscreen to prevent scroll issues');
-      }
+      // Always enter fullscreen (first play or replay)
+      await this.requestFullscreen(container);
+      // Hide cursor after 3 seconds (for desktop)
+      setTimeout(() => {
+        container.style.cursor = 'none';
+      }, 3000);
 
     } catch (error) {
       console.error('Playback failed:', error);
@@ -371,9 +377,9 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   onReplay(): void {
-    console.log('Replay button clicked - will play WITHOUT fullscreen');
+    console.log('Replay button clicked - will play in fullscreen');
     
-    // Mark as replaying to skip fullscreen
+    // Mark as replaying
     this.isReplaying = true;
     
     // Force enable scroll first
@@ -402,6 +408,18 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     if (prevStep >= 0) {
       this.wizardService.requestStepChange(prevStep);
     }
+  }
+
+  formatTime(seconds: number): string {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  get progressPercent(): number {
+    if (!this.videoDuration) return 0;
+    return Math.min(100, (this.currentTime / this.videoDuration) * 100);
   }
 
   onNext(): void {

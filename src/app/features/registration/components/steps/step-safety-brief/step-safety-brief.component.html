@@ -23,6 +23,15 @@
         {{ 'your_browser_does_not_support_html5_video.' | translate }}
       </video>
 
+      @if (!showPlayButton && !videoEnded && videoDuration > 0) {
+        <div class="video-progress">
+          <div class="video-progress-bar">
+            <div class="video-progress-fill" [style.width.%]="progressPercent"></div>
+          </div>
+          <span class="video-time">{{ formatTime(currentTime) }} / {{ formatTime(videoDuration) }}</span>
+        </div>
+      }
+
       @if (showPlayButton) {
         <button #playButton pButton class="play-button" icon="pi pi-play"
           (click)="startPlayback()">
