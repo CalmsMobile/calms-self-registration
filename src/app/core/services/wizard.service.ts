@@ -63,6 +63,7 @@ export class WizardService {
   appointmentCode = ''; // appointment code (q param)
   hcParam = '';       // raw hc query param value (persisted so step-general can resolve it)
   hostCodeFromQuery = ''; // host IC resolved from hc param (GetSelfRegShareURLData response)
+  categoryCodeFromQuery = ''; // category code resolved from vc+hc params (GetSelfRegShareURLData response)
   isHostFromQuery = false; // true when hc query param was used to pre-fill host
 
   // Static variables for safety brief - will be replaced with dynamic data later
@@ -137,6 +138,7 @@ export class WizardService {
     this.appointmentCode = '';
     this.hcParam = '';
     this.hostCodeFromQuery = '';
+    this.categoryCodeFromQuery = '';
     this.isHostFromQuery = false;
     this.formDataStore.next({});
     this.visitorAckData = null;

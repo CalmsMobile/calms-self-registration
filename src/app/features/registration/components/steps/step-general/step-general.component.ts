@@ -820,8 +820,32 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Apply query parameter host filtering for appointment flow
+  // Apply query parameter host filtering for appointment flow or hc query param
   private applyQueryParamHostFiltering() {
+    // Handle isHostFromQuery: auto-select and disable host from hc query param
+    if (this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery) {
+      const hostCode = this.wizardService.hostCodeFromQuery;
+      console.log('Applying host filtering for hc query param, hostCodeFromQuery:', hostCode);
+
+      const matchingHost = this.hosts.find((host: any) =>
+        host.HOSTIC === hostCode ||
+        host.HostIC === hostCode ||
+        String(host.HOSTIC) === String(hostCode)
+      );
+
+      if (matchingHost) {
+        console.log('Found matching host for hc param:', matchingHost);
+        this.hosts = [matchingHost];
+        this.hostNameList = [matchingHost];
+        this.shouldFilterHostByQueryParam = true;
+        this.generalForm.get('host')?.setValue(matchingHost.HOSTIC || matchingHost.HostIC || matchingHost.SeqId);
+        console.log('Host auto-selected and disabled for hc query param flow');
+        return;
+      } else {
+        console.warn('No matching host found for hostCodeFromQuery:', hostCode, 'Available hosts:', this.hosts);
+      }
+    }
+
     // Only apply filtering if we're in appointment flow and have visitor ack data
     if (!this.isAppointmentFlow || !this.visitorAckData?.visitorData?.hostId) {
       console.log('Not in appointment flow or no hostId found, skipping host filtering');
@@ -1073,7 +1097,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       country: [savedData.country || ''],
       work_permit_ref: [savedData.work_permit_ref || ''],
       remarks: [savedData.remarks || ''],
-      host: [savedData.host || (this.shouldHideHostControl ? this.defaultHostId : '')],
+      host: [savedData.host || (this.shouldHideHostControl ? this.defaultHostId : '') || (this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery ? this.wizardService.hostCodeFromQuery : '')],
       startDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.startDate || '')],
       endDate: [isPreFilledData ? (this.parseDate(visitorData.endTime) || '') : (savedData.endDate || '')],
       department: [savedData.department || ''],
@@ -1566,7 +1590,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('country', this.settings.CountryEnabled, this.settings.CountryRequired);
     this.setupControl('work_permit_ref', this.settings.WorkPermitRefEnabled, false);
     this.setupControl('remarks', this.settings.RemarksEnabled, this.settings.RemarksRequired);
-    this.setupControl('host', this.settings.HostNameEnabled, this.settings.HostNameRequired);
+    // Don't require host when it's auto-selected from the hc query param
+    const hostRequired = this.settings.HostNameRequired && !(this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery);
+    this.setupControl('host', this.settings.HostNameEnabled, hostRequired);
     // In appointment flow, always show date/time fields (they carry pre-filled data)
     const showStartEnd = this.isAppointmentFlow || (this.settings.StartEndDtEnabled && !this.enableVimsApptTimeSlot);
     this.setupControl('startDate', showStartEnd, true);

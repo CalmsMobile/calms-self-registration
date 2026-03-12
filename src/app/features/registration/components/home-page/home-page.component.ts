@@ -191,15 +191,30 @@ export class HomePageComponent {
 
         // Check for host code query parameter (hc) alongside bc
         const hcParam = p['hc'];
+        // Read vc early so it can be passed to GetSelfRegShareURLData when hc is also present
+        const vcParam = p['vc'];
+
         if (hcParam) {
           this.wizardService.hcParam = hcParam;
           this.wizardService.isHostFromQuery = true;
-          this.api.GetSelfRegShareURLData(hcParam).subscribe({
+          this.api.GetSelfRegShareURLData(hcParam, vcParam || undefined).subscribe({
             next: (response: any) => {
               const responseArray = Array.isArray(response) ? response : [response];
-              const hostic = responseArray[0]?.Data?.Table?.[0]?.HOSTIC;
+              const tableData = responseArray[0]?.Table?.[0];
+              const hostic = tableData?.HOSTIC;
               if (hostic) {
                 this.wizardService.hostCodeFromQuery = hostic;
+              }
+              // Use server-resolved CategoryCode when vc was passed alongside hc
+              const categoryCode = tableData?.CategoryCode;
+              if (categoryCode) {
+                this.wizardService.categoryCodeFromQuery = categoryCode;
+                this.selectedCategory = categoryCode;
+                this.isCategoryFromQuery = true;
+                // Re-apply selection if categories are already loaded
+                if (this.categories.length > 0) {
+                  this.loadCategories();
+                }
               }
             },
             error: (err) => {
@@ -209,17 +224,21 @@ export class HomePageComponent {
         }
 
         // Check for category query parameter (vc)
-        const vcParam = p['vc'];
         if (vcParam) {
           // Store raw encrypted category param
           this.wizardService.refCatCode = vcParam;
 
-          const decryptedCategory = this.decryptParam(vcParam);
-          if (decryptedCategory) {
-            // Use numeric ID if it's a number, otherwise use as string code
-            this.selectedCategory = !isNaN(Number(decryptedCategory))
-              ? parseInt(decryptedCategory)
-              : decryptedCategory;
+          if (!hcParam) {
+            // No hc present: resolve category client-side from the encrypted vc param
+            const decryptedCategory = this.decryptParam(vcParam);
+            if (decryptedCategory) {
+              this.selectedCategory = !isNaN(Number(decryptedCategory))
+                ? parseInt(decryptedCategory)
+                : decryptedCategory;
+              this.isCategoryFromQuery = true;
+            }
+          } else {
+            // hc is present: category is resolved server-side via GetSelfRegShareURLData
             this.isCategoryFromQuery = true;
           }
         }
@@ -238,15 +257,28 @@ export class HomePageComponent {
 
         // Check for standalone hc param (without bc)
         const hcParam = p['hc'];
+        const vcParam = p['vc'];
         if (hcParam) {
           this.wizardService.hcParam = hcParam;
           this.wizardService.isHostFromQuery = true;
-          this.api.GetSelfRegShareURLData(hcParam).subscribe({
+          this.api.GetSelfRegShareURLData(hcParam, vcParam || undefined).subscribe({
             next: (response: any) => {
               const responseArray = Array.isArray(response) ? response : [response];
-              const hostic = responseArray[0]?.Data?.Table?.[0]?.HOSTIC;
+              const tableData = responseArray[0]?.Data?.Table?.[0];
+              const hostic = tableData?.HOSTIC;
               if (hostic) {
                 this.wizardService.hostCodeFromQuery = hostic;
+              }
+              // Use server-resolved CategoryCode when vc was passed alongside hc
+              const categoryCode = tableData?.CategoryCode;
+              if (categoryCode) {
+                this.wizardService.categoryCodeFromQuery = categoryCode;
+                this.selectedCategory = categoryCode;
+                this.isCategoryFromQuery = true;
+                // Re-apply selection if categories are already loaded
+                if (this.categories.length > 0) {
+                  this.loadCategories();
+                }
               }
             },
             error: (err) => {
@@ -655,13 +687,15 @@ export class HomePageComponent {
     if (this.categories.length === 1) {
       this.selectedCategory = this.categories[0].visitor_ctg_id;
       this.onCategoryChange(this.selectedCategory);
-    } else if ((this.isAppointmentFlow || this.isCategoryFromQuery) && this.selectedCategory) {
+    } else if ((this.isAppointmentFlow || this.isCategoryFromQuery) && (this.selectedCategory || this.wizardService.categoryCodeFromQuery)) {
       // In appointment flow or category from query param, match by ID or code
+      // Prefer server-resolved category code (from hc+vc API response) over selectedCategory
+      const categoryToMatch = this.wizardService.categoryCodeFromQuery || this.selectedCategory;
       const validCategory = this.categories.find(c =>
-        c.visitor_ctg_id === this.selectedCategory ||
-        String(c.visitor_ctg_id) === String(this.selectedCategory) ||
-        c.visitor_ctg_code === this.selectedCategory ||
-        String(c.visitor_ctg_code) === String(this.selectedCategory)
+        c.visitor_ctg_id === categoryToMatch ||
+        String(c.visitor_ctg_id) === String(categoryToMatch) ||
+        c.visitor_ctg_code === categoryToMatch ||
+        String(c.visitor_ctg_code) === String(categoryToMatch)
       );
       if (validCategory) {
         // Use the numeric visitor_ctg_id for downstream APIs

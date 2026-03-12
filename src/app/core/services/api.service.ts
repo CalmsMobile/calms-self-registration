@@ -227,9 +227,13 @@ export class ApiService {
   /**
    * Get host data from a shared/short URL host code
    * @param refHostCode The host code from the hc query parameter
+   * @param refCatCode Optional encrypted category code from the vc query parameter
    */
-  GetSelfRegShareURLData(refHostCode: string) {
-    const loParam = { RefHostCode: refHostCode };
+  GetSelfRegShareURLData(refHostCode: string, refCatCode?: string) {
+    const loParam: any = { RefHostCode: refHostCode };
+    if (refCatCode) {
+      loParam.RefCatCode = refCatCode;
+    }
     return this.apiBase.post(`${this.baseUrl}/GetSelfRegShareURLData`, loParam);
   }
 

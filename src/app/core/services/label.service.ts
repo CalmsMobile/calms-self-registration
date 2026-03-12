@@ -42,7 +42,7 @@ export class LabelService {
   }
 
   getLabel(key: string, type: 'caption' | 'placeholder' | 'title' = 'caption'): string {
-    console.log(this.labels$.value);
+    //console.log(this.labels$.value);
     return this.labels$.value[key]?.[type] || '';
   }
 
