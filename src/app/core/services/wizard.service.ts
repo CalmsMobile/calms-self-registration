@@ -238,6 +238,11 @@ export class WizardService {
     if (allSettings.Table5?.length) {
       settingsData.VideoUrl = allSettings.Table5[0]?.VideoUrl;
     }
+
+    // Store time_permit from Table8 for AptEndTime=Category mode
+    if (allSettings.Table8?.length) {
+      settingsData.CategoryTimePermit = allSettings.Table8[0]?.time_permit || '';
+    }
     /* debugger
     if (allSettings.Table6?.length) {
       
@@ -451,6 +456,12 @@ export class WizardService {
 
       return `${month}-${day}-${year} ${hours}:${minutes}`;
     };
+    // Strip data URL prefix — send raw base64 only
+    const stripBase64Prefix = (src: string): string => {
+      if (!src) return '';
+      const idx = src.indexOf(';base64,');
+      return idx >= 0 ? src.substring(idx + 8) : src;
+    };
 
     // Basic VisitorAck structure matching the expected format
     let visitorAck: any = {
@@ -491,7 +502,7 @@ export class WizardService {
       q: this.appointmentCode || '',
 
       // NDA Agreement signature (base64 PNG)
-      NDASignature: formData['nda-agreement']?.ndaSignature || '',
+      NDASignature: stripBase64Prefix(formData['nda-agreement']?.ndaSignature || ''),
       NDAAccepted: formData['nda-agreement']?.ndaAccepted || false
     };
 
@@ -565,7 +576,7 @@ export class WizardService {
       const genderId = extractId(data.gender, 'Value', 'id');
       return {
         MySelf: isSelf,
-        Photo: data.profile || '',
+        Photo: data.profilePreview || (typeof data.profile === 'string' ? data.profile : '') || '',
         FullName: data.fullName || '',
         IdentityNo: data.visitor_id || '',
         Visitor_IC: data.visitor_id || '',

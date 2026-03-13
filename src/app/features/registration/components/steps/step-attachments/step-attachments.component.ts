@@ -200,8 +200,8 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
   }
 
   get hasMandatoryDocuments(): boolean {
-  return this.documentTypes.some(d => d.Mandatory);
-}
+    return this.attachmentUploadEnabled && this.documentTypes.some(d => d.Mandatory);
+  }
 
   proceedToNext(): void {
     this.validateStep();

@@ -8,9 +8,11 @@
       </h1>
       <p class="subtitle">{{'please_provide_your_details' | translate}}</p>
     </div>
+    @if (settings.SearchExistingVisitor) {
     <p-button type="button" [label]="'returning_visitor' | translate" icon="pi pi-user" [outlined]="true"
       styleClass="returning-guest-btn" (onClick)="onExistingGuestClick()">
     </p-button>
+    }
   </div>
 
   <!-- Loading State -->
@@ -77,7 +79,7 @@
           <span class="required-star">{{settings?.NameRequired ? '*' : ''}}</span>
         </label>
         <input pInputText id="fullName" [placeholder]="'full_name' | translate:'placeholder'" formControlName="fullName"
-          [class]="{'ng-invalid': isFieldInvalidRequired('fullName')}" [disabled]="isFieldDisabled('fullName')">
+          [class]="{'ng-invalid': isFieldInvalidRequired('fullName')}" [disabled]="isFieldDisabled('fullName')" (blur)="onFullNameBlur()">
         @if (isFieldInvalidRequired('fullName')) {
         <small class="error-message">{{'full_name' | translate}} is required</small>
         }

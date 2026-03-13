@@ -72,6 +72,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   visitorAckData: any = null;
   isAppointmentFlow = false;
   isVisitorBlacklisted = false;
+  isVisitorNotWhitelisted = false;
   shouldFilterHostByQueryParam = false; // Flag to indicate if host should be filtered for query param flow
   // Fields that are allowed to be edited in appointment flow (visitor acknowledgment)
   allowedEditableFields = ['fullName', 'visitor_id', 'email', 'phone', 'gender', 'host']; // Temporarily enable host for testing
@@ -152,7 +153,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(settings => {
       console.log('Settings loaded:', settings);
-      this.settings = settings;
+      this.settings = { ...settings };
+      // Merge flags from selfRegistrationSettings (loaded separately via label service)
+      const selfRegSettings = this.wizardService.getSelfRegistrationSettings();
+      if (selfRegSettings) {
+        this.settings.SearchExistingVisitor = selfRegSettings.SearchExistingVisitor ?? this.settings.SearchExistingVisitor;
+        this.settings.EnableWhitelistValidation = selfRegSettings.EnableWhitelistValidation ?? this.settings.EnableWhitelistValidation;
+        this.settings.AptEndTime = selfRegSettings.AptEndTime ?? this.settings.AptEndTime ?? '';
+      }
       this.isSingaporePDPARequired = settings?.IsSingaporePDPARequired === true;
       this.loadUdfSettings();
       this.loadLocalSettings(); // Load local settings for VIMS features
@@ -501,6 +509,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.udfOptions = udfSettings.Table1;
       this.initializeForm();
       this.setupConditionalControls();
+      this.applyDefaultDateTimes();
 
       // Set loading to false after everything is initialized
       this.isLoading = false;
@@ -538,6 +547,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           // Reinitialize form with new controls
           this.initializeForm();
           this.setupConditionalControls();
+          this.applyDefaultDateTimes();
         } else {
           console.log('No local settings found, loading branch data anyway');
           // Load branch data even if no local settings
@@ -1063,6 +1073,69 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Apply default start (now) and end datetime based on AptEndTime setting.
+   * Only applied when not in appointment flow and start/end are not already saved.
+   *   AptEndTime = 'Category'    → end = now + time_permit parsed from CategoryTimePermit
+   *   AptEndTime = 'DefaultEOD'  → end = today at 23:59:59
+   */
+  private applyDefaultDateTimes(): void {
+    // Skip if in appointment flow — dates are pre-filled from visitor ack
+    if (this.isAppointmentFlow) return;
+
+    const aptEndTime = this.settings?.AptEndTime;
+    if (!aptEndTime) return;
+
+    const savedData = this.wizardService.getFormData('general') || {};
+    const now = new Date();
+
+    // Always default start to now if not already saved
+    if (!savedData.startDate) {
+      this.generalForm.get('startDate')?.setValue(now);
+    }
+
+    if (savedData.endDate) return; // already saved — don't overwrite
+
+    let endDate: Date | null = null;
+
+    if (aptEndTime === 'DefaultEOD') {
+      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    } else if (aptEndTime === 'Category') {
+      const timePermit: string = this.settings?.CategoryTimePermit || '';
+      endDate = this.parseTimePermit(timePermit, now);
+    }
+
+    if (endDate) {
+      this.generalForm.get('endDate')?.setValue(endDate);
+    }
+  }
+
+  /**
+   * Parse a time_permit string like "18 Hours", "2 Days", "1 Month", "3 Months" and
+   * return a Date offset from the given base date.
+   */
+  private parseTimePermit(timePermit: string, base: Date): Date | null {
+    if (!timePermit) return null;
+    const match = timePermit.trim().match(/^(\d+)\s*(hour|hours|day|days|week|weeks|month|months)$/i);
+    if (!match) return null;
+
+    const amount = parseInt(match[1], 10);
+    const unit = match[2].toLowerCase();
+    const result = new Date(base);
+
+    if (unit.startsWith('hour')) {
+      result.setHours(result.getHours() + amount);
+    } else if (unit.startsWith('day')) {
+      result.setDate(result.getDate() + amount);
+    } else if (unit.startsWith('week')) {
+      result.setDate(result.getDate() + amount * 7);
+    } else if (unit.startsWith('month')) {
+      result.setMonth(result.getMonth() + amount);
+    }
+
+    return result;
+  }
+
   private initializeForm(): void {
     const savedData = this.wizardService.getFormData('general') || {};
 
@@ -1158,6 +1231,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Clear profile image display in multiple visitor mode if visitors exist
     if (this.isMultipleVisitorMode && this.savedVisitors.length > 0) {
       this.profileImage = '';
+    } else if (savedData.profilePreview) {
+      // Restore profile image preview when navigating back
+      this.profileImage = savedData.profilePreview;
     }
 
     // Initialize visitors after form is created
@@ -1319,6 +1395,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (this.isVisitorNotWhitelisted) {
+      this.messageService.add({ severity: 'error', summary: 'Not Whitelisted', detail: 'Visitor not whitelisted. Please contact admin.', life: 5000 });
+      return;
+    }
+
     const currentForm = this.getCurrentVisitorForm();
 
     if (this.isCurrentVisitorFormValid()) {
@@ -1351,6 +1432,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
         this.messageService.add({ severity: 'success', ...this.getAlert('visitor_update_message') });
       } else {
+        // Check for duplicate visitor by visitor_id or fullName
+        const isDuplicate = this.savedVisitors.some(v =>
+          (visitorData.visitor_id && v.visitor_id === visitorData.visitor_id) ||
+          (visitorData.fullName && v.fullName?.toLowerCase() === visitorData.fullName?.toLowerCase())
+        );
+
+        if (isDuplicate) {
+          this.messageService.add({ severity: 'warn', ...this.getAlert('duplicate_visitor_alert') });
+          return;
+        }
+
         // Add new visitor
         this.savedVisitors.push(visitorData);
 
@@ -1515,6 +1607,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Populate the form with the selected visitor's data
       currentForm.patchValue(visitor);
 
+      // Restore profile image display from saved base64 preview
+      if (visitor.profilePreview) {
+        this.profileImage = this.sanitizer.bypassSecurityTrustUrl(visitor.profilePreview);
+      } else {
+        this.profileImage = '';
+      }
+
       // Store the index for updating later
       this.editingVisitorIndex = index;
 
@@ -1555,6 +1654,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.editingVisitorIndex = -1;
       const currentForm = this.getCurrentVisitorForm();
       currentForm.reset();
+      this.profileImage = ''; // Clear photo preview when cancelling edit
 
       this.messageService.add({ severity: 'info', ...this.getAlert('cancellation_message') });
     }
@@ -1735,6 +1835,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return false;
     }
 
+    // Block if visitor failed whitelist validation
+    if (this.isVisitorNotWhitelisted) {
+      this.messageService.add({ severity: 'error', summary: 'Not Whitelisted', detail: 'Visitor not whitelisted. Please contact admin.', life: 5000 });
+      this.wizardService.setStepValid(false);
+      return false;
+    }
+
     // Block if time slot is enabled but no slots available for selected date
     if (this.enableVimsApptTimeSlot && this.timeSlotsLoaded && this.timeSlotList.length === 0) {
       const dateField = this.enableFBInSelfReg ? 'sharedDate' : 'appointmentDate';
@@ -1773,10 +1880,16 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
     }
 
-    if (isValid) {
-      // In multiple visitor mode, auto-save the current form as a visitor entry if none saved yet
-      if (this.isMultipleVisitorMode && this.savedVisitors.length === 0) {
-        console.log('Auto-saving visitor entry before proceeding');
+    if (this.isMultipleVisitorMode) {
+      // Rule 1: No saved visitors yet — form must be fully valid to auto-add as single visitor
+      if (this.savedVisitors.length === 0) {
+        if (!isValid) {
+          this.scrollToFirstError();
+          this.messageService.add({ severity: 'error', ...this.getAlert('all_fields_required') });
+          this.wizardService.setStepValid(false);
+          return false;
+        }
+        // Auto-save current form as the first (single) visitor
         const visitorData = { ...this.generalForm.value };
         visitorData.Visitor_IC = visitorData.visitor_id || '';
         visitorData.IdentityNo = visitorData.visitor_id || '';
@@ -1784,9 +1897,34 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           visitorData.myself = true;
         }
         this.savedVisitors.push(visitorData);
+        this.saveFormDataToWizard();
+        this.wizardService.setStepValid(true);
+        return true;
       }
 
-      // Save the form data when validation passes
+      // Rule 2: Visitors already added — allow proceeding if the current form is blank
+      const currentFormHasData = this.isCurrentVisitorFormValid() || this.hasFormData();
+      if (!currentFormHasData) {
+        this.saveFormDataToWizard();
+        this.wizardService.setStepValid(true);
+        return true;
+      }
+
+      // Current form has partial/complete data — require it to be fully valid before proceeding
+      if (!isValid) {
+        this.scrollToFirstError();
+        this.messageService.add({ severity: 'error', ...this.getAlert('all_fields_required') });
+        this.wizardService.setStepValid(false);
+        return false;
+      }
+
+      this.saveFormDataToWizard();
+      this.wizardService.setStepValid(true);
+      return true;
+    }
+
+    // Non-multiple visitor mode
+    if (isValid) {
       this.saveFormDataToWizard();
     }
 
@@ -1804,7 +1942,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   private saveFormDataToWizard(): void {
-    const formData = this.generalForm.value;
+    const formData = { ...this.generalForm.value };
+    // Always persist savedVisitors so they survive back navigation
+    if (this.isMultipleVisitorMode) {
+      formData.savedVisitors = this.savedVisitors;
+    }
     this.wizardService.updateFormData('general', formData);
   }
 
@@ -1991,10 +2133,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         const imageUrl = this.sanitizer.bypassSecurityTrustUrl(e.target.result);
 
         if (this.isMultipleVisitorMode && visitorIndex !== undefined) {
-          // Update specific visitor's profile
+          // Update specific visitor's profile (legacy FormArray path)
           this.visitorsArray.at(visitorIndex).get('profile')?.setValue(file);
+          // Also store base64 preview for display and payload
+          this.profileImage = imageUrl;
+          this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
         } else {
-          // Single visitor mode
+          // Main form (both single and multi-visitor current-form)
           this.profileImage = imageUrl;
           this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
         }
@@ -2192,7 +2337,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   onVisitorIdBlur(): void {
     const visitorId = this.generalForm.get('visitor_id')?.value?.trim();
-    if (!visitorId) { this.isVisitorBlacklisted = false; return; }
+    if (!visitorId) { this.isVisitorBlacklisted = false; this.isVisitorNotWhitelisted = false; return; }
 
     const branchId = this.wizardService.currentBranchID;
     this.api.SearchVisitor(visitorId, branchId).subscribe({
@@ -2220,6 +2365,51 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         });
       },
       error: () => { }
+    });
+
+    // Trigger whitelist check when both name and ID are present
+    const fullName = this.generalForm.get('fullName')?.value?.trim();
+    if (fullName) {
+      this.checkWhitelistValidation(visitorId);
+    }
+  }
+
+  onFullNameBlur(): void {
+    const visitorId = this.generalForm.get('visitor_id')?.value?.trim();
+    const fullName = this.generalForm.get('fullName')?.value?.trim();
+    if (visitorId && fullName) {
+      this.checkWhitelistValidation(visitorId);
+    }
+  }
+
+  private checkWhitelistValidation(visitorId: string): void {
+    if (!this.settings?.EnableWhitelistValidation) {
+      this.isVisitorNotWhitelisted = false;
+      return;
+    }
+
+    const branchId = this.wizardService.currentBranchID;
+    this.api.SearchVisitorWhitelist(visitorId, branchId).subscribe({
+      next: (response: any) => {
+        // Response: [ { Data: { Table: [ { Code: 10|20, Description: '...' } ] }, Status: true } ]
+        const result = Array.isArray(response) ? response[0] : response;
+        const code = result?.Table?.[0]?.Code;
+        if (code === 10) {
+          // Whitelisted — allow to proceed
+          this.isVisitorNotWhitelisted = false;
+        } else {
+          // Code 20 or unexpected — not whitelisted
+          this.isVisitorNotWhitelisted = true;
+          const description = result?.Table?.[0]?.Description || 'Visitor not whitelisted. Please contact admin.';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Not Whitelisted',
+            detail: description,
+            life: 5000
+          });
+        }
+      },
+      error: () => { this.isVisitorNotWhitelisted = false; }
     });
   }
 

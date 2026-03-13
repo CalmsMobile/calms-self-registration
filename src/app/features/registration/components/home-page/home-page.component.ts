@@ -522,7 +522,10 @@ export class HomePageComponent {
           const tcSettings = responseData.Table1[0];
           this.wizardService.setSelfRegistrationSettings({
             TermsnCondEnabled: tcSettings.TermsnCondEnabled ?? false,
-            TermsnCondTemplate: tcSettings.TermsnCond || ''
+            TermsnCondTemplate: tcSettings.TermsnCond || '',
+            SearchExistingVisitor: tcSettings.SearchExistingVisitor ?? false,
+            EnableWhitelistValidation: tcSettings.EnableWhitelistValidation ?? false,
+            AptEndTime: tcSettings.AptEndTime || ''
           });
         }
 
