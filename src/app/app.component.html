@@ -1,4 +1,4 @@
-<div class="app-container">
+<div class="app-container" [class.no-bg]="isApprovalPage">
   
   @if (showHeader) {
   <app-header></app-header>
@@ -10,7 +10,7 @@
   </app-language-selector>
   }
 
-  <main class="app-content">
+  <main class="app-content" [class.full-width]="isFullWidth">
     <router-outlet></router-outlet>
   </main>
 </div>

@@ -21,6 +21,8 @@ export class AppComponent implements OnInit {
   logo = 'calms-technologies.png';
   showLanguageSelector = true;
   showHeader = true;
+  isFullWidth = false;
+  isApprovalPage = false;
 
   constructor(
     private router: Router,
@@ -33,9 +35,18 @@ export class AppComponent implements OnInit {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      // Show language selector only on home page (with or without query params)
       const urlWithoutParams = event.url.split('?')[0];
-      this.showLanguageSelector = urlWithoutParams === '/' || urlWithoutParams === '/home';
+      const isApprovalPage = urlWithoutParams === '/appointment-approval';
+      // Show language selector only on home page (with or without query params)
+      this.showLanguageSelector = !isApprovalPage && (urlWithoutParams === '/' || urlWithoutParams === '/home');
+      // Hide app header and use full-width layout on the approval page (it has its own header)
+      this.isApprovalPage = isApprovalPage;
+      if (isApprovalPage) {
+        this.showHeader = false;
+        this.isFullWidth = true;
+      } else {
+        this.isFullWidth = false;
+      }
     });
 
     // Subscribe to access denied state to hide UI elements when access is restricted
