@@ -21,6 +21,7 @@ export class AppComponent implements OnInit {
   logo = 'calms-technologies.png';
   showLanguageSelector = true;
   showHeader = true;
+  isHomePage = false;
 
   constructor(
     private router: Router,
@@ -33,9 +34,14 @@ export class AppComponent implements OnInit {
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: any) => {
-      // Show language selector only on home page (with or without query params)
       const urlWithoutParams = event.url.split('?')[0];
-      this.showLanguageSelector = urlWithoutParams === '/' || urlWithoutParams === '/home';
+      this.isHomePage = urlWithoutParams === '/' || urlWithoutParams === '/home';
+      if (this.isHomePage) {
+        this.showHeader = false;
+        this.showLanguageSelector = false;
+      } else {
+        this.showHeader = true;
+      }
     });
 
     // Subscribe to access denied state to hide UI elements when access is restricted

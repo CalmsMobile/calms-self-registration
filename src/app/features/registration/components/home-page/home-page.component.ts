@@ -18,6 +18,7 @@ import { StepTermsComponent } from '../steps/step-terms/step-terms.component';
 import { RouterLink } from '@angular/router';
 import { CheckboxModule } from 'primeng/checkbox';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { LanguageSelectorComponent } from '../../../../shared/components/language-selector/language-selector.component';
 
 interface Branch {
   RefBranchSeqID: number;
@@ -42,6 +43,7 @@ interface Category {
     ProgressBarModule,
     StepTermsComponent,
     TranslatePipe,
+    LanguageSelectorComponent,
 
   ],
   templateUrl: './home-page.component.html',

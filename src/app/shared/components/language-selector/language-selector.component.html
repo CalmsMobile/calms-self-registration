@@ -1,9 +1,21 @@
 <div class="language-wrapper">
-    <!-- PrimeNG Select (real control) -->
-    <p-select [options]="languages" [(ngModel)]="selectedLanguage" (onChange)="onLanguageChange($event)"
-        optionLabel="LanguageName" placeholder="Select Language" appendTo="body" styleClass="language-dropdown">
-    </p-select>
+  <!-- Globe button -->
+  <button class="lang-btn" (click)="toggleDropdown()" type="button" title="Change language">
+    <i class="pi pi-globe"></i>
+  </button>
 
-    <!-- Icon overlay -->
-    <i class="pi pi-globe language-icon" title="Change language"></i>
+  <!-- Custom dropdown -->
+  @if (showDropdown) {
+  <div class="lang-dropdown">
+    @for (lang of languages; track lang.LanguageId) {
+    <button class="lang-option"
+            [class.active]="selectedLanguage?.LanguageId === lang.LanguageId"
+            (click)="selectLanguage(lang)"
+            type="button">
+      <span class="lang-code">{{ getCountryCode(lang.LanguageCode) }}</span>
+      <span class="lang-name">{{ lang.LanguageName }}</span>
+    </button>
+    }
+  </div>
+  }
 </div>

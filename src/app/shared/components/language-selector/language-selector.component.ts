@@ -1,6 +1,5 @@
-import { Component, ViewChild, ElementRef, EventEmitter, Output, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { SelectModule } from 'primeng/select';
+import { Component, EventEmitter, Output, OnInit, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../core/services/api.service';
 import { LanguageService } from '../../../core/services/language.service';
 
@@ -13,16 +12,24 @@ interface LanguageModel {
 @Component({
   selector: 'app-language-selector',
   standalone: true,
-  imports: [SelectModule, FormsModule],
+  imports: [CommonModule],
   templateUrl: './language-selector.component.html',
   styleUrl: './language-selector.component.scss'
 })
 export class LanguageSelectorComponent implements OnInit {
   @Output() languageChange = new EventEmitter<LanguageModel>();
 
-  langSelect!: ElementRef;
   languages: LanguageModel[] = [];
   selectedLanguage?: LanguageModel;
+  showDropdown = false;
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('app-language-selector')) {
+      this.showDropdown = false;
+    }
+  }
 
   constructor(
     private api: ApiService,
@@ -73,6 +80,30 @@ export class LanguageSelectorComponent implements OnInit {
         }
       }
     });
+  }
+
+  toggleDropdown() {
+    this.showDropdown = !this.showDropdown;
+  }
+
+  selectLanguage(lang: LanguageModel) {
+    this.selectedLanguage = lang;
+    this.languageService.setLanguage(lang);
+    this.languageChange.emit(lang);
+    this.showDropdown = false;
+  }
+
+  getCountryCode(languageCode: string): string {
+    if (!languageCode) return '--';
+    const map: Record<string, string> = {
+      en: 'GB', ta: 'IN', hi: 'IN', te: 'IN', ml: 'IN',
+      kn: 'IN', bn: 'BD', fr: 'FR', de: 'DE', es: 'ES',
+      pt: 'PT', ru: 'RU', ja: 'JP', ko: 'KR', zh: 'CN',
+      ar: 'SA', ms: 'MY', id: 'ID', th: 'TH', vi: 'VN',
+      tr: 'TR', it: 'IT', nl: 'NL', pl: 'PL', sv: 'SE'
+    };
+    const code = languageCode.toLowerCase().split('-')[0];
+    return map[code] ?? code.toUpperCase().slice(0, 2);
   }
 
   onLanguageChange(event: { value: LanguageModel }): void {
