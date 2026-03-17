@@ -998,27 +998,27 @@
     border-radius: 28px;
   }
 
-  .modal-head { margin-bottom: 12px; padding: 0 2px; }
-  .modal-title { font-size: 23px; letter-spacing: -0.1px; line-height: 1.12; margin-left: 16px; }
-  .modal-close { width: 28px; height: 28px; margin-right: 20px; svg { width: 30px; height: 25px; stroke-width: 3px; } }
+  #safety-modal .modal-head { margin-bottom: 12px; padding: 0 2px; }
+  #safety-modal .modal-title { font-size: 23px; letter-spacing: -0.1px; line-height: 1.12; margin-left: 16px; }
+  #safety-modal .modal-close { width: 28px; height: 28px; margin-right: 20px; svg { width: 30px; height: 25px; stroke-width: 3px; } }
 
-  .safety-legend { margin: 4px 21px 12px; font-size: 17px; gap: 22px; }
-  .legend-dot { width: 10px; height: 10px; margin-left: 7px; }
+  #safety-modal .safety-legend { margin: 4px 21px 12px; font-size: 17px; gap: 22px; }
+  #safety-modal .legend-dot { width: 10px; height: 10px; margin-left: 7px; }
 
-  .qa-list { gap: 25px; margin: 20px; margin-top: 36px; }
-  .qa-row { grid-template-columns: 38px 1fr; gap: 10px; }
-  .qa-check { width: 38px; height: 38px; box-shadow: 0 1px 0 rgba(255,255,255,0.65) inset; svg { width: 17px; height: 17px; } }
-  .qa-card { border-radius: 14px; border-left-width: 5px; padding: 14px 12px 14px 13px; }
-  .qa-question { font-size: 15px; line-height: 1.44; letter-spacing: -0.05px; }
-  .qa-answers { margin-top: 12px; gap: 10px; }
-  .ans-chip { height: 32px; font-size: 14px; letter-spacing: 0; }
+  #safety-modal .qa-list { gap: 25px; margin: 20px; margin-top: 36px; }
+  #safety-modal .qa-row { grid-template-columns: 38px 1fr; gap: 10px; }
+  #safety-modal .qa-check { width: 38px; height: 38px; box-shadow: 0 1px 0 rgba(255,255,255,0.65) inset; svg { width: 17px; height: 17px; } }
+  #safety-modal .qa-card { border-radius: 14px; border-left-width: 5px; padding: 14px 12px 14px 13px; }
+  #safety-modal .qa-question { font-size: 15px; line-height: 1.44; letter-spacing: -0.05px; }
+  #safety-modal .qa-answers { margin-top: 12px; gap: 10px; }
+  #safety-modal .ans-chip { height: 32px; font-size: 14px; letter-spacing: 0; }
 }
 
 /* ─── Responsive ─────────────────────────────────────── */
 @media (max-width: 1500px) {
   .topbar { padding: 18px 28px; }
   .content { padding: 34px 26px 48px; }
-  .declarations { grid-template-columns: repeat(2, 1fr); }
+  .declarations { grid-template-columns: repeat(4, 1fr); }
   .main-panel { grid-template-columns: 40% 60%; }
   .brand-left strong { font-size: 28px; }
   .brand-right strong { font-size: 28px; }
