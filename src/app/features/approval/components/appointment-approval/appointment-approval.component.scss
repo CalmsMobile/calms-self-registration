@@ -183,6 +183,11 @@
   background: linear-gradient(90deg, var(--reject-a), var(--reject-b));
 }
 
+.btn-resubmit {
+  background: linear-gradient(90deg, #5f5cff, #5133f2);
+  box-shadow: 0 12px 22px rgba(81, 51, 242, 0.28);
+}
+
 .btn-approve {
   background: linear-gradient(90deg, var(--approve-a), var(--approve-b));
 }
@@ -322,7 +327,7 @@
   border: 1px solid #e2e6ef;
   box-shadow: 0 24px 46px rgba(22, 29, 45, 0.08);
   display: grid;
-  grid-template-columns: 35% 65%;
+  grid-template-columns: 30% 70%;
   overflow: hidden;
 }
 
@@ -336,8 +341,8 @@
 }
 
 .avatar {
-  width: 194px;
-  height: 194px;
+  width: 250px;
+  height: 250px;
   border-radius: 56px;
   overflow: hidden;
   margin: 0 auto;
@@ -463,18 +468,19 @@
 
 .host-meta {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(2, max-content);
   gap: 10px 14px;
   margin-top: 18px;
+  justify-content: center;
 }
 
 .meta-pill {
   background: #ffffff;
   border-radius: 999px;
   border: 1px solid #ebeefa;
-  padding: 8px 14px;
+  padding: 6px 10px;
   color: #4d6286;
-  font-size: 16px;
+  font-size: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -533,7 +539,7 @@
 
 .detail-label {
   margin: 0;
-  color: #34465f;
+  color: #265fae;
   font-size: 18px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -834,8 +840,8 @@
   height: 28px;
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 27px;
+    height: 30px;
     stroke: currentColor;
     stroke-width: 2;
     fill: none;
@@ -1019,7 +1025,7 @@
   .topbar { padding: 18px 28px; }
   .content { padding: 34px 26px 48px; }
   .declarations { grid-template-columns: repeat(4, 1fr); }
-  .main-panel { grid-template-columns: 40% 60%; }
+  .main-panel { grid-template-columns: 30% 70%; }
   .brand-left strong { font-size: 28px; }
   .brand-right strong { font-size: 28px; }
   .brand-right span { font-size: 13px; }
@@ -1030,12 +1036,12 @@
   .decl-sub { font-size: 16px; }
   .name { font-size: 27px; }
   .role-pill { font-size: 14px; }
-  .info-line { font-size: 17px; }
+  .info-line { font-size: 20px; }
   .host-label { font-size: 13px; }
   .host-name { font-size: 24px; }
   .host-dept { font-size: 16px; }
-  .meta-pill { font-size: 14px; }
-  .detail-label { font-size: 13px; }
+  .meta-pill { font-size: 17px; }
+  .detail-label { font-size: 15px; }
   .detail-value { font-size: 22px; }
   .footer { font-size: 15px; }
   .modal-title { font-size: 25px; }
