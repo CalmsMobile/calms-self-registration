@@ -1,6 +1,13 @@
-<div class="step-container">
-  <div class="header-section">
-    <div class="title-wrapper">
+<main class="page">
+  <!-- Page Header -->
+  <header class="page-header">
+    <img [src]="logo" alt="Logo" class="header-logo" />
+    <span class="header-title">{{ companyTitle }}</span>
+  </header>
+
+  <!-- Title Section -->
+  <section class="title-section">
+    <div class="title-left">
       <h1 class="main-title">
         <span class="highlight">{{'visitor' | translate}}</span>
         <br>
@@ -9,11 +16,12 @@
       <p class="subtitle">{{'please_provide_your_details' | translate}}</p>
     </div>
     @if (settings.SearchExistingVisitor) {
-    <p-button type="button" [label]="'returning_visitor' | translate" icon="pi pi-user" [outlined]="true"
-      styleClass="returning-guest-btn" (onClick)="onExistingGuestClick()">
-    </p-button>
+    <button type="button" class="returning-btn" (click)="onExistingGuestClick()">
+      <i class="pi pi-search"></i>
+      {{ 'returning_visitor' | translate }}?
+    </button>
     }
-  </div>
+  </section>
 
   <!-- Loading State -->
   @if (isLoading) {
@@ -27,7 +35,7 @@
 
   <!-- Form Content -->
   @if (!isLoading) {
-  <div class="step-content">
+  <section class="form-section">
     @if (settings && udfSettings !== null) {
     <form [formGroup]="generalForm" class="form-grid">
 
@@ -758,19 +766,30 @@
     }
 
     }
-  </div>
+  </section>
   }
 
-  <!-- Navigation inside card -->
-  <div class="card-navigation">
-
-    <button type="button" class="card-nav-btn card-next-btn" (click)="goNext()">
-      <span>{{ 'next_step' | translate }}</span>
-      <i class="pi pi-arrow-right"></i>
+  <!-- Actions -->
+  <section class="actions">
+    <button type="button" class="btn btn-back" (click)="goBack()">
+      <i class="pi pi-arrow-left"></i>
+      {{ 'back' | translate }}
     </button>
-  </div>
+    <div class="actions-right">
+      @if (isMultipleVisitorMode) {
+      <button type="button" class="btn btn-save-add" (click)="addVisitorToTable()" [disabled]="!isCurrentVisitorFormValid()">
+        {{ 'save_and_add' | translate }}
+        <i class="pi pi-user-plus"></i>
+      </button>
+      }
+      <button type="button" class="btn btn-continue" (click)="goNext()">
+        {{ 'save_and_continue' | translate }}
+        <i class="pi pi-arrow-right"></i>
+      </button>
+    </div>
+  </section>
 
-</div>
+</main>
 
 <p-dialog [(visible)]="showReturningVisitorPopup" [modal]="true" [draggable]="false" [resizable]="false"
   styleClass="search-profile-dialog" [showHeader]="false">

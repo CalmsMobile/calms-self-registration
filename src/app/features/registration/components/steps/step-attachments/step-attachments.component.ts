@@ -2,6 +2,7 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
+import { SharedService } from '../../../../../shared/shared.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { Subject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
@@ -37,16 +38,21 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
   acceptedTypes = '.pdf,image/*';
 
   attachmentUploadEnabled = false;
+  logo = 'assets/logo.png';
+  companyTitle = '';
 
   private destroy$ = new Subject<void>();
 
   constructor(
     private wizardService: WizardService,
-    private http: HttpClient
+    private http: HttpClient,
+    private sharedService: SharedService
   ) {
     this.wizardService.onValidationRequest.subscribe(() => {
       this.validateStep();
     });
+    this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
+    this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
   }
 
   ngOnInit(): void {

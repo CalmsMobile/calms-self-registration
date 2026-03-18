@@ -24,85 +24,132 @@
   }
 
   @if (!hasInvalidUrl && !isAccessDenied) {
-  <!-- Left panel — image -->
-  <div class="left"></div>
 
-  <!-- Right panel — content -->
-  <div class="right">
-   
-    <div class="right-scroll">
-      <div class="center">
-        <!-- Logo -->
-        <img [src]="logo" alt="Company Logo" class="logo">
+  <!-- ========== STATE 1: Before branch selected — centered 2-panel layout ========== -->
+  @if (!selectedBranch) {
+  <div class="pre-branch">
+    <!-- Left panel — image -->
+    <div class="pre-left"></div>
 
-        <!-- Title -->
-        <h1 class="title">
-          <span class="accent">{{ formattedPageTitle.first || 'Visitor' }}</span><br>
-          {{ formattedPageTitle.rest || 'Registration' }}
-        </h1>
+    <!-- Right panel — content -->
+    <div class="pre-right">
+      <app-language-selector class="pre-lang"></app-language-selector>
+      <div class="pre-right-scroll">
+        <div class="pre-center">
+          <!-- Logo -->
+          <img [src]="logo" alt="Company Logo" class="pre-logo">
 
-        <!-- Subtitle / Welcome text -->
-        <p class="subtitle">{{ welcomeText }}</p>
+          <!-- Title -->
+          <h1 class="pre-title">
+            <span class="accent">{{ formattedPageTitle.first || 'Visitor' }}</span><br>
+            {{ formattedPageTitle.rest || 'Registration' }}
+          </h1>
 
-        <!-- Form -->
-        <div class="form">
+          <!-- Subtitle / Welcome text -->
+          <p class="pre-subtitle">{{ welcomeText }}</p>
+
           <!-- Branch Selection -->
           @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
-          <div class="field">
-            <div class="label">{{ branchTranslation.caption || ('branch' | translate) }}</div>
-            <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
-              [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
-              optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
-              [autofocus]="false" appendTo="body" styleClass="home-select">
-            </p-select>
-          </div>
-          }
-
-          <!-- Category Selection -->
-          @if (selectedBranch && categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
-          <div class="field">
-            <div class="label">{{ 'category' | translate }}</div>
-            <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
-              [placeholder]="'category' | translate:'placeholder'" optionLabel="visitor_ctg_desc"
-              optionValue="visitor_ctg_id" [showClear]="true"
-              [autofocus]="false" appendTo="body" styleClass="home-select">
-            </p-select>
-          </div>
-          }
-
-          <!-- Terms and Conditions -->
-          @if (selectedBranch && selectedCategory && shouldShowTerms()) {
-          <div class="terms-section">
-            <h2 class="terms-header">Terms and Condition</h2>
-            <div class="terms-content" [innerHTML]="getTermsHtml()"></div>
-            <div style="display: none;">
-              <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
-            </div>
-            <div class="terms-checkbox-wrapper">
-              <span class="terms-agree-label">{{ 'i_agree_to_the_terms_and_conditions' | translate }}</span>
-              <div class="checkbox-container">
-                <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsAccepted = !termsAccepted">
-                  @if (termsAccepted) {
-                  <i class="pi pi-check"></i>
-                  }
-                </div>
-              </div>
+          <div class="pre-form">
+            <div class="pre-field">
+              <div class="pre-label">{{ branchTranslation.caption || ('branch' | translate) }}</div>
+              <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
+                [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
+                optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
+                [autofocus]="false" appendTo="body" styleClass="home-select">
+              </p-select>
             </div>
           </div>
-          }
-
-          <!-- Proceed Button -->
-          @if (selectedBranch && selectedCategory) {
-          <button class="proceed-btn"
-            [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
-            (click)="proceedToWizard()">
-            {{ 'agree_and_proceed' | translate }} &rarr;
-          </button>
           }
         </div>
       </div>
     </div>
   </div>
+  }
+
+  <!-- ========== STATE 2: After branch selected — 3-column layout ========== -->
+  @if (selectedBranch) {
+  <!-- Header with logo -->
+  <div class="header">
+    <img [src]="logo" alt="Company Logo" />
+  </div>
+
+  <!-- Company title -->
+  <div class="center-title">{{ title }}</div>
+
+  <!-- Main content area -->
+  <div class="content">
+    <!-- Left panel: title + illustration -->
+    <div class="left">
+      <div class="title">
+        <span class="accent">{{ formattedPageTitle.first || 'Visitor' }}</span>
+        {{ formattedPageTitle.rest || 'Registration' }}
+      </div>
+      <div class="subtitle">{{ welcomeText }}</div>
+      <img src="assets/visit.png" alt="Visitor illustration" />
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Right panel: form -->
+    <div class="right">
+      <!-- Branch Selection (shown if multiple branches) -->
+      @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
+      <div class="field">
+        <div class="label">{{ branchTranslation.caption || ('branch' | translate) }}</div>
+        <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
+          [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
+          optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
+          [autofocus]="false" appendTo="body" styleClass="home-select">
+        </p-select>
+      </div>
+      }
+
+      <!-- Category Selection -->
+      @if (selectedBranch && categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
+      <div class="field field-visit">
+        <div class="label">{{ 'category' | translate }}</div>
+        <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
+          [placeholder]="'category' | translate:'placeholder'" optionLabel="visitor_ctg_desc"
+          optionValue="visitor_ctg_id" [showClear]="true"
+          [autofocus]="false" appendTo="body" styleClass="home-select">
+        </p-select>
+      </div>
+      }
+
+      <!-- Terms and Conditions -->
+      @if (selectedBranch && selectedCategory && shouldShowTerms()) {
+      <div class="terms">
+        <h4>{{ 'terms_and_conditions' | translate }}</h4>
+        <div class="terms-body" [innerHTML]="getTermsHtml()"></div>
+        <div style="display: none;">
+          <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
+        </div>
+        <div class="terms-footer">
+          <span class="terms-agree-label">{{ 'i_agree_to_the_terms_and_conditions' | translate }}</span>
+          <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsAccepted = !termsAccepted">
+            @if (termsAccepted) {
+            <i class="pi pi-check"></i>
+            }
+          </div>
+        </div>
+      </div>
+      }
+
+      <!-- Continue Button -->
+      @if (selectedBranch && selectedCategory) {
+      <div class="actions">
+        <button class="btn" type="button"
+          [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
+          (click)="proceedToWizard()">
+          {{ 'agree_and_proceed' | translate }} &rarr;
+        </button>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
   }
 </div>
 }

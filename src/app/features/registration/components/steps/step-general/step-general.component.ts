@@ -17,6 +17,7 @@ import { filter, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../../core/services/api.service';
 import { LabelService } from '../../../../../core/services/label.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
+import { SharedService } from '../../../../../shared/shared.service';
 import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
 
 
@@ -30,6 +31,8 @@ import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
 export class StepGeneralComponent implements OnInit, OnDestroy {
   generalForm: FormGroup = new FormGroup({});
   profileImage: SafeUrl | string = "";
+  logo = 'assets/logo.png';
+  companyTitle = '';
   hosts: any[] = [];
   departmentList: any[] = [];
   hostNameList: any[] = [];
@@ -126,8 +129,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private sanitizer: DomSanitizer,
     private api: ApiService,
-    private labelService: LabelService
+    private labelService: LabelService,
+    private sharedService: SharedService
   ) {
+    this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
+    this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
   }
 
   private getAlert(key: string): { summary: string; detail: string } {

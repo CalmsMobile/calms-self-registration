@@ -1,6 +1,7 @@
 import { Component, ElementRef, ViewChild, AfterViewInit, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { LabelService } from '../../../../../core/services/label.service';
+import { SharedService } from '../../../../../shared/shared.service';
 
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
@@ -27,17 +28,22 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
   isReplaying = false; // Track if user is replaying video
   videoDuration = 0;       // total duration in seconds (loaded from metadata)
   currentTime = 0;         // current playback position in seconds
+  logo = 'assets/logo.png';
+  companyTitle = '';
   private bodyStyleObserver?: MutationObserver;
 
   constructor(
     private wizardService: WizardService,
     private messageService: MessageService,
-    private labelService: LabelService
+    private labelService: LabelService,
+    private sharedService: SharedService
   ) {
     // Subscribe to validation requests from wizard
     this.wizardService.onValidationRequest.subscribe(() => {
       this.validateStep();
     });
+    this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
+    this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
   }
 
   ngOnInit() {

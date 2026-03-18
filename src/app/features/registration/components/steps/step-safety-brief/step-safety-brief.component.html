@@ -1,10 +1,16 @@
-﻿<div class="page">
+﻿<main class="page">
+  <!-- Header -->
+  <header class="page-header">
+    <img class="logo" [src]="logo" alt="Company Logo" />
+    <h1>{{ companyTitle }}</h1>
+  </header>
+
   <!-- Title section -->
-  <div class="title-section">
-    <h2 class="page-title">
+  <section class="title">
+    <h2>
       <span class="accent">{{ 'sbv_title' | translate }}</span>
     </h2>
-    <p class="instruction">{{ 'sbv_instruction' | translate }}</p>
+    <p>{{ 'sbv_instruction' | translate }}</p>
     @if (isFullscreen && !videoEnded) {
     <p class="fullscreen-msg">
       {{ 'press_the_replay_button_after_the_video_completes_to_exit_fullscreen' | translate }}
@@ -13,10 +19,10 @@
     @if (isReplaying && !videoEnded && !isFullscreen) {
     <p class="replay-msg">{{ 'replaying_video' | translate }}</p>
     }
-  </div>
+  </section>
 
   <!-- Video Card -->
-  <div class="video-card">
+  <section class="video-card">
     <div #videoContainer class="video-inner">
       <video #safetyVideo class="safety-video" [hidden]="videoEnded && showReplay" disablePictureInPicture
         controlsList="nodownload nofullscreen noremoteplayback">
@@ -51,17 +57,17 @@
       </div>
       }
     </div>
-  </div>
+  </section>
 
   <!-- Actions -->
-  <div class="actions">
-    <button class="btn grey" (click)="goBack()">
-      &larr; {{ 'sbv_previous_step' | translate }}
+  <section class="actions">
+    <button class="btn grey" type="button" (click)="goBack()">
+      <span class="icon-left">&larr;</span> {{ 'sbv_previous_step' | translate }}
     </button>
-    <button class="btn yellow" (click)="onNext()">
-      {{ 'sbv_next_step' | translate }} &rarr;
+    <button class="btn yellow" type="button" (click)="onNext()">
+      {{ 'sbv_next_step' | translate }} <span class="icon-right">&rarr;</span>
     </button>
-  </div>
-</div>
+  </section>
+</main>
 
 <p-toast></p-toast>
