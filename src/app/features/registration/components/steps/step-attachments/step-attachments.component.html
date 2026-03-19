@@ -27,16 +27,17 @@
                 </div>
               }
             </div>
-            <label class="upload-btn">
+            <div class="upload-btn">
+              <input
+                type="file"
+                style="display:none"
+                [accept]="acceptedTypes"
+                #fileInput
+                (change)="onFileSelect($event, doc.VisitorAttachSeqId)">
               @if (!attachments[doc.VisitorAttachSeqId].file) {
-                <span>📄</span>
-                <input 
-                  type="file" 
-                  hidden 
-                  [accept]="acceptedTypes"
-                  (change)="onFileSelect($event, doc.VisitorAttachSeqId)">
+                <span (click)="fileInput.click()" style="cursor:pointer">📄</span>
               } @else {
-                <button 
+                <button
                   type="button"
                   class="delete-btn"
                   (click)="removeFile(doc.VisitorAttachSeqId)"
@@ -44,7 +45,7 @@
                   🗑
                 </button>
               }
-            </label>
+            </div>
           </div>
           @if (attachments[doc.VisitorAttachSeqId].file) {
             <div class="progress">

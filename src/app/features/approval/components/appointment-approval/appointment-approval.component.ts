@@ -2,7 +2,8 @@ import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin, switchMap } from 'rxjs';
+import { forkJoin, of, switchMap } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ApiService } from '../../../../core/services/api.service';
 
 @Component({
@@ -47,7 +48,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   constructor(private route: ActivatedRoute, private apiService: ApiService) {}
 
   ngOnInit() {
-    this.seqIdEnc  = this.route.snapshot.queryParamMap.get('enc')   || '';
+    this.seqIdEnc  = (this.route.snapshot.queryParamMap.get('enc') || '').replace(/ /g, '+');
     this.hostIc    = this.route.snapshot.queryParamMap.get('ic')    ||
                      this.route.snapshot.queryParamMap.get('token') || '';
     this.hostSeqId = this.route.snapshot.queryParamMap.get('hseq') || 123;
@@ -77,16 +78,16 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
         const visitorCtg = this.appointmentData?.Visitor_category || '';
 
         return forkJoin({
-          decl:  this.apiService.GetVisitorDeclarationSettings(branch, visitorCtg),
-          docs:  this.apiService.GetVisitorDocsBySeqId(this.seqId),
-          items: this.apiService.GetVisitorItemChecklistBySeqId(this.seqId),
-          qna:   this.apiService.GetVisitorQuestionariesByAppointmentId(this.seqId)
+          decl:  this.apiService.GetVisitorDeclarationSettings(branch, visitorCtg).pipe(catchError(() => of(null))),
+          docs:  this.apiService.GetVisitorDocsBySeqId(this.seqId).pipe(catchError(() => of(null))),
+          items: this.apiService.GetVisitorItemChecklistBySeqId(this.seqId).pipe(catchError(() => of(null))),
+          qna:   this.apiService.GetVisitorQuestionariesByAppointmentId(this.seqId).pipe(catchError(() => of(null)))
         });
       })
     ).subscribe({
       next: (res: any) => {
         this.declarationData   = res.decl?.Table1  || res.decl?.Table  || [];
-        this.questionnaireData = res.qna?.Table1   || res.qna?.Table   || [];
+        this.questionnaireData = res.qna?.Table  || [];
         this.docsData        = res.docs?.Table1 || res.docs?.Table  || [];
         this.itemsData       = res.items?.Table || [];
         const settingRaw = res.items?.Table1?.[0]?.SettingDetail;
@@ -107,6 +108,24 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  getQnaOptions(item: any): { label: string; index: number; isSelected: boolean; isCorrect: boolean }[] {
+    const selected = (item.Answer || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+    const correct  = (item.CrtAnswers || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+    const opts = [];
+    for (let i = 1; i <= 4; i++) {
+      const label = item['Option' + i];
+      if (!label) continue;
+      opts.push({ label, index: i, isSelected: selected.includes(String(i)), isCorrect: correct.includes(String(i)) });
+    }
+    return opts;
+  }
+
+  isQnaCorrect(item: any): boolean {
+    const selected = (item.Answer || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+    const correct  = (item.CrtAnswers || '').split(',').map((s: string) => s.trim()).filter(Boolean);
+    return selected.length > 0 && selected.every((s: string) => correct.includes(s));
   }
 
   formatDate(dateStr: string): string {

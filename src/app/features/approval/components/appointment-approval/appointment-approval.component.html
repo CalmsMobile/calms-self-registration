@@ -444,13 +444,38 @@ Documents</h2>
           <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
       </div>
+      @if (questionnaireData.length > 0) {
+        <div class="safety-legend">
+          <span>Correct <span class="legend-dot dot-green"></span></span>
+          <span>Wrong <span class="legend-dot dot-red"></span></span>
+        </div>
+      }
       <div class="qa-list">
         @for (item of questionnaireData; track $index) {
           <div class="qa-row">
-            <div class="qa-card" style="width:100%">
-              <p class="qa-question">{{ item.Question }}</p>
+            <div class="qa-check" [class.wrong]="!isQnaCorrect(item)">
+              @if (isQnaCorrect(item)) {
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>
+              } @else {
+                <svg viewBox="0 0 24 24"><path d="M12 4 3 20h18L12 4Z"/><path d="M12 9v5M12 17h.01"/></svg>
+              }
+            </div>
+            <div class="qa-card" [class.wrong]="!isQnaCorrect(item)">
+              <p class="qa-question">{{ item.Description }}</p>
               <div class="qa-answers">
-                <span class="ans-chip selected-green">{{ item.Answer }}</span>
+                @for (opt of getQnaOptions(item); track opt.index) {
+                  <span class="ans-chip"
+                    [class.selected-green]="opt.isSelected && opt.isCorrect"
+                    [class.selected-red]="opt.isSelected && !opt.isCorrect"
+                    [class.soft-green]="!opt.isSelected && opt.isCorrect">
+                    @if (opt.isSelected && opt.isCorrect) {
+                      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>
+                    } @else if (opt.isSelected && !opt.isCorrect) {
+                      <svg viewBox="0 0 24 24"><path d="M12 4 3 20h18L12 4Z"/></svg>
+                    }
+                    {{ opt.label }}
+                  </span>
+                }
               </div>
             </div>
           </div>
