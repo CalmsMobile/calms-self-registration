@@ -138,7 +138,8 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     if (!file) return;
 
     if (file.size > this.maxSize) {
-      console.error('File size exceeds limit');
+      //this.messageService.add({ severity: 'warn', summary: 'File Too Large', detail: `Maximum file size is ${this.maxSize / 1000000}MB. Please select a smaller file.`, life: 4000 });
+      input.value = '';
       return;
     }
 

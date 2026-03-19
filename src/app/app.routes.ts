@@ -9,6 +9,7 @@ import { StepNdaAgreementComponent } from './features/registration/components/st
 import { HomePageComponent } from './features/registration/components/home-page/home-page.component';
 import { WizardContainerComponent } from './features/registration/components/wizard-container/wizard-container.component';
 import { RegistrationStatusPageComponent } from './features/registration/components/registration-status/registration-status-page.component';
+import { AppointmentApprovalComponent } from './features/approval/components/appointment-approval/appointment-approval.component';
 import { getSortedSteps } from './core/models/step-config.model';
 
 /**
@@ -49,6 +50,10 @@ export const routes: Routes = [
   {
     path: 'registration-status',
     component: RegistrationStatusPageComponent
+  },
+  {
+    path: 'appointment-approval',
+    component: AppointmentApprovalComponent
   },
   { path: '**', redirectTo: '' }
 ];

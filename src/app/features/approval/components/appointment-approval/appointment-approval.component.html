@@ -1,0 +1,491 @@
+@if (isLoading) {
+  <div class="page" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
+    <p style="color:#6b7d9b;font-size:18px;">Loading...</p>
+  </div>
+} @else if (actionResult) {
+  <div class="page" style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;">
+    @if (actionResult === 'approved') {
+      <div class="status-badge-circle status-ok" style="width:82px;height:82px;margin:0 auto;">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>
+      </div>
+      <h2 style="color:#24324a;font-size:28px;margin:0;">Appointment Approved</h2>
+      <p style="color:#6b7d9b;font-size:16px;margin:0;">The visitor has been notified via email.</p>
+    } @else if (actionResult === 'rejected') {
+      <div class="status-badge-circle status-danger" style="width:82px;height:82px;margin:0 auto;">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 17h.01"/></svg>
+      </div>
+      <h2 style="color:#24324a;font-size:28px;margin:0;">Appointment Rejected</h2>
+      <p style="color:#6b7d9b;font-size:16px;margin:0;">The visitor has been notified of the rejection.</p>
+    }
+  </div>
+} @else {
+<div class="page">
+  <header class="topbar">
+    <div class="brand" aria-label="CALMS Visitor Approval">
+      @if (companyLogo) {
+        <img class="logo-mark" [src]="companyLogo" alt="Company Logo" aria-hidden="true" style="object-fit:contain;background:none;border-radius:0;">
+      } @else {
+        <div class="logo-mark" aria-hidden="true"></div>
+      }
+      <div class="brand-copy">
+        <div class="brand-left">
+          <strong>CALMS</strong>
+          <span>Technologies</span>
+        </div>
+        <div class="brand-right">
+          <strong>CALMS</strong>
+          <span>Visitor Approval</span>
+        </div>
+      </div>
+    </div>
+    <div class="desktop-actions" aria-label="Actions">
+      <button class="btn btn-reject" type="button" (click)="openModal('reject-modal')">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        Reject
+      </button>
+      <button class="btn btn-approve" type="button" (click)="openModal('approve-modal')">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>
+        Approve
+      </button>
+    </div>
+  </header>
+
+  <main class="content">
+    @if (errorMessage) {
+      <p style="color:#ff4d6d;font-size:15px;margin-bottom:12px;">{{ errorMessage }}</p>
+    }
+    <p class="pending">{{ appointmentData?.Approval_Status || 'Pending Review' }}</p>
+    <h1 class="title">Visit Request #{{ appointmentData?.SEQ_ID || seqId }}</h1>
+
+    <section class="declarations" aria-label="Declaration Cards">
+      <article class="declaration-card modal-trigger" role="button" tabindex="0"
+        (click)="openModal('documents-modal')"
+        (keydown.enter)="openModal('documents-modal')"
+        (keydown.space)="$event.preventDefault(); openModal('documents-modal')"
+        aria-label="Open Supporting
+Documents">
+        <div class="decl-left">
+          <div class="icon-chip chip-doc" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M9 3h7l5 5v13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v6h6"/><path d="m10.5 14.5 2 2 4-4"/></svg>
+          </div>
+          <div class="decl-text">
+            <h2 class="decl-title">Supporting
+Documents</h2>
+            <p class="decl-sub">{{ docsData.length > 0 ? docsData.length + ' File' + (docsData.length > 1 ? 's' : '') + ' Uploaded' : 'No Files' }}</p>
+          </div>
+        </div>
+        <div class="decl-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 18 18 6"/><path d="M9 6h9v9"/></svg>
+        </div>
+      </article>
+
+      <article class="declaration-card modal-trigger" role="button" tabindex="0"
+        (click)="openModal('safety-modal')"
+        (keydown.enter)="openModal('safety-modal')"
+        (keydown.space)="$event.preventDefault(); openModal('safety-modal')"
+        aria-label="Open safety declaration review">
+        <div class="decl-left">
+          <div class="icon-chip chip-self" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M9 3h7l5 5v13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v6h6"/><path d="M11 13h6M11 17h6M11 9h2"/></svg>
+          </div>
+          <div class="decl-text">
+            <h2 class="decl-title">Questionnaire</h2>
+            <p class="decl-sub">{{ questionnaireData.length > 0 ? questionnaireData.length + ' Question' + (questionnaireData.length > 1 ? 's' : '') : 'Health & Safety' }}</p>
+          </div>
+        </div>
+        <div class="decl-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 18 18 6"/><path d="M9 6h9v9"/></svg>
+        </div>
+      </article>
+
+      <article class="declaration-card modal-trigger" role="button" tabindex="0"
+        (click)="openModal('items-modal')"
+        (keydown.enter)="openModal('items-modal')"
+        (keydown.space)="$event.preventDefault(); openModal('items-modal')"
+        aria-label="Open item declaration details">
+        <div class="decl-left">
+          <div class="icon-chip chip-item" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="m12 3 8 4.5-8 4.5L4 7.5 12 3Z"/><path d="M4 7.5V16l8 5 8-5V7.5"/><path d="M12 12v9"/></svg>
+          </div>
+          <div class="decl-text">
+            <h2 class="decl-title">Equipment Movement</h2>
+            <p class="decl-sub">{{ itemsData.length > 0 ? itemsData.length + ' Item' + (itemsData.length > 1 ? 's' : '') : 'No Items' }}</p>
+          </div>
+        </div>
+        <div class="decl-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 18 18 6"/><path d="M9 6h9v9"/></svg>
+        </div>
+      </article>
+
+      <article class="declaration-card">
+        <div class="decl-left">
+          <div class="icon-chip chip-doc" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M9 3h7l5 5v13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v6h6"/><path d="m10.5 14.5 2 2 4-4"/></svg>
+          </div>
+          <div class="decl-text">
+            <h2 class="decl-title">NDA Agreement</h2>
+            <p class="decl-sub">Review</p>
+          </div>
+        </div>
+        <div class="decl-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 18 18 6"/><path d="M9 6h9v9"/></svg>
+        </div>
+      </article>
+    </section>
+
+    <section class="main-panel" aria-label="Visitor Details">
+      <aside class="profile-panel">
+        <div class="avatar" role="img" aria-label="Visitor photo"></div>
+        <h2 class="name">{{ appointmentData?.VISITOR_NAME }}</h2>
+        <div class="role-pill">{{ appointmentData?.Visitor_category || appointmentData?.VisitorCategory }}</div>
+
+        <div class="quick-info">
+          @if (appointmentData?.Applied_Date) {
+            <p class="info-line">
+              <span class="small-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M16 3v4M8 3v4M4 10h16"/></svg>
+              </span>
+              Applied on {{ formatDate(appointmentData.Applied_Date) }}
+            </p>
+          }
+          @if (appointmentData?.EMAIL) {
+            <p class="info-line">
+              <span class="small-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="m5 7 7 5 7-5"/></svg>
+              </span>
+              {{ appointmentData.EMAIL }}
+            </p>
+          }
+          @if (appointmentData?.TELEPHONE_NO) {
+            <p class="info-line">
+              <span class="small-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M22 16.9v2.4a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 3.6a2 2 0 0 1 2-2.2h2.5a2 2 0 0 1 2 1.7c.1 1 .4 2 .8 3 .3.8.1 1.7-.5 2.3l-1 1a16 16 0 0 0 5.7 5.7l1-1a2 2 0 0 1 2.3-.5 13 13 0 0 0 3 .8 2 2 0 0 1 1.7 2Z"/></svg>
+              </span>
+              {{ appointmentData.TELEPHONE_NO }}
+            </p>
+          }
+        </div>
+
+        <section class="host-card" aria-label="Host Information">
+          <p class="host-label">Host</p>
+          <p class="host-name">{{ appointmentData?.HOSTNAME }}</p>
+          <p class="host-dept">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-7h6v7"/></svg>
+            {{ appointmentData?.Room_Name || appointmentData?.HostFloor }}
+          </p>
+          <div class="host-meta">
+            <div class="meta-pill">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              {{ formatDate(appointmentData?.START_DATE) }}
+            </div>
+            <div class="meta-pill">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              {{ formatDate(appointmentData?.END_DATE) }}
+            </div>
+            <div class="meta-pill">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/></svg>
+              {{ formatTime(appointmentData?.START_TIME) }}
+            </div>
+            <div class="meta-pill">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/></svg>
+              {{ formatTime(appointmentData?.END_TIME) }}
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <div class="details-panel">
+        <div class="details-grid">
+          @if (appointmentData?.EMAIL) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg></div>
+              <div><p class="detail-label">Email</p><p class="detail-value">{{ appointmentData.EMAIL }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.TELEPHONE_NO) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M22 16.9v2.4a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2 3.6a2 2 0 0 1 2-2.2h2.5a2 2 0 0 1 2 1.7c.1 1 .4 2 .8 3 .3.8.1 1.7-.5 2.3l-1 1a16 16 0 0 0 5.7 5.7l1-1a2 2 0 0 1 2.3-.5 13 13 0 0 0 3 .8 2 2 0 0 1 1.7 2Z"/></svg></div>
+              <div><p class="detail-label">Phone</p><p class="detail-value">{{ appointmentData.TELEPHONE_NO }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.VISITOR_IC) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h6M14 14h4"/></svg></div>
+              <div><p class="detail-label">{{ appointmentData?.ID_TYPE || 'ID' }}</p><p class="detail-value">{{ appointmentData.VISITOR_IC }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.WorkPermitRef) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h6M14 14h4"/></svg></div>
+              <div><p class="detail-label">Work Permit</p><p class="detail-value">{{ appointmentData.WorkPermitRef }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.Purpose_Visit || appointmentData?.REASON) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></div>
+              <div><p class="detail-label">Purpose</p><p class="detail-value">{{ appointmentData?.Purpose_Visit || appointmentData?.REASON }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.Address || appointmentData?.Country) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
+              <div><p class="detail-label">Address</p><p class="detail-value">{{ appointmentData?.Address }}{{ appointmentData?.Country ? ', ' + appointmentData.Country : '' }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.START_DATE) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></div>
+              <div><p class="detail-label">Visit Date</p><p class="detail-value">{{ formatDate(appointmentData.START_DATE) }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.START_TIME || appointmentData?.END_TIME) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+              <div><p class="detail-label">Time Slot</p><p class="detail-value">{{ formatTime(appointmentData?.START_TIME) }} – {{ formatTime(appointmentData?.END_TIME) }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.Room_Name || appointmentData?.Room) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-7h6v7"/></svg></div>
+              <div><p class="detail-label">Room</p><p class="detail-value">{{ appointmentData?.Room_Name }}{{ appointmentData?.Room ? ' · ' + appointmentData.Room : '' }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.SEQ_ID || seqId) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h6M14 14h4"/></svg></div>
+              <div><p class="detail-label">Appt ID</p><p class="detail-value">#{{ appointmentData?.SEQ_ID || seqId }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.Remarks) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+              <div><p class="detail-label">Remarks</p><p class="detail-value">{{ appointmentData.Remarks }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.STAFF_NAME || appointmentData?.Booked_By) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M8 3h7l5 5v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M15 3v6h6"/><path d="M10 13h6M10 17h6"/></svg></div>
+              <div><p class="detail-label">Booked By</p><p class="detail-value">{{ appointmentData?.STAFF_NAME || appointmentData?.Booked_By }}</p></div>
+            </article>
+          }
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">&copy; 2026 CALMS Technologies. Secure Approval System.</footer>
+
+  <div class="mobile-action-bar" aria-label="Mobile Actions">
+    <button class="btn btn-reject" type="button" (click)="openModal('reject-modal')">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+      Reject
+    </button>
+    <button class="btn btn-approve" type="button" (click)="openModal('approve-modal')">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>
+      Approve
+    </button>
+  </div>
+</div>
+
+<!-- Modal overlay -->
+<div class="modal-overlay" [class.is-open]="activeModal !== null"
+  [attr.aria-hidden]="activeModal === null ? 'true' : 'false'"
+  (click)="onOverlayClick($event)">
+
+  @if (pendingModal === 'approve-modal') {
+    <section class="modal-card modal-compact" [class.is-open]="activeModal === 'approve-modal'"
+      role="dialog" aria-modal="true" aria-labelledby="approveTitle">
+      <div class="modal-head">
+        <h2 class="modal-title" id="approveTitle"></h2>
+        <button class="modal-close" type="button" (click)="closeModal()" aria-label="Close modal">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <div class="center-modal">
+        <div class="status-badge-circle status-ok" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>
+        </div>
+        <h3 class="modal-copy-title">Approve this appointment?</h3>
+        <p class="modal-copy">Visitor access will be granted immediately. An email notification will be sent to the visitor.</p>
+        <div class="modal-actions">
+          <button class="modal-btn ghost" type="button" (click)="closeModal()" [disabled]="isSubmitting">Cancel</button>
+          <button class="modal-btn approve" type="button" (click)="approve()" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Approving...' : 'Approve' }}
+          </button>
+        </div>
+      </div>
+    </section>
+  }
+
+  @if (pendingModal === 'reject-modal') {
+    <section class="modal-card modal-compact" [class.is-open]="activeModal === 'reject-modal'"
+      role="dialog" aria-modal="true" aria-labelledby="rejectTitle">
+      <div class="modal-head">
+        <h2 class="modal-title" id="rejectTitle"></h2>
+        <button class="modal-close" type="button" (click)="closeModal()" aria-label="Close modal">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <div class="center-modal">
+        <div class="status-badge-circle status-danger" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 17h.01"/></svg>
+        </div>
+        <h3 class="modal-copy-title">Reject this appointment?</h3>
+        <p class="modal-copy">This action cannot be undone. Please provide a reason for the rejection.</p>
+      </div>
+      <p class="modal-section-label">Reason for Rejection</p>
+      <textarea class="modal-textarea" placeholder="Enter reason here..." [(ngModel)]="rejectRemarks"></textarea>
+      <div class="modal-actions">
+        <button class="modal-btn ghost" type="button" (click)="closeModal()" [disabled]="isSubmitting">Cancel</button>
+        <button class="modal-btn reject" type="button" (click)="reject()" [disabled]="isSubmitting || !rejectRemarks.trim()">
+          {{ isSubmitting ? 'Rejecting...' : 'Reject' }}
+        </button>
+      </div>
+    </section>
+  }
+
+  @if (pendingModal === 'documents-modal') {
+    <section class="modal-card modal-medium" [class.is-open]="activeModal === 'documents-modal'"
+      role="dialog" aria-modal="true" aria-labelledby="docsTitle">
+      <div class="modal-head">
+        <h2 class="modal-title" id="docsTitle">Supporting Documents</h2>
+        <button class="modal-close" type="button" (click)="closeModal()" aria-label="Close modal">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </div>
+      @if (docsData.length > 0) {
+        <p class="modal-section-label">Attached Files</p>
+        <div class="file-list">
+          @for (doc of docsData; track $index) {
+            <article class="row-card">
+              <div class="row-left">
+                <div class="mini-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M8 3h7l5 5v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M15 3v6h6"/><path d="M10 13h6M10 17h6M10 9h2"/></svg>
+                </div>
+                <div>
+                  <p class="row-title">{{ doc.DocName || doc.FileName || doc.DocumentType || 'Document' }}</p>
+                  <p class="row-sub">{{ doc.FileSize || '' }}{{ doc.FileType ? ' • ' + doc.FileType : '' }}</p>
+                </div>
+              </div>
+              @if (doc.FilePath || doc.FileUrl || doc.DocPath) {
+                <a class="row-action" [href]="doc.FilePath || doc.FileUrl || doc.DocPath" target="_blank" download aria-label="Download file">
+                  <svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>
+                </a>
+              }
+            </article>
+          }
+        </div>
+      } @else {
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:32px 24px 16px;gap:12px;">
+          <p style="margin:0;font-size:14px;color:#6b7d9b;">No documents uploaded.</p>
+        </div>
+      }
+      <div class="modal-divider"></div>
+      <div class="modal-actions">
+        <button class="modal-btn ghost" type="button" (click)="closeModal()">Close</button>
+      </div>
+    </section>
+  }
+
+  @if (pendingModal === 'items-modal') {
+    <section class="modal-card modal-medium" [class.is-open]="activeModal === 'items-modal'"
+      role="dialog" aria-modal="true" aria-labelledby="itemsTitle">
+      <div class="modal-head">
+        <h2 class="modal-title" id="itemsTitle">Equipment Movement</h2>
+        <button class="modal-close" type="button" (click)="closeModal()" aria-label="Close modal">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </div>
+      @if (itemsData.length > 0) {
+        <p class="modal-section-label">Declared Items</p>
+        <div class="file-list">
+          @for (item of itemsData; track $index) {
+            <article class="row-card">
+              <div class="row-left">
+                <div class="mini-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="m12 3 8 4.5-8 4.5L4 7.5 12 3Z"/><path d="M4 7.5V16l8 5 8-5V7.5"/><path d="M12 12v9"/></svg>
+                </div>
+                <div>
+                  <p class="row-title">{{ item.MItemDesc || item.ItemDesc || '—' }}</p>
+                  <p class="row-sub">
+                    {{ itemCaptions.serial }}: {{ item.MSerialNo || item.SerialNo || '—' }}
+                    @if (item.MType || item.Type) { &nbsp;•&nbsp; {{ itemCaptions.type }}: {{ item.MType || item.Type }} }
+                  </p>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+        <div class="modal-divider"></div>
+        <div class="modal-actions">
+          <button class="modal-btn ghost" type="button" (click)="closeModal()">Close</button>
+        </div>
+      } @else {
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:32px 24px 24px;gap:16px;">
+          <div style="width:72px;height:72px;border-radius:50%;background:#fff7e6;display:flex;align-items:center;justify-content:center;">
+            <svg viewBox="0 0 24 24" style="width:36px;height:36px;stroke:#f59e0b;stroke-width:1.5;fill:none;">
+              <path d="m12 3 8 4.5-8 4.5L4 7.5 12 3Z"/><path d="M4 7.5V16l8 5 8-5V7.5"/><path d="M12 12v9"/>
+            </svg>
+          </div>
+          <h3 style="margin:0;font-size:18px;font-weight:700;color:#24324a;">No Items Declared</h3>
+          <p style="margin:0;font-size:14px;color:#6b7d9b;line-height:1.5;">The visitor has not declared any items for<br>this visit. No further action is required.</p>
+          <button class="modal-btn ghost" type="button" (click)="closeModal()" style="margin-top:8px;min-width:120px;">Close</button>
+        </div>
+      }
+    </section>
+  }
+
+  @if (pendingModal === 'safety-modal') {
+    <section id="safety-modal" class="modal-card modal-wide" [class.is-open]="activeModal === 'safety-modal'"
+      role="dialog" aria-modal="true" aria-labelledby="safetyTitle">
+      <div class="modal-head">
+        <h2 class="modal-title" id="safetyTitle">Safety Declaration Review</h2>
+        <button class="modal-close" type="button" (click)="closeModal()" aria-label="Close modal">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </div>
+      @if (questionnaireData.length > 0) {
+        <div class="safety-legend">
+          <span>Correct <span class="legend-dot dot-green"></span></span>
+          <span>Wrong <span class="legend-dot dot-red"></span></span>
+        </div>
+      }
+      <div class="qa-list">
+        @for (item of questionnaireData; track $index) {
+          <div class="qa-row">
+            <div class="qa-check" [class.wrong]="!isQnaCorrect(item)">
+              @if (isQnaCorrect(item)) {
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>
+              } @else {
+                <svg viewBox="0 0 24 24"><path d="M12 4 3 20h18L12 4Z"/><path d="M12 9v5M12 17h.01"/></svg>
+              }
+            </div>
+            <div class="qa-card" [class.wrong]="!isQnaCorrect(item)">
+              <p class="qa-question">{{ item.Description }}</p>
+              <div class="qa-answers">
+                @for (opt of getQnaOptions(item); track opt.index) {
+                  <span class="ans-chip"
+                    [class.selected-green]="opt.isSelected && opt.isCorrect"
+                    [class.selected-red]="opt.isSelected && !opt.isCorrect"
+                    [class.soft-green]="!opt.isSelected && opt.isCorrect">
+                    @if (opt.isSelected && opt.isCorrect) {
+                      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>
+                    } @else if (opt.isSelected && !opt.isCorrect) {
+                      <svg viewBox="0 0 24 24"><path d="M12 4 3 20h18L12 4Z"/></svg>
+                    }
+                    {{ opt.label }}
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+        @if (questionnaireData.length === 0) {
+          <p style="color:#6b7d9b;font-size:14px;text-align:center;padding:24px 0;">No questionnaire data available.</p>
+        }
+      </div>
+    </section>
+  }
+
+</div>
+}

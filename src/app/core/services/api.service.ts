@@ -246,4 +246,47 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/GetSelfRegShareURLData`, loParam);
   }
 
+  GetCustomClientConfigData(hostSeqId: string | number = 123) {
+    const loParam = { "Authorize": { "AuDeviceUID": "WEB", "AuHostSeqId": hostSeqId } };
+    return this.apiBase.post(`${this.baseUrl}/GetCustomClientConfigData`, loParam);
+  }
+
+  GetAppointmentDetailBySeqId(seqIdEnc: string) {
+    const loParam = { "SEQ_ID_ENC": seqIdEnc };
+    return this.apiBase.post(`${this.baseUrl}/GetAppointmentDetailBySeqId`, loParam);
+  }
+
+  AppointmentApprovalByVisitor(seqId: string, status: string, hostIc: string, cancelRemarks: string, actualStatus: string, hostSeqId: string | number) {
+    const loParam = {
+      "SEQ_ID": seqId,
+      "Status": status,
+      "HOSTIC": hostIc,
+      "CancelRemarks": cancelRemarks,
+      "ActualStatus": actualStatus,
+      "Authorize": { "AuDeviceUID": "WEB", "AuHostSeqId": hostSeqId }
+    };
+    return this.apiBase.post(`${this.baseUrl}/AppointmentApprovalByVisitor`, loParam);
+  }
+
+  RequestResubmitAppointmentData(seqId: string, hostSeqId: string | number) {
+    const loParam = {
+      "CancelRemarks": "Request for Resubmitting your Appointment details",
+      "SEQ_ID": seqId,
+      "Authorize": { "AuDeviceUID": "WEB", "AuHostSeqId": hostSeqId }
+    };
+    return this.apiBase.post(`${this.baseUrl}/RequestResubmitAppointmentData`, loParam);
+  }
+
+  GetVisitorDocsBySeqId(seqId: string) {
+    return this.apiBase.post(`${this.baseUrl}/GetVisitorDocsBySeqId`, { "SEQ_ID": seqId });
+  }
+
+  GetVisitorQuestionariesByAppointmentId(seqId: string) {
+    return this.apiBase.post(`${this.baseUrl}/GetVisitorQuestionariesByAppointmentId`, { "SEQ_ID": seqId });
+  }
+
+  GetVisitorItemChecklistBySeqId(seqId: string) {
+    return this.apiBase.post(`${this.baseUrl}/GetVisitorItemChecklistBySeqId`, { "SEQ_ID": seqId });
+  }
+
 }
