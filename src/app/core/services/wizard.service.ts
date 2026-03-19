@@ -490,7 +490,14 @@ export class WizardService {
 
       // Lists as JSON strings
       VisitorsList: this.getVisitorsList(formData),
-      CheckList: JSON.stringify(formData.checkList || []),
+      CheckList: JSON.stringify(
+        (formData.prohibitedItems?.declaredItems || []).map((item: any) => ({
+          MaterialDesc: item.description || item.MaterialDesc || '',
+          SerialNo: item.serialNumber || item.SerialNo || '',
+          MovementType: item.direction || item.MovementType || '',
+          ChecklistSeqId: item.ChecklistSeqId || ''
+        }))
+      ),
       AttachmentList: this.formatAttachmentList(formData.attachments || {}),
       AnswerList: this.formatAnswerList(formData.questionnaire || {}),
       SafetyBriefViewed: formData.safetyBrief?.videoWatched || false,
@@ -795,49 +802,28 @@ export class WizardService {
       return JSON.stringify([]);
     }
 
-    // Check if it has the expected structure from step-attachments component
-    if (attachmentData.nothingToDeclare !== undefined) {
-      // This is the structure from step-attachments component
+    // Structure saved by step-attachments: { attachments: { "docId": { fileName, trackerId, ... } } }
+    if (attachmentData.attachments && typeof attachmentData.attachments === 'object') {
       const attachmentArray: any[] = [];
 
-      // If nothing to declare, return empty array
-      if (attachmentData.nothingToDeclare) {
-        return JSON.stringify([]);
-      }
+      Object.keys(attachmentData.attachments).forEach(docId => {
+        const attachment = attachmentData.attachments[docId];
+        if (attachment.fileName && attachment.trackerId) {
+          const fileExtension = attachment.fileName.includes('.')
+            ? attachment.fileName.substring(attachment.fileName.lastIndexOf('.'))
+            : '';
 
-      // Add declared items if any (for items being brought in/out)
-      if (attachmentData.declaredItems && Array.isArray(attachmentData.declaredItems)) {
-        attachmentData.declaredItems.forEach((item: any) => {
           attachmentArray.push({
-            description: item.description,
-            serialNumber: item.serialNumber,
-            direction: item.direction,
-            type: 'declared_item'
+            VisitorAttachSeqId: parseInt(docId),
+            src: '',
+            extension: fileExtension,
+            filename: attachment.fileName,
+            uid: attachment.trackerId,
+            trackerId: attachment.trackerId,
+            primary: '1'
           });
-        });
-      }
-
-      // Add attachment files if any (uploaded documents)
-      if (attachmentData.attachments && typeof attachmentData.attachments === 'object') {
-        Object.keys(attachmentData.attachments).forEach(docId => {
-          const attachment = attachmentData.attachments[docId];
-          if (attachment.fileName && attachment.trackerId) {
-            // Format according to the expected structure
-            const fileExtension = attachment.fileName.includes('.') ?
-              attachment.fileName.substring(attachment.fileName.lastIndexOf('.')) : '';
-
-            attachmentArray.push({
-              VisitorAttachSeqId: parseInt(docId),
-              src: "",
-              extension: fileExtension,
-              filename: attachment.fileName,
-              uid: attachment.trackerId,
-              trackerId: attachment.trackerId,
-              primary: "1" // Assuming all attachments are primary for now
-            });
-          }
-        });
-      }
+        }
+      });
 
       return JSON.stringify(attachmentArray);
     }

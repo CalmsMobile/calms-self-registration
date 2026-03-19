@@ -7,6 +7,7 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { Subject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../../environments/environment';
+import { MessageService } from 'primeng/api';
 
 interface DocumentType {
   VisitorAttachSeqId: string;
@@ -46,7 +47,8 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
   constructor(
     private wizardService: WizardService,
     private http: HttpClient,
-    private sharedService: SharedService
+    private sharedService: SharedService,
+    private messageService: MessageService
   ) {
     this.wizardService.onValidationRequest.subscribe(() => {
       this.validateStep();
@@ -138,7 +140,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     if (!file) return;
 
     if (file.size > this.maxSize) {
-      //this.messageService.add({ severity: 'warn', summary: 'File Too Large', detail: `Maximum file size is ${this.maxSize / 1000000}MB. Please select a smaller file.`, life: 4000 });
+      this.messageService.add({ severity: 'warn', summary: 'File Too Large', detail: `Maximum file size is ${this.maxSize / 1000000}MB. Please select a smaller file.`, life: 4000 });
       input.value = '';
       return;
     }

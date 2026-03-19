@@ -45,9 +45,17 @@
               }
             </div>
 
+            <!-- Always in DOM: prevents first-click failure -->
+            <input
+              type="file"
+              style="display:none"
+              #fileInput
+              [accept]="acceptedTypes"
+              (change)="onFileSelect($event, doc.VisitorAttachSeqId)">
+
             <!-- Idle: upload icon -->
             @if (!attachments[doc.VisitorAttachSeqId].file) {
-              <label class="card-right">
+              <div class="card-right" (click)="fileInput.click()" style="cursor:pointer">
                 <div class="icon">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M6 4h9l3 3v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm8 1v3h3" />
@@ -56,12 +64,7 @@
                   </svg>
                 </div>
                 <div class="small">{{ 'no_file_chosen' | translate }}</div>
-                <input
-                  type="file"
-                  hidden
-                  [accept]="acceptedTypes"
-                  (change)="onFileSelect($event, doc.VisitorAttachSeqId)">
-              </label>
+              </div>
             }
 
             <!-- Uploaded: delete button -->
