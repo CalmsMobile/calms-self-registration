@@ -1,13 +1,24 @@
 @if (!isLoading) {
-  <div class="step-container">
-    <h2>{{ 'questionnaire_title' | translate }}</h2>
-    <div class="step-content">
-      <form [formGroup]="questionnaireForm" class="questionnaire-form">
-        @for (question of questions; track question) {
-          <div class="question-item">
-            <div class="question-header">
+  <main class="page" [formGroup]="questionnaireForm">
+    <section class="content">
+      <div class="left">
+        <h2>
+          <span class="accent">{{ 'questionnaire_title' | translate }}</span>
+        </h2>
+        <p>{{ 'questionnaire_subtitle' | translate }}</p>
+        <div class="illustration">
+          <img [src]="illustrationUrl" alt="Questionnaire illustration" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="right">
+        <div class="questions" #questionsScroll>
+          @for (question of questions; track question.QuestionariesSeqId; let i = $index) {
+            <div class="question-card" [class.has-error]="validationErrors[question.QuestionariesSeqId]">
               @if (question.ShortName) {
-                <h3>{{ question.ShortName }}</h3>
+                <p class="question-label">{{ question.ShortName }}</p>
               }
               <p class="question-text">
                 {{ question.Description }}
@@ -15,89 +26,66 @@
                   <span class="required-indicator">*</span>
                 }
               </p>
-            </div>
-            
-            <div class="answer-options">
-              <!-- Multiple Choice (Checkbox) Questions -->
-              @if (isMultipleAnswerQuestion(question)) {
-                <div class="checkbox-group">
+              <div class="options">
+                @if (isMultipleAnswerQuestion(question)) {
                   @for (option of getQuestionOptions(question); track option.value) {
-                    <div class="p-field-checkbox">
-                      <p-checkbox
-                        [inputId]="'q' + question.QuestionariesSeqId + '_opt' + option.value"
-                        [value]="option.value"
-                        [binary]="true"
-                        [ngModel]="isCheckboxSelected(question.QuestionariesSeqId, option.value)"
-                        (onChange)="onCheckboxChange(question.QuestionariesSeqId, option.value, $event)"
-                        [ngModelOptions]="{standalone: true}"
-                        />
-                      <label [for]="'q' + question.QuestionariesSeqId + '_opt' + option.value" class="ml-2">
-                        {{ option.label }}
-                      </label>
-                    </div>
+                    <button
+                      type="button"
+                      class="option"
+                      [class.selected]="isCheckboxSelected(question.QuestionariesSeqId, option.value)"
+                      (click)="toggleCheckbox(question.QuestionariesSeqId, option.value)"
+                    >{{ option.label }}</button>
                   }
-                </div>
-              }
-              
-              <!-- Single Choice (Radio Button) Questions -->
-              @else {
-                <div class="radio-group">
+                } @else {
                   @for (option of getQuestionOptions(question); track option.value) {
-                    <div class="p-field-radiobutton">
-                      <p-radioButton
-                        name="q{{question.QuestionariesSeqId}}"
-                        [value]="option.value"
-                        [formControl]="getQuestionControl(question.QuestionariesSeqId)"
-                        [inputId]="'q' + question.QuestionariesSeqId + '_opt' + option.value" />
-                      <label [for]="'q' + question.QuestionariesSeqId + '_opt' + option.value" class="ml-2">
-                        {{ option.label }}
-                      </label>
-                    </div>
+                    <button
+                      type="button"
+                      class="option"
+                      [class.selected]="getQuestionControl(question.QuestionariesSeqId).value === option.value"
+                      (click)="selectRadioOption(question.QuestionariesSeqId, option.value)"
+                    >{{ option.label }}</button>
                   }
-                </div>
-              }
-              
-              <!-- Error Message removed: validation shown as common toast alert -->
+                }
+              </div>
             </div>
-          </div>
-        }
-      </form>
-    </div>
-  </div>
+          }
+        </div>
+      </div>
+    </section>
+  </main>
 }
 
-<!-- Unified Validation Alert Dialog -->
-<p-dialog
-  [(visible)]="showAlertDialog"
-  [modal]="true"
-  [closable]="true"
-  [draggable]="false"
-  [resizable]="false"
-  [showHeader]="false"
-  styleClass="validation-alert-dialog"
-  (onHide)="closeAlertDialog()">
-
-  <div class="alert-dialog-content">
-    <i class="pi pi-exclamation-circle alert-icon"></i>
-    <p class="alert-message">{{ alertMessage }}</p>
-  </div>
-
-  <ng-template pTemplate="footer">
-    <div class="alert-dialog-footer">
-      @if (showRewatchButton) {
-        <p-button
-          [label]="'rewatch_safety_brief' | translate"
-          icon="pi pi-play"
-          severity="warn"
-          (onClick)="rewatchSafetyBrief()">
-        </p-button>
-      }
-      <p-button
-        [label]="'review_my_answer' | translate"
-        icon="pi pi-pencil"
-        severity="secondary"
-        (onClick)="closeAlertDialog()">
-      </p-button>
+<!-- Incorrect answer modal -->
+<div class="modal" [class.active]="modalType === 'incorrect'">
+  <div class="modal-overlay" (click)="closeModal()"></div>
+  <div class="modal-card compact" role="dialog" aria-modal="true">
+    <div class="modal-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="bi bi-person-video2" viewBox="0 0 16 16">
+        <path d="M10 9.05a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
+        <path d="M2 1a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM1 3a1 1 0 0 1 1-1h2v2H1zm4 10V2h9a1 1 0 0 1 1 1v9c0 .285-.12.543-.31.725C14.15 11.494 12.822 10 10 10c-3.037 0-4.345 1.73-4.798 3zm-4-2h3v2H2a1 1 0 0 1-1-1zm3-1H1V8h3zm0-3H1V5h3z"/>
+      </svg>
     </div>
-  </ng-template>
-</p-dialog>
+    <p class="modal-text compact">{{ alertMessage }}</p>
+    <div class="modal-actions compact">
+      <button class="modal-btn danger" type="button" (click)="rewatchSafetyBrief()">{{ 'rewatch_safety_brief' | translate }}</button>
+      <button class="modal-link" type="button" (click)="reviewAnswers()">{{ 'review_my_answer' | translate }}</button>
+    </div>
+  </div>
+</div>
+
+<!-- Required answers modal -->
+<div class="modal" [class.active]="modalType === 'required'">
+  <div class="modal-overlay" (click)="closeModal()"></div>
+  <div class="modal-card compact" role="dialog" aria-modal="true">
+    <div class="modal-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="bi bi-toggle-on" viewBox="0 0 16 16">
+        <path d="M5 3a5 5 0 0 0 0 10h6a5 5 0 0 0 0-10zm6 9a4 4 0 1 1 0-8 4 4 0 0 1 0 8"/>
+      </svg>
+    </div>
+    <p class="modal-text compact">{{ alertMessage }}</p>
+    <div class="modal-actions compact">
+      <button class="modal-btn danger" type="button" (click)="reviewAnswers()">{{ 'review_my_answer' | translate }}</button>
+      <button class="modal-link" type="button" (click)="closeModal()">{{ 'keep_answering' | translate }}</button>
+    </div>
+  </div>
+</div>

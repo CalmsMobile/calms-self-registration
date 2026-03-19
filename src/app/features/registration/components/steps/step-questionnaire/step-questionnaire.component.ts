@@ -4,10 +4,6 @@ import { MessageService } from 'primeng/api';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { LabelService } from '../../../../../core/services/label.service';
 import { ToastModule } from 'primeng/toast';
-import { RadioButtonModule } from 'primeng/radiobutton';
-import { CheckboxModule } from 'primeng/checkbox';
-import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
 
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { Subject, takeUntil } from 'rxjs';
@@ -35,7 +31,7 @@ interface Question {
   templateUrl: './step-questionnaire.component.html',
   styleUrls: ['./step-questionnaire.component.scss'],
   standalone: true,
-  imports: [FormsModule, ToastModule, RadioButtonModule, CheckboxModule, DialogModule, ButtonModule, ReactiveFormsModule, TranslatePipe]
+  imports: [FormsModule, ToastModule, ReactiveFormsModule, TranslatePipe]
 })
 export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   questions: Question[] = [];
@@ -43,10 +39,19 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   questionnaireForm: FormGroup;
   validationErrors: { [key: number]: boolean } = {};
   isLoading = true;
-  showAlertDialog = false;
+  modalType: 'incorrect' | 'required' | null = null;
   alertMessage = '';
-  showRewatchButton = false;
+  illustrationUrl = '/assets/questionnaire.svg';
   private destroy$ = new Subject<void>();
+
+  get hasAnyAnswer(): boolean {
+    return this.questions.some(q => {
+      if (this.isMultipleAnswerQuestion(q)) {
+        return this.getQuestionArray(q.QuestionariesSeqId).length > 0;
+      }
+      return this.getQuestionControl(q.QuestionariesSeqId).value !== null;
+    });
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -332,11 +337,10 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
       }
     });
 
-    // Safety brief wrong answer → show unified alert dialog with rewatch button
+    // Safety brief wrong answer → show incorrect modal with rewatch button
     if (hasSafetyBriefError && firstSafetyQuestion) {
       this.alertMessage = this.labelService.getLabel('incorrect_safety_briefing_answer', 'caption');
-      this.showRewatchButton = true;
-      this.showAlertDialog = true;
+      this.modalType = 'incorrect';
       this.wizardService.setStepValid(false);
       return;
     }
@@ -347,25 +351,52 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
       this.saveFormData();
     } else if (hasUnanswered) {
       this.alertMessage = this.labelService.getLabel('please_answer_this_question', 'caption');
-      this.showRewatchButton = false;
-      this.showAlertDialog = true;
+      this.modalType = 'required';
     } else if (hasWrongAnswer) {
       this.alertMessage = this.labelService.getLabel('this_question_requires_the_correct_answer_to_proceed', 'caption');
-      this.showRewatchButton = false;
-      this.showAlertDialog = true;
+      this.modalType = 'required';
     }
   }
 
   /**
    * Navigate back to safety brief step to rewatch video
    */
+  selectRadioOption(questionId: number, value: string): void {
+    const control = this.getQuestionControl(questionId);
+    control.setValue(value);
+    control.markAsTouched();
+    if (this.validationErrors[questionId]) {
+      delete this.validationErrors[questionId];
+    }
+    this.saveFormData();
+  }
+
+  toggleCheckbox(questionId: number, optionValue: string): void {
+    const formArray = this.getQuestionArray(questionId);
+    const index = formArray.value.indexOf(optionValue);
+    if (index >= 0) {
+      formArray.removeAt(index);
+    } else {
+      formArray.push(this.fb.control(optionValue));
+    }
+    if (this.validationErrors[questionId]) {
+      delete this.validationErrors[questionId];
+    }
+    formArray.markAsTouched();
+    this.saveFormData();
+  }
+
+  closeModal(): void {
+    this.modalType = null;
+  }
+
+  reviewAnswers(): void {
+    this.modalType = null;
+  }
+
   rewatchSafetyBrief(): void {
-    this.showAlertDialog = false;
-    
-    // PrimeNG modal dialog adds 'p-overflow-hidden' to body; clean up before navigating.
-    document.body.classList.remove('p-overflow-hidden');
-    document.querySelectorAll('.p-dialog-mask').forEach(mask => mask.remove());
-    
+    this.modalType = null;
+
     // Find the safety brief step index
     const steps = this.wizardService.getEnabledSteps();
     const safetyBriefStepIndex = steps.findIndex(step => 
@@ -386,7 +417,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   }
 
   closeAlertDialog(): void {
-    this.showAlertDialog = false;
+    this.modalType = null;
   }
 
   getQuestionError(questionId: number): string | null {

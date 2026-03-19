@@ -1,44 +1,66 @@
-<div class="step-container">
-  <div class="step-content">
+<main class="page">
+  <section class="content">
+    <div class="left">
+      <h2>
+        <span class="accent">NDA</span>
+        <span>{{ 'nda_agreement' | translate }}</span>
+      </h2>
+      <p>{{ 'nda_subtitle' | translate }}</p>
+      <div class="illustration">
+        <img [src]="illustrationUrl" alt="NDA illustration" />
+      </div>
+    </div>
 
-    <!-- NDA HTML Content -->
-    <div class="nda-text" [innerHTML]="getNdaHtml()"></div>
+    <div class="divider"></div>
 
-    <!-- Signature Section -->
-    <div class="signature-section">
-      <h3 class="signature-title">{{ 'signature' | translate }}</h3>
-      <p class="signature-instruction">{{ 'draw_signature_below' | translate }}</p>
-
-      <div class="signature-pad-wrapper" [class.error]="showValidationError">
-        <canvas
-          #signatureCanvas
-          class="signature-canvas"
-          (mousedown)="onMouseDown($event)"
-          (mousemove)="onMouseMove($event)"
-          (mouseup)="onMouseUp()"
-          (mouseleave)="onMouseLeave()"
-          (touchstart)="onTouchStart($event)"
-          (touchmove)="onTouchMove($event)"
-          (touchend)="onTouchEnd($event)">
-        </canvas>
+    <div class="right">
+      <div class="card">
+        <div class="terms">
+          <div class="terms-title">{{ 'terms_and_conditions' | translate }}</div>
+          <div class="terms-box" [innerHTML]="getNdaHtml()"></div>
+        </div>
       </div>
 
       @if (showValidationError) {
         <span class="error-message">{{ 'signature_required' | translate }}</span>
       }
 
-      <div class="signature-actions">
-        <p-button
-          styleClass="clear-btn"
-          [label]="'clear' | translate"
-          icon="pi pi-eraser"
-          severity="secondary"
-          [outlined]="true"
-          (onClick)="clearSignature()">
-        </p-button>
+      <div class="actions">
+        <button class="btn yellow" type="button" (click)="openSignature()">
+          {{ 'sign' | translate }} <span class="icon-right">&#9998;</span>
+        </button>
       </div>
     </div>
+  </section>
+</main>
 
+<!-- Signature Modal -->
+<div class="modal" [class.active]="showSignatureModal">
+  <div class="modal-overlay" (click)="closeSignature()"></div>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <div class="modal-title">{{ 'signature' | translate }}</div>
+      <button class="modal-close" type="button" (click)="closeSignature()">&#215;</button>
+    </div>
+    <div class="signature-box">
+      <canvas
+        #signatureCanvas
+        class="signature-canvas"
+        (mousedown)="onMouseDown($event)"
+        (mousemove)="onMouseMove($event)"
+        (mouseup)="onMouseUp()"
+        (mouseleave)="onMouseLeave()"
+        (touchstart)="onTouchStart($event)"
+        (touchmove)="onTouchMove($event)"
+        (touchend)="onTouchEnd($event)"
+      ></canvas>
+    </div>
+    <div class="signature-label">{{ 'draw_signature_below' | translate }}</div>
+    <div class="modal-actions">
+      <button class="btn grey" type="button" (click)="clearSignature()">{{ 'clear' | translate }}</button>
+      <button class="btn grey" type="button" (click)="closeSignature()">{{ 'close' | translate }}</button>
+      <button class="btn yellow" type="button" (click)="submitSignature()">{{ 'submit' | translate }}</button>
+    </div>
   </div>
 </div>
 

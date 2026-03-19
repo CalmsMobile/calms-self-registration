@@ -330,14 +330,16 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
 
               console.log('Registration successful:', response);
 
-              // Extract data from Table array (api service returns unwrapped data)
+              // api-base.service unwraps response[0].Data, so response = { Table: [...] }
               const responseData = response?.Table?.[0];
               const isAutoApproved = responseData?.AutoApprove === 1 || responseData?.AutoApprove === true;
               const isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1;
+              const approvalStatus: string = responseData?.Approval_Status || (isAutoApproved ? 'Approved' : 'Pending');
 
               // Get branch info before clearing session storage
               const branchName = this.wizardService.currentBranchName;
               const branchID = this.wizardService.currentBranchID;
+              const generalFormData = this.wizardService.getFormData('general') || {};
 
               // Clear session storage after successful submission
               this.wizardService.clearSessionStorage();
@@ -346,12 +348,18 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               this.router.navigate(['/registration-status'], {
                 state: {
                   registrationData: {
+                    status: isAutoApproved ? 'success' : 'pending',
                     isAutoApproved: isAutoApproved,
-                    visitorId: responseData?.SEQ_ID || response?.VisitorId || response?.ID,
-                    qrCodeData: responseData?.HexCode || response?.QRCodeData,
+                    approvalStatus: approvalStatus,
+                    visitorId: responseData?.SEQ_ID?.toString() || '',
+                    qrCodeData: responseData?.HexCode || '',
+                    isDynamicQR: isDynamicQR,
+                    registrationId: responseData?.appointment_group_id || responseData?.SEQ_ID?.toString() || '',
                     visitorName: visitorAckData.FullName,
-                    registrationNumber: responseData?.appointment_group_id || response?.RegistrationNumber || response?.RefNo,
-                    isDynamicQR: isDynamicQR
+                    visitDate: visitorAckData.StartDateTime?.split(' ')[0] || '',
+                    time: visitorAckData.StartDateTime?.split(' ')[1] || '',
+                    branch: branchName,
+                    meetingWith: generalFormData.host_name || generalFormData.hostName || ''
                   },
                   branchName: branchName,
                   branchID: branchID
@@ -368,10 +376,20 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               console.error('Form data at error:', this.wizardService.getFormData());
               console.error('======================');
 
-              // Important: Don't clear questionnaire state on error
-              // The wizard service should preserve form data for retry
+              const branchName = this.wizardService.currentBranchName;
+              const branchID = this.wizardService.currentBranchID;
 
-              // You might want to show an error message here
+              this.router.navigate(['/registration-status'], {
+                state: {
+                  registrationData: {
+                    status: 'error',
+                    visitorName: visitorAckData.FullName,
+                    branch: branchName
+                  },
+                  branchName: branchName,
+                  branchID: branchID
+                }
+              });
             }
           });
       } else {

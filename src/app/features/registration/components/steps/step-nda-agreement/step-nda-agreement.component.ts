@@ -10,7 +10,6 @@ import {
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
@@ -18,7 +17,7 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 @Component({
   selector: 'app-step-nda-agreement',
   standalone: true,
-  imports: [ButtonModule, ToastModule, TranslatePipe],
+  imports: [ToastModule, TranslatePipe],
   templateUrl: './step-nda-agreement.component.html',
   styleUrls: ['./step-nda-agreement.component.scss']
 })
@@ -30,6 +29,8 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   private hasSigned = false;
   private destroy$ = new Subject<void>();
   showValidationError = false;
+  showSignatureModal = false;
+  illustrationUrl = '/assets/nda.svg';
 
   /** Restored base64 signature (if user navigated back) */
   restoredSignature = '';
@@ -184,6 +185,31 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
     if (this.isDrawing) {
       this.isDrawing = false;
       this.ctx.closePath();
+    }
+  }
+
+  openSignature(): void {
+    this.showSignatureModal = true;
+    // Re-init canvas after modal becomes visible
+    setTimeout(() => {
+      this.initCanvas();
+      if (this.restoredSignature) {
+        const img = new Image();
+        img.onload = () => this.ctx.drawImage(img, 0, 0);
+        img.src = this.restoredSignature;
+      }
+    }, 50);
+  }
+
+  closeSignature(): void {
+    this.showSignatureModal = false;
+  }
+
+  submitSignature(): void {
+    this.showSignatureModal = false;
+    if (this.hasSigned) {
+      this.restoredSignature = this.getSignatureDataUrl();
+      this.showValidationError = false;
     }
   }
 
