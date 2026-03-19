@@ -387,24 +387,25 @@
 
 .quick-info {
   border-top: 1px solid #e6e9f2;
-  padding-top: 22px;
-  display: grid;
-  gap: 14px;
+  padding-top: 0;
+  
+  gap: 0;
 }
 
 .info-line {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   color: #5f7393;
   font-size: 20px;
-  line-height: 1.3;
+  line-height: 1;
+  padding: 0;
   word-break: break-word;
 }
 
 .small-icon {
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: #f2f4f8;
   border: 1px solid #e0e5ef;
@@ -413,8 +414,8 @@
   flex-shrink: 0;
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 13px;
+    height: 13px;
     stroke: #5f7393;
     stroke-width: 2;
     fill: none;
@@ -820,6 +821,10 @@
   color: #27354e;
   font-size: 16px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .row-sub {
@@ -846,6 +851,73 @@
     stroke-width: 2;
     fill: none;
   }
+}
+
+.movement-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: #def7ec;
+  color: #089967;
+  border: 1px solid #b9ebd7;
+
+  &.out {
+    background: #fff0e6;
+    color: #d07200;
+    border-color: #f5d3a8;
+  }
+
+  svg {
+    width: 13px;
+    height: 13px;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+.row-dl-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  border: 1.5px solid #dbe2ef;
+  background: #f4f6fc;
+  color: #6a7f9d;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover { background: #e6eaf6; color: #2f66ff; }
+
+  svg {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
+.modal-btn.dl-all {
+  background: linear-gradient(135deg, #4f6ef7, #3451e8);
+  color: #fff;
+  border: none;
+  font-weight: 700;
+  flex: 1;
+
+  &:hover { background: linear-gradient(135deg, #3f5eea, #2a43d6); }
 }
 
 .chip-in {
@@ -1073,7 +1145,7 @@
   .avatar { width: 124px; height: 124px; border-radius: 40px; }
   .name { font-size: 22px; }
   .role-pill { font-size: 13px; padding: 5px 14px; }
-  .quick-info { gap: 8px; padding-top: 14px; }
+  .quick-info { padding-top: 8px; }
   .info-line { font-size: 13px; }
   .small-icon { width: 28px; height: 28px; svg { width: 14px; height: 14px; } }
   .host-card { border-radius: 20px; padding: 16px; }
@@ -1142,7 +1214,6 @@
   .avatar { width: 106px; height: 106px; border-radius: 32px; }
   .name { font-size: 20px; }
   .role-pill { font-size: 12px; padding: 4px 12px; }
-  .quick-info { gap: 7px; }
   .info-line { font-size: 16px; font-weight: 600; }
   .details-panel { display: block; padding: 12px; }
   .details-grid { grid-template-columns: 1fr; gap: 10px; }

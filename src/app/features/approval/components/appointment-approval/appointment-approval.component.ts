@@ -22,6 +22,8 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   appointmentData: any = null;
   clientConfig: any = null;
   companyLogo: string = '';
+  companyName: string = '';
+  visitorImg: string = '';
   declarationData: any[] = [];
   questionnaireData: any[] = [];
   docsData: any[] = [];
@@ -71,6 +73,12 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
         this.clientConfig    = res.config?.Table1?.[0] || null;
         this.appointmentData = res.detail?.Table1?.[0] || null;
         this.companyLogo     = res.detail?.Table4?.[0]?.CompanyLogo || '';
+        this.companyName     = res.detail?.Table4?.[0]?.CompanyName || res.detail?.Table4?.[0]?.Name ||
+                               this.clientConfig?.CompanyName || this.clientConfig?.ClientName || this.clientConfig?.Company || '';
+        const rawImg = res.detail?.Table3?.[0]?.VisitorImg || '';
+        this.visitorImg = rawImg
+          ? (rawImg.startsWith('data:') || rawImg.startsWith('http') ? rawImg : 'data:image/jpeg;base64,' + rawImg)
+          : '';
         this.seqId  = String(this.appointmentData?.SEQ_ID || '');
         this.hostIc = this.appointmentData?.STAFF_IC      || this.hostIc;
 
@@ -108,6 +116,12 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  getDocFileName(docPath: string): string {
+    if (!docPath) return 'Document';
+    const parts = docPath.replace(/\\/g, '/').split('/');
+    return parts[parts.length - 1] || 'Document';
   }
 
   getQnaOptions(item: any): { label: string; index: number; isSelected: boolean; isCorrect: boolean }[] {
@@ -209,6 +223,18 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     if ((event.target as HTMLElement).classList.contains('modal-overlay')) {
       this.closeModal();
     }
+  }
+
+  downloadAll() {
+    this.docsData.forEach((doc: any) => {
+      const url = doc.FilePath || doc.FileUrl || doc.DocPath;
+      if (!url) return;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = '';
+      a.target = '_blank';
+      a.click();
+    });
   }
 
   @HostListener('document:keydown.escape')
