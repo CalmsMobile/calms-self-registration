@@ -13,7 +13,6 @@ import { filter, Subject, takeUntil } from 'rxjs';
 import { SharedService } from '../../../../shared/shared.service';
 import { environment } from '../../../../../environments/environment';
 import { ToastModule } from 'primeng/toast';
-import { ProgressBarModule } from 'primeng/progressbar';
 import { StepTermsComponent } from '../steps/step-terms/step-terms.component';
 import { RouterLink } from '@angular/router';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -40,7 +39,6 @@ interface Category {
     SelectModule,
     ButtonModule, CheckboxModule,
     ToastModule,
-    ProgressBarModule,
     StepTermsComponent,
     TranslatePipe,
     LanguageSelectorComponent,

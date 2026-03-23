@@ -46,15 +46,28 @@
           {{'profile_picture' | translate}}
           <span class="required-star">{{settings?.ImageUploadRequired ? '*' : ''}}</span>
         </label>
-        <div class="profile-upload" (click)="fileInput.click()" [class.invalid]="isFieldInvalidRequired('profile')">
-          <input #fileInput type="file" accept="image/*" style="display:none" (change)="handleFileUpload($event)">
+        <div class="profile-avatar-field" [class.invalid]="isFieldInvalidRequired('profile')" [class.ng-invalid]="isFieldInvalidRequired('profile')">
           @if (profileImage) {
-          <img [src]="profileImage" class="profile-image" alt="Profile">
+          <!-- Has photo: show round avatar with action icons -->
+          <div class="profile-avatar-wrap">
+            <img [src]="profileImage" class="profile-avatar-img" alt="Profile" />
+            <div class="profile-avatar-actions">
+              <button type="button" class="avatar-action-btn change-btn" (click)="openPhotoCaptureDialog()" title="Change photo">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button type="button" class="avatar-action-btn delete-btn" (click)="clearPhoto()" title="Remove photo">
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
+          </div>
+          <span class="profile-avatar-label">{{ 'profile_picture' | translate }}</span>
           } @else {
-          <div class="upload-placeholder">
-            <button type="button" pButton [label]="'profile_picture' | translate:'placeholder'"
-              class="p-button-outlined"></button>
-            <span>No file chosen</span>
+          <!-- No photo: click to open capture dialog -->
+          <div class="profile-avatar-empty" (click)="openPhotoCaptureDialog()">
+            <div class="profile-avatar-circle">
+              <i class="pi pi-camera"></i>
+            </div>
+            <span class="profile-avatar-hint">{{ 'profile_picture' | translate:'placeholder' }}</span>
           </div>
           }
         </div>
@@ -713,57 +726,12 @@
       }
       }
 
-      <!-- Add Visitor Button (only when multiple visitor setting is enabled) -->
-      @if (isMultipleVisitorMode) {
-      <div class="add-visitor-section full-width">
-        <p-button type="button" icon="pi pi-plus"
-          [label]="editingVisitorIndex >= 0 ? ('update_visitor' | translate) : ('add_visitor' | translate)"
-          (onClick)="addVisitorToTable()" styleClass="add-guest-btn" [disabled]="!isCurrentVisitorFormValid()">
-        </p-button>
-        @if (editingVisitorIndex >= 0) {
-        <p-button type="button" icon="pi pi-times" label="Cancel" (onClick)="cancelEdit()" [outlined]="true"
-          severity="secondary">
-        </p-button>
-        }
-      </div>
-      }
+
 
     </form>
 
-    <!-- Saved Visitors Table -->
-    @if (isMultipleVisitorMode && savedVisitors.length > 0) {
-    <div class="saved-visitors-section">
-      <h4 class="saved-title">{{'saved_visitors' | translate}}</h4>
 
-      @for (visitor of savedVisitors; track visitor; let i = $index) {
-      <div class="saved-visitor-card">
-        <div class="saved-content">
-          @if (settings?.ImageUploadEnabled) {
-          <div class="saved-photo">
-            @if (visitor.profilePreview) {
-            <img [src]="visitor.profilePreview" alt="Visitor photo" class="saved-photo-img" />
-            } @else {
-            <i class="pi pi-camera"></i>
-            }
-          </div>
-          }
-          <div class="saved-info">
-            <i class="pi pi-phone"></i>
-            <span>{{visitor.phone || 'No phone'}}</span>
-          </div>
-        </div>
-        <div class="saved-actions">
-          <button class="action-btn edit-btn" (click)="editSavedVisitor(i)" title="Edit">
-            <i class="pi pi-pencil"></i>
-          </button>
-          <button class="action-btn delete-btn" (click)="deleteSavedVisitor(i)" title="Delete">
-            <i class="pi pi-trash"></i>
-          </button>
-        </div>
-      </div>
-      }
-    </div>
-    }
+
 
     }
   </section>
@@ -775,6 +743,24 @@
       <i class="pi pi-arrow-left"></i>
       {{ 'back' | translate }}
     </button>
+    @if (isMultipleVisitorMode && savedVisitors.length > 0) {
+    <div class="visitor-chips-row">
+      @for (visitor of savedVisitors; track visitor; let i = $index) {
+      <button type="button" class="visitor-chip" [class.active]="editingVisitorIndex === i"
+        (click)="editSavedVisitor(i)">
+        @if (visitor.profilePreview) {
+        <img [src]="visitor.profilePreview" class="chip-avatar-img" alt="" />
+        } @else {
+        <span class="chip-initials">{{ getVisitorInitials(visitor.fullName) }}</span>
+        }
+        <span class="chip-name">{{ visitor.fullName || (('visitor' | translate) + ' ' + (i + 1)) }}</span>
+        <span class="chip-delete" (click)="$event.stopPropagation(); deleteSavedVisitor(i)">
+          <i class="pi pi-times"></i>
+        </span>
+      </button>
+      }
+    </div>
+    }
     <div class="actions-right">
       @if (isMultipleVisitorMode) {
       <button type="button" class="btn btn-save-add" (click)="addVisitorToTable()" [disabled]="!isCurrentVisitorFormValid()">
@@ -805,5 +791,137 @@
     <button pButton type="button" class="search-btn" [label]="'search_profile_button' | translate"
       (click)="searchProfile()">
     </button>
+  </div>
+</p-dialog>
+
+<!-- Photo Capture Dialog -->
+<p-dialog [(visible)]="showPhotoCaptureDialog" [modal]="true" [draggable]="false" [resizable]="false"
+  styleClass="photo-capture-dialog" [showHeader]="false" (onHide)="stopCamera()">
+  <div class="photo-capture-container">
+
+    <!-- Close button -->
+    <button type="button" class="photo-close-btn" (click)="closePhotoCaptureDialog()">
+      <i class="pi pi-times"></i>
+    </button>
+
+    <!-- ══════════════════════════════════════════════════════
+         MODE 1: EXISTING PHOTO PREVIEW
+         Shows the current saved image. User can keep it,
+         retake with camera, or browse a new file.
+         ══════════════════════════════════════════════════════ -->
+    @if (dialogMode === 'preview' && dialogPreviousImage) {
+    <h2 class="photo-title">Your Photo</h2>
+    <p class="photo-subtitle">Current profile photo — update or keep it</p>
+
+    <div class="preview-photo-wrap">
+      <img [src]="dialogPreviousImage" class="preview-photo-img" alt="Current photo" />
+      <div class="preview-face-ring"></div>
+    </div>
+
+    <div class="photo-actions">
+      <!-- Keep existing photo -->
+      <button type="button" class="btn-capture" (click)="closePhotoCaptureDialog()">
+        <i class="pi pi-check"></i>
+        Keep This Photo
+      </button>
+
+      <!-- Switch to live camera -->
+      <button type="button" class="btn-retake" (click)="switchToCamera()">
+        <i class="pi pi-camera"></i>
+        Take New Photo
+      </button>
+
+      <!-- Browse from device -->
+      <input #dialogFileInput type="file" accept="image/*" style="display:none"
+        (change)="handleFileUpload($event, undefined, true)">
+      <button type="button" class="btn-upload" (click)="dialogFileInput.click()">
+        <i class="pi pi-upload"></i>
+        Upload from Device
+      </button>
+    </div>
+    }
+
+    <!-- ══════════════════════════════════════════════════════
+         MODE 2: CAMERA / CAPTURE
+         Live camera feed or captured snapshot.
+         ══════════════════════════════════════════════════════ -->
+    @if (dialogMode === 'camera') {
+    <h2 class="photo-title">Capture Your Photo</h2>
+    <p class="photo-subtitle">Align your face inside the frame</p>
+
+    <!-- Camera controls -->
+    <div class="camera-area">
+      <div class="camera-controls-top">
+        <button type="button" class="camera-ctrl-btn" (click)="toggleFlash()" [class.active]="useFlash" title="Flash">
+          <i class="pi pi-bolt"></i>
+        </button>
+        <button type="button" class="camera-ctrl-btn" (click)="flipCamera()" title="Flip camera">
+          <i class="pi pi-sync"></i>
+        </button>
+      </div>
+
+      <div class="camera-frame-wrapper">
+        <!-- Live video feed -->
+        <video #cameraVideo autoplay playsinline [style.display]="isCameraOn && !capturedImage ? 'block' : 'none'"
+          class="camera-video"></video>
+
+        <!-- Captured snapshot preview -->
+        @if (capturedImage) {
+        <img [src]="capturedImage" class="camera-video" alt="Captured" />
+        }
+
+        <!-- Loader while camera initialises -->
+        @if (!isCameraOn && !capturedImage) {
+        <div class="camera-placeholder">
+          <i class="pi pi-camera"></i>
+        </div>
+        }
+
+        <!-- Face guide ring -->
+        <div class="face-guide-ring"></div>
+      </div>
+    </div>
+
+    <p class="camera-hint">Make sure your face is clearly visible</p>
+
+    <div class="photo-actions">
+      @if (!capturedImage) {
+      <button type="button" class="btn-capture" (click)="capturePhoto()" [disabled]="!isCameraOn">
+        <i class="pi pi-camera"></i>
+        Capture Photo
+      </button>
+      } @else {
+      <button type="button" class="btn-capture" (click)="useCapture()">
+        <i class="pi pi-check"></i>
+        Use This Photo
+      </button>
+      <button type="button" class="btn-retake" (click)="retakePhoto()">
+        <i class="pi pi-refresh"></i>
+        Retake
+      </button>
+      }
+
+      <input #dialogFileInput type="file" accept="image/*" style="display:none"
+        (change)="handleFileUpload($event, undefined, true)">
+      <button type="button" class="btn-upload" (click)="dialogFileInput.click()">
+        <i class="pi pi-upload"></i>
+        Upload from Device
+      </button>
+
+      <!-- Back to existing preview if one exists -->
+      @if (dialogPreviousImage) {
+      <button type="button" class="btn-skip" (click)="dialogMode = 'preview'">
+        ← Back to current photo
+      </button>
+      } @else if (!settings?.ImageUploadRequired) {
+      <button type="button" class="btn-skip" (click)="skipPhoto()">
+        Skip
+      </button>
+      }
+    </div>
+    }
+
+    <!-- Hidden canvas for snapshot capture -->
+    <canvas #captureCanvas style="display:none"></canvas>
   </div>
 </p-dialog>

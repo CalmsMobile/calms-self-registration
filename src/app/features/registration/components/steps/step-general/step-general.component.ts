@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Sanitizer } from '@angular/core';
+import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -29,10 +29,24 @@ import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
   styleUrls: ['./step-general.component.scss']
 })
 export class StepGeneralComponent implements OnInit, OnDestroy {
+  @ViewChild('cameraVideo') cameraVideoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('captureCanvas') captureCanvasRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
+
   generalForm: FormGroup = new FormGroup({});
   profileImage: SafeUrl | string = "";
   logo = 'assets/logo.png';
   companyTitle = '';
+
+  // Photo capture dialog
+  showPhotoCaptureDialog = false;
+  isCameraOn = false;
+  useFlash = false;
+  cameraFacingMode: 'user' | 'environment' = 'user';
+  cameraStream: MediaStream | null = null;
+  capturedImage: string | null = null;
+  dialogPreviousImage: string | null = null; // existing photo shown in dialog before camera starts
+  dialogMode: 'preview' | 'camera' = 'camera'; // 'preview' when existing photo is present
   hosts: any[] = [];
   departmentList: any[] = [];
   hostNameList: any[] = [];
@@ -1458,9 +1472,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Save form data immediately after visitor modification
       this.saveFormDataToWizard();
 
-      // Clear only main visitor identification fields: fullName, visitor_id, profile
-      // Keep other information (email, phone, company, vehicle info, UDF fields, etc.)
-      const fieldsToReset = ['fullName', 'visitor_id', 'profile'];
+      // Clear visitor identification fields including the profile preview so the next
+      // visitor doesn't accidentally inherit the previous visitor's photo.
+      const fieldsToReset = ['fullName', 'visitor_id', 'profile', 'profilePreview'];
 
       fieldsToReset.forEach(field => {
         if (currentForm.get(field)) {
@@ -1664,6 +1678,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
       this.messageService.add({ severity: 'info', ...this.getAlert('cancellation_message') });
     }
+  }
+
+  getVisitorInitials(name: string): string {
+    if (!name?.trim()) return '?';
+    return name.trim().split(/\s+/).slice(0, 2).map(w => w[0].toUpperCase()).join('');
   }
 
   private setupConditionalControls(): void {
@@ -1903,12 +1922,46 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           visitorData.myself = true;
         }
         this.savedVisitors.push(visitorData);
+
+        // Clear the form so that back-navigation shows the chip without also
+        // pre-filling the form with the same visitor's data (which looks like a duplicate).
+        ['fullName', 'visitor_id', 'profile', 'profilePreview'].forEach(f => {
+          this.generalForm.get(f)?.reset();
+          this.generalForm.get(f)?.markAsUntouched();
+          this.generalForm.get(f)?.markAsPristine();
+        });
+        this.profileImage = '';
+
         this.saveFormDataToWizard();
         this.wizardService.setStepValid(true);
         return true;
       }
 
-      // Rule 2: Visitors already added — allow proceeding if the current form is blank
+      // Rule 2: Editing an existing visitor — commit the changes before proceeding
+      if (this.editingVisitorIndex >= 0) {
+        if (!isValid) {
+          this.scrollToFirstError();
+          this.messageService.add({ severity: 'error', ...this.getAlert('all_fields_required') });
+          this.wizardService.setStepValid(false);
+          return false;
+        }
+        const visitorData = { ...this.generalForm.value };
+        visitorData.Visitor_IC = visitorData.visitor_id || '';
+        visitorData.IdentityNo = visitorData.visitor_id || '';
+        this.savedVisitors[this.editingVisitorIndex] = visitorData;
+        this.editingVisitorIndex = -1;
+        ['fullName', 'visitor_id', 'profile', 'profilePreview'].forEach(f => {
+          this.generalForm.get(f)?.reset();
+          this.generalForm.get(f)?.markAsUntouched();
+          this.generalForm.get(f)?.markAsPristine();
+        });
+        this.profileImage = '';
+        this.saveFormDataToWizard();
+        this.wizardService.setStepValid(true);
+        return true;
+      }
+
+      // Rule 3: Visitors already added — allow proceeding if the current form is blank
       const currentFormHasData = this.isCurrentVisitorFormValid() || this.hasFormData();
       if (!currentFormHasData) {
         this.saveFormDataToWizard();
@@ -2080,11 +2133,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!control || !control.enabled) {
       return false;
     }
-
+    // Only show error after the user has interacted with the field, or after validateForm() marks it touched.
+    // This prevents fields from turning red on load or after programmatic resets (e.g. addVisitorToTable).
     const hasBeenInteracted = control.dirty || control.touched;
-    const isEmpty = !control.value || (Array.isArray(control.value) && control.value.length === 0);
-    const isRequiredAndEmpty = control.hasError('required') && isEmpty;
-    return control.invalid && (hasBeenInteracted || isRequiredAndEmpty);
+    return control.invalid && hasBeenInteracted;
   }
 
   private readonly dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
@@ -2120,7 +2172,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return control.hasError('maxlength') && (control.dirty || control.touched);
   }
 
-  handleFileUpload(event: any, visitorIndex?: number): void {
+  handleFileUpload(event: any, visitorIndex?: number, closeDialog = false): void {
     const file = event.target.files[0];
     if (file) {
       // Validate file
@@ -2149,9 +2201,146 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.profileImage = imageUrl;
           this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
         }
+
+        if (closeDialog) {
+          this.closePhotoCaptureDialog();
+        }
       };
       reader.readAsDataURL(file);
     }
+  }
+
+  // ─── Photo Capture Dialog ────────────────────────────────────────────────
+
+  openPhotoCaptureDialog(): void {
+    this.capturedImage = null;
+    const existingPreview = this.generalForm.get('profilePreview')?.value as string | null;
+    this.dialogPreviousImage = existingPreview || null;
+    // If there is an existing photo, show it first so user can decide to keep or change it
+    if (this.dialogPreviousImage) {
+      this.dialogMode = 'preview';
+      this.showPhotoCaptureDialog = true;
+    } else {
+      this.dialogMode = 'camera';
+      this.showPhotoCaptureDialog = true;
+      setTimeout(() => this.startCamera(), 300);
+    }
+  }
+
+  switchToCamera(): void {
+    this.dialogMode = 'camera';
+    this.capturedImage = null;
+    setTimeout(() => this.startCamera(), 150);
+  }
+
+  clearPhoto(): void {
+    this.profileImage = '';
+    this.generalForm.patchValue({ profile: null, profilePreview: '' });
+    // Mark touched+dirty so the required error border shows immediately after removal
+    const ctrl = this.generalForm.get('profile');
+    ctrl?.markAsTouched();
+    ctrl?.markAsDirty();
+    ctrl?.updateValueAndValidity();
+  }
+
+  closePhotoCaptureDialog(): void {
+    this.stopCamera();
+    this.capturedImage = null;
+    this.dialogPreviousImage = null;
+    this.dialogMode = 'camera';
+    this.showPhotoCaptureDialog = false;
+  }
+
+  async startCamera(): Promise<void> {
+    this.stopCamera();
+    try {
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: this.cameraFacingMode,
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        }
+      };
+      // Torch/flash is part of advanced track constraints
+      this.cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+      const videoEl = this.cameraVideoRef?.nativeElement;
+      if (videoEl) {
+        videoEl.srcObject = this.cameraStream;
+        videoEl.play();
+      }
+      this.isCameraOn = true;
+    } catch {
+      this.isCameraOn = false;
+      this.showError('Could not access camera. Please use "Upload from Device".');
+    }
+  }
+
+  stopCamera(): void {
+    if (this.cameraStream) {
+      this.cameraStream.getTracks().forEach(t => t.stop());
+      this.cameraStream = null;
+    }
+    this.isCameraOn = false;
+  }
+
+  async flipCamera(): Promise<void> {
+    this.cameraFacingMode = this.cameraFacingMode === 'user' ? 'environment' : 'user';
+    await this.startCamera();
+  }
+
+  toggleFlash(): void {
+    this.useFlash = !this.useFlash;
+    if (this.cameraStream) {
+      const track = this.cameraStream.getVideoTracks()[0];
+      if (track) {
+        (track.applyConstraints as any)({ advanced: [{ torch: this.useFlash }] }).catch(() => {});
+      }
+    }
+  }
+
+  capturePhoto(): void {
+    const video = this.cameraVideoRef?.nativeElement;
+    const canvas = this.captureCanvasRef?.nativeElement;
+    if (!video || !canvas) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Mirror if using front camera
+    if (this.cameraFacingMode === 'user') {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(video, 0, 0);
+    this.capturedImage = canvas.toDataURL('image/jpeg', 0.85);
+    this.stopCamera();
+  }
+
+  retakePhoto(): void {
+    this.capturedImage = null;
+    setTimeout(() => this.startCamera(), 100);
+  }
+
+  useCapture(): void {
+    if (!this.capturedImage) return;
+    const base64 = this.capturedImage;
+    const imageUrl = this.sanitizer.bypassSecurityTrustUrl(base64);
+    this.profileImage = imageUrl;
+    // Convert base64 to a File object
+    const byteString = atob(base64.split(',')[1]);
+    const mimeType = base64.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+    const file = new File([ab], 'photo.jpg', { type: mimeType });
+    this.generalForm.patchValue({ profile: file, profilePreview: base64 });
+    this.closePhotoCaptureDialog();
+  }
+
+  skipPhoto(): void {
+    this.closePhotoCaptureDialog();
   }
 
   private showError(message: string): void {
@@ -2163,6 +2352,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.stopCamera();
     this.saveFormDataToWizard();
 
     // Clear host search timeout
@@ -2662,6 +2852,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   goNext(): void {
+    // If image upload is REQUIRED and no photo taken yet — open capture dialog to guide the user.
+    // (Optional image: just proceed with normal validation.)
+    if (this.settings?.ImageUploadEnabled && this.settings?.ImageUploadRequired && !this.profileImage) {
+      this.openPhotoCaptureDialog();
+      // Mark profile as touched so the red border appears if the user skips/closes the dialog
+      this.generalForm.get('profile')?.markAsTouched();
+      this.generalForm.get('profile')?.markAsDirty();
+      return;
+    }
     // validateForm() handles markAllAsTouched, setStepValid, and toast errors internally
     const isValid = this.validateForm();
     if (isValid) {
