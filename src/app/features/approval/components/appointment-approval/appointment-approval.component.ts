@@ -163,7 +163,6 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSubmitting = false;
         this.actionResult = 'approved';
-        this.closeModal();
       },
       error: () => {
         this.isSubmitting = false;
@@ -181,7 +180,6 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSubmitting = false;
         this.actionResult = 'rejected';
-        this.closeModal();
       },
       error: () => {
         this.isSubmitting = false;
@@ -215,6 +213,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
 
   closeModal() {
     this.activeModal = null;
+    this.actionResult = '';
     document.body.style.overflow = '';
     this.closeTimer = setTimeout(() => { this.pendingModal = null; }, 240);
   }
