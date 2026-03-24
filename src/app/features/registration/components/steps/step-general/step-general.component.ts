@@ -135,6 +135,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   // Saved visitors for single visitor mode
   savedVisitors: any[] = [];
+  showSavedVisitorsModal = false;
   private destroy$ = new Subject<void>();
 
   constructor(

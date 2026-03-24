@@ -27,6 +27,7 @@ interface Branch {
 interface Category {
   visitor_ctg_id: number;
   visitor_ctg_code?: string;
+  visitor_ctg_desc?: string;
   Name: string;
 }
 
@@ -85,6 +86,10 @@ export class HomePageComponent {
   isAppointmentFlow = false;
   encryptedAppointmentCode: string | null = null;
   appointmentData: any = null;
+
+  // Mobile dropdown toggle states
+  branchOpen = false;
+  visitOpen = false;
 
   get isLoading(): boolean {
     return this._isLoading;
@@ -833,6 +838,42 @@ export class HomePageComponent {
   private getCategoryName(categoryId: number): string {
     const category = this.categories.find(c => c.visitor_ctg_id === categoryId);
     return category ? category.Name : '';
+  }
+
+  // ===== Mobile helpers =====
+
+  get selectedBranchName(): string {
+    if (!this.selectedBranch) return '';
+    const branch = this.branchList.find(b => b.RefBranchSeqID === this.selectedBranch);
+    return branch ? branch.Branch_Name : '';
+  }
+
+  get selectedCategoryName(): string {
+    if (!this.selectedCategory) return '';
+    const cat = this.categories.find(c => c.visitor_ctg_id === this.selectedCategory);
+    return cat ? (cat.visitor_ctg_desc || cat.Name) : '';
+  }
+
+  toggleBranch() {
+    this.branchOpen = !this.branchOpen;
+    this.visitOpen = false;
+  }
+
+  toggleVisit() {
+    this.visitOpen = !this.visitOpen;
+    this.branchOpen = false;
+  }
+
+  selectMobileBranch(branchId: any) {
+    this.selectedBranch = branchId;
+    this.branchOpen = false;
+    this.onBranchChange(branchId);
+  }
+
+  selectMobileCategory(categoryId: any) {
+    this.selectedCategory = categoryId;
+    this.visitOpen = false;
+    this.onCategoryChange(categoryId);
   }
 
   shouldShowTerms(): boolean {

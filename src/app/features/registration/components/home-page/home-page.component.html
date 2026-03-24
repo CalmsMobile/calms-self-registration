@@ -152,6 +152,141 @@
 
   }
 </div>
+
+<!-- ===================== MOBILE VIEW ===================== -->
+<div class="mobile-page">
+
+  @if (isAccessDenied || (hasInvalidUrl && !isAccessDenied)) {
+  <div class="m-error-wrapper">
+    <div class="m-error-card">
+      @if (isAccessDenied) {
+      <i class="pi pi-ban m-error-icon"></i>
+      <p class="m-error-message">{{ baseUrlAccessDeniedInstruction }}</p>
+      } @else {
+      <i class="pi pi-exclamation-triangle m-error-icon"></i>
+      <p class="m-error-message">{{ errorMessage }}</p>
+      }
+      <p class="m-error-subtitle">{{ 'please_contact_your_administrator_for_a_valid_registration_link.' | translate }}</p>
+    </div>
+  </div>
+  }
+
+  @if (!hasInvalidUrl && !isAccessDenied) {
+
+  <!-- ===== STATE 1: No branch yet — hero image layout ===== -->
+  @if (!selectedBranch && branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
+  <div class="m-hero">
+    <app-language-selector class="m-lang"></app-language-selector>
+  </div>
+  <div class="m-content">
+    <img [src]="logo" alt="Company Logo" class="m-logo" />
+    <p class="m-company-name">{{ title }}</p>
+    <h1 class="m-welcome">{{ welcomeText }}</h1>
+    <p class="m-subtitle">{{ 'please_select_your_branch_location' | translate }}</p>
+    <div class="m-form">
+      <div class="m-field-group">
+        <label class="m-label">{{ branchTranslation.caption || ('branch' | translate) }}</label>
+        <div class="m-select-wrap" [class.open]="branchOpen">
+          <button class="m-select-btn" type="button" (click)="toggleBranch()">
+            <span [class.m-placeholder]="!selectedBranchName">{{ selectedBranchName || branchTranslation.placeholder || ('branch' | translate:'placeholder') }}</span>
+          </button>
+          <span class="m-chev" aria-hidden="true">&#9660;</span>
+          <ul class="m-select-list" role="listbox">
+            @for (branch of branchList; track branch.RefBranchSeqID) {
+            <li [class.active]="branch.RefBranchSeqID === selectedBranch" (click)="selectMobileBranch(branch.RefBranchSeqID)" role="option">{{ branch.Branch_Name }}</li>
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ===== STATE 2: Branch selected (or from query) — full form layout ===== -->
+  @if (selectedBranch || branchList.length === 1 || isBranchFromQuery || isAppointmentFlow) {
+  <div class="m-post-wrap">
+
+    <!-- Header: logo + company name -->
+    <div class="m-post-header">
+      <img [src]="logo" alt="Company Logo" class="m-post-logo" />
+      <p class="m-post-company">{{ title }}</p>
+    </div>
+
+    <!-- Page title -->
+    <div class="m-post-title">
+      <span class="m-post-accent">{{ formattedPageTitle.first || 'Visitor' }}</span><br>
+      <span class="m-post-rest">{{ formattedPageTitle.rest || 'Registration' }}</span>
+    </div>
+
+    <!-- Form -->
+    <div class="m-post-form">
+
+      <!-- Branch Selection -->
+      @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
+      <div class="m-field-group">
+        <label class="m-label">{{ branchTranslation.caption || ('branch' | translate) }} <span class="m-optional">(Optional)</span></label>
+        <div class="m-select-wrap" [class.open]="branchOpen">
+          <button class="m-select-btn" type="button" (click)="toggleBranch()">
+            <span [class.m-placeholder]="!selectedBranchName">{{ selectedBranchName || branchTranslation.placeholder || ('branch' | translate:'placeholder') }}</span>
+          </button>
+          <span class="m-chev" aria-hidden="true">&#9660;</span>
+          <ul class="m-select-list" role="listbox">
+            @for (branch of branchList; track branch.RefBranchSeqID) {
+            <li [class.active]="branch.RefBranchSeqID === selectedBranch" (click)="selectMobileBranch(branch.RefBranchSeqID)" role="option">{{ branch.Branch_Name }}</li>
+            }
+          </ul>
+        </div>
+      </div>
+      }
+
+      <!-- Category Selection -->
+      @if (categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
+      <div class="m-field-group">
+        <label class="m-label">{{ 'type_of_visit' | translate }} <span class="m-optional">(Optional)</span></label>
+        <div class="m-select-wrap" [class.open]="visitOpen">
+          <button class="m-select-btn" type="button" (click)="toggleVisit()">
+            <span [class.m-placeholder]="!selectedCategoryName">{{ selectedCategoryName || ('category' | translate:'placeholder') }}</span>
+          </button>
+          <span class="m-chev" aria-hidden="true">&#9660;</span>
+          <ul class="m-select-list" role="listbox">
+            @for (cat of categories; track cat.visitor_ctg_id) {
+            <li [class.active]="cat.visitor_ctg_id === selectedCategory" (click)="selectMobileCategory(cat.visitor_ctg_id)" role="option">{{ cat.visitor_ctg_desc }}</li>
+            }
+          </ul>
+        </div>
+      </div>
+      }
+
+      <!-- Terms and Conditions -->
+      @if (selectedBranch && selectedCategory && shouldShowTerms()) {
+      <div class="m-terms-card">
+        <div class="m-terms-head">
+          <h3>{{ 'terms_and_conditions' | translate }}</h3>
+          <div class="m-custom-checkbox" [class.checked]="termsAccepted" (click)="termsAccepted = !termsAccepted">
+            @if (termsAccepted) {<i class="pi pi-check"></i>}
+          </div>
+        </div>
+        <div class="m-terms-body" [innerHTML]="getTermsHtml()"></div>
+        <p class="m-terms-agree">{{ 'i_agree_to_the_terms_and_conditions' | translate }}</p>
+      </div>
+      }
+
+      <!-- Continue Button -->
+      @if (selectedBranch && selectedCategory) {
+      <button class="m-continue" type="button"
+        [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
+        (click)="proceedToWizard()">
+        {{ 'agree_and_proceed' | translate }} <span class="m-arrow">&#8594;</span>
+      </button>
+      }
+
+    </div>
+  </div>
+  }
+
+  }
+
+</div>
 }
 
 @if (isLoading) {

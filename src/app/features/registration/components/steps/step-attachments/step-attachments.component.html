@@ -27,7 +27,8 @@
         @for (doc of documentTypes; track doc.VisitorAttachSeqId) {
           <div class="card"
             [class.upload]="!attachments[doc.VisitorAttachSeqId].file"
-            [class.uploaded]="!!attachments[doc.VisitorAttachSeqId].file">
+            [class.uploading]="!!attachments[doc.VisitorAttachSeqId].file && !attachments[doc.VisitorAttachSeqId].uploaded"
+            [class.uploaded]="!!attachments[doc.VisitorAttachSeqId].file && !!attachments[doc.VisitorAttachSeqId].uploaded">
 
             <div class="card-text">
               <div class="title">
@@ -38,9 +39,17 @@
               </div>
               @if (!attachments[doc.VisitorAttachSeqId].file) {
                 <div class="subtitle">Max size: {{ maxSize / 1000000 }}MB (.pdf, images)</div>
-              } @else {
+              }
+              @if (attachments[doc.VisitorAttachSeqId].file && attachments[doc.VisitorAttachSeqId].uploaded) {
                 <div class="subtitle uploaded-info">
                   ({{ (attachments[doc.VisitorAttachSeqId].file?.size || 0) / 1024 / 1024 | number: '1.1-1' }}MB)
+                </div>
+              }
+              @if (attachments[doc.VisitorAttachSeqId].file && !attachments[doc.VisitorAttachSeqId].uploaded) {
+                <div class="progress">
+                  <div class="track">
+                    <div class="fill" [style.width.%]="attachments[doc.VisitorAttachSeqId].uploadProgress || 0"></div>
+                  </div>
                 </div>
               }
             </div>
@@ -67,8 +76,13 @@
               </div>
             }
 
+            <!-- Uploading: progress percentage -->
+            @if (attachments[doc.VisitorAttachSeqId].file && !attachments[doc.VisitorAttachSeqId].uploaded) {
+              <div class="percent">{{ attachments[doc.VisitorAttachSeqId].uploadProgress || 0 }}%</div>
+            }
+
             <!-- Uploaded: delete button -->
-            @if (attachments[doc.VisitorAttachSeqId].file) {
+            @if (attachments[doc.VisitorAttachSeqId].file && attachments[doc.VisitorAttachSeqId].uploaded) {
               <button
                 class="delete"
                 type="button"

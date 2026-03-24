@@ -5,7 +5,7 @@ import { WizardService } from '../../../../../core/services/wizard.service';
 import { SharedService } from '../../../../../shared/shared.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { Subject } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpEventType } from '@angular/common/http';
 import { environment } from '../../../../../../environments/environment';
 import { MessageService } from 'primeng/api';
 
@@ -21,6 +21,7 @@ interface Attachment {
   caption: string;
   trackerId?: string;
   uploaded?: boolean;
+  uploadProgress?: number;
 }
 
 @Component({
@@ -171,13 +172,21 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
 
     const uploadUrl = `${environment.proURL}Handler/ImageChunkHandler.ashx?op=profile&ac=upload&nologin=1&isResize=1`;
 
-    this.http.post(uploadUrl, formData).subscribe({
-      next: () => {
-        this.attachments[docId].uploaded = true;
-        this.saveFormData();
+    this.attachments[docId].uploadProgress = 0;
+
+    this.http.post(uploadUrl, formData, { reportProgress: true, observe: 'events' }).subscribe({
+      next: (event: any) => {
+        if (event.type === HttpEventType.UploadProgress && event.total) {
+          this.attachments[docId].uploadProgress = Math.round(100 * event.loaded / event.total);
+        } else if (event.type === HttpEventType.Response) {
+          this.attachments[docId].uploadProgress = 100;
+          this.attachments[docId].uploaded = true;
+          this.saveFormData();
+        }
       },
       error: () => {
         this.attachments[docId].uploaded = false;
+        this.attachments[docId].uploadProgress = undefined;
       }
     });
   }
