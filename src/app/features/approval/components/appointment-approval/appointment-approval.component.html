@@ -2,22 +2,6 @@
   <div class="page" style="display:flex;align-items:center;justify-content:center;min-height:100vh;">
     <p style="color:#6b7d9b;font-size:18px;">Loading...</p>
   </div>
-} @else if (actionResult) {
-  <div class="page" style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;">
-    @if (actionResult === 'approved') {
-      <div class="status-badge-circle status-ok" style="width:82px;height:82px;margin:0 auto;">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>
-      </div>
-      <h2 style="color:#24324a;font-size:28px;margin:0;">Appointment Approved</h2>
-      <p style="color:#6b7d9b;font-size:16px;margin:0;">The visitor has been notified via email.</p>
-    } @else if (actionResult === 'rejected') {
-      <div class="status-badge-circle status-danger" style="width:82px;height:82px;margin:0 auto;">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 17h.01"/></svg>
-      </div>
-      <h2 style="color:#24324a;font-size:28px;margin:0;">Appointment Rejected</h2>
-      <p style="color:#6b7d9b;font-size:16px;margin:0;">The visitor has been notified of the rejection.</p>
-    }
-  </div>
 } @else {
 <div class="page">
   <header class="topbar">
@@ -114,20 +98,26 @@ Documents</h2>
         </div>
       </article>
 
-      <article class="declaration-card">
-        <div class="decl-left">
-          <div class="icon-chip chip-doc" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M9 3h7l5 5v13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v6h6"/><path d="m10.5 14.5 2 2 4-4"/></svg>
+      @if (ndaDoc) {
+        <article class="declaration-card modal-trigger" role="button" tabindex="0"
+          (click)="openModal('nda-modal')"
+          (keydown.enter)="openModal('nda-modal')"
+          (keydown.space)="$event.preventDefault(); openModal('nda-modal')"
+          aria-label="Open NDA Agreement">
+          <div class="decl-left">
+            <div class="icon-chip chip-doc" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M9 3h7l5 5v13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v6h6"/><path d="m10.5 14.5 2 2 4-4"/></svg>
+            </div>
+            <div class="decl-text">
+              <h2 class="decl-title">NDA Agreement</h2>
+              <p class="decl-sub">View Document</p>
+            </div>
           </div>
-          <div class="decl-text">
-            <h2 class="decl-title">NDA Agreement</h2>
-            <p class="decl-sub">Review</p>
+          <div class="decl-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 18 18 6"/><path d="M9 6h9v9"/></svg>
           </div>
-        </div>
-        <div class="decl-arrow" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M6 18 18 6"/><path d="M9 6h9v9"/></svg>
-        </div>
-      </article>
+        </article>
+      }
     </section>
 
     <section class="main-panel" aria-label="Visitor Details">
@@ -301,19 +291,29 @@ Documents</h2>
           <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
       </div>
-      <div class="center-modal">
-        <div class="status-badge-circle status-ok" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>
+      @if (actionResult === 'approved') {
+        <div class="center-modal">
+          <div class="status-badge-circle status-ok" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>
+          </div>
+          <h3 class="modal-copy-title">Appointment Approved</h3>
+          <p class="modal-copy">The visitor has been notified via email.</p>
         </div>
-        <h3 class="modal-copy-title">Approve this appointment?</h3>
-        <p class="modal-copy">Visitor access will be granted immediately. An email notification will be sent to the visitor.</p>
-        <div class="modal-actions">
-          <button class="modal-btn ghost" type="button" (click)="closeModal()" [disabled]="isSubmitting">Cancel</button>
-          <button class="modal-btn approve" type="button" (click)="approve()" [disabled]="isSubmitting">
-            {{ isSubmitting ? 'Approving...' : 'Approve' }}
-          </button>
+      } @else {
+        <div class="center-modal">
+          <div class="status-badge-circle status-ok" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/></svg>
+          </div>
+          <h3 class="modal-copy-title">Approve this appointment?</h3>
+          <p class="modal-copy">Visitor access will be granted immediately. An email notification will be sent to the visitor.</p>
+          <div class="modal-actions">
+            <button class="modal-btn ghost" type="button" (click)="closeModal()" [disabled]="isSubmitting">Cancel</button>
+            <button class="modal-btn approve" type="button" (click)="approve()" [disabled]="isSubmitting">
+              {{ isSubmitting ? 'Approving...' : 'Approve' }}
+            </button>
+          </div>
         </div>
-      </div>
+      }
     </section>
   }
 
@@ -326,21 +326,31 @@ Documents</h2>
           <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
       </div>
-      <div class="center-modal">
-        <div class="status-badge-circle status-danger" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 17h.01"/></svg>
+      @if (actionResult === 'rejected') {
+        <div class="center-modal">
+          <div class="status-badge-circle status-danger" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 17h.01"/></svg>
+          </div>
+          <h3 class="modal-copy-title">Appointment Rejected</h3>
+          <p class="modal-copy">The visitor has been notified of the rejection.</p>
         </div>
-        <h3 class="modal-copy-title">Reject this appointment?</h3>
-        <p class="modal-copy">This action cannot be undone. Please provide a reason for the rejection.</p>
-      </div>
-      <p class="modal-section-label">Reason for Rejection</p>
-      <textarea class="modal-textarea" placeholder="Enter reason here..." [(ngModel)]="rejectRemarks"></textarea>
-      <div class="modal-actions">
-        <button class="modal-btn ghost" type="button" (click)="closeModal()" [disabled]="isSubmitting">Cancel</button>
-        <button class="modal-btn reject" type="button" (click)="reject()" [disabled]="isSubmitting || !rejectRemarks.trim()">
-          {{ isSubmitting ? 'Rejecting...' : 'Reject' }}
-        </button>
-      </div>
+      } @else {
+        <div class="center-modal">
+          <div class="status-badge-circle status-danger" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 7v6M12 17h.01"/></svg>
+          </div>
+          <h3 class="modal-copy-title">Reject this appointment?</h3>
+          <p class="modal-copy">This action cannot be undone. Please provide a reason for the rejection.</p>
+        </div>
+        <p class="modal-section-label">Reason for Rejection</p>
+        <textarea class="modal-textarea" placeholder="Enter reason here..." [(ngModel)]="rejectRemarks"></textarea>
+        <div class="modal-actions">
+          <button class="modal-btn ghost" type="button" (click)="closeModal()" [disabled]="isSubmitting">Cancel</button>
+          <button class="modal-btn reject" type="button" (click)="reject()" [disabled]="isSubmitting || !rejectRemarks.trim()">
+            {{ isSubmitting ? 'Rejecting...' : 'Reject' }}
+          </button>
+        </div>
+      }
     </section>
   }
 
@@ -490,6 +500,19 @@ Documents</h2>
           <p style="color:#6b7d9b;font-size:14px;text-align:center;padding:24px 0;">No questionnaire data available.</p>
         }
       </div>
+    </section>
+  }
+
+  @if (pendingModal === 'nda-modal') {
+    <section class="modal-card modal-pdf" [class.is-open]="activeModal === 'nda-modal'"
+      role="dialog" aria-modal="true" aria-labelledby="ndaTitle">
+      <div class="modal-head">
+        <h2 class="modal-title" id="ndaTitle">NDA Agreement</h2>
+        <button class="modal-close" type="button" (click)="closeModal()" aria-label="Close modal">
+          <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <iframe [src]="ndaUrl" style="width:100%;height:100%;border:none;flex:1;display:block;" title="NDA Agreement"></iframe>
     </section>
   }
 
