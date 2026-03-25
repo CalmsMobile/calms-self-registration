@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
+import { SharedService } from '../../../../../shared/shared.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { Subject } from 'rxjs';
 
@@ -22,10 +23,14 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   declaredItems: DeclaredItem[] = [];
   newItem = { description: '', serialNumber: '', direction: '' };
   canAdd = false;
+  logo = 'assets/logo.png';
+  companyTitle = '';
 
   private destroy$ = new Subject<void>();
 
-  constructor(private wizardService: WizardService) {
+  constructor(private wizardService: WizardService, private sharedService: SharedService) {
+    this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
+    this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
     this.wizardService.onValidationRequest.subscribe(() => {
       this.validateStep();
     });

@@ -3,6 +3,7 @@ import { FormBuilder, FormControl, FormGroup, FormArray, FormsModule, ReactiveFo
 import { MessageService } from 'primeng/api';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { LabelService } from '../../../../../core/services/label.service';
+import { SharedService } from '../../../../../shared/shared.service';
 import { ToastModule } from 'primeng/toast';
 
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
@@ -42,6 +43,8 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   modalType: 'incorrect' | 'required' | null = null;
   alertMessage = '';
   illustrationUrl = '/assets/safety-declaration.png';
+  logo = 'assets/logo.png';
+  companyTitle = '';
   private destroy$ = new Subject<void>();
 
   get hasAnyAnswer(): boolean {
@@ -57,9 +60,12 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private wizardService: WizardService,
     private messageService: MessageService,
-    private labelService: LabelService
+    private labelService: LabelService,
+    private sharedService: SharedService
   ) {
     this.questionnaireForm = this.fb.group({});
+    this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
+    this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
   }
 
   ngOnInit() {
@@ -256,6 +262,14 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     
     formArray.markAsTouched();
     this.saveFormData();
+  }
+
+  mobileNext(): void {
+    this.validateQuestionnaire();
+    // Navigate only when validation passed (validationErrors will be empty)
+    if (Object.keys(this.validationErrors).length === 0) {
+      this.wizardService.navigateToNextStep();
+    }
   }
 
   validateQuestionnaire(): void {

@@ -55,6 +55,73 @@
   </main>
 }
 
+<!-- Mobile Layout -->
+@if (!isLoading) {
+<div class="mobile-page">
+  <!-- Header -->
+  <header class="m-header">
+    <img [src]="logo" alt="Logo" class="m-logo" />
+    <span class="m-company">{{ companyTitle }}</span>
+  </header>
+
+  <!-- Title -->
+  <div class="m-title-wrap">
+    <h1 class="m-title">
+      <span class="m-accent">{{ 'questionnaire_title' | translate }}</span>
+    </h1>
+    <p class="m-subtitle">{{ 'questionnaire_subtitle' | translate }}</p>
+  </div>
+
+  <!-- Questions -->
+  <div class="m-questions" [formGroup]="questionnaireForm">
+    @for (question of questions; track question.QuestionariesSeqId; let i = $index) {
+    <div class="m-question-card" [class.has-error]="validationErrors[question.QuestionariesSeqId]">
+      @if (question.ShortName) {
+      <p class="m-question-label">{{ question.ShortName }}</p>
+      }
+      <p class="m-question-text">
+        {{ question.Description }}
+        @if (question.ValidationRequired) {
+        <span class="m-required">*</span>
+        }
+      </p>
+      <div class="m-options">
+        @if (isMultipleAnswerQuestion(question)) {
+          @for (option of getQuestionOptions(question); track option.value) {
+          <button type="button" class="m-option"
+            [class.selected]="isCheckboxSelected(question.QuestionariesSeqId, option.value)"
+            (click)="toggleCheckbox(question.QuestionariesSeqId, option.value)">
+            {{ option.label }}
+          </button>
+          }
+        } @else {
+          @for (option of getQuestionOptions(question); track option.value) {
+          <button type="button" class="m-option"
+            [class.selected]="getQuestionControl(question.QuestionariesSeqId).value === option.value"
+            (click)="selectRadioOption(question.QuestionariesSeqId, option.value)">
+            {{ option.label }}
+          </button>
+          }
+        }
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- Actions -->
+  <div class="m-actions">
+    <div class="m-actions-row">
+      <button class="m-btn m-btn-grey" type="button" (click)="rewatchSafetyBrief()">
+        <span>&#8592;</span> {{ 'back' | translate }}
+      </button>
+    </div>
+    <button class="m-btn m-btn-yellow" type="button" [disabled]="!hasAnyAnswer" (click)="mobileNext()">
+      {{ 'continue' | translate }} <span>&#8594;</span>
+    </button>
+  </div>
+</div>
+}
+
 <!-- Incorrect answer modal -->
 <div class="modal" [class.active]="modalType === 'incorrect'">
   <div class="modal-overlay" (click)="closeModal()"></div>
