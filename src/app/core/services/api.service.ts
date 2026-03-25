@@ -289,4 +289,8 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/GetVisitorItemChecklistBySeqId`, { "SEQ_ID": seqId });
   }
 
+  GetVisitorNDABySeqId(seqId: string) {
+    return this.apiBase.post(`${this.baseUrl}/GetVisitorNDABySeqId`, { "SEQ_ID": seqId });
+  }
+
 }

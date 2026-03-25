@@ -4,7 +4,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of, switchMap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 import { ApiService } from '../../../../core/services/api.service';
+import { environment } from '../../../../../environments/environment';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-appointment-approval',
@@ -28,6 +31,8 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   questionnaireData: any[] = [];
   docsData: any[] = [];
   itemsData: any[] = [];
+  ndaDoc: string = '';
+  ndaUrl: SafeResourceUrl = '';
   itemCaptions = { desc: 'Equipment Detail', serial: 'Serial Number', type: 'Type' };
 
   isLoading = true;
@@ -47,7 +52,9 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   private openTimer: any = null;
   private closeTimer: any = null;
 
-  constructor(private route: ActivatedRoute, private apiService: ApiService) {}
+  private ndaBlobUrl = '';
+
+  constructor(private route: ActivatedRoute, private apiService: ApiService, private sanitizer: DomSanitizer, private http: HttpClient) {}
 
   ngOnInit() {
     this.seqIdEnc  = (this.route.snapshot.queryParamMap.get('enc') || '').replace(/ /g, '+');
@@ -61,6 +68,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     document.body.style.overflow = '';
     clearTimeout(this.openTimer);
     clearTimeout(this.closeTimer);
+    if (this.ndaBlobUrl) { URL.revokeObjectURL(this.ndaBlobUrl); }
   }
 
   loadData() {
@@ -89,7 +97,8 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
           decl:  this.apiService.GetVisitorDeclarationSettings(branch, visitorCtg).pipe(catchError(() => of(null))),
           docs:  this.apiService.GetVisitorDocsBySeqId(this.seqId).pipe(catchError(() => of(null))),
           items: this.apiService.GetVisitorItemChecklistBySeqId(this.seqId).pipe(catchError(() => of(null))),
-          qna:   this.apiService.GetVisitorQuestionariesByAppointmentId(this.seqId).pipe(catchError(() => of(null)))
+          qna:   this.apiService.GetVisitorQuestionariesByAppointmentId(this.seqId).pipe(catchError(() => of(null))),
+          nda:   this.apiService.GetVisitorNDABySeqId(this.seqId).pipe(catchError(() => of(null)))
         });
       })
     ).subscribe({
@@ -97,8 +106,23 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
         this.declarationData   = res.decl?.Table1  || res.decl?.Table  || [];
         this.questionnaireData = res.qna?.Table  || [];
         this.docsData        = res.docs?.Table1 || res.docs?.Table  || [];
-        this.itemsData       = res.items?.Table || [];
-        const settingRaw = res.items?.Table1?.[0]?.SettingDetail;
+        this.itemsData       = res.items?.Table || res.decl?.Table || [];
+        this.ndaDoc = res.nda?.Table?.[0]?.NDADocument || '';
+        if (this.ndaDoc) {
+          const base = environment.apiURL.replace(/\/api\/vims$/i, '');
+          const url = base + '/' + this.ndaDoc.replace(/\\/g, '/');
+          this.http.get(url, { responseType: 'blob' }).subscribe({
+            next: (blob) => {
+              if (this.ndaBlobUrl) { URL.revokeObjectURL(this.ndaBlobUrl); }
+              this.ndaBlobUrl = URL.createObjectURL(blob);
+              this.ndaUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.ndaBlobUrl);
+            },
+            error: () => {
+              this.ndaUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+            }
+          });
+        }
+        const settingRaw = res.decl?.Table1?.[0]?.SettingDetail || res.items?.Table1?.[0]?.SettingDetail;
         if (settingRaw) {
           try {
             const s = JSON.parse(settingRaw);
