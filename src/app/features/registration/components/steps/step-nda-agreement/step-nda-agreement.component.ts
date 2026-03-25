@@ -30,7 +30,7 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   private destroy$ = new Subject<void>();
   showValidationError = false;
   showSignatureModal = false;
-  illustrationUrl = '/assets/nda.svg';
+  illustrationUrl = '/assets/sign.png';
 
   /** Restored base64 signature (if user navigated back) */
   restoredSignature = '';

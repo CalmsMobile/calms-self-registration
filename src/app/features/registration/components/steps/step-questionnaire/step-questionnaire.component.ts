@@ -41,7 +41,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   isLoading = true;
   modalType: 'incorrect' | 'required' | null = null;
   alertMessage = '';
-  illustrationUrl = '/assets/questionnaire.svg';
+  illustrationUrl = '/assets/safety-declaration.png';
   private destroy$ = new Subject<void>();
 
   get hasAnyAnswer(): boolean {
