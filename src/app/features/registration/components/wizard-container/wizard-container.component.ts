@@ -48,9 +48,9 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
   showWizardNav = true;
 
   /** Routes that manage their own header + navigation */
-  private readonly ownLayoutRoutes = ['attachments', 'prohibited-items', 'general-info'];
+  private readonly ownLayoutRoutes = ['attachments', 'prohibited-items', 'general-info', 'questionnaire', 'nda-agreement', 'safety-brief'];
   /** Routes that manage their own nav only (keep shared header) */
-  private readonly ownNavRoutes = ['safety-brief'];
+  private readonly ownNavRoutes: string[] = [];
 
   private destroy$ = new Subject<void>();
 
@@ -190,15 +190,23 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     const stepRoute = this.getStepRoute(stepIndex);
     if (this.wizardService.shouldSkipSafetyBrief(stepRoute)) {
       console.log('Auto-skipping step:', stepRoute);
-      // Mark step as valid and completed
-      this.wizardService.setStepValid(true);
-      this.completedSteps[stepIndex] = true;
-      // Navigate to next step
-      const nextStepIndex = stepIndex + 1;
-      if (nextStepIndex < this.items.length) {
-        this.navigateToStep(nextStepIndex, true);
+      const isGoingBackward = stepIndex < currentStep;
+      if (isGoingBackward) {
+        // When going backward past safety brief, go to the step before it
+        const prevStepIndex = stepIndex - 1;
+        if (prevStepIndex >= 0) {
+          this.navigateToStep(prevStepIndex, true);
+        }
       } else {
-        this.submitRegistration();
+        // Going forward: mark step as valid and skip ahead
+        this.wizardService.setStepValid(true);
+        this.completedSteps[stepIndex] = true;
+        const nextStepIndex = stepIndex + 1;
+        if (nextStepIndex < this.items.length) {
+          this.navigateToStep(nextStepIndex, true);
+        } else {
+          this.submitRegistration();
+        }
       }
       return;
     }

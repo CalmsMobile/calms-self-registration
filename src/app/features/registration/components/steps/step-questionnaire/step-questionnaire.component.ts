@@ -408,6 +408,12 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     this.modalType = null;
   }
 
+  goBack(): void {
+    this.saveFormData();
+    const prev = this.wizardService.getCurrentStepIndex() - 1;
+    if (prev >= 0) this.wizardService.requestStepChange(prev);
+  }
+
   rewatchSafetyBrief(): void {
     this.modalType = null;
 

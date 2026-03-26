@@ -1,18 +1,19 @@
-<div class="language-wrapper">
-  <!-- Globe button -->
-  <button class="lang-btn" (click)="toggleDropdown()" type="button" title="Change language">
-    <i class="pi pi-globe"></i>
+<div class="language-wrapper" [class.lang-open]="showDropdown">
+  <!-- Language button -->
+  <button class="lang-btn" (click)="toggleDropdown()" type="button" aria-label="Select language">
+    文A
   </button>
 
-  <!-- Custom dropdown -->
+  <!-- Backdrop + panel -->
   @if (showDropdown) {
-  <div class="lang-dropdown">
+  <div class="lang-backdrop" (click)="toggleDropdown()"></div>
+  <div class="lang-panel">
     @for (lang of languages; track lang.LanguageId) {
-    <button class="lang-option"
+    <button class="lang-item"
             [class.active]="selectedLanguage?.LanguageId === lang.LanguageId"
             (click)="selectLanguage(lang)"
             type="button">
-      <span class="lang-code">{{ getCountryCode(lang.LanguageCode) }}</span>
+      <span class="lang-flag">{{ getFlagEmoji(lang.LanguageCode) }}</span>
       <span class="lang-name">{{ lang.LanguageName }}</span>
     </button>
     }

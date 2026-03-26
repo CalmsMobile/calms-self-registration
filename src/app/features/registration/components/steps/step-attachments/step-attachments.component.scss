@@ -9,12 +9,13 @@
 
   display: flex;
   justify-content: center;
+  min-height: 100vh;
   font-family: 'Poppins', sans-serif;
   background-color: #f5f5f5;
   background-image: url('/assets/back.png');
   background-repeat: no-repeat;
   background-position: center top;
-  background-size: 100% auto;
+  background-size: cover;
   color: var(--text-dark);
 }
 
@@ -300,14 +301,13 @@
   }
 
   &.yellow {
-    background: var(--primary);
+    background: #f5b301;
     color: #2b2b2b;
     box-shadow: 0 4px 16px rgba(245, 180, 0, 0.3);
 
     &:hover {
-      background: linear-gradient(145deg, #ffc926, #e8a900);
+      background: #e8a900;
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(245, 180, 0, 0.4);
     }
   }
 
@@ -337,13 +337,15 @@
 
 @media (max-width: 768px) {
   :host {
+    background: #f6f6f6;
     background-image: none;
-    background-color: #f0f0f0;
+    justify-content: center;
     display: block;
   }
 
   .page {
-    padding: 22px 18px 32px;
+    max-width: 420px;
+    padding: 18px 18px 28px;
     max-height: none;
   }
 
@@ -364,25 +366,21 @@
   /* Content layout */
   .content {
     grid-template-columns: 1fr;
-    gap: 16px;
-    margin-top: 0;
+    gap: 18px;
+    margin-top: 42px;
   }
 
-  /* Show left panel as a compact card */
   .left {
     display: block;
-    background: #ffffff;
-    border-radius: 20px;
-    padding: 18px 18px 14px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+    order: 1;
 
     h2 {
-      font-size: 26px;
+      font-size: 28px;
       line-height: 1.1;
     }
 
     p {
-      font-size: 12.5px;
+      font-size: 13px;
       margin-top: 6px;
     }
   }
@@ -462,7 +460,7 @@
   /* Actions */
   .actions {
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
     margin-top: 22px;
   }
 
@@ -473,14 +471,14 @@
   }
 
   .btn {
-    height: 48px;
+    height: 46px;
     font-size: 14px;
-    padding: 0 20px;
+    padding: 0 18px;
     justify-content: center;
   }
 
   .actions-left .btn {
-    flex: 1;
+    width: 48%;
   }
 
   .btn.yellow {
@@ -488,9 +486,9 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 400px) {
   .page { padding: 16px 14px 28px; }
   .logo { width: 110px; }
   .page-header h1 { font-size: 20px; }
-  .btn { padding: 0 16px; font-size: 13px; }
+  .btn { padding: 0 14px; font-size: 13px; }
 }
