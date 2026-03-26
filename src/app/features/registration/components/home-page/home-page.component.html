@@ -142,7 +142,8 @@
         <button class="btn" type="button"
           [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
           (click)="proceedToWizard()">
-          {{ 'agree_and_proceed' | translate }} &rarr;
+          <span>{{ 'agree_and_proceed' | translate }}</span>
+          <i class="pi pi-arrow-right btn-icon"></i>
         </button>
       </div>
       }
@@ -190,7 +191,7 @@
           <button class="m-select-btn" type="button" (click)="toggleBranch()">
             <span [class.m-placeholder]="!selectedBranchName">{{ selectedBranchName || branchTranslation.placeholder || ('branch' | translate:'placeholder') }}</span>
           </button>
-          <span class="m-chev" aria-hidden="true">&#9660;</span>
+          <span class="m-chev" aria-hidden="true">⌄</span>
           <ul class="m-select-list" role="listbox">
             @for (branch of branchList; track branch.RefBranchSeqID) {
             <li [class.active]="branch.RefBranchSeqID === selectedBranch" (click)="selectMobileBranch(branch.RefBranchSeqID)" role="option">{{ branch.Branch_Name }}</li>
@@ -229,7 +230,7 @@
           <button class="m-select-btn" type="button" (click)="toggleBranch()">
             <span [class.m-placeholder]="!selectedBranchName">{{ selectedBranchName || branchTranslation.placeholder || ('branch' | translate:'placeholder') }}</span>
           </button>
-          <span class="m-chev" aria-hidden="true">&#9660;</span>
+          <span class="m-chev" aria-hidden="true">⌄</span>
           <ul class="m-select-list" role="listbox">
             @for (branch of branchList; track branch.RefBranchSeqID) {
             <li [class.active]="branch.RefBranchSeqID === selectedBranch" (click)="selectMobileBranch(branch.RefBranchSeqID)" role="option">{{ branch.Branch_Name }}</li>
@@ -247,7 +248,7 @@
           <button class="m-select-btn" type="button" (click)="toggleVisit()">
             <span [class.m-placeholder]="!selectedCategoryName">{{ selectedCategoryName || ('category' | translate:'placeholder') }}</span>
           </button>
-          <span class="m-chev" aria-hidden="true">&#9660;</span>
+          <span class="m-chev" aria-hidden="true">⌄</span>
           <ul class="m-select-list" role="listbox">
             @for (cat of categories; track cat.visitor_ctg_id) {
             <li [class.active]="cat.visitor_ctg_id === selectedCategory" (click)="selectMobileCategory(cat.visitor_ctg_id)" role="option">{{ cat.visitor_ctg_desc }}</li>
@@ -276,7 +277,8 @@
       <button class="m-continue" type="button"
         [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
         (click)="proceedToWizard()">
-        {{ 'agree_and_proceed' | translate }} <span class="m-arrow">&#8594;</span>
+        <span>{{ 'agree_and_proceed' | translate }}</span>
+        <i class="pi pi-arrow-right"></i>
       </button>
       }
 

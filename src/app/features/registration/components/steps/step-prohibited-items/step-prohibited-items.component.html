@@ -1,4 +1,9 @@
 ﻿<main class="page">
+  <header class="page-header">
+    <img [src]="logo" alt="Logo" class="logo" />
+    <h1>{{ companyTitle }}</h1>
+  </header>
+
   <section class="layout">
     <div class="left">
       <h2>
@@ -72,10 +77,10 @@
 
       <div class="actions">
         <div class="actions-left">
-          <button class="btn grey" type="button" (click)="goBack()"><span class="icon-left">&larr;</span> {{ 'em_back' | translate }}</button>
-          <button class="btn grey" type="button" (click)="skipStep()">{{ 'em_skip' | translate }} <span class="icon-right">&rarr;</span></button>
+          <button class="btn grey" type="button" (click)="goBack()"><span class="icon-left">&larr;</span> {{ 'back' | translate }}</button>
+          <button class="btn grey" type="button" (click)="skipStep()">{{ 'skip' | translate }} <span class="icon-right">&rarr;</span></button>
         </div>
-        <button class="btn yellow" type="button" (click)="proceedToNext()">{{ 'em_continue' | translate }} <span class="icon-right">&rarr;</span></button>
+        <button class="btn yellow" type="button" (click)="proceedToNext()">{{ 'continue' | translate }} <span class="icon-right">&rarr;</span></button>
       </div>
     </div>
   </section>
@@ -161,14 +166,14 @@
   <div class="m-actions">
     <div class="m-actions-row">
       <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
-        <span>&#8592;</span> {{ 'em_back' | translate }}
+        <span>&#8592;</span> {{ 'back' | translate }}
       </button>
       <button class="m-btn m-btn-grey" type="button" (click)="skipStep()">
-        {{ 'em_skip' | translate }} <span>&#8594;</span>
+        {{ 'skip' | translate }} <span>&#8594;</span>
       </button>
     </div>
     <button class="m-btn m-btn-yellow" type="button" (click)="proceedToNext()">
-      {{ 'em_continue' | translate }} <span>&#8594;</span>
+      {{ 'continue' | translate }} <span>&#8594;</span>
     </button>
   </div>
 </div>

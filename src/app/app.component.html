@@ -4,13 +4,7 @@
   <app-header></app-header>
   }
 
-  <!-- Global Language Icon -->
-  @if (showLanguageSelector) {
-  <app-language-selector class="global-language-icon" (languageChange)="onLanguageChange($event)">
-  </app-language-selector>
-  }
-
-  <main class="app-content">
+<main class="app-content">
     <router-outlet></router-outlet>
   </main>
 </div>

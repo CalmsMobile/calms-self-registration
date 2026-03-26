@@ -252,7 +252,6 @@ export class HomePageComponent {
         this.loadBranches().then(() => {
           this.getPageSettings();
           this.loadBranchHostDataAsync(null);
-          this.sharedService.setLanguageVisibility(false);
         });
       } else {
         // Normal flow without query parameter
@@ -540,11 +539,6 @@ export class HomePageComponent {
     }
   }
 
-  // Ensure global language selector shows only when no branch is selected
-  private updateLanguageVisibility() {
-    this.sharedService.setLanguageVisibility(!this.selectedBranch);
-  }
-
   /**
    * Process additional page settings from the API response
    * This uses the same data that was already fetched by the label service
@@ -659,8 +653,6 @@ export class HomePageComponent {
           if (!this.isBranchFromQuery) {
             this.isLoading = false;
           }
-          // Update language selector visibility after branches are loaded
-          this.updateLanguageVisibility();
           resolve();
         },
         error: (error) => {
@@ -738,8 +730,6 @@ export class HomePageComponent {
         lsBranchName,
         environment.proURL + "Handler/PortalImageHandler.ashx?ScreenType=20&RefSlno=" + newValue
       );
-      // hide language selector when a branch is selected
-      this.sharedService.setLanguageVisibility(false);
     } catch (error) {
       console.error('Error in branch change:', error);
     } finally {

@@ -93,6 +93,13 @@ export class LanguageSelectorComponent implements OnInit {
     this.showDropdown = false;
   }
 
+  getFlagEmoji(languageCode: string): string {
+    const countryCode = this.getCountryCode(languageCode);
+    return [...countryCode.toUpperCase()].map(c =>
+      String.fromCodePoint(127397 + c.charCodeAt(0))
+    ).join('');
+  }
+
   getCountryCode(languageCode: string): string {
     if (!languageCode) return '--';
     const map: Record<string, string> = {

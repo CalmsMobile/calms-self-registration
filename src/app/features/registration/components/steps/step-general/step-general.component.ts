@@ -1706,6 +1706,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     this.setupControl('gender', this.settings.GenderEnabled, this.settings.GenderRequired);
     this.setupControl('department', this.settings.HostDepartmentEnabled, this.settings.HostDepartmentRequired);
+    this.setupControl('floor', this.settings.FloorEnabled, this.settings.FloorRequired);
     this.setupControl('purpose', this.settings.PurposeEnabled, this.settings.PurposeRequired);
     this.setupControl('visitor_company', this.settings.CompanyEnabled, this.settings.CompanyRequired);
     this.setupControl('vehicle_number', this.settings.VehicleNumberEnabled, this.settings.VehicleNumberRequired);

@@ -1,4 +1,10 @@
 <main class="page">
+  <!-- Header -->
+  <header class="page-header">
+    <img [src]="logo" alt="Logo" class="logo" />
+    <h1>{{ companyTitle }}</h1>
+  </header>
+
   <section class="content">
     <div class="left">
       <h2>
@@ -26,6 +32,9 @@
       }
 
       <div class="actions">
+        <button class="btn grey" type="button" (click)="goBack()">
+          <span class="icon-left">&#8592;</span> {{ 'back' | translate }}
+        </button>
         <button class="btn yellow" type="button" (click)="openSignature()">
           {{ 'sign' | translate }} <span class="icon-right">&#9998;</span>
         </button>

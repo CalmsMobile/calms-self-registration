@@ -117,15 +117,3 @@
     }
   }
 }
-
-.global-language-icon {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 1000;
-
-  @media (max-width: 600px) {
-    top: 16px;
-    right: 16px;
-  }
-}

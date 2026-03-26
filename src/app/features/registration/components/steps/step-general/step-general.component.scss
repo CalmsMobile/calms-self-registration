@@ -103,25 +103,26 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 28px;
+  padding: 14px 28px;
   border-radius: 999px;
-  border: 2px solid var(--text-dark);
-  background: white;
+  border: 2px dotted #bdbdbd;
+  background: #f9f9f9;
   font-size: 15px;
   font-weight: 600;
   font-family: 'Poppins', sans-serif;
-  color: var(--text-dark);
+  color: #595959;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
   flex-shrink: 0;
 
   &:hover {
-    background: #f5f5f5;
+    background: #f0f0f0;
   }
 
   i {
     font-size: 16px;
+    color: #707070;
   }
 }
 
@@ -171,7 +172,7 @@
 .form-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 22px;
   margin-bottom: 14px;
 
   @media (max-width: 1100px) {
@@ -193,15 +194,46 @@
 }
 
 .field-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-dark);
+  font-size: 12px;
+  font-weight: 500;
+  color: #7a7a7a;
   margin-bottom: 8px;
 }
 
 .required-star {
   color: var(--error);
   margin-left: 2px;
+}
+
+/* ============================================
+   INPUT WRAP & FIELD ICON
+   ============================================ */
+.input-wrap {
+  position: relative;
+}
+
+.field-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  color: #7b7b7b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+
+  i {
+    font-size: 15px;
+  }
+}
+
+.wrap-textarea .field-icon {
+  top: 18px;
+  transform: none;
 }
 
 /* Input Styling */
@@ -213,12 +245,13 @@ textarea,
 ::ng-deep .p-autocomplete,
 ::ng-deep .p-multiselect {
   width: 100%;
-  height: 48px;
-  padding: 0 16px;
+  height: 52px;
+  padding: 0 18px 0 52px;
   border-radius: 18px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #e6e6e6;
   background: white !important;
-  font-size: 14px;
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06);
+  font-size: 15px;
   font-family: 'Poppins', sans-serif;
   transition: all 0.2s ease;
   display: flex;
@@ -261,10 +294,11 @@ textarea {
   .p-autocomplete,
   .p-multiselect {
     width: 100% !important;
-    height: 48px !important;
+    height: 52px !important;
     border-radius: 18px !important;
-    border: 1px solid #d1d5db !important;
+    border: 1px solid #e6e6e6 !important;
     background: white !important;
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06) !important;
     display: flex !important;
     align-items: center !important;
     transition: all 0.2s ease;
@@ -289,8 +323,8 @@ textarea {
     height: 100% !important;
     border: none !important;
     background: transparent !important;
-    padding: 0 40px 0 16px !important;
-    font-size: 14px !important;
+    padding: 0 40px 0 52px !important;
+    font-size: 15px !important;
     display: flex !important;
     align-items: center !important;
     outline: none !important;
@@ -885,8 +919,8 @@ textarea {
 
   input,
   textarea {
-    height: 42px !important;
-    font-size: 13px !important;
+    height: 46px !important;
+    font-size: 14px !important;
   }
 
   ::ng-deep {
@@ -895,8 +929,8 @@ textarea {
     .p-datepicker,
     .p-autocomplete,
     .p-multiselect {
-      height: 42px !important;
-      font-size: 13px !important;
+      height: 46px !important;
+      font-size: 14px !important;
     }
 
     .p-select-label,
@@ -958,9 +992,9 @@ textarea {
 
   input,
   textarea {
-    height: 38px !important;
-    font-size: 12px !important;
-    padding: 0 12px !important;
+    height: 42px !important;
+    font-size: 13px !important;
+    padding: 0 14px 0 48px !important;
   }
 
   ::ng-deep {
@@ -969,8 +1003,8 @@ textarea {
     .p-datepicker,
     .p-autocomplete,
     .p-multiselect {
-      height: 38px !important;
-      font-size: 12px !important;
+      height: 42px !important;
+      font-size: 13px !important;
     }
   }
 
@@ -1404,8 +1438,8 @@ textarea {
 .btn {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 36px;
+  gap: 12px;
+  padding: 14px 26px;
   border-radius: 999px;
   border: none;
   font-family: 'Poppins', sans-serif;
@@ -1422,23 +1456,24 @@ textarea {
 }
 
 .btn-back {
-  background: #eaeaea;
-  color: var(--text-dark);
-  border: 2px solid var(--text-dark);
+  background: #e0e0e0;
+  color: #4a4a4a;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.08);
 
   &:hover:not(:disabled) {
-    background: #ddd;
+    background: #d4d4d4;
   }
 }
 
 .btn-save-add,
 .btn-continue {
-  background: linear-gradient(180deg, #f7d26a 0%, #f1b733 100%);
-  color: #1f1f1f;
-  box-shadow: 0 6px 18px rgba(245, 180, 0, 0.3);
+  background: #f5b301;
+  color: #27304a;
+  box-shadow: 0 10px 24px rgba(245, 179, 1, 0.35);
 
   &:hover:not(:disabled) {
-    box-shadow: 0 8px 22px rgba(245, 180, 0, 0.4);
+    background: #e8a900;
+    box-shadow: 0 12px 28px rgba(245, 179, 1, 0.45);
     transform: translateY(-1px);
   }
 }
@@ -1820,7 +1855,7 @@ textarea {
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
-    background: #f6f6f6;
+    background: #ffffff;
     font-family: 'Poppins', sans-serif;
   }
 
@@ -1850,10 +1885,9 @@ textarea {
   .m-top-section {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 14px 20px 12px;
+    align-items: flex-start;
+    padding: 16px 22px 12px;
     background: #fff;
-    border-bottom: 1px solid #f0f0f0;
   }
 
   .m-left-title {
@@ -1926,17 +1960,21 @@ textarea {
   .m-returning-btn {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 2px solid #d1d5db;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px dotted #bdbdbd;
     background: #f9f9f9;
-    font-size: 12px;
-    font-weight: 600;
-    font-family: 'Poppins', sans-serif;
+    font-size: 0; /* hide text, show icon only */
     color: #595959;
     cursor: pointer;
-    white-space: nowrap;
+    flex-shrink: 0;
+
+    i {
+      font-size: 16px;
+      color: #707070;
+    }
   }
 
   /* Loading */
@@ -1960,10 +1998,11 @@ textarea {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 16px 16px 0;
+    padding: 18px 22px 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
+    background: #f3f4f7;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -1971,7 +2010,7 @@ textarea {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 18px;
     padding-bottom: 16px;
   }
 
@@ -1984,9 +2023,9 @@ textarea {
   }
 
   .m-field-label {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
-    color: #3b3b3b;
+    color: #4a4a4a;
   }
 
   .m-req {
@@ -2020,34 +2059,34 @@ textarea {
     & > textarea.p-inputtext {
       padding-left: 46px !important;
       width: 100%;
-      height: 52px;
-      border-radius: 18px;
-      border: 1px solid #e6e6e6;
+      height: 54px;
+      border-radius: 24px;
+      border: 1px solid #e5e7ef;
       background: #fff;
-      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06);
-      font-size: 15px;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+      font-size: 14px;
       font-family: 'Poppins', sans-serif;
       color: #4a4a4a;
     }
 
     & > textarea.p-inputtext {
       height: auto !important;
-      min-height: 52px;
+      min-height: 54px;
       padding-top: 14px;
       resize: none;
     }
 
     ::ng-deep .p-select {
       width: 100%;
-      height: 52px !important;
-      border-radius: 18px !important;
-      border: 1px solid #e6e6e6 !important;
+      height: 54px !important;
+      border-radius: 24px !important;
+      border: 1px solid #e5e7ef !important;
       background: #fff !important;
-      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 
       .p-select-label {
         padding-left: 46px !important;
-        font-size: 15px !important;
+        font-size: 14px !important;
         font-family: 'Poppins', sans-serif !important;
         color: #4a4a4a !important;
       }
@@ -2055,16 +2094,16 @@ textarea {
 
     ::ng-deep .p-datepicker {
       width: 100%;
-      height: 52px !important;
-      border-radius: 18px !important;
-      border: 1px solid #e6e6e6 !important;
+      height: 54px !important;
+      border-radius: 24px !important;
+      border: 1px solid #e5e7ef !important;
       background: #fff !important;
-      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 
       .p-datepicker-input,
       .p-inputtext {
         padding-left: 46px !important;
-        font-size: 15px !important;
+        font-size: 14px !important;
         font-family: 'Poppins', sans-serif !important;
       }
     }
@@ -2074,26 +2113,26 @@ textarea {
 
       .p-inputtext {
         padding-left: 46px !important;
-        font-size: 15px !important;
-        height: 52px !important;
-        border-radius: 18px !important;
-        border: 1px solid #e6e6e6 !important;
+        font-size: 14px !important;
+        height: 54px !important;
+        border-radius: 24px !important;
+        border: 1px solid #e5e7ef !important;
         background: #fff !important;
-        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
       }
     }
 
     ::ng-deep .p-multiselect {
       width: 100%;
-      height: 52px !important;
-      border-radius: 18px !important;
-      border: 1px solid #e6e6e6 !important;
+      height: 54px !important;
+      border-radius: 24px !important;
+      border: 1px solid #e5e7ef !important;
       background: #fff !important;
-      box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 
       .p-multiselect-label {
         padding-left: 46px !important;
-        font-size: 15px !important;
+        font-size: 14px !important;
       }
     }
   }
@@ -2103,23 +2142,23 @@ textarea {
   .m-form-field > ::ng-deep .p-multiselect,
   .m-form-field > ::ng-deep .p-datepicker {
     width: 100%;
-    height: 52px !important;
-    border-radius: 18px !important;
-    border: 1px solid #e6e6e6 !important;
+    height: 54px !important;
+    border-radius: 24px !important;
+    border: 1px solid #e5e7ef !important;
     background: #fff !important;
-    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06);
-    font-size: 15px !important;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    font-size: 14px !important;
     font-family: 'Poppins', sans-serif !important;
   }
 
   .m-form-field > input.p-inputtext {
     width: 100%;
-    height: 52px;
-    border-radius: 18px;
-    border: 1px solid #e6e6e6;
+    height: 54px;
+    border-radius: 24px;
+    border: 1px solid #e5e7ef;
     background: #fff;
-    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06);
-    font-size: 15px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    font-size: 14px;
     font-family: 'Poppins', sans-serif;
     color: #4a4a4a;
     padding: 0 18px;
@@ -2236,30 +2275,32 @@ textarea {
   /* Actions bar */
   .m-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 14px 16px 28px;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 22px 32px;
     background: #fff;
     border-top: 1px solid #f0f0f0;
-    gap: 10px;
     flex-shrink: 0;
   }
 
   .m-actions-right {
     display: flex;
     gap: 10px;
+    width: 100%;
   }
 
   .m-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 12px 20px;
+    height: 54px;
+    padding: 0 20px;
     border-radius: 999px;
     border: none;
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
-    font-size: 13px;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
@@ -2271,15 +2312,21 @@ textarea {
   }
 
   .m-btn-back {
-    background: #eaeaea;
-    color: #3b3b3b;
-    border: 2px solid #3b3b3b;
+    width: 100%;
+    background: #e0e0e0;
+    color: #4a4a4a;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
   }
 
   .m-btn-save-add,
   .m-btn-continue {
-    background: linear-gradient(180deg, #f7d26a 0%, #f1b733 100%);
+    flex: 1;
+    background: #f5b301;
     color: #1f1f1f;
-    box-shadow: 0 4px 12px rgba(245, 180, 0, 0.3);
+    box-shadow: 0 10px 22px rgba(245, 179, 1, 0.35);
+
+    &:hover:not(:disabled) {
+      background: #e8a900;
+    }
   }
 }

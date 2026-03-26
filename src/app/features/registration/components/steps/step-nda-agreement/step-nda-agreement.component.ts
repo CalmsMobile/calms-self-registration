@@ -234,6 +234,9 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
     if (this.hasSigned) {
       this.restoredSignature = this.getSignatureDataUrl();
       this.showValidationError = false;
+      this.saveFormData();
+      this.wizardService.setStepValid(true);
+      this.wizardService.navigateToNextStep();
     }
   }
 
