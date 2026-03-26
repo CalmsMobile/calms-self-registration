@@ -14,6 +14,8 @@ interface DocumentType {
   Caption: string;
   Mandatory: boolean;
   RefAddVisitorSeqId: number;
+  FileBase64?: string;
+  FileName?: string;
 }
 
 interface Attachment {
@@ -225,5 +227,9 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     this.validateStep();
     this.saveFormData();
     this.wizardService.navigateToNextStep();
+  }
+
+  getDownloadUrl(filePath: string): string {
+    return `${environment.proURL}${filePath.replace(/\\/g, '/')}`;
   }
 }

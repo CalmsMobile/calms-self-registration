@@ -138,6 +138,12 @@
   color: #6b6b6b;
 }
 
+.card-text {
+  flex: 1;
+  min-width: 0;
+  margin-left: 10PX;
+}
+
 .mandatory {
   color: #e53e3e;
   font-weight: 700;
@@ -173,6 +179,21 @@
   align-items: flex-end;
   gap: 4px;
   cursor: pointer;
+}
+
+.card-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.7;
+  }
 }
 
 .card.upload {

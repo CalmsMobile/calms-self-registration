@@ -30,6 +30,19 @@
             [class.uploading]="!!attachments[doc.VisitorAttachSeqId].file && !attachments[doc.VisitorAttachSeqId].uploaded"
             [class.uploaded]="!!attachments[doc.VisitorAttachSeqId].file && !!attachments[doc.VisitorAttachSeqId].uploaded">
 
+            @if (doc.FileBase64) {
+              <a class="card-left" [href]="getDownloadUrl(doc.FileBase64)" target="_blank" rel="noopener noreferrer">
+                <div class="icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 4h9l3 3v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm8 1v3h3" />
+                    <path d="M12 9v8" />
+                    <path d="M15 14l-3 3-3-3" />
+                  </svg>
+                </div>
+                <div class="small">{{ 'download' | translate }}</div>
+              </a>
+            }
+
             <div class="card-text">
               <div class="title">
                 {{ doc.Caption }}
