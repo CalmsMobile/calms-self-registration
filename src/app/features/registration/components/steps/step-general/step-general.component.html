@@ -847,6 +847,676 @@
 
 </main>
 
+<!-- Mobile Layout -->
+<div class="mobile-page">
+
+  <!-- Header -->
+  <header class="m-header">
+    <img [src]="logo" alt="Logo" class="m-logo" />
+    <span class="m-brand">{{ companyTitle }}</span>
+  </header>
+
+  <!-- Top Section: title + action buttons -->
+  <section class="m-top-section">
+    <div class="m-left-title">
+      <h2 class="m-hero-title">
+        <span class="m-accent">{{'visitor' | translate}}</span>
+        <span class="m-normal">{{'information' | translate}}</span>
+      </h2>
+      <p class="m-hero-subtext">{{'please_provide_your_details' | translate}}</p>
+    </div>
+    <div class="m-top-actions">
+      @if (isMultipleVisitorMode && savedVisitors.length > 0) {
+      <button type="button" class="m-btn-saved" (click)="showSavedVisitorsModal = true" title="View saved visitors">
+        <i class="pi pi-users"></i>
+        <span class="m-count">{{ savedVisitors.length }}</span>
+      </button>
+      }
+      @if (settings.SearchExistingVisitor) {
+      <button type="button" class="m-returning-btn" (click)="onExistingGuestClick()">
+        <i class="pi pi-search"></i>
+        {{ 'returning_visitor' | translate }}?
+      </button>
+      }
+    </div>
+  </section>
+
+  <!-- Loading state -->
+  @if (isLoading) {
+  <div class="m-loading">
+    <i class="pi pi-spin pi-spinner"></i>
+    <p>Loading form...</p>
+  </div>
+  }
+
+  <!-- Form -->
+  @if (!isLoading) {
+  <div class="m-form-shell" [formGroup]="generalForm">
+    @if (settings && udfSettings !== null) {
+    <div class="m-form-scroll">
+
+      <!-- Profile Picture -->
+      @if (settings?.ImageUploadEnabled) {
+      <div class="m-form-field">
+        <div class="m-profile-field" [class.invalid]="isFieldInvalidRequired('profile')">
+          @if (profileImage) {
+          <div class="m-avatar-wrap">
+            <img [src]="profileImage" class="m-avatar-img" alt="Profile" />
+            <div class="m-avatar-actions">
+              <button type="button" class="m-avatar-btn m-change-btn" (click)="openPhotoCaptureDialog()">
+                <i class="pi pi-pencil"></i>
+              </button>
+              <button type="button" class="m-avatar-btn m-delete-btn" (click)="clearPhoto()">
+                <i class="pi pi-trash"></i>
+              </button>
+            </div>
+          </div>
+          <div class="m-avatar-info">
+            <span class="m-avatar-label">{{ 'profile_picture' | translate }}</span>
+            <span class="m-avatar-hint">{{ 'profile_picture' | translate:'placeholder' }}</span>
+          </div>
+          } @else {
+          <div class="m-avatar-empty" (click)="openPhotoCaptureDialog()">
+            <div class="m-avatar-circle"><i class="pi pi-camera"></i></div>
+          </div>
+          <div class="m-avatar-info" (click)="openPhotoCaptureDialog()" style="cursor:pointer">
+            <span class="m-avatar-label">{{ 'profile_picture' | translate }}</span>
+            <span class="m-avatar-hint">{{ 'profile_picture' | translate:'placeholder' }}</span>
+          </div>
+          }
+        </div>
+        @if (isFieldInvalidRequired('profile')) {
+        <small class="m-error">{{'profile_picture' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Phone -->
+      @if (settings?.ContactNumberEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'contact_number' | translate}} <span class="m-req">{{settings?.ContactNumberRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-phone"></i></span>
+          <input pInputText [placeholder]="'contact_number' | translate:'placeholder'" formControlName="phone"
+            [class]="{'ng-invalid': isFieldInvalidRequired('phone')}" [disabled]="isFieldDisabled('phone')">
+        </div>
+        @if (isFieldInvalidRequired('phone')) {
+        <small class="m-error">{{'contact_number' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Full Name -->
+      @if (settings?.NameEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'full_name' | translate}} <span class="m-req">{{settings?.NameRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-user"></i></span>
+          <input pInputText [placeholder]="'full_name' | translate:'placeholder'" formControlName="fullName"
+            [class]="{'ng-invalid': isFieldInvalidRequired('fullName')}" [disabled]="isFieldDisabled('fullName')" (blur)="onFullNameBlur()">
+        </div>
+        @if (isFieldInvalidRequired('fullName')) {
+        <small class="m-error">{{'full_name' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Host -->
+      @if (settings?.HostNameEnabled && !shouldHideHostControl && !isFieldHiddenInAppointmentFlow('host')) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'whom_you_would_like_to_visit' | translate}} <span class="m-req">{{settings?.HostNameRequired && !isAppointmentFlow ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-users"></i></span>
+          <p-select [options]="hosts" formControlName="host"
+            [placeholder]="'whom_you_would_like_to_visit' | translate:'placeholder'" (onChange)="onHostChange($event)"
+            optionLabel="HOSTNAME" optionValue="HOSTIC" [class]="{'ng-invalid': isFieldInvalidRequired('host')}"
+            [disabled]="isFieldDisabled('host')" appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('host')) {
+        <small class="m-error">{{'whom_you_would_like_to_visit' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Email -->
+      @if (settings?.EmailEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'email_address' | translate}} <span class="m-req">{{settings?.EmailRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-envelope"></i></span>
+          <input pInputText [placeholder]="'email_address' | translate:'placeholder'" formControlName="email"
+            type="email" [class]="{'ng-invalid': isFieldInvalidRequired('email')}" [disabled]="isFieldDisabled('email')">
+        </div>
+        @if (isEmailFormatError()) {
+        <small class="m-error">Please enter a valid email address</small>
+        } @else if (isFieldInvalidRequired('email')) {
+        <small class="m-error">{{'email_address' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Start Date & Time -->
+      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'appointment_start_date_time' | translate}} <span class="m-req">*</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker formControlName="startDate" [showIcon]="true"
+            [class]="{'ng-invalid': isFieldInvalidRequired('startDate')}" [minDate]="minDate"
+            [placeholder]="'dd/mm/yyyy --:-- --'" [showTime]="true" hourFormat="12" appendTo="body" dateFormat="dd/mm/yy">
+          </p-datepicker>
+        </div>
+        @if (isFieldInvalidRequired('startDate')) {
+        <small class="m-error">{{'appointment_start_date_time' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- End Date & Time -->
+      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'appointment_end_date_time' | translate}} <span class="m-req">*</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker formControlName="endDate" [showIcon]="true" [showTime]="true" hourFormat="12"
+            [class]="{'ng-invalid': isFieldInvalidRequired('endDate') || endBeforeStartError}"
+            [minDate]="generalForm.get('startDate')?.value || minDate" [disabled]="!generalForm.get('startDate')?.value"
+            [placeholder]="'dd/mm/yyyy --:-- --'" appendTo="body" dateFormat="dd/mm/yy">
+          </p-datepicker>
+        </div>
+        @if (endBeforeStartError) {
+        <small class="m-error">{{ 'end_date_error_message' | translate }}</small>
+        } @else if (isFieldInvalidRequired('endDate')) {
+        <small class="m-error">{{'appointment_end_date_time' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Identity Number -->
+      @if (settings?.IdProofEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'identity_number' | translate}} <span class="m-req">{{settings?.IdProofRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-id-card"></i></span>
+          <input pInputText [placeholder]="'identity_number' | translate:'placeholder'"
+            formControlName="visitor_id" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id')}"
+            [disabled]="isFieldDisabled('visitor_id')" (blur)="onVisitorIdBlur()">
+        </div>
+        @if (isFieldInvalidRequired('visitor_id')) {
+        <small class="m-error">{{'identity_number' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- ID Type -->
+      @if (settings?.IdTypeEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'id_type' | translate}} <span class="m-req">{{settings?.IdTypeRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-list"></i></span>
+          <p-select [options]="idTypeList" formControlName="visitor_id_type"
+            [placeholder]="'id_type' | translate:'placeholder'" optionLabel="IDTYPEDESCRIPTION" optionValue="ID_TYPECODE"
+            [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id_type')}"
+            [disabled]="isFieldDisabled('visitor_id_type')" (onChange)="onIdTypeChange($event)" appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('visitor_id_type')) {
+        <small class="m-error">{{'id_type' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- ID Expiry Date -->
+      @if (settings?.IdProofEnabled && showIdExpiryField) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'id_expired_date' | translate}} <span class="m-req">{{settings?.IdExpiredRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker formControlName="id_expired_date" [showIcon]="true"
+            [placeholder]="'id_expired_date' | translate:'placeholder'" [minDate]="minDate" dateFormat="dd/mm/yy"
+            [class]="{'ng-invalid': isFieldInvalidRequired('id_expired_date')}"
+            [disabled]="isFieldDisabled('id_expired_date')" appendTo="body">
+          </p-datepicker>
+        </div>
+        @if (isFieldInvalidRequired('id_expired_date')) {
+        <small class="m-error">{{'id_expired_date' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Title -->
+      @if (settings?.TitleEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'title' | translate}} <span class="m-req">{{settings?.TitleRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-tag"></i></span>
+          <p-select [options]="titleList" formControlName="title"
+            [placeholder]="'title' | translate:'placeholder'" optionLabel="Title" optionValue="Title"
+            [class]="{'ng-invalid': isFieldInvalidRequired('title')}" [disabled]="isFieldDisabled('title')"
+            appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('title')) {
+        <small class="m-error">{{'title' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Department -->
+      @if (settings?.HostDepartmentEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'department' | translate}} <span class="m-req">{{settings?.HostDepartmentRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-building"></i></span>
+          <p-select [options]="departmentList" formControlName="department"
+            [placeholder]="'department' | translate:'placeholder'" optionLabel="DName" optionValue="DepartmentSeqId"
+            [class]="{'ng-invalid': isFieldInvalidRequired('department')}" [disabled]="isFieldDisabled('department')"
+            (onChange)="onDepartmentChange($event)" appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('department')) {
+        <small class="m-error">{{'department' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Purpose of Visit -->
+      @if (settings?.PurposeEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'purpose_of_your_visit?' | translate}} <span class="m-req">{{settings?.PurposeRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-question-circle"></i></span>
+          <p-select [options]="purposeList" formControlName="purpose"
+            [placeholder]="'purpose_of_your_visit?' | translate:'placeholder'" optionLabel="visitpurpose_desc"
+            optionValue="visitpurpose_id" [class]="{'ng-invalid': isFieldInvalidRequired('purpose')}"
+            (onChange)="onPurposeChange($event)" appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('purpose')) {
+        <small class="m-error">{{'purpose_of_your_visit?' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Gender -->
+      @if (settings?.GenderEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'gender' | translate}} <span class="m-req">{{settings?.GenderRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-venus-mars"></i></span>
+          <p-select [options]="genderOptions" formControlName="gender"
+            [placeholder]="'gender' | translate:'placeholder'" optionLabel="Name" optionValue="Value"
+            [class]="{'ng-invalid': isFieldInvalidRequired('gender')}" [disabled]="isFieldDisabled('gender')"
+            appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('gender')) {
+        <small class="m-error">{{'gender' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Company -->
+      @if (settings?.CompanyEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'my_company' | translate}} <span class="m-req">{{settings?.CompanyRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-briefcase"></i></span>
+          <p-autoComplete [suggestions]="companyList" (completeMethod)="searchCompany($event)"
+            (onSelect)="onCompanySelect($event)" field="visitor_comp_name" optionLabel="visitor_comp_name"
+            dataKey="visitor_comp_name" formControlName="visitor_company"
+            [placeholder]="'my_company' | translate:'placeholder'" [dropdown]="true" [forceSelection]="false"
+            [class]="{'ng-invalid': isFieldInvalidRequired('visitor_company')}"
+            [disabled]="isFieldDisabled('visitor_company')" appendTo="body">
+          </p-autoComplete>
+        </div>
+        @if (isFieldInvalidRequired('visitor_company')) {
+        <small class="m-error">{{'my_company' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Vehicle Number -->
+      @if (settings?.VehicleNumberEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'vehicle_number' | translate}} <span class="m-req">{{settings?.VehicleNumberRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-car"></i></span>
+          <input pInputText [placeholder]="'vehicle_number' | translate:'placeholder'"
+            formControlName="vehicle_number" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_number')}"
+            [disabled]="isFieldDisabled('vehicle_number')">
+        </div>
+        @if (isFieldInvalidRequired('vehicle_number')) {
+        <small class="m-error">{{'vehicle_number' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Vehicle Brand -->
+      @if (settings?.VehicleBrandModelEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'vehicle_brand' | translate}} <span class="m-req">{{settings?.VehicleBrandModelRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-car"></i></span>
+          <input pInputText [placeholder]="'vehicle_brand' | translate:'placeholder'"
+            formControlName="vehicle_brand" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_brand')}"
+            [disabled]="isFieldDisabled('vehicle_brand')">
+        </div>
+        @if (isFieldInvalidRequired('vehicle_brand')) {
+        <small class="m-error">{{'vehicle_brand' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Vehicle Model -->
+      @if (settings?.VehicleBrandModelEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'vehicle_model' | translate}} <span class="m-req">{{settings?.VehicleBrandModelRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-cog"></i></span>
+          <input pInputText [placeholder]="'vehicle_model' | translate:'placeholder'"
+            formControlName="vehicle_model" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_model')}"
+            [disabled]="isFieldDisabled('vehicle_model')">
+        </div>
+        @if (isFieldInvalidRequired('vehicle_model')) {
+        <small class="m-error">{{'vehicle_model' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Vehicle Color -->
+      @if (settings?.VehicleColorEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'vehicle_color' | translate}} <span class="m-req">{{settings?.VehicleColorRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-palette"></i></span>
+          <input pInputText [placeholder]="'vehicle_color' | translate:'placeholder'"
+            formControlName="vehicle_color" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_color')}"
+            [disabled]="isFieldDisabled('vehicle_color')">
+        </div>
+        @if (isFieldInvalidRequired('vehicle_color')) {
+        <small class="m-error">{{'vehicle_color' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Address -->
+      @if (settings?.AddressEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'address' | translate}} <span class="m-req">{{settings?.AddressRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap m-textarea-wrap">
+          <span class="m-field-icon m-icon-top"><i class="pi pi-map-marker"></i></span>
+          <textarea pInputText cols="3" [placeholder]="'address' | translate:'placeholder'"
+            formControlName="visitor_address" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_address')}"
+            [disabled]="isFieldDisabled('visitor_address')"></textarea>
+        </div>
+        @if (isFieldInvalidRequired('visitor_address')) {
+        <small class="m-error">{{'address' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Country -->
+      @if (settings?.CountryEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'country' | translate}} <span class="m-req">{{settings?.CountryRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-globe"></i></span>
+          <p-select [options]="countryList" formControlName="country"
+            [placeholder]="'country' | translate:'placeholder'" optionLabel="Name" optionValue="CountrySeqId"
+            [class]="{'ng-invalid': isFieldInvalidRequired('country')}" [disabled]="isFieldDisabled('country')"
+            appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('country')) {
+        <small class="m-error">{{'country' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Work Permit Reference -->
+      @if (settings?.WorkPermitRefEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'permit_to_work_reference' | translate}} <span class="m-req">{{settings?.WorkPermitRefRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-file"></i></span>
+          <input pInputText [placeholder]="'permit_to_work_reference' | translate:'placeholder'"
+            formControlName="work_permit_ref" [class]="{'ng-invalid': isFieldInvalidRequired('work_permit_ref')}"
+            [disabled]="isFieldDisabled('work_permit_ref')">
+        </div>
+        @if (isFieldInvalidRequired('work_permit_ref')) {
+        <small class="m-error">{{'permit_to_work_reference' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Remarks -->
+      @if (settings?.RemarksEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'would_you_like_to_add_comments_for_your_visit?' | translate}} <span class="m-req">{{settings?.RemarksRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap m-textarea-wrap">
+          <span class="m-field-icon m-icon-top"><i class="pi pi-comment"></i></span>
+          <textarea pInputText cols="3" rows="1"
+            [placeholder]="'would_you_like_to_add_comments_for_your_visit?' | translate:'placeholder'"
+            formControlName="remarks" [class]="{'ng-invalid': isFieldInvalidRequired('remarks')}"
+            [disabled]="isFieldDisabled('remarks')">
+          </textarea>
+        </div>
+        @if (isFieldInvalidRequired('remarks')) {
+        <small class="m-error">{{'would_you_like_to_add_comments_for_your_visit?' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- VIMS Appointment Date -->
+      @if (enableVimsApptTimeSlot && !enableFBInSelfReg) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'appointment_date' | translate}} <span class="m-req">*</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker formControlName="appointmentDate" [showIcon]="true"
+            [class]="{'ng-invalid': isFieldInvalidRequired('appointmentDate')}" [minDate]="minDate"
+            placeholder="Select appointment date" [showTime]="false" (onSelect)="onAppointmentDateSelect($event)"
+            appendTo="body" dateFormat="dd/mm/yy">
+          </p-datepicker>
+        </div>
+        @if (isFieldInvalidRequired('appointmentDate')) {
+        <small class="m-error">{{'appointment_date' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- VIMS Time Slot (no FB) -->
+      @if (enableVimsApptTimeSlot && !enableFBInSelfReg && timeSlotsLoaded) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'time_slot' | translate}} <span class="m-req">*</span></label>
+        @if (timeSlotList.length > 0) {
+        <div class="time-slot-tiles" [class.invalid]="isFieldInvalidRequired('timeSlot')">
+          @for (slot of timeSlotList; track slot.Code) {
+          <div class="time-slot-tile" [class.selected]="generalForm.get('timeSlot')?.value === slot.Code"
+            [class.unavailable]="slot.availableCount === 0" (click)="selectTimeSlot(slot)">
+            <span class="slot-tile-name">{{slot.Name}}</span>
+            @if (slot.availableCount === 0) { <span class="slot-tile-full">Full</span> }
+          </div>
+          }
+        </div>
+        @if (isFieldInvalidRequired('timeSlot')) {
+        <small class="m-error">{{'time_slot' | translate}} is required</small>
+        }
+        } @else {
+        <div class="time-slot-empty"><i class="pi pi-calendar-times"></i><span>No time slots available for the selected date</span></div>
+        }
+      </div>
+      }
+
+      <!-- Shared Date (FB + VIMS combined) -->
+      @if ((enableVimsApptTimeSlot && enableFBInSelfReg) || (enableFBInSelfReg && generalForm.get('facilityBooking')?.value)) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'date' | translate}} <span class="m-req">*</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker formControlName="sharedDate" [showIcon]="true"
+            [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate"
+            placeholder="Select date" [showTime]="false" (onSelect)="onSharedDateSelect($event)"
+            appendTo="body" dateFormat="dd/mm/yy">
+          </p-datepicker>
+        </div>
+        @if (isFieldInvalidRequired('sharedDate')) {
+        <small class="m-error">{{'date' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Facility Purpose -->
+      @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'purpose' | translate}} <span class="m-req">*</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-question-circle"></i></span>
+          <p-select [options]="facilityPurposeList" formControlName="facilityPurpose"
+            placeholder="Select purpose" optionLabel="PurposeName" optionValue="PurposeCode"
+            [class]="{'ng-invalid': isFieldInvalidRequired('facilityPurpose')}" appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('facilityPurpose')) {
+        <small class="m-error">{{'purpose' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- Facility Selection -->
+      @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'facility' | translate}} <span class="m-req">*</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-building"></i></span>
+          <p-select [options]="facilityMasterList" formControlName="facilitySelection"
+            placeholder="Select facility" optionLabel="FacilityName" optionValue="FacilityCode"
+            (onChange)="onFacilitySelectionChange($event.value)"
+            [class]="{'ng-invalid': isFieldInvalidRequired('facilitySelection')}" appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('facilitySelection')) {
+        <small class="m-error">{{'facility' | translate}} is required</small>
+        }
+      </div>
+      }
+
+      <!-- VIMS Time Slot (with FB) -->
+      @if (enableVimsApptTimeSlot && enableFBInSelfReg && !generalForm.get('facilityBooking')?.value && timeSlotsLoaded) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'time_slot' | translate}} <span class="m-req">*</span></label>
+        @if (timeSlotList.length > 0) {
+        <div class="time-slot-tiles" [class.invalid]="isFieldInvalidRequired('timeSlot')">
+          @for (slot of timeSlotList; track slot.Code) {
+          <div class="time-slot-tile" [class.selected]="generalForm.get('timeSlot')?.value === slot.Code"
+            [class.unavailable]="slot.availableCount === 0" (click)="selectTimeSlot(slot)">
+            <span class="slot-tile-name">{{slot.Name}}</span>
+            @if (slot.availableCount === 0) { <span class="slot-tile-full">Full</span> }
+          </div>
+          }
+        </div>
+        @if (isFieldInvalidRequired('timeSlot')) {
+        <small class="m-error">{{'time_slot' | translate}} is required</small>
+        }
+        } @else {
+        <div class="time-slot-empty"><i class="pi pi-calendar-times"></i><span>No time slots available</span></div>
+        }
+      </div>
+      }
+
+      <!-- Dynamic UDF fields -->
+      @for (udf of udfSettings; track udf) {
+      @if (udf.Enabled) {
+      @if (udf.UDFCtrlType === 10) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+          [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
+          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+        @if (isFieldRequired(udf.formControlName)) {
+        <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        }
+      </div>
+      }
+      @if (udf.UDFCtrlType === 20) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
+          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+          optionLabel="label" optionValue="value"
+          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+        </p-select>
+        @if (isFieldInvalidRequired(udf.formControlName)) {
+        <small class="m-error">Please select {{(udf.translateKey | translate) || udf.Caption}}</small>
+        }
+      </div>
+      }
+      @if (udf.UDFCtrlType === 30) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <p-multiSelect [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
+          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+          optionLabel="label" optionValue="value"
+          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+        </p-multiSelect>
+        @if (isFieldInvalidRequired(udf.formControlName)) {
+        <small class="m-error">Please select at least one {{(udf.translateKey | translate) || udf.Caption}}</small>
+        }
+      </div>
+      }
+      @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <p-datepicker [formControlName]="udf.formControlName" [showIcon]="true"
+          iconDisplay="input" dateFormat="dd/mm/yy" appendTo="body"
+          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+        </p-datepicker>
+        @if (isFieldInvalidRequired(udf.formControlName)) {
+        <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        }
+      </div>
+      }
+      @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <p-datepicker [formControlName]="udf.formControlName" [showIcon]="true"
+          iconDisplay="input" dateFormat="dd/mm/yy" appendTo="body" [minDate]="minDate"
+          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+        </p-datepicker>
+        @if (isFieldInvalidRequired(udf.formControlName)) {
+        <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        }
+      </div>
+      }
+      }
+      }
+
+    </div>
+    }
+  </div>
+  }
+
+  <!-- Actions -->
+  <div class="m-actions">
+    <button type="button" class="m-btn m-btn-back" (click)="goBack()">
+      <i class="pi pi-arrow-left"></i> {{ 'back' | translate }}
+    </button>
+    <div class="m-actions-right">
+      @if (isMultipleVisitorMode) {
+      <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" [disabled]="!isCurrentVisitorFormValid()">
+        {{ 'save_and_add' | translate }} <i class="pi pi-user-plus"></i>
+      </button>
+      }
+      <button type="button" class="m-btn m-btn-continue" (click)="goNext()">
+        {{ 'save_and_continue' | translate }} <i class="pi pi-arrow-right"></i>
+      </button>
+    </div>
+  </div>
+
+</div>
+
 <!-- Saved Visitors Modal -->
 <p-dialog [(visible)]="showSavedVisitorsModal" [modal]="true" [draggable]="false" [resizable]="false"
   styleClass="saved-visitors-dialog" [showHeader]="false">

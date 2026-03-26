@@ -65,3 +65,46 @@
 </div>
 
 <p-toast></p-toast>
+
+<!-- Mobile Layout -->
+<div class="mobile-page">
+  <!-- Header -->
+  <header class="m-header">
+    <img [src]="logo" alt="Logo" class="m-logo" />
+    <span class="m-company">{{ companyTitle }}</span>
+  </header>
+
+  <!-- Title -->
+  <div class="m-title-wrap">
+    <h1 class="m-title">
+      <span class="m-accent">NDA</span>
+      <span>{{ 'nda_agreement' | translate }}</span>
+    </h1>
+    <p class="m-subtitle">{{ 'nda_subtitle' | translate }}</p>
+  </div>
+
+  <!-- Terms Card -->
+  <div class="m-card">
+    <div class="m-terms-title">{{ 'terms_and_conditions' | translate }}</div>
+    <div class="m-terms-box" [innerHTML]="getNdaHtml()"></div>
+  </div>
+
+  @if (showValidationError) {
+  <p class="m-error">{{ 'signature_required' | translate }}</p>
+  }
+
+  <!-- Actions -->
+  <div class="m-actions">
+    <div class="m-actions-row">
+      <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
+        <span>&#8592;</span> {{ 'back' | translate }}
+      </button>
+      <button class="m-btn m-btn-grey" type="button" (click)="openSignature()">
+        {{ 'sign' | translate }} <span>&#9998;</span>
+      </button>
+    </div>
+    <button class="m-btn m-btn-yellow" type="button" [disabled]="!hasSigned" (click)="mobileNext()">
+      {{ 'continue' | translate }} <span>&#8594;</span>
+    </button>
+  </div>
+</div>

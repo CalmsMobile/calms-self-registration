@@ -469,25 +469,26 @@
 
 // Responsive design
 @media (max-width: 768px) {
-  .registration-status-container {
-    padding: 1rem;
+  .page {
+    padding: 24px 16px 40px;
+    gap: 10px;
   }
-  
-  .status-card {
-    padding: 1.5rem;
+
+  .pass-card {
+    width: 100%;
+    max-width: 400px;
   }
-  
-  .status-header h2 {
-    font-size: 1.5rem;
+
+  .action-btn {
+    width: 100%;
+    max-width: 400px;
   }
-  
-  .message-section .message-line {
-    font-size: 1rem;
-  }
-  
+
   .action-buttons {
+    width: 100%;
+    max-width: 400px;
     flex-direction: column;
-    
+
     .btn {
       width: 100%;
     }

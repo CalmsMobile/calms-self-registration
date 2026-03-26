@@ -12,6 +12,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { WizardService } from '../../../../../core/services/wizard.service';
+import { SharedService } from '../../../../../shared/shared.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 
 @Component({
@@ -26,11 +27,13 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
 
   private ctx!: CanvasRenderingContext2D;
   private isDrawing = false;
-  private hasSigned = false;
+  hasSigned = false;
   private destroy$ = new Subject<void>();
   showValidationError = false;
   showSignatureModal = false;
   illustrationUrl = '/assets/sign.png';
+  logo = 'assets/logo.png';
+  companyTitle = '';
 
   /** Restored base64 signature (if user navigated back) */
   restoredSignature = '';
@@ -38,8 +41,12 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   constructor(
     private wizardService: WizardService,
     private sanitizer: DomSanitizer,
-    private messageService: MessageService
-  ) {}
+    private messageService: MessageService,
+    private sharedService: SharedService
+  ) {
+    this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
+    this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
+  }
 
   ngOnInit(): void {
     // Redirect to home if settings aren't loaded
@@ -185,6 +192,23 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
     if (this.isDrawing) {
       this.isDrawing = false;
       this.ctx.closePath();
+    }
+  }
+
+  goBack(): void {
+    this.saveFormData();
+    const prev = this.wizardService.getCurrentStepIndex() - 1;
+    if (prev >= 0) this.wizardService.requestStepChange(prev);
+  }
+
+  mobileNext(): void {
+    if (this.hasSigned) {
+      this.showValidationError = false;
+      this.saveFormData();
+      this.wizardService.setStepValid(true);
+      this.wizardService.navigateToNextStep();
+    } else {
+      this.showValidationError = true;
     }
   }
 
