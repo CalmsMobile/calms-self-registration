@@ -36,8 +36,22 @@
 
   <!-- Loading State -->
   @if (isLoading) {
-  <div class="loading-indicator">
-    <p-progressbar mode="indeterminate" [style]="{ height: '6px' }" />
+  <div class="loading-overlay">
+    <div class="loading-content">
+      <div class="loader">
+        <div class="pacman">
+          <div class="top"></div>
+          <div class="bottom"></div>
+        </div>
+        <div class="dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+      <p>Loading...</p>
+    </div>
   </div>
   }
 
@@ -989,8 +1003,22 @@
 
   <!-- Loading state -->
   @if (isLoading) {
-  <div class="loading-indicator">
-    <p-progressbar mode="indeterminate" [style]="{ height: '6px' }" />
+  <div class="loading-overlay">
+    <div class="loading-content">
+      <div class="loader">
+        <div class="pacman">
+          <div class="top"></div>
+          <div class="bottom"></div>
+        </div>
+        <div class="dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+      <p>Loading...</p>
+    </div>
   </div>
   }
 
