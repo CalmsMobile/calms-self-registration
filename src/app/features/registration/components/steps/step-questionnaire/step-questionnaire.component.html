@@ -1,8 +1,11 @@
 @if (!isLoading) {
   <main class="page" [formGroup]="questionnaireForm">
-    <header class="page-header">
-      <img [src]="logo" alt="Logo" class="logo" />
-      <h1>{{ companyTitle }}</h1>
+    <header class="page-header flex-header">
+      <div class="header-center">
+        <img [src]="logo" alt="Logo" class="logo" />
+        <h1>{{ companyTitle }}</h1>
+      </div>
+      <app-language-selector class="step-lang"></app-language-selector>
     </header>
 
     <section class="content">

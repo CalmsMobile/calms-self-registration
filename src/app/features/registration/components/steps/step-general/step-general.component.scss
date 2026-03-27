@@ -39,8 +39,9 @@
    PAGE HEADER
    ============================================ */
 .page-header {
+  position: relative;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
   padding-top: 24px;
   padding-bottom: 8px;
@@ -58,6 +59,19 @@
     color: #4a4a4a;
     margin-top: 4px;
   }
+}
+
+.header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.step-lang {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 /* ============================================

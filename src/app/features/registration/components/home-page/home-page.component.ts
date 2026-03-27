@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, AfterViewChecked, ElementRef } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ButtonModule } from 'primeng/button';
@@ -43,15 +43,20 @@ interface Category {
     StepTermsComponent,
     TranslatePipe,
     LanguageSelectorComponent,
-
   ],
   templateUrl: './home-page.component.html',
   styleUrl: './home-page.component.scss'
 })
-export class HomePageComponent {
+export class HomePageComponent implements AfterViewChecked {
   @ViewChild(StepTermsComponent) termsComponent!: StepTermsComponent;
+  @ViewChild('termsBodyRef') termsBodyEl?: ElementRef<HTMLElement>;
+  @ViewChild('mTermsBodyRef') mTermsBodyEl?: ElementRef<HTMLElement>;
   termsValid = false;
   termsAccepted = false;
+  termsScrolledToBottom = false;
+  private termsAutoChecked = false;
+  private _cachedTermsHtml: SafeHtml | string = '';
+  private _cachedTermsTemplate = '';
   branchList: Branch[] = [];
   currentLanguage: any;
 
@@ -591,6 +596,30 @@ export class HomePageComponent {
     this.termsValid = isValid;
   }
 
+  ngAfterViewChecked() {
+    if (!this.termsAutoChecked && this.shouldShowTerms()) {
+      const el = this.termsBodyEl?.nativeElement ?? this.mTermsBodyEl?.nativeElement;
+      if (el && el.scrollHeight > 0) {
+        this.termsAutoChecked = true;
+        if (el.scrollHeight <= el.clientHeight + 2) {
+          // Content fits without scrolling — enable checkbox immediately
+          setTimeout(() => { this.termsScrolledToBottom = true; }, 0);
+        }
+      }
+    }
+  }
+
+  onTermsScroll(event: Event) {
+    const el = event.target as HTMLElement;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 20) {
+      this.termsScrolledToBottom = true;
+    }
+  }
+
+  checkTermsAutoScroll(el: HTMLElement) {
+    // unused — kept for safety; auto-check is now handled in ngAfterViewChecked
+  }
+
   private loadBranches(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.api.GetSelfRegistrationWelcomePageData().subscribe({
@@ -606,10 +635,10 @@ export class HomePageComponent {
             if (this.branchList.length === 1 && !this.isBranchFromQuery) {
               this.selectedBranch = this.branchList[0].RefBranchSeqID;
               this.wizardService.currentBranchID = this.selectedBranch;
-            }
-
-            // Load branch translation after branches are loaded
-            if (this.currentLanguage) {
+              // Trigger full branch-selection flow (loads categories, settings, host data)
+              await this.onBranchChange(this.selectedBranch);
+            } else if (this.currentLanguage) {
+              // Multi-branch: just load labels for the current language
               await this.getSelfRegistrationSettings();
             }
           }
@@ -873,10 +902,14 @@ export class HomePageComponent {
 
   getTermsHtml(): SafeHtml {
     const selfRegSettings = this.wizardService.getSelfRegistrationSettings();
-    if (selfRegSettings?.TermsnCondTemplate) {
-      return this.sanitizer.bypassSecurityTrustHtml(selfRegSettings.TermsnCondTemplate);
+    const template = selfRegSettings?.TermsnCondTemplate ?? '';
+    if (template !== this._cachedTermsTemplate) {
+      this._cachedTermsTemplate = template;
+      this._cachedTermsHtml = template
+        ? this.sanitizer.bypassSecurityTrustHtml(template)
+        : '';
     }
-    return '';
+    return this._cachedTermsHtml;
   }
   // shouldShowTerms(): boolean {
   //   const settings = this.wizardService.getSettings();
@@ -973,7 +1006,9 @@ export class HomePageComponent {
     this.selectedCategory = null;
     // Reset terms validation
     this.termsValid = false;
-    this.termsAccepted = false; // Add this reset
+    this.termsAccepted = false;
+    this.termsScrolledToBottom = false;
+    this.termsAutoChecked = false;
     // Clear any stored settings related to category
     this.wizardService.setSettings(null);
   }

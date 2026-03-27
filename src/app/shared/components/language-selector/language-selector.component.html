@@ -13,7 +13,7 @@
             [class.active]="selectedLanguage?.LanguageId === lang.LanguageId"
             (click)="selectLanguage(lang)"
             type="button">
-      <span class="lang-flag">{{ getFlagEmoji(lang.LanguageCode) }}</span>
+      <span class="lang-flag">{{ getLanguageSign(lang.LanguageCode) }}</span>
       <span class="lang-name">{{ lang.LanguageName }}</span>
     </button>
     }

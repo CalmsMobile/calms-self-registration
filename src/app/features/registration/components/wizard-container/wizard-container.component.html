@@ -4,9 +4,12 @@
 
     <!-- Branch Header - hidden for pages with own layout -->
     @if (showSharedLayout) {
-    <div class="branch-header">
-      <img routerLink="/" [src]="logo" alt="Company Logo" class="logo-company">
-      <h1 routerLink="/" class="app-title">{{title}}</h1>
+    <div class="branch-header flex-header">
+      <div class="header-center">
+        <img routerLink="/" [src]="logo" alt="Company Logo" class="logo-company">
+        <h1 routerLink="/" class="app-title">{{title}}</h1>
+      </div>
+      <app-language-selector class="wiz-lang"></app-language-selector>
     </div>
     }
 

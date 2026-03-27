@@ -1,8 +1,11 @@
 <main class="page">
   <!-- Page Header -->
-  <header class="page-header">
-    <img [src]="logo" alt="Logo" class="header-logo" />
-    <span class="header-title">{{ companyTitle }}</span>
+  <header class="page-header flex-header">
+    <div class="header-center">
+      <img [src]="logo" alt="Logo" class="header-logo" />
+      <span class="header-title">{{ companyTitle }}</span>
+    </div>
+    <app-language-selector class="step-lang"></app-language-selector>
   </header>
 
   <!-- Title Section -->
