@@ -14,11 +14,12 @@ import { ToastModule } from 'primeng/toast';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { SharedService } from '../../../../../shared/shared.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
+import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 
 @Component({
   selector: 'app-step-nda-agreement',
   standalone: true,
-  imports: [ToastModule, TranslatePipe],
+  imports: [ToastModule, TranslatePipe, LanguageSelectorComponent],
   templateUrl: './step-nda-agreement.component.html',
   styleUrls: ['./step-nda-agreement.component.scss']
 })

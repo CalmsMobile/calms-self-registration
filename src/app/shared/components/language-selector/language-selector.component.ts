@@ -93,21 +93,14 @@ export class LanguageSelectorComponent implements OnInit {
     this.showDropdown = false;
   }
 
-  getFlagEmoji(languageCode: string): string {
-    const countryCode = this.getCountryCode(languageCode);
-    return [...countryCode.toUpperCase()].map(c =>
-      String.fromCodePoint(127397 + c.charCodeAt(0))
-    ).join('');
-  }
-
-  getCountryCode(languageCode: string): string {
-    if (!languageCode) return '--';
+  getLanguageSign(languageCode: string): string {
+    if (!languageCode) return '?';
     const map: Record<string, string> = {
-      en: 'GB', ta: 'IN', hi: 'IN', te: 'IN', ml: 'IN',
-      kn: 'IN', bn: 'BD', fr: 'FR', de: 'DE', es: 'ES',
-      pt: 'PT', ru: 'RU', ja: 'JP', ko: 'KR', zh: 'CN',
-      ar: 'SA', ms: 'MY', id: 'ID', th: 'TH', vi: 'VN',
-      tr: 'TR', it: 'IT', nl: 'NL', pl: 'PL', sv: 'SE'
+      en: 'A',  fr: 'Fr', de: 'De', es: 'Es', pt: 'Pt',
+      it: 'It', nl: 'Nl', pl: 'Pl', sv: 'Sv', ru: 'Я',
+      ar: 'ع',  hi: 'अ',  ta: 'அ',  te: 'తె', ml: 'മ',
+      kn: 'ಕ',  bn: 'বা', zh: '文',  ja: 'あ', ko: '한',
+      th: 'ก',  vi: 'Vt', ms: 'Ms', id: 'Id', tr: 'Tr'
     };
     const code = languageCode.toLowerCase().split('-')[0];
     return map[code] ?? code.toUpperCase().slice(0, 2);

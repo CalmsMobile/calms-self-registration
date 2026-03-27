@@ -7,13 +7,14 @@ import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
+import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { environment } from '../../../../../../environments/environment';
 
 @Component({
   selector: 'app-step-safety-brief',
   templateUrl: './step-safety-brief.component.html',
   styleUrls: ['./step-safety-brief.component.scss'],
-  imports: [ButtonModule, ToastModule, TranslatePipe]
+  imports: [ButtonModule, ToastModule, TranslatePipe, LanguageSelectorComponent]
 })
 export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('safetyVideo') videoElement!: ElementRef<HTMLVideoElement>;

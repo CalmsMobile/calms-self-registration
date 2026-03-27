@@ -18,6 +18,7 @@ import { filter, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../../core/services/api.service';
 import { LabelService } from '../../../../../core/services/label.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
+import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { SharedService } from '../../../../../shared/shared.service';
 import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
 
@@ -25,7 +26,7 @@ import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
 @Component({
   selector: 'app-step-general',
   standalone: true,
-  imports: [DatePickerModule, SelectModule, ReactiveFormsModule, FormsModule, InputTextModule, AutoCompleteModule, TranslatePipe, MultiSelectModule, DividerModule, CheckboxModule, ButtonModule, TableModule, DialogModule, ProgressBarModule],
+  imports: [DatePickerModule, SelectModule, ReactiveFormsModule, FormsModule, InputTextModule, AutoCompleteModule, TranslatePipe, MultiSelectModule, DividerModule, CheckboxModule, ButtonModule, TableModule, DialogModule, LanguageSelectorComponent, ProgressBarModule],
   templateUrl: './step-general.component.html',
   styleUrls: ['./step-general.component.scss']
 })

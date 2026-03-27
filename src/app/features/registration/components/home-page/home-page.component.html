@@ -72,6 +72,7 @@
   <!-- Header with logo -->
   <div class="header">
     <img [src]="logo" alt="Company Logo" />
+    <app-language-selector class="header-lang"></app-language-selector>
   </div>
 
   <!-- Company title -->
@@ -121,17 +122,13 @@
       @if (selectedBranch && selectedCategory && shouldShowTerms()) {
       <div class="terms">
         <h4>{{ 'terms_and_conditions' | translate }}</h4>
-        <div class="terms-body" [innerHTML]="getTermsHtml()"></div>
+        <div class="terms-body"
+             (scroll)="onTermsScroll($event)"
+             #termsBodyRef
+             [innerHTML]="getTermsHtml()">
+        </div>
         <div style="display: none;">
           <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
-        </div>
-        <div class="terms-footer">
-          <span class="terms-agree-label">{{ 'i_agree_to_the_terms_and_conditions' | translate }}</span>
-          <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsAccepted = !termsAccepted">
-            @if (termsAccepted) {
-            <i class="pi pi-check"></i>
-            }
-          </div>
         </div>
       </div>
       }
@@ -140,7 +137,7 @@
       @if (selectedBranch && selectedCategory) {
       <div class="actions">
         <button class="btn" type="button"
-          [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
+          [disabled]="shouldShowTerms() && (!termsScrolledToBottom || !termsValid)"
           (click)="proceedToWizard()">
           <span>{{ 'agree_and_proceed' | translate }}</span>
           <i class="pi pi-arrow-right btn-icon"></i>
@@ -209,8 +206,11 @@
 
     <!-- Header: logo + company name -->
     <div class="m-post-header">
-      <img [src]="logo" alt="Company Logo" class="m-post-logo" />
-      <p class="m-post-company">{{ title }}</p>
+      <div class="m-post-header-center">
+        <img [src]="logo" alt="Company Logo" class="m-post-logo" />
+        <p class="m-post-company">{{ title }}</p>
+      </div>
+      <app-language-selector class="m-post-lang"></app-language-selector>
     </div>
 
     <!-- Page title -->
@@ -263,19 +263,19 @@
       <div class="m-terms-card">
         <div class="m-terms-head">
           <h3>{{ 'terms_and_conditions' | translate }}</h3>
-          <div class="m-custom-checkbox" [class.checked]="termsAccepted" (click)="termsAccepted = !termsAccepted">
-            @if (termsAccepted) {<i class="pi pi-check"></i>}
-          </div>
         </div>
-        <div class="m-terms-body" [innerHTML]="getTermsHtml()"></div>
-        <p class="m-terms-agree">{{ 'i_agree_to_the_terms_and_conditions' | translate }}</p>
+        <div class="m-terms-body"
+             #mTermsBodyRef
+             (scroll)="onTermsScroll($event)"
+             [innerHTML]="getTermsHtml()">
+        </div>
       </div>
       }
 
       <!-- Continue Button -->
       @if (selectedBranch && selectedCategory) {
       <button class="m-continue" type="button"
-        [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
+        [disabled]="shouldShowTerms() && (!termsScrolledToBottom || !termsValid)"
         (click)="proceedToWizard()">
         <span>{{ 'agree_and_proceed' | translate }}</span>
         <i class="pi pi-arrow-right"></i>

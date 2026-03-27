@@ -19,6 +19,7 @@ import { LanguageService } from '../../../../core/services/language.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { SharedService } from '../../../../shared/shared.service';
 import { getSortedSteps } from '../../../../core/models/step-config.model';
+import { LanguageSelectorComponent } from '../../../../shared/components/language-selector/language-selector.component';
 
 @Component({
   selector: 'app-wizard-container',
@@ -31,7 +32,8 @@ import { getSortedSteps } from '../../../../core/models/step-config.model';
     RouterOutlet,
     RouterLink,
     ProgressBarModule,
-    TranslatePipe
+    TranslatePipe,
+    LanguageSelectorComponent
   ],
   templateUrl: './wizard-container.component.html',
   styleUrls: ['./wizard-container.component.scss']
@@ -114,11 +116,16 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
         this.submitRegistration();
       });
 
-    // Subscribe to language changes
+    // Subscribe to language changes — reload page settings and update step labels
     this.languageService.currentLanguage$
       .pipe(takeUntil(this.destroy$))
       .subscribe(language => {
         if (language) {
+          this.labelService.loadLabels(
+            this.wizardService.currentBranchID,
+            language.LanguageId,
+            this.wizardService.refCode || undefined
+          );
           this.updateStepLabels();
         }
       });

@@ -7,6 +7,7 @@ import { SharedService } from '../../../../../shared/shared.service';
 import { ToastModule } from 'primeng/toast';
 
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
+import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { Subject, takeUntil } from 'rxjs';
 
 interface Question {
@@ -32,7 +33,7 @@ interface Question {
   templateUrl: './step-questionnaire.component.html',
   styleUrls: ['./step-questionnaire.component.scss'],
   standalone: true,
-  imports: [FormsModule, ToastModule, ReactiveFormsModule, TranslatePipe]
+  imports: [FormsModule, ToastModule, ReactiveFormsModule, TranslatePipe, LanguageSelectorComponent]
 })
 export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   questions: Question[] = [];

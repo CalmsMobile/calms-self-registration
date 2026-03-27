@@ -31,11 +31,26 @@
 
 /* ===== HEADER ===== */
 .page-header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 26px;
+}
+
+.header-center {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  margin-bottom: 26px;
+}
+
+.step-lang {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .logo {
