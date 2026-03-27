@@ -33,7 +33,7 @@
             [class.uploading]="!!attachments[doc.VisitorAttachSeqId].file && !attachments[doc.VisitorAttachSeqId].uploaded"
             [class.uploaded]="!!attachments[doc.VisitorAttachSeqId].file && !!attachments[doc.VisitorAttachSeqId].uploaded">
 
-            @if (doc.FileBase64) {
+            @if (doc.FileBase64 && !attachments[doc.VisitorAttachSeqId].uploaded) {
               <a class="card-left" [href]="getDownloadUrl(doc.FileBase64)" target="_blank" rel="noopener noreferrer">
                 <div class="icon">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -44,6 +44,7 @@
                 </div>
                 <div class="small">{{ 'download' | translate }}</div>
               </a>
+              <div class="card-col-divider"></div>
             }
 
             <div class="card-text">
@@ -58,7 +59,8 @@
               }
               @if (attachments[doc.VisitorAttachSeqId].file && attachments[doc.VisitorAttachSeqId].uploaded) {
                 <div class="subtitle uploaded-info">
-                  ({{ (attachments[doc.VisitorAttachSeqId].file?.size || 0) / 1024 / 1024 | number: '1.1-1' }}MB)
+                  {{ attachments[doc.VisitorAttachSeqId].file?.name }}
+                  <span class="file-size">({{ (attachments[doc.VisitorAttachSeqId].file?.size || 0) / 1024 / 1024 | number: '1.1-1' }}MB)</span>
                 </div>
               }
               @if (attachments[doc.VisitorAttachSeqId].file && !attachments[doc.VisitorAttachSeqId].uploaded) {
