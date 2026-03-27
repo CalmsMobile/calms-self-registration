@@ -11,7 +11,8 @@
   <!-- Title section -->
   <section class="title">
     <h2>
-      <span class="accent">{{ 'sbv_title' | translate }}</span>
+      <span class="accent">{{ formattedPageTitle.first }}</span>
+      <span>{{ formattedPageTitle.rest }}</span>
     </h2>
     <p>{{ 'sbv_instruction' | translate }}</p>
     @if (isFullscreen && !videoEnded) {

@@ -46,6 +46,13 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   illustrationUrl = '/assets/safety-declaration.png';
   logo = 'assets/logo.png';
   companyTitle = '';
+
+  get formattedPageTitle(): { first: string; rest: string } {
+    const text = this.labelService.getLabel('questionnaire_title', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
+    const i = text.indexOf(' ');
+    return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
+  }
+
   private destroy$ = new Subject<void>();
 
   get hasAnyAnswer(): boolean {

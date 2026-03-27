@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { SharedService } from '../../../../../shared/shared.service';
+import { LabelService } from '../../../../../core/services/label.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { Subject } from 'rxjs';
@@ -35,9 +36,15 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   logo = 'assets/logo.png';
   companyTitle = '';
 
+  get formattedPageTitle(): { first: string; rest: string } {
+    const text = this.labelService.getLabel('equipment_movement', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
+    const i = text.indexOf(' ');
+    return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
+  }
+
   private destroy$ = new Subject<void>();
 
-  constructor(private wizardService: WizardService, private sharedService: SharedService) {
+  constructor(private wizardService: WizardService, private sharedService: SharedService, private labelService: LabelService) {
     this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
     this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
     this.wizardService.onValidationRequest.subscribe(() => {

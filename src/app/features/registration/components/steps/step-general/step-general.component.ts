@@ -40,6 +40,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   logo = 'assets/logo.png';
   companyTitle = '';
 
+  get formattedPageTitle(): { first: string; rest: string } {
+    const text = this.labelService.getLabel('visitor_information', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
+    const i = text.indexOf(' ');
+    return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
+  }
+
   // Photo capture dialog
   showPhotoCaptureDialog = false;
   isCameraOn = false;

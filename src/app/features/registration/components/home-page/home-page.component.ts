@@ -110,7 +110,7 @@ export class HomePageComponent implements AfterViewChecked {
     // Better approach: simple split method used in template with a pipe, OR just simple logic here if pageTitle is populated.
     // Let's assume pageTitle is populated or we strictly use what's available.
 
-    const text = this.pageTitle || 'Visitor Registration';
+    const text = this.wizardService.pageTitle || 'Visitor Registration';
     const firstSpaceIndex = text.indexOf(' ');
 
     if (firstSpaceIndex === -1) {
@@ -516,7 +516,7 @@ export class HomePageComponent implements AfterViewChecked {
         const responseData = await this.labelService.loadLabels(this.selectedBranch, this.currentLanguage.LanguageId, this.wizardService.refCode || undefined);
 
         // Update page title based on the loaded labels
-        const wizardTitle = this.labelService.getLabel('wizardTitle', 'caption');
+        const wizardTitle = this.labelService.getLabel('title', 'caption');
         if (wizardTitle) {
           this.wizardService.pageTitle = wizardTitle;
         }

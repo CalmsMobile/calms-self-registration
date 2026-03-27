@@ -13,6 +13,7 @@ import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { SharedService } from '../../../../../shared/shared.service';
+import { LabelService } from '../../../../../core/services/label.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 
@@ -38,6 +39,12 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   logo = 'assets/logo.png';
   companyTitle = '';
 
+  get formattedPageTitle(): { first: string; rest: string } {
+    const text = this.labelService.getLabel('nda_title', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
+    const i = text.indexOf(' ');
+    return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
+  }
+
   /** Restored base64 signature (if user navigated back) */
   restoredSignature = '';
 
@@ -45,7 +52,8 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
     private wizardService: WizardService,
     private sanitizer: DomSanitizer,
     private messageService: MessageService,
-    private sharedService: SharedService
+    private sharedService: SharedService,
+    private labelService: LabelService
   ) {
     this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
     this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);

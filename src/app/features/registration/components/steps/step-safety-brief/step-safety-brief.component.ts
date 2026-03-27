@@ -31,6 +31,13 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
   currentTime = 0;         // current playback position in seconds
   logo = 'assets/logo.png';
   companyTitle = '';
+
+  get formattedPageTitle(): { first: string; rest: string } {
+    const text = this.labelService.getLabel('sbv_title', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
+    const i = text.indexOf(' ');
+    return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
+  }
+
   private bodyStyleObserver?: MutationObserver;
 
   constructor(
