@@ -215,7 +215,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
       this.messageService.add({
         severity: 'error',
         summary: this.labelService.getLabel('safety_briefing_required', 'caption'),
-        detail: this.labelService.getLabel('sbv_instruction', 'caption')
+        detail: this.labelService.getLabel('sbv_instruction', 'caption'),
+        life: 5000
       });
     }
   }
@@ -429,13 +430,9 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   onNext(): void {
-    // Validate before proceeding
-    this.validateStep();
-    
-    // Only proceed if validation passes
     const savedData = this.wizardService.getFormData('safetyBrief');
     const wasWatched = savedData?.videoWatched || false;
-    
+
     if (this.videoEnded || wasWatched) {
       this.wizardService.setStepValid(true);
       this.wizardService.navigateToNextStep();
@@ -443,7 +440,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
       this.messageService.add({
         severity: 'error',
         summary: this.labelService.getLabel('safety_briefing_required', 'caption'),
-        detail: this.labelService.getLabel('sbv_instruction', 'caption')
+        detail: this.labelService.getLabel('sbv_instruction', 'caption'),
+        life: 5000
       });
     }
   }

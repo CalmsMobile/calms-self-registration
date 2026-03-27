@@ -33,11 +33,8 @@
 
   <!-- Loading State -->
   @if (isLoading) {
-  <div class="loading-container">
-    <div class="loading-spinner">
-      <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
-      <p>Loading form...</p>
-    </div>
+  <div class="loading-indicator">
+    <p-progressbar mode="indeterminate" [style]="{ height: '6px' }" />
   </div>
   }
 
@@ -175,7 +172,7 @@
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
-          <p-datepicker id="id_expired" formControlName="id_expired_date" [showIcon]="true"
+          <p-datepicker id="id_expired" formControlName="id_expired_date"
             [placeholder]="'id_expired_date' | translate:'placeholder'" [minDate]="minDate" dateFormat="dd/mm/yy"
             [class]="{'ng-invalid': isFieldInvalidRequired('id_expired_date')}"
             [disabled]="isFieldDisabled('id_expired_date')" appendTo="body">
@@ -195,7 +192,7 @@
           <span class="required-star">{{settings?.GenderRequired ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
-          <span class="field-icon"><i class="pi pi-venus-mars"></i></span>
+          <span class="field-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 2H22v5.5h-2V5.4l-3.2 3.2a6 6 0 1 1-1.4-1.4L18.6 4H16.5V2ZM8.5 10a4 4 0 1 0 0 8a4 4 0 0 0 0-8Z"/></svg></span>
           <p-select id="gender" [options]="genderOptions" formControlName="gender"
             [placeholder]="'gender' | translate:'placeholder'" optionLabel="Name" optionValue="Value"
             [class]="{'ng-invalid': isFieldInvalidRequired('gender')}" [disabled]="isFieldDisabled('gender')"
@@ -331,10 +328,12 @@
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-briefcase"></i></span>
+          <span class="autocomplete-arrow"><i class="pi pi-chevron-down"></i></span>
           <p-autoComplete id="visitor_company" [suggestions]="companyList" (completeMethod)="searchCompany($event)"
             (onSelect)="onCompanySelect($event)" field="visitor_comp_name" optionLabel="visitor_comp_name"
             dataKey="visitor_comp_name" formControlName="visitor_company"
-            [placeholder]="'my_company' | translate:'placeholder'" [dropdown]="true" [forceSelection]="false"
+            [placeholder]="'my_company' | translate:'placeholder'" [forceSelection]="false"
+            [completeOnFocus]="true" [minLength]="0"
             [class]="{'ng-invalid': isFieldInvalidRequired('visitor_company')}"
             [disabled]="isFieldDisabled('visitor_company')" appendTo="body">
           </p-autoComplete>
@@ -413,10 +412,13 @@
           {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <input pInputText [id]="udf.formControlName"
-          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
-          [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-align-left"></i></span>
+          <input pInputText [id]="udf.formControlName"
+            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+        </div>
         @if (isFieldRequired(udf.formControlName)) {
         <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
@@ -434,11 +436,14 @@
           {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <p-select [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
-          [formControlName]="udf.formControlName"
-          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
-          optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
-        </p-select>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-list"></i></span>
+          <p-select [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
+            [formControlName]="udf.formControlName"
+            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
+            optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+          </p-select>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="error-message">Please select {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
@@ -450,11 +455,14 @@
           {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <p-multiSelect [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
-          [formControlName]="udf.formControlName"
-          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
-          optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
-        </p-multiSelect>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-list"></i></span>
+          <p-multiSelect [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
+            [formControlName]="udf.formControlName"
+            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
+            optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+          </p-multiSelect>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="error-message">Please select at least one {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
@@ -466,10 +474,13 @@
           {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName" [showIcon]="true"
-          iconDisplay="input" dateFormat="dd/mm/yy" appendTo="body"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
-        </p-datepicker>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+          </p-datepicker>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
@@ -481,10 +492,13 @@
           {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName" [showIcon]="true"
-          iconDisplay="input" dateFormat="dd/mm/yy" appendTo="body" [minDate]="minDate"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
-        </p-datepicker>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+          </p-datepicker>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
@@ -543,7 +557,7 @@
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
-          <p-datepicker id="sharedDate" formControlName="sharedDate" [showIcon]="true"
+          <p-datepicker id="sharedDate" formControlName="sharedDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate" placeholder="Select date"
             [showTime]="false" (onSelect)="onSharedDateSelect($event)" appendTo="body" dateFormat="dd/mm/yy">
           </p-datepicker>
@@ -728,22 +742,24 @@
       </div>
       }
 
-      <!-- 20. Appointment Start Datetime -->
+      <!-- 20 & 21. Appointment Start / End Datetime — schedule dialog trigger -->
       @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
       <div class="form-field">
-        <label class="field-label" for="startDate">
-          {{'appointment_start_date_time' | translate}}
+        <label class="field-label">
+          {{'appointment_start_date_time' | translate}} &amp; {{'appointment_end_date_time' | translate}}
           <span class="required-star">*</span>
         </label>
-        <div class="input-wrap">
-          <span class="field-icon"><i class="pi pi-calendar"></i></span>
-          <p-datepicker id="startDate" formControlName="startDate" [showIcon]="true"
-            [class]="{'ng-invalid': isFieldInvalidRequired('startDate')}" [minDate]="minDate"
-            [placeholder]="'dd/mm/yyyy --:-- --'" [showTime]="true" hourFormat="12" appendTo="body" dateFormat="dd/mm/yy">
-          </p-datepicker>
+        <div class="schedule-trigger"
+          [class.ng-invalid]="isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate') || endBeforeStartError"
+          (click)="openScheduleDialog()">
+          <i class="pi pi-calendar"></i>
+          <span>{{ getScheduleDisplayText() }}</span>
+          <i class="pi pi-chevron-down"></i>
         </div>
-        @if (isFieldInvalidRequired('startDate')) {
-        <small class="error-message">{{'appointment_start_date_time' | translate}} is required</small>
+        @if (endBeforeStartError) {
+        <small class="error-message">{{ 'end_date_error_message' | translate }}</small>
+        } @else if (isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate')) {
+        <small class="error-message">Appointment date &amp; time is required</small>
         }
       </div>
       }
@@ -756,7 +772,7 @@
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
-          <p-datepicker id="appointmentDate" formControlName="appointmentDate" [showIcon]="true"
+          <p-datepicker id="appointmentDate" formControlName="appointmentDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('appointmentDate')}" [minDate]="minDate"
             placeholder="Select appointment date" [showTime]="false" (onSelect)="onAppointmentDateSelect($event)"
             appendTo="body" dateFormat="dd/mm/yy">
@@ -797,28 +813,7 @@
       </div>
       }
 
-      <!-- 21. Appointment End Datetime -->
-      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
-      <div class="form-field">
-        <label class="field-label" for="endDate">
-          {{'appointment_end_date_time' | translate}}
-          <span class="required-star">*</span>
-        </label>
-        <div class="input-wrap">
-          <span class="field-icon"><i class="pi pi-calendar"></i></span>
-          <p-datepicker id="endDate" formControlName="endDate" [showIcon]="true" [showTime]="true" hourFormat="12"
-            [class]="{'ng-invalid': isFieldInvalidRequired('endDate') || endBeforeStartError}"
-            [minDate]="generalForm.get('startDate')?.value || minDate" [disabled]="!generalForm.get('startDate')?.value"
-            [placeholder]="'dd/mm/yyyy --:-- --'" appendTo="body" dateFormat="dd/mm/yy">
-          </p-datepicker>
-        </div>
-        @if (endBeforeStartError) {
-        <small class="error-message">{{ 'end_date_error_message' | translate }}</small>
-        } @else if (isFieldInvalidRequired('endDate')) {
-        <small class="error-message">{{'appointment_end_date_time' | translate}} is required</small>
-        }
-      </div>
-      }
+      <!-- 21. End datetime handled by schedule dialog above -->
 
       <!-- 22. Appointment UDF fields -->
       @for (udf of udfSettings; track udf) {
@@ -829,10 +824,13 @@
           {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <input pInputText [id]="udf.formControlName"
-          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
-          [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-align-left"></i></span>
+          <input pInputText [id]="udf.formControlName"
+            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+        </div>
         @if (isFieldRequired(udf.formControlName)) {
         <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
@@ -850,11 +848,14 @@
           {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <p-select [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
-          [formControlName]="udf.formControlName"
-          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
-          optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
-        </p-select>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-list"></i></span>
+          <p-select [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
+            [formControlName]="udf.formControlName"
+            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
+            optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+          </p-select>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="error-message">Please select {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
@@ -866,11 +867,14 @@
           {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <p-multiSelect [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
-          [formControlName]="udf.formControlName"
-          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
-          optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
-        </p-multiSelect>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-list"></i></span>
+          <p-multiSelect [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
+            [formControlName]="udf.formControlName"
+            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
+            optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+          </p-multiSelect>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="error-message">Please select at least one {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
@@ -882,10 +886,13 @@
           {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName" [showIcon]="true"
-          iconDisplay="input" dateFormat="dd/mm/yy" appendTo="body"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
-        </p-datepicker>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+          </p-datepicker>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
@@ -897,10 +904,13 @@
           {{(udf.translateKey | translate) || udf.Caption}}
           <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
-        <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName" [showIcon]="true"
-          iconDisplay="input" dateFormat="dd/mm/yy" appendTo="body" [minDate]="minDate"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
-        </p-datepicker>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+          </p-datepicker>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
@@ -976,9 +986,8 @@
 
   <!-- Loading state -->
   @if (isLoading) {
-  <div class="m-loading">
-    <i class="pi pi-spin pi-spinner"></i>
-    <p>Loading form...</p>
+  <div class="loading-indicator">
+    <p-progressbar mode="indeterminate" [style]="{ height: '6px' }" />
   </div>
   }
 
@@ -1097,7 +1106,7 @@
         <label class="m-field-label">{{'id_expired_date' | translate}} <span class="m-req">{{settings?.IdExpiredRequired ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
-          <p-datepicker formControlName="id_expired_date" [showIcon]="true"
+          <p-datepicker formControlName="id_expired_date"
             [placeholder]="'id_expired_date' | translate:'placeholder'" [minDate]="minDate" dateFormat="dd/mm/yy"
             [class]="{'ng-invalid': isFieldInvalidRequired('id_expired_date')}"
             [disabled]="isFieldDisabled('id_expired_date')" appendTo="body">
@@ -1114,7 +1123,7 @@
       <div class="m-form-field">
         <label class="m-field-label">{{'gender' | translate}} <span class="m-req">{{settings?.GenderRequired ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
-          <span class="m-field-icon"><i class="pi pi-venus-mars"></i></span>
+          <span class="m-field-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 2H22v5.5h-2V5.4l-3.2 3.2a6 6 0 1 1-1.4-1.4L18.6 4H16.5V2ZM8.5 10a4 4 0 1 0 0 8a4 4 0 0 0 0-8Z"/></svg></span>
           <p-select [options]="genderOptions" formControlName="gender"
             [placeholder]="'gender' | translate:'placeholder'" optionLabel="Name" optionValue="Value"
             [class]="{'ng-invalid': isFieldInvalidRequired('gender')}" [disabled]="isFieldDisabled('gender')"
@@ -1229,10 +1238,12 @@
         <label class="m-field-label">{{'my_company' | translate}} <span class="m-req">{{settings?.CompanyRequired ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-briefcase"></i></span>
+          <span class="autocomplete-arrow"><i class="pi pi-chevron-down"></i></span>
           <p-autoComplete [suggestions]="companyList" (completeMethod)="searchCompany($event)"
             (onSelect)="onCompanySelect($event)" field="visitor_comp_name" optionLabel="visitor_comp_name"
             dataKey="visitor_comp_name" formControlName="visitor_company"
-            [placeholder]="'my_company' | translate:'placeholder'" [dropdown]="true" [forceSelection]="false"
+            [placeholder]="'my_company' | translate:'placeholder'" [forceSelection]="false"
+            [completeOnFocus]="true" [minLength]="0"
             [class]="{'ng-invalid': isFieldInvalidRequired('visitor_company')}"
             [disabled]="isFieldDisabled('visitor_company')" appendTo="body">
           </p-autoComplete>
@@ -1299,9 +1310,12 @@
       @if (udf.UDFCtrlType === 10) {
       <div class="m-form-field">
         <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
-        <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
-          [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-align-left"></i></span>
+          <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+        </div>
         @if (isFieldRequired(udf.formControlName)) {
         <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
@@ -1310,11 +1324,14 @@
       @if (udf.UDFCtrlType === 20) {
       <div class="m-form-field">
         <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
-        <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
-          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
-          optionLabel="label" optionValue="value"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
-        </p-select>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-list"></i></span>
+          <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
+            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            optionLabel="label" optionValue="value"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+          </p-select>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="m-error">Please select {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
@@ -1323,11 +1340,14 @@
       @if (udf.UDFCtrlType === 30) {
       <div class="m-form-field">
         <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
-        <p-multiSelect [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
-          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
-          optionLabel="label" optionValue="value"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
-        </p-multiSelect>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-list"></i></span>
+          <p-multiSelect [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
+            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            optionLabel="label" optionValue="value"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+          </p-multiSelect>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="m-error">Please select at least one {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
@@ -1336,10 +1356,13 @@
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
       <div class="m-form-field">
         <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
-        <p-datepicker [formControlName]="udf.formControlName" [showIcon]="true"
-          iconDisplay="input" dateFormat="dd/mm/yy" appendTo="body"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
-        </p-datepicker>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker [formControlName]="udf.formControlName"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+          </p-datepicker>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
@@ -1348,10 +1371,13 @@
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="m-form-field">
         <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
-        <p-datepicker [formControlName]="udf.formControlName" [showIcon]="true"
-          iconDisplay="input" dateFormat="dd/mm/yy" appendTo="body" [minDate]="minDate"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
-        </p-datepicker>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker [formControlName]="udf.formControlName"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+          </p-datepicker>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
@@ -1402,7 +1428,7 @@
         <label class="m-field-label">{{'date' | translate}} <span class="m-req">*</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
-          <p-datepicker formControlName="sharedDate" [showIcon]="true"
+          <p-datepicker formControlName="sharedDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate"
             placeholder="Select date" [showTime]="false" (onSelect)="onSharedDateSelect($event)"
             appendTo="body" dateFormat="dd/mm/yy">
@@ -1522,19 +1548,21 @@
       </div>
       }
 
-      <!-- 20. Appointment Start Datetime -->
+      <!-- 20 & 21. Appointment Start / End — schedule dialog trigger (mobile) -->
       @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
       <div class="m-form-field">
-        <label class="m-field-label">{{'appointment_start_date_time' | translate}} <span class="m-req">*</span></label>
-        <div class="m-input-wrap">
-          <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
-          <p-datepicker formControlName="startDate" [showIcon]="true"
-            [class]="{'ng-invalid': isFieldInvalidRequired('startDate')}" [minDate]="minDate"
-            [placeholder]="'dd/mm/yyyy --:-- --'" [showTime]="true" hourFormat="12" appendTo="body" dateFormat="dd/mm/yy">
-          </p-datepicker>
+        <label class="m-field-label">{{'appointment_start_date_time' | translate}} &amp; {{'appointment_end_date_time' | translate}} <span class="m-req">*</span></label>
+        <div class="schedule-trigger m-schedule-trigger"
+          [class.ng-invalid]="isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate') || endBeforeStartError"
+          (click)="openScheduleDialog()">
+          <i class="pi pi-calendar"></i>
+          <span>{{ getScheduleDisplayText() }}</span>
+          <i class="pi pi-chevron-down"></i>
         </div>
-        @if (isFieldInvalidRequired('startDate')) {
-        <small class="m-error">{{'appointment_start_date_time' | translate}} is required</small>
+        @if (endBeforeStartError) {
+        <small class="m-error">{{ 'end_date_error_message' | translate }}</small>
+        } @else if (isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate')) {
+        <small class="m-error">Appointment date &amp; time is required</small>
         }
       </div>
       }
@@ -1545,7 +1573,7 @@
         <label class="m-field-label">{{'appointment_date' | translate}} <span class="m-req">*</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
-          <p-datepicker formControlName="appointmentDate" [showIcon]="true"
+          <p-datepicker formControlName="appointmentDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('appointmentDate')}" [minDate]="minDate"
             placeholder="Select appointment date" [showTime]="false" (onSelect)="onAppointmentDateSelect($event)"
             appendTo="body" dateFormat="dd/mm/yy">
@@ -1579,25 +1607,7 @@
       </div>
       }
 
-      <!-- 21. Appointment End Datetime -->
-      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
-      <div class="m-form-field">
-        <label class="m-field-label">{{'appointment_end_date_time' | translate}} <span class="m-req">*</span></label>
-        <div class="m-input-wrap">
-          <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
-          <p-datepicker formControlName="endDate" [showIcon]="true" [showTime]="true" hourFormat="12"
-            [class]="{'ng-invalid': isFieldInvalidRequired('endDate') || endBeforeStartError}"
-            [minDate]="generalForm.get('startDate')?.value || minDate" [disabled]="!generalForm.get('startDate')?.value"
-            [placeholder]="'dd/mm/yyyy --:-- --'" appendTo="body" dateFormat="dd/mm/yy">
-          </p-datepicker>
-        </div>
-        @if (endBeforeStartError) {
-        <small class="m-error">{{ 'end_date_error_message' | translate }}</small>
-        } @else if (isFieldInvalidRequired('endDate')) {
-        <small class="m-error">{{'appointment_end_date_time' | translate}} is required</small>
-        }
-      </div>
-      }
+      <!-- 21. End datetime handled by schedule dialog above (mobile) -->
 
       <!-- 22. Appointment UDF fields -->
       @for (udf of udfSettings; track udf) {
@@ -1605,9 +1615,12 @@
       @if (udf.UDFCtrlType === 10) {
       <div class="m-form-field">
         <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
-        <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
-          [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-align-left"></i></span>
+          <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+        </div>
         @if (isFieldRequired(udf.formControlName)) {
         <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
@@ -1616,11 +1629,14 @@
       @if (udf.UDFCtrlType === 20) {
       <div class="m-form-field">
         <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
-        <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
-          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
-          optionLabel="label" optionValue="value"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
-        </p-select>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-list"></i></span>
+          <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
+            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            optionLabel="label" optionValue="value"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+          </p-select>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="m-error">Please select {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
@@ -1629,11 +1645,14 @@
       @if (udf.UDFCtrlType === 30) {
       <div class="m-form-field">
         <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
-        <p-multiSelect [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
-          [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
-          optionLabel="label" optionValue="value"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
-        </p-multiSelect>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-list"></i></span>
+          <p-multiSelect [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
+            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            optionLabel="label" optionValue="value"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+          </p-multiSelect>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="m-error">Please select at least one {{(udf.translateKey | translate) || udf.Caption}}</small>
         }
@@ -1642,10 +1661,13 @@
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
       <div class="m-form-field">
         <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
-        <p-datepicker [formControlName]="udf.formControlName" [showIcon]="true"
-          iconDisplay="input" dateFormat="dd/mm/yy" appendTo="body"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
-        </p-datepicker>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker [formControlName]="udf.formControlName"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+          </p-datepicker>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
@@ -1654,10 +1676,13 @@
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="m-form-field">
         <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
-        <p-datepicker [formControlName]="udf.formControlName" [showIcon]="true"
-          iconDisplay="input" dateFormat="dd/mm/yy" appendTo="body" [minDate]="minDate"
-          [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
-        </p-datepicker>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
+          <p-datepicker [formControlName]="udf.formControlName"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate"
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+          </p-datepicker>
+        </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
         <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
         }
@@ -1726,26 +1751,45 @@
       </div>
       }
     </div>
-    <button type="button" class="btn-add-more" (click)="showSavedVisitorsModal = false">
-      <i class="pi pi-plus"></i> {{ 'add_visitor' | translate }}
-    </button>
+  
   </div>
 </p-dialog>
 
 <p-dialog [(visible)]="showReturningVisitorPopup" [modal]="true" [draggable]="false" [resizable]="false"
   styleClass="search-profile-dialog" [showHeader]="false">
   <div class="search-profile-container">
-    <button type="button" class="close-btn" (click)="showReturningVisitorPopup = false">
+
+    <!-- Close -->
+    <button type="button" class="sp-close" (click)="showReturningVisitorPopup = false">
       <i class="pi pi-times"></i>
     </button>
-    <h2 class="dialog-title">{{ 'search_profile' | translate }}</h2>
-    <div class="search-input-wrapper">
-      <input pInputText type="text" [(ngModel)]="searchQuery" [placeholder]="'search_profile' | translate:'placeholder'"
-        (keyup.enter)="searchProfile()">
+
+    <!-- Header -->
+    <div class="sp-header">
+      <div class="sp-icon-wrap">
+        <i class="pi pi-user-edit"></i>
+      </div>
+      <div>
+        <h2 class="sp-title">{{ 'search_profile' | translate }}</h2>
+        <p class="sp-desc">Enter your Phone Number, Email, or NRIC to find your existing profile and skip the form.</p>
+      </div>
     </div>
-    <button pButton type="button" class="search-btn" [label]="'search_profile_button' | translate"
-      (click)="searchProfile()">
+
+    <hr class="sp-divider" />
+
+    <!-- Search Input -->
+    <div class="sp-search-wrap">
+      <i class="pi pi-search sp-search-icon"></i>
+      <input type="text" class="sp-search-input" [(ngModel)]="searchQuery"
+        [placeholder]="'search_profile' | translate:'placeholder'"
+        (keyup.enter)="searchProfile()" />
+    </div>
+
+    <!-- Button -->
+    <button type="button" class="sp-btn" (click)="searchProfile()">
+      {{ 'search_profile_button' | translate }}
     </button>
+
   </div>
 </p-dialog>
 
@@ -1879,4 +1923,69 @@
     <!-- Hidden canvas for snapshot capture -->
     <canvas #captureCanvas style="display:none"></canvas>
   </div>
+</p-dialog>
+
+<!-- ===================== Schedule Meeting Dialog ===================== -->
+<p-dialog [(visible)]="showScheduleDialog" [modal]="true" [closable]="false"
+  styleClass="schedule-dialog" [draggable]="false" [resizable]="false">
+
+  <ng-template pTemplate="header">
+    <div class="sd-header">
+      <div class="sd-header-left">
+        <span class="sd-icon"><i class="pi pi-clock"></i></span>
+        <div>
+          <h3 class="sd-title">Schedule a meeting</h3>
+          <p class="sd-subtitle">Create your next meeting easily.</p>
+        </div>
+      </div>
+      <button type="button" class="sd-close" (click)="closeScheduleDialog()">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  </ng-template>
+
+  <div class="sd-body">
+    <!-- Inline Calendar -->
+    <div class="sd-calendar">
+      <p-datepicker [inline]="true" [(ngModel)]="scheduleCalendarDate"
+        [minDate]="minDate" [showTime]="false" dateFormat="dd/mm/yy"
+        (onSelect)="onScheduleCalendarSelect($event)">
+      </p-datepicker>
+    </div>
+
+    <!-- Date / Time Fields -->
+    <div class="sd-fields">
+      <div class="sd-field" [class.sd-field-active]="scheduleActiveField === 'start'"
+        (click)="scheduleActiveField = 'start'">
+        <label class="sd-label">Start date*</label>
+        <div class="sd-row">
+          <div class="sd-date-box">{{ formatScheduleDate(scheduleStartDate) }}</div>
+          <input type="time" class="sd-time-box" [(ngModel)]="scheduleStartTime" />
+        </div>
+      </div>
+      <div class="sd-field" [class.sd-field-active]="scheduleActiveField === 'end'"
+        (click)="scheduleActiveField = 'end'">
+        <label class="sd-label">End date*</label>
+        <div class="sd-row">
+          <div class="sd-date-box">{{ formatScheduleDate(scheduleEndDate) }}</div>
+          <input type="time" class="sd-time-box" [(ngModel)]="scheduleEndTime" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <div class="sd-footer">
+      <span class="sd-summary">
+        Event: {{ formatScheduleDate(scheduleStartDate) }} – {{ formatScheduleDate(scheduleEndDate) }},
+        from {{ formatTime12(scheduleStartTime) }} – {{ formatTime12(scheduleEndTime) }}
+      </span>
+      <div class="sd-footer-btns">
+        <button type="button" class="sd-btn-cancel" (click)="closeScheduleDialog()">Cancel</button>
+        <button type="button" class="sd-btn-schedule"
+          [disabled]="!scheduleStartDate || !scheduleEndDate"
+          (click)="applySchedule()">Schedule</button>
+      </div>
+    </div>
+  </ng-template>
 </p-dialog>

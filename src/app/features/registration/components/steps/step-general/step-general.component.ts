@@ -13,6 +13,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { DividerModule } from 'primeng/divider';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ButtonModule } from 'primeng/button';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { filter, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../../core/services/api.service';
 import { LabelService } from '../../../../../core/services/label.service';
@@ -24,7 +25,7 @@ import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
 @Component({
   selector: 'app-step-general',
   standalone: true,
-  imports: [DatePickerModule, SelectModule, ReactiveFormsModule, FormsModule, InputTextModule, AutoCompleteModule, TranslatePipe, MultiSelectModule, DividerModule, CheckboxModule, ButtonModule, TableModule, DialogModule],
+  imports: [DatePickerModule, SelectModule, ReactiveFormsModule, FormsModule, InputTextModule, AutoCompleteModule, TranslatePipe, MultiSelectModule, DividerModule, CheckboxModule, ButtonModule, TableModule, DialogModule, ProgressBarModule],
   templateUrl: './step-general.component.html',
   styleUrls: ['./step-general.component.scss']
 })
@@ -67,6 +68,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   minEndTime: Date | undefined = undefined;
   endBeforeStartError = false;
   showIdExpiryField = false;
+
+  // Schedule dialog
+  showScheduleDialog = false;
+  scheduleCalendarDate: Date = new Date();
+  scheduleStartDate: Date | null = null;
+  scheduleEndDate: Date | null = null;
+  scheduleStartTime = '09:00';
+  scheduleEndTime = '10:00';
+  scheduleActiveField: 'start' | 'end' = 'start';
   selectedIdTypeData: any = null;
   gbShowMemberId = false;
   showTime = true;
@@ -282,6 +292,81 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
 
+
+  openScheduleDialog(): void {
+    const startVal: Date | null = this.generalForm.get('startDate')?.value ?? null;
+    const endVal: Date | null = this.generalForm.get('endDate')?.value ?? null;
+    if (startVal) {
+      this.scheduleStartDate = new Date(startVal);
+      this.scheduleCalendarDate = new Date(startVal);
+      this.scheduleStartTime = `${startVal.getHours().toString().padStart(2, '0')}:${startVal.getMinutes().toString().padStart(2, '0')}`;
+    } else {
+      this.scheduleStartDate = null;
+      this.scheduleCalendarDate = new Date();
+      this.scheduleStartTime = '09:00';
+    }
+    if (endVal) {
+      this.scheduleEndDate = new Date(endVal);
+      this.scheduleEndTime = `${endVal.getHours().toString().padStart(2, '0')}:${endVal.getMinutes().toString().padStart(2, '0')}`;
+    } else {
+      this.scheduleEndDate = null;
+      this.scheduleEndTime = '10:00';
+    }
+    this.scheduleActiveField = 'start';
+    this.showScheduleDialog = true;
+  }
+
+  closeScheduleDialog(): void {
+    this.showScheduleDialog = false;
+  }
+
+  onScheduleCalendarSelect(date: Date): void {
+    if (this.scheduleActiveField === 'start') {
+      this.scheduleStartDate = new Date(date);
+      this.scheduleActiveField = 'end';
+      if (!this.scheduleEndDate) this.scheduleEndDate = new Date(date);
+    } else {
+      this.scheduleEndDate = new Date(date);
+    }
+  }
+
+  applySchedule(): void {
+    if (!this.scheduleStartDate || !this.scheduleEndDate) return;
+    const [sh, sm] = this.scheduleStartTime.split(':').map(Number);
+    const [eh, em] = this.scheduleEndTime.split(':').map(Number);
+    const start = new Date(this.scheduleStartDate);
+    start.setHours(sh, sm, 0, 0);
+    const end = new Date(this.scheduleEndDate);
+    end.setHours(eh, em, 0, 0);
+    this.generalForm.get('startDate')?.setValue(start);
+    this.generalForm.get('startDate')?.markAsTouched();
+    this.generalForm.get('endDate')?.setValue(end);
+    this.generalForm.get('endDate')?.markAsTouched();
+    this.showScheduleDialog = false;
+  }
+
+  formatScheduleDate(date: Date | null): string {
+    if (!date) return 'Select date';
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  formatTime12(time: string): string {
+    if (!time) return '';
+    const [h, m] = time.split(':').map(Number);
+    const period = h >= 12 ? 'PM' : 'AM';
+    const hour12 = h % 12 || 12;
+    return `${hour12}:${m.toString().padStart(2, '0')} ${period}`;
+  }
+
+  getScheduleDisplayText(): string {
+    const start: Date | null = this.generalForm.get('startDate')?.value ?? null;
+    const end: Date | null = this.generalForm.get('endDate')?.value ?? null;
+    if (!start && !end) return 'Click to schedule appointment';
+    const pad = (d: Date) => `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    const s = start ? `${this.formatScheduleDate(start)} ${this.formatTime12(pad(start))}` : 'Select start';
+    const e = end ? `${this.formatScheduleDate(end)} ${this.formatTime12(pad(end))}` : 'Select end';
+    return `${s}  →  ${e}`;
+  }
 
   onStartDateSelect(selectedDate: Date) {
     const endDateControl = this.generalForm.get('endDate');

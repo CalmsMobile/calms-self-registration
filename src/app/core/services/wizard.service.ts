@@ -577,13 +577,20 @@ export class WizardService {
       return obj?.toString() || '';
     };
 
+    const stripPhotoPrefix = (src: string): string => {
+      if (!src) return '';
+      const idx = src.indexOf(';base64,');
+      return idx >= 0 ? src.substring(idx + 8) : src;
+    };
+
     const buildVisitorEntry = (data: any, isSelf: boolean) => {
       const companyId = extractId(data.visitor_company, 'visitor_comp_code', 'id');
       const countryId = extractId(data.country, 'CountrySeqId', 'id');
       const genderId = extractId(data.gender, 'Value', 'id');
+      const rawPhoto = data.profilePreview || (typeof data.profile === 'string' ? data.profile : '') || '';
       return {
         MySelf: isSelf,
-        Photo: data.profilePreview || (typeof data.profile === 'string' ? data.profile : '') || '',
+        Photo: stripPhotoPrefix(rawPhoto),
         FullName: data.fullName || '',
         IdentityNo: data.visitor_id || '',
         Visitor_IC: data.visitor_id || '',
@@ -591,7 +598,7 @@ export class WizardService {
         GenderDesc: genderId,
         Email: data.email || '',
         ID_TYPE: data.visitor_id_type || '',
-        ID_EXPIRED_DATE: data.expired_date || '',
+        ID_EXPIRED_DATE: data.id_expired_date || data.expired_date || '',
         CompanyId: companyId,
         CompanyDesc: '',
         Contact: data.phone || '',

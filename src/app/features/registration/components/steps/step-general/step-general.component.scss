@@ -27,7 +27,7 @@
 .page {
   width: 100%;
   height: 100vh;
-  background: url('/assets/back.png') no-repeat center center;
+  background: #f6f6f6 url('/assets/back.png') no-repeat center center;
   background-size: cover;
   display: flex;
   flex-direction: column;
@@ -129,28 +129,16 @@
 /* ============================================
    LOADING STATE
    ============================================ */
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
-}
-
-.loading-spinner {
+.loading-indicator {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 1rem;
-  color: var(--primary);
+  min-height: 100vh;
+  background: rgba(255, 255, 255, 0.9);
 
-  p {
-    margin: 0;
-    font-size: 1rem;
-    color: var(--text-dark);
-  }
-
-  i {
-    color: var(--primary);
+  ::ng-deep .p-progressbar {
+    width: 60%;
   }
 }
 
@@ -201,7 +189,7 @@
 }
 
 .required-star {
-  color: var(--error);
+  color: #ff3b3b !important;
   margin-left: 2px;
 }
 
@@ -219,15 +207,23 @@
   transform: translateY(-50%);
   width: 22px;
   height: 22px;
+  flex-shrink: 0;
   color: #7b7b7b;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
   z-index: 2;
+  overflow: hidden;
 
   i {
     font-size: 15px;
+  }
+
+  svg {
+    width: 100%;
+    height: 100%;
+    display: block;
   }
 }
 
@@ -239,11 +235,7 @@
 /* Input Styling */
 input,
 textarea,
-::ng-deep .p-inputtext,
-::ng-deep .p-select,
-::ng-deep .p-datepicker,
-::ng-deep .p-autocomplete,
-::ng-deep .p-multiselect {
+::ng-deep .p-inputtext {
   width: 100%;
   height: 52px;
   padding: 0 18px 0 52px;
@@ -274,8 +266,10 @@ textarea,
   }
 
   &.error,
-  &.ng-invalid.ng-touched {
-    border-color: #ef4444 !important;
+  &.ng-invalid.ng-touched,
+  &.ng-invalid.ng-dirty {
+    border-color: var(--error) !important;
+    box-shadow: 0 0 0 2px rgba(255, 59, 59, 0.12) !important;
   }
 }
 
@@ -295,6 +289,8 @@ textarea {
   .p-multiselect {
     width: 100% !important;
     height: 52px !important;
+    padding: 0 !important;
+    margin-top: auto !important;
     border-radius: 18px !important;
     border: 1px solid #e6e6e6 !important;
     background: white !important;
@@ -310,13 +306,34 @@ textarea {
       box-shadow: 0 0 0 2px rgba(245, 180, 0, 0.12) !important;
     }
 
-    &.ng-invalid.ng-touched {
-      border-color: #ef4444 !important;
+    &.ng-invalid.ng-touched,
+    &.ng-invalid.ng-dirty,
+    &.ng-invalid.p-focus,
+    &.ng-invalid:focus-within {
+      border-color: var(--error) !important;
+      box-shadow: 0 0 0 2px rgba(255, 59, 59, 0.12) !important;
     }
   }
 
   /* Internal Input Resets */
   .p-select-label,
+  .p-multiselect-label {
+    flex: 1 1 auto !important;
+    display: block !important;
+    min-width: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 40px 0 52px !important;
+    font-size: 15px !important;
+    text-align: left !important;
+    outline: none !important;
+    box-shadow: none !important;
+    color: inherit !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
   .p-datepicker input,
   .p-autocomplete input {
     width: 100% !important;
@@ -325,8 +342,7 @@ textarea {
     background: transparent !important;
     padding: 0 40px 0 52px !important;
     font-size: 15px !important;
-    display: flex !important;
-    align-items: center !important;
+    text-align: left !important;
     outline: none !important;
     box-shadow: none !important;
     position: relative !important;
@@ -379,13 +395,14 @@ textarea {
   .p-datepicker-button:focus {
     box-shadow: none !important;
   }
+
 }
 
 .error-message {
   position: absolute;
   bottom: 2px;
   left: 0;
-  color: var(--error);
+  color: #ff3b3b !important;
   font-size: 11px;
   line-height: 1.3;
   white-space: nowrap;
@@ -1018,12 +1035,7 @@ textarea {
   }
 }
 
-/* ============================================
-   UTILITY CLASSES
-   ============================================ */
-.ng-invalid.ng-touched {
-  border-color: var(--error) !important;
-}
+
 
 ::ng-deep .p-button {
   font-family: 'Poppins', sans-serif;
@@ -1310,79 +1322,135 @@ textarea {
 }
 
 .search-profile-container {
-  padding: 40px;
+  padding: 32px 32px 28px;
   position: relative;
-  max-width: 500px;
-  width: 90vw;
+  width: min(480px, 90vw);
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  align-items: center;
+  gap: 20px;
+  font-family: 'Poppins', sans-serif;
 
-  .close-btn {
+  /* Close button — red circle top-right */
+  .sp-close {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    background: transparent;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #ff3b3b;
     border: none;
-    font-size: 20px;
+    color: #fff;
+    font-size: 13px;
     cursor: pointer;
-    color: #000;
-    padding: 5px;
-    line-height: 1;
-
-    &:hover {
-      color: var(--primary);
-    }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    &:hover { background: #e02020; }
   }
 
-  .dialog-title {
-    color: #f5b942; // Yellow title
-    font-size: 28px;
+  /* Header row: icon + title + desc */
+  .sp-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding-right: 36px; // avoid overlap with close btn
+  }
+
+  .sp-icon-wrap {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #fff8e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    i { color: #f5b400; font-size: 18px; }
+  }
+
+  .sp-title {
+    margin: 0 0 4px;
+    font-size: 20px;
     font-weight: 700;
-    margin: 0;
-    width: 100%;
-    text-align: left;
+    color: #f5b400;
   }
 
-  .search-input-wrapper {
+  .sp-desc {
+    margin: 0;
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+
+  /* Divider */
+  .sp-divider {
+    border: none;
+    border-top: 1px solid #f0f0f0;
+    margin: 0;
+  }
+
+  /* Search input with icon inside */
+  .sp-search-wrap {
+    position: relative;
     width: 100%;
 
-    input {
+    .sp-search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #f5b400;
+      font-size: 15px;
+      pointer-events: none;
+    }
+
+    .sp-search-input {
       width: 100%;
       height: 50px;
-      border-radius: 12px;
-      border: 1px solid #e0e0e0;
-      padding: 0 20px;
-      font-size: 15px;
+      border-radius: 14px;
+      border: 1.5px solid #e6e6e6;
+      padding: 0 18px 0 44px;
+      font-size: 14px;
+      font-family: 'Poppins', sans-serif;
+      color: #3b3b3b;
+      background: #fafafa;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s, box-shadow 0.2s;
 
-      &::placeholder {
-        color: #999;
-      }
-
+      &::placeholder { color: #aaa; }
       &:focus {
-        border-color: #f5b942;
-        box-shadow: 0 0 0 2px rgba(245, 185, 66, 0.1);
+        border-color: #f5b400;
+        box-shadow: 0 0 0 3px rgba(245, 180, 0, 0.12);
+        background: #fff;
       }
     }
   }
 
-  .search-btn {
+  /* CTA button */
+  .sp-btn {
     width: 100%;
-    height: 50px !important;
-    background: #f5b942 !important;
-    border: none !important;
-    border-radius: 15px !important;
-    color: black !important;
-    font-weight: 700 !important;
-    font-size: 16px !important;
-    box-shadow: 0 4px 15px rgba(245, 185, 66, 0.3) !important;
-    transition: all 0.3s ease !important;
+    height: 52px;
+    border-radius: 26px;
+    border: none;
+    background: #f5b400;
+    color: #000;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 16px rgba(245, 180, 0, 0.28);
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
 
     &:hover {
-      background: #e5ab3b !important;
-      transform: translateY(-2px);
+      background: #e5a800;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(245, 180, 0, 0.36);
     }
+    &:active { transform: translateY(0); }
   }
 }
 
@@ -1425,6 +1493,7 @@ textarea {
   justify-content: space-between;
   align-items: center;
   padding: 16px 0 28px;
+  border-top: 2px solid #766e6d;
   flex-shrink: 0;
   gap: 12px;
   min-width: 0;
@@ -1547,31 +1616,33 @@ textarea {
 
   .field-icon {
     position: absolute;
-    left: 13px;
+    left: 18px;
     top: 50%;
     transform: translateY(-50%);
     z-index: 5;
-    color: #999;
+    color: #7b7b7b;
     font-size: 15px;
+    width: 22px;
+    height: 22px;
     pointer-events: none;
     display: flex;
     align-items: center;
   }
 
   & > input.p-inputtext {
-    padding-left: 40px !important;
+    padding-left: 52px !important;
     width: 100%;
   }
 
   & > textarea.p-inputtext {
-    padding-left: 40px !important;
+    padding-left: 52px !important;
     width: 100%;
   }
 
   ::ng-deep .p-select {
     width: 100%;
     .p-select-label {
-      padding-left: 40px !important;
+      padding-left: 52px !important;
     }
   }
 
@@ -1579,14 +1650,24 @@ textarea {
     width: 100%;
     .p-datepicker-input,
     .p-inputtext {
-      padding-left: 40px !important;
+      padding-left: 52px !important;
     }
   }
 
   ::ng-deep .p-autocomplete {
     width: 100%;
     .p-inputtext {
-      padding-left: 40px !important;
+      padding-left: 52px !important;
+    }
+  }
+
+  ::ng-deep .p-multiselect {
+    width: 100%;
+    .p-multiselect-label {
+      flex: 1 !important;
+      display: block !important;
+      padding-left: 52px !important;
+      text-align: left !important;
     }
   }
 }
@@ -1595,6 +1676,279 @@ textarea {
   .field-icon {
     top: 14px;
     transform: none;
+  }
+}
+
+.autocomplete-arrow {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 40px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* ============================================
+   SCHEDULE TRIGGER FIELD
+   ============================================ */
+.schedule-trigger {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 18px;
+  border: 1px solid #e6e6e6;
+  background: #ffffff;
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  font-size: 15px;
+  font-family: 'Poppins', sans-serif;
+  color: #3b3b3b;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  margin-top: auto;
+
+  i:first-child { color: #7b7b7b; font-size: 15px; flex-shrink: 0; }
+  span { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: left; }
+  i:last-child { color: #6b7280; font-size: 13px; flex-shrink: 0; }
+
+  &:hover { border-color: var(--primary); }
+  &.ng-invalid { border-color: #ff3b3b !important; box-shadow: 0 0 0 2px rgba(255,59,59,0.12) !important; }
+}
+
+.m-schedule-trigger {
+  height: 54px;
+  border-radius: 24px;
+  border: 1px solid #e5e7ef;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+  font-size: 14px;
+  margin-top: 0;
+}
+
+/* ============================================
+   SCHEDULE MEETING DIALOG
+   ============================================ */
+::ng-deep .schedule-dialog {
+  .p-dialog {
+    border-radius: 24px !important;
+    overflow: hidden;
+    width: min(720px, 95vw) !important;
+  }
+
+  .p-dialog-header {
+    padding: 20px 24px 16px !important;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .p-dialog-content {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .p-dialog-footer {
+    padding: 0 !important;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  /* Inline calendar — remove extra borders/shadows */
+  .p-datepicker {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    width: auto !important;
+  }
+
+  .p-datepicker-calendar-container {
+    border: none !important;
+  }
+}
+
+/* Header */
+.sd-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+
+  .sd-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .sd-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #fff8e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    i { color: var(--primary); font-size: 16px; }
+  }
+
+  .sd-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .sd-subtitle {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: #8b8b8b;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .sd-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #ff3b3b;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    i { font-size: 13px; }
+    &:hover { background: #e02020; }
+  }
+}
+
+/* Body */
+.sd-body {
+  display: flex;
+  gap: 0;
+
+  .sd-calendar {
+    flex: 0 0 auto;
+    border-right: 1px solid #f0f0f0;
+    padding: 16px;
+
+    ::ng-deep .p-datepicker-inline {
+      border: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      width: 100% !important;
+    }
+  }
+
+  .sd-fields {
+    flex: 1;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    justify-content: center;
+  }
+}
+
+.sd-field {
+  border: 1.5px solid #e6e6e6;
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+
+  &.sd-field-active { border-color: var(--primary); }
+
+  .sd-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #8b8b8b;
+    margin-bottom: 8px;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .sd-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sd-date-box {
+    flex: 1;
+    font-size: 14px;
+    color: #3b3b3b;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .sd-time-box {
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    color: #3b3b3b;
+    outline: none;
+    cursor: pointer;
+    &:focus { border-color: var(--primary); }
+  }
+}
+
+/* Footer */
+.sd-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  .sd-summary {
+    font-size: 13px;
+    color: #8b8b8b;
+    font-family: 'Poppins', sans-serif;
+    flex: 1;
+  }
+
+  .sd-footer-btns {
+    display: flex;
+    gap: 10px;
+  }
+
+  .sd-btn-cancel {
+    padding: 10px 22px;
+    border-radius: 20px;
+    border: 1px solid #e6e6e6;
+    background: white;
+    color: #3b3b3b;
+    font-size: 14px;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    &:hover { background: #f5f5f5; }
+  }
+
+  .sd-btn-schedule {
+    padding: 10px 22px;
+    border-radius: 20px;
+    border: none;
+    background: var(--primary);
+    color: #000;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Poppins', sans-serif;
+    cursor: pointer;
+    &:disabled { opacity: 0.5; cursor: not-allowed; }
+    &:hover:not(:disabled) { background: #e5a800; }
   }
 }
 
@@ -1804,27 +2158,29 @@ textarea {
   .input-wrap {
     .field-icon {
       font-size: 14px;
-      left: 11px;
+      left: 14px;
+      width: 18px;
+      height: 18px;
     }
 
     & > input.p-inputtext {
-      padding-left: 36px !important;
+      padding-left: 46px !important;
     }
 
     & > textarea.p-inputtext {
-      padding-left: 36px !important;
+      padding-left: 46px !important;
     }
 
     ::ng-deep .p-select .p-select-label {
-      padding-left: 36px !important;
+      padding-left: 46px !important;
     }
 
     ::ng-deep .p-datepicker .p-inputtext {
-      padding-left: 36px !important;
+      padding-left: 46px !important;
     }
 
     ::ng-deep .p-autocomplete .p-inputtext {
-      padding-left: 36px !important;
+      padding-left: 46px !important;
     }
   }
 
@@ -1978,18 +2334,11 @@ textarea {
   }
 
   /* Loading */
-  .m-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    padding: 40px 16px;
-    color: #f5b400;
+  .loading-indicator {
+    min-height: 100vh;
 
-    p {
-      margin: 0;
-      font-size: 14px;
-      color: #555;
+    ::ng-deep .p-progressbar {
+      width: 80%;
     }
   }
 
@@ -2029,7 +2378,7 @@ textarea {
   }
 
   .m-req {
-    color: #ff3b3b;
+    color: #ff3b3b !important;
     margin-left: 2px;
   }
 
@@ -2045,9 +2394,19 @@ textarea {
       z-index: 5;
       color: #7b7b7b;
       font-size: 15px;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      overflow: hidden;
       pointer-events: none;
       display: flex;
       align-items: center;
+
+      svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
     }
 
     &.m-textarea-wrap .m-field-icon {
@@ -2085,10 +2444,13 @@ textarea {
       box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 
       .p-select-label {
+        flex: 1 !important;
+        display: block !important;
         padding-left: 46px !important;
         font-size: 14px !important;
         font-family: 'Poppins', sans-serif !important;
         color: #4a4a4a !important;
+        text-align: left !important;
       }
     }
 
@@ -2112,11 +2474,9 @@ textarea {
       width: 100%;
 
       .p-inputtext {
-        padding-left: 46px !important;
+       
         font-size: 14px !important;
-        height: 54px !important;
-        border-radius: 24px !important;
-        border: 1px solid #e5e7ef !important;
+      
         background: #fff !important;
         box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
       }
@@ -2131,8 +2491,11 @@ textarea {
       box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
 
       .p-multiselect-label {
+        flex: 1 !important;
+        display: block !important;
         padding-left: 46px !important;
         font-size: 14px !important;
+        text-align: left !important;
       }
     }
   }
@@ -2165,7 +2528,7 @@ textarea {
   }
 
   .m-error {
-    color: #ff3b3b;
+    color: var(--error);
     font-size: 11px;
     line-height: 1.3;
   }
@@ -2279,7 +2642,7 @@ textarea {
     gap: 10px;
     padding: 14px 22px 32px;
     background: #fff;
-    border-top: 1px solid #f0f0f0;
+    border-top: 2px solid #ffe8e7;
     flex-shrink: 0;
   }
 
