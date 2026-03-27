@@ -65,7 +65,7 @@
 
 /* ── Pass card ── */
 .pass-card {
-  width: 380px;
+  width: 440px;
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 18px 30px rgba(0, 0, 0, 0.08);
@@ -94,13 +94,13 @@
 }
 
 .pass-brand {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 1.2;
 }
 
 .brand-sub {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   opacity: 0.85;
 }
@@ -110,9 +110,9 @@
   top: 14px;
   right: 14px;
   background: #ffffff;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
 }
 
@@ -132,14 +132,14 @@
 .page-error   .reg-block { background: #ead2cf; }
 
 .reg-label {
-  font-size: 9px;
+  font-size: 11px;
   color: #8a7c5b;
   font-weight: 600;
   margin-bottom: 2px;
 }
 
 .reg-value {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.5px;
 }
@@ -167,14 +167,14 @@
 
 .info-item {
   display: flex;
-  gap: 6px;
-  font-size: 10px;
+  gap: 8px;
+  font-size: 12px;
   color: #7c7c7c;
 }
 
 .info-icon {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   color: #7c7c7c;
   display: inline-flex;
   align-items: center;
@@ -182,29 +182,29 @@
   flex-shrink: 0;
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     fill: currentColor;
   }
 }
 
 .info-label {
-  font-size: 9px;
+  font-size: 11px;
   color: #9aa0a6;
 }
 
 .info-value {
-  font-size: 11px;
+  font-size: 14px;
   color: #3e3e3e;
   font-weight: 600;
 }
 
 .status-pill {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 3px 10px;
   background: #ffffff;
   border-radius: 999px;
-  font-size: 9px;
+  font-size: 11px;
   margin-top: 2px;
   border: 1px dashed;
 }
@@ -243,14 +243,14 @@
 }
 
 .qr-caption {
-  font-size: 10px;
+  font-size: 13px;
   color: #9aa0a6;
   text-align: center;
 }
 
 /* ── Pending note ── */
 .pending-note {
-  font-size: 10px;
+  font-size: 13px;
   color: #8a8a8a;
   text-align: center;
   line-height: 1.4;
@@ -258,7 +258,7 @@
 
 /* ── Action buttons ── */
 .action-buttons {
-  width: 380px;
+  width: 440px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -266,11 +266,11 @@
 }
 
 .action-btn {
-  width: 380px;
+  width: 440px;
   border: none;
   border-radius: 999px;
-  padding: 12px 16px;
-  font-size: 13px;
+  padding: 14px 20px;
+  font-size: 15px;
   font-weight: 600;
   font-family: "Poppins", sans-serif;
   display: inline-flex;

@@ -22,38 +22,40 @@
 
     <div class="right">
       <div class="form">
-        <label class="field">
+        <label class="field" [class.field-error]="showFieldErrors && !newItem.description.trim()">
           <span class="label">{{ 'item_description' | translate }}</span>
           <input type="text"
             [(ngModel)]="newItem.description"
             (ngModelChange)="checkInputs()"
             [placeholder]="'item_description' | translate:'placeholder'" />
         </label>
-        <label class="field">
+        <label class="field" [class.field-error]="showFieldErrors && !newItem.serialNumber.trim()">
           <span class="label">{{ 'serial_number' | translate }}</span>
           <input type="text"
             [(ngModel)]="newItem.serialNumber"
             (ngModelChange)="checkInputs()"
             [placeholder]="'serial_number' | translate:'placeholder'" />
         </label>
-        <label class="field">
-          <span class="label">{{ 'em_direction' | translate }}</span>
-          <div class="select-wrap">
-            <select [(ngModel)]="newItem.direction" (ngModelChange)="checkInputs()">
-              <option value="">{{ 'em_direction' | translate:'placeholder' }}</option>
-              <option value="IN">IN</option>
-              <option value="OUT">OUT</option>
-            </select>
-          </div>
-        </label>
-        <button class="btn-outline" type="button" [disabled]="!canAdd" (click)="addItem()">
-          {{ 'add_item' | translate }}
-          <span class="add-icon">
-            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-              <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z" clip-rule="evenodd" />
-            </svg>
-          </span>
-        </button>
+        <div class="direction-row">
+          <label class="field" [class.field-error]="showFieldErrors && !newItem.direction">
+            <span class="label">{{ 'em_direction' | translate }}</span>
+            <div class="select-wrap">
+              <select [(ngModel)]="newItem.direction" (ngModelChange)="checkInputs()">
+                <option value="">{{ 'em_direction' | translate:'placeholder' }}</option>
+                <option value="IN">IN</option>
+                <option value="OUT">OUT</option>
+              </select>
+            </div>
+          </label>
+          <button class="btn-outline" type="button" [disabled]="!canAdd" (click)="addItem()">
+            {{ 'add_item' | translate }}
+            <span class="add-icon">
+              <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z" clip-rule="evenodd" />
+              </svg>
+            </span>
+          </button>
+        </div>
       </div>
 
       @if (declaredItems.length > 0) {
@@ -83,7 +85,7 @@
           <button class="btn grey" type="button" (click)="goBack()"><span class="icon-left">&larr;</span> {{ 'back' | translate }}</button>
           <button class="btn grey" type="button" (click)="skipStep()">{{ 'skip' | translate }} <span class="icon-right">&rarr;</span></button>
         </div>
-        <button class="btn yellow" type="button" (click)="proceedToNext()">{{ 'continue' | translate }} <span class="icon-right">&rarr;</span></button>
+        <button class="btn yellow" type="button" [disabled]="partiallyFilled" (click)="proceedToNext()">{{ 'continue' | translate }} <span class="icon-right">&rarr;</span></button>
       </div>
     </div>
   </section>
@@ -108,37 +110,39 @@
   <!-- Form Card -->
   <div class="m-card">
     <div class="m-form">
-      <div class="m-field">
+      <div class="m-field" [class.m-field-error]="showFieldErrors && !newItem.description.trim()">
         <span class="m-label">{{ 'item_description' | translate }}</span>
         <input class="m-input" type="text"
           [(ngModel)]="newItem.description"
           (ngModelChange)="checkInputs()"
           [placeholder]="'item_description' | translate:'placeholder'" />
       </div>
-      <div class="m-field">
+      <div class="m-field" [class.m-field-error]="showFieldErrors && !newItem.serialNumber.trim()">
         <span class="m-label">{{ 'serial_number' | translate }}</span>
         <input class="m-input" type="text"
           [(ngModel)]="newItem.serialNumber"
           (ngModelChange)="checkInputs()"
           [placeholder]="'serial_number' | translate:'placeholder'" />
       </div>
-      <div class="m-field">
-        <span class="m-label">{{ 'em_direction' | translate }}</span>
-        <div class="m-select-wrap">
-          <select class="m-input" [(ngModel)]="newItem.direction" (ngModelChange)="checkInputs()">
-            <option value="">{{ 'em_direction' | translate:'placeholder' }}</option>
-            <option value="IN">IN</option>
-            <option value="OUT">OUT</option>
-          </select>
-          <span class="m-chev">&#8964;</span>
+      <div class="m-direction-row">
+        <div class="m-field" [class.m-field-error]="showFieldErrors && !newItem.direction">
+          <span class="m-label">{{ 'em_direction' | translate }}</span>
+          <div class="m-select-wrap">
+            <select class="m-input" [(ngModel)]="newItem.direction" (ngModelChange)="checkInputs()">
+              <option value="">{{ 'em_direction' | translate:'placeholder' }}</option>
+              <option value="IN">IN</option>
+              <option value="OUT">OUT</option>
+            </select>
+            <span class="m-chev">&#8964;</span>
+          </div>
         </div>
+        <button class="m-add-btn" type="button" [disabled]="!canAdd" (click)="addItem()">
+          <span>{{ 'add_item' | translate }}</span>
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z" clip-rule="evenodd" />
+          </svg>
+        </button>
       </div>
-      <button class="m-add-btn" type="button" [disabled]="!canAdd" (click)="addItem()">
-        <span>{{ 'add_item' | translate }}</span>
-        <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-          <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z" clip-rule="evenodd" />
-        </svg>
-      </button>
     </div>
   </div>
 
@@ -175,7 +179,7 @@
         {{ 'skip' | translate }} <span>&#8594;</span>
       </button>
     </div>
-    <button class="m-btn m-btn-yellow" type="button" (click)="proceedToNext()">
+    <button class="m-btn m-btn-yellow" type="button" [disabled]="partiallyFilled" (click)="proceedToNext()">
       {{ 'continue' | translate }} <span>&#8594;</span>
     </button>
   </div>

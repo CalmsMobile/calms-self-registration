@@ -26,7 +26,7 @@
       <div class="card">
         <div class="terms">
           <div class="terms-title">{{ 'terms_and_conditions' | translate }}</div>
-          <div class="terms-box" [innerHTML]="getNdaHtml()"></div>
+          <div #termsBox class="terms-box" [innerHTML]="getNdaHtml()" (scroll)="onTermsScroll($event)"></div>
         </div>
       </div>
 
@@ -38,7 +38,7 @@
         <button class="btn grey" type="button" (click)="goBack()">
           <span class="icon-left">&#8592;</span> {{ 'back' | translate }}
         </button>
-        <button class="btn yellow" type="button" (click)="openSignature()">
+        <button class="btn yellow" type="button" (click)="openSignature()" [disabled]="!ndaScrolledToBottom">
           {{ 'sign' | translate }} <span class="icon-right">&#9998;</span>
         </button>
       </div>
@@ -70,8 +70,7 @@
     <div class="signature-label">{{ 'draw_signature_below' | translate }}</div>
     <div class="modal-actions">
       <button class="btn grey" type="button" (click)="clearSignature()">{{ 'clear' | translate }}</button>
-      <button class="btn grey" type="button" (click)="closeSignature()">{{ 'close' | translate }}</button>
-      <button class="btn yellow" type="button" (click)="submitSignature()">{{ 'submit' | translate }}</button>
+      <button class="btn yellow" type="button" (click)="submitSignature()" [disabled]="!hasSigned">{{ 'submit' | translate }}</button>
     </div>
   </div>
 </div>
@@ -98,7 +97,7 @@
   <!-- Terms Card -->
   <div class="m-card">
     <div class="m-terms-title">{{ 'terms_and_conditions' | translate }}</div>
-    <div class="m-terms-box" [innerHTML]="getNdaHtml()"></div>
+    <div class="m-terms-box" [innerHTML]="getNdaHtml()" (scroll)="onTermsScroll($event)"></div>
   </div>
 
   @if (showValidationError) {
@@ -111,7 +110,7 @@
       <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
         <span>&#8592;</span> {{ 'back' | translate }}
       </button>
-      <button class="m-btn m-btn-grey" type="button" (click)="openSignature()">
+      <button class="m-btn m-btn-grey" type="button" (click)="openSignature()" [disabled]="!ndaScrolledToBottom">
         {{ 'sign' | translate }} <span>&#9998;</span>
       </button>
     </div>

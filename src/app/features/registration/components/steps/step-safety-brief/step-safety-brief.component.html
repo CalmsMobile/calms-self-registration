@@ -67,7 +67,7 @@
     <button class="btn grey" type="button" (click)="goBack()">
       <span class="icon-left">&larr;</span> {{ 'sbv_previous_step' | translate }}
     </button>
-    <button class="btn yellow" type="button" (click)="onNext()">
+    <button class="btn yellow" type="button" (click)="onNext()" [disabled]="!videoEnded">
       {{ 'sbv_next_step' | translate }} <span class="icon-right">&rarr;</span>
     </button>
   </section>

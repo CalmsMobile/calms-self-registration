@@ -25,6 +25,7 @@ import { LanguageSelectorComponent } from '../../../../../shared/components/lang
 })
 export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('signatureCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('termsBox') termsBoxRef?: ElementRef<HTMLDivElement>;
 
   private ctx!: CanvasRenderingContext2D;
   private isDrawing = false;
@@ -32,6 +33,7 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   private destroy$ = new Subject<void>();
   showValidationError = false;
   showSignatureModal = false;
+  ndaScrolledToBottom = false;
   illustrationUrl = '/assets/sign.png';
   logo = 'assets/logo.png';
   companyTitle = '';
@@ -66,6 +68,12 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   ngAfterViewInit(): void {
     this.initCanvas();
     this.restoreSavedSignature();
+    setTimeout(() => {
+      const el = this.termsBoxRef?.nativeElement;
+      if (el && el.scrollHeight <= el.clientHeight + 4) {
+        this.ndaScrolledToBottom = true;
+      }
+    }, 150);
   }
 
   ngOnDestroy(): void {
@@ -196,6 +204,13 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
     }
   }
 
+  onTermsScroll(event: Event): void {
+    const el = event.target as HTMLElement;
+    if (el.scrollHeight - el.scrollTop <= el.clientHeight + 20) {
+      this.ndaScrolledToBottom = true;
+    }
+  }
+
   goBack(): void {
     this.saveFormData();
     const prev = this.wizardService.getCurrentStepIndex() - 1;
@@ -287,6 +302,7 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
     if (saved?.ndaSignature) {
       this.restoredSignature = saved.ndaSignature;
       this.hasSigned = true;
+      this.ndaScrolledToBottom = true;
 
       // Draw the saved signature onto the canvas
       const img = new Image();

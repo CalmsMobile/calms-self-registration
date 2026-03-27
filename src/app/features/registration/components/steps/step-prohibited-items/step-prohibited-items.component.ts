@@ -24,6 +24,14 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   declaredItems: DeclaredItem[] = [];
   newItem = { description: '', serialNumber: '', direction: '' };
   canAdd = false;
+  showFieldErrors = false;
+
+  get partiallyFilled(): boolean {
+    const { description, serialNumber, direction } = this.newItem;
+    const filled = [!!description.trim(), !!serialNumber.trim(), !!direction];
+    return filled.some(v => v) && !filled.every(v => v);
+  }
+
   logo = 'assets/logo.png';
   companyTitle = '';
 
@@ -54,6 +62,7 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
     this.canAdd = !!this.newItem.description.trim() &&
                   !!this.newItem.serialNumber.trim() &&
                   !!this.newItem.direction;
+    this.showFieldErrors = this.partiallyFilled;
   }
 
   addItem(): void {
@@ -61,6 +70,7 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
     this.declaredItems.push({ ...this.newItem });
     this.newItem = { description: '', serialNumber: '', direction: '' };
     this.canAdd = false;
+    this.showFieldErrors = false;
     this.saveFormData();
   }
 
@@ -91,6 +101,14 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   }
 
   proceedToNext(): void {
+    if (this.partiallyFilled) {
+      this.showFieldErrors = true;
+      return;
+    }
+    // Auto-add item if all fields are filled
+    if (this.canAdd) {
+      this.addItem();
+    }
     this.saveFormData();
     this.wizardService.navigateToNextStep();
   }

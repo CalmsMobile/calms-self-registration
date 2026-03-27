@@ -24,16 +24,11 @@
       <div class="right">
         <div class="questions" #questionsScroll>
           @for (question of questions; track question.QuestionariesSeqId; let i = $index) {
-            <div class="question-card" [class.has-error]="validationErrors[question.QuestionariesSeqId]">
+            <div class="question-card">
               @if (question.ShortName) {
                 <p class="question-label">{{ question.ShortName }}</p>
               }
-              <p class="question-text">
-                {{ question.Description }}
-                @if (question.ValidationRequired) {
-                  <span class="required-indicator">*</span>
-                }
-              </p>
+              <p class="question-text">{{ question.Description }}</p>
               <div class="options">
                 @if (isMultipleAnswerQuestion(question)) {
                   @for (option of getQuestionOptions(question); track option.value) {
@@ -92,16 +87,11 @@
   <!-- Questions -->
   <div class="m-questions" [formGroup]="questionnaireForm">
     @for (question of questions; track question.QuestionariesSeqId; let i = $index) {
-    <div class="m-question-card" [class.has-error]="validationErrors[question.QuestionariesSeqId]">
+    <div class="m-question-card">
       @if (question.ShortName) {
       <p class="m-question-label">{{ question.ShortName }}</p>
       }
-      <p class="m-question-text">
-        {{ question.Description }}
-        @if (question.ValidationRequired) {
-        <span class="m-required">*</span>
-        }
-      </p>
+      <p class="m-question-text">{{ question.Description }}</p>
       <div class="m-options">
         @if (isMultipleAnswerQuestion(question)) {
           @for (option of getQuestionOptions(question); track option.value) {
