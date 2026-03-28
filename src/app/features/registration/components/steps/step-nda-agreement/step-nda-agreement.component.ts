@@ -35,7 +35,7 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   showValidationError = false;
   showSignatureModal = false;
   ndaScrolledToBottom = false;
-  illustrationUrl = '/assets/sign.png';
+  illustrationUrl = 'assets/sign.png';
   logo = 'assets/logo.png';
   companyTitle = '';
 
