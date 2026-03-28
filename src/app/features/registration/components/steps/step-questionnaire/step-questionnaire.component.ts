@@ -43,7 +43,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   isLoading = true;
   modalType: 'incorrect' | 'required' | null = null;
   alertMessage = '';
-  illustrationUrl = '/assets/safety-declaration.png';
+  illustrationUrl = 'assets/safety-declaration.png';
   logo = 'assets/logo.png';
   companyTitle = '';
 
