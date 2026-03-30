@@ -56,7 +56,8 @@
               <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
                 [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
                 optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
-                [autofocus]="false" appendTo="body" styleClass="home-select">
+                [autofocus]="false" appendTo="body" styleClass="home-select"
+                [class.select-empty]="!selectedBranch">
               </p-select>
             </div>
           </div>
@@ -101,7 +102,8 @@
         <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
           [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
           optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
-          [autofocus]="false" appendTo="body" styleClass="home-select">
+          [autofocus]="false" appendTo="body" styleClass="home-select"
+          [class.select-empty]="!selectedBranch">
         </p-select>
       </div>
       }
@@ -113,7 +115,8 @@
         <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
           [placeholder]="'category' | translate:'placeholder'" optionLabel="visitor_ctg_desc"
           optionValue="visitor_ctg_id" [showClear]="true"
-          [autofocus]="false" appendTo="body" styleClass="home-select">
+          [autofocus]="false" appendTo="body" styleClass="home-select"
+          [class.select-empty]="!selectedCategory">
         </p-select>
       </div>
       }

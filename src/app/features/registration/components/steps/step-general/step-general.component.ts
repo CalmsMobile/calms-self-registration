@@ -2227,10 +2227,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!control || !control.enabled) {
       return false;
     }
-    // Only show error after the user has interacted with the field, or after validateForm() marks it touched.
-    // This prevents fields from turning red on load or after programmatic resets (e.g. addVisitorToTable).
+    // Required+empty fields highlight immediately from load.
+    // Other validation errors (format, length) only show after interaction.
+    const isRequiredAndEmpty = control.hasError('required') && !control.value;
     const hasBeenInteracted = control.dirty || control.touched;
-    return control.invalid && hasBeenInteracted;
+    return control.invalid && (isRequiredAndEmpty || hasBeenInteracted);
   }
 
   private readonly dateRangeValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {

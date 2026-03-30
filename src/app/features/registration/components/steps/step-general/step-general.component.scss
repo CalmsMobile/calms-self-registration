@@ -370,10 +370,8 @@ textarea,
   }
 
   &.error,
-  &.ng-invalid.ng-touched,
-  &.ng-invalid.ng-dirty {
-    border-color: var(--error) !important;
-    box-shadow: 0 0 0 2px rgba(255, 59, 59, 0.12) !important;
+  &.ng-invalid {
+    box-shadow: 0 0 0 2px rgb(255 59 59) !important
   }
 }
 
@@ -410,12 +408,8 @@ textarea {
       box-shadow: 0 0 0 2px rgba(245, 180, 0, 0.12) !important;
     }
 
-    &.ng-invalid.ng-touched,
-    &.ng-invalid.ng-dirty,
-    &.ng-invalid.p-focus,
-    &.ng-invalid:focus-within {
-      border-color: var(--error) !important;
-      box-shadow: 0 0 0 2px rgba(255, 59, 59, 0.12) !important;
+    &.ng-invalid {
+      box-shadow: 0 0 0 2px rgb(255 59 59) !important;
     }
   }
 
@@ -1825,7 +1819,7 @@ textarea {
   i:last-child { color: #6b7280; font-size: 13px; flex-shrink: 0; }
 
   &:hover { border-color: var(--primary); }
-  &.ng-invalid { border-color: #ff3b3b !important; box-shadow: 0 0 0 2px rgba(255,59,59,0.12) !important; }
+  &.ng-invalid { box-shadow: 0 0 0 2px rgba(255,59,59,0.12) !important; }
 }
 
 .m-schedule-trigger {

@@ -255,6 +255,12 @@
   }
 }
 
+.card.mandatory-empty {
+  box-shadow: 0 0 0 2px rgb(255 59 59) !important;
+      margin-top: 2px;
+    margin-left: 2px;
+}
+
 .delete {
   border: none;
   background: transparent;

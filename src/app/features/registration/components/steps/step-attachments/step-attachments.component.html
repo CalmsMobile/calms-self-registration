@@ -31,7 +31,8 @@
           <div class="card"
             [class.upload]="!attachments[doc.VisitorAttachSeqId].file"
             [class.uploading]="!!attachments[doc.VisitorAttachSeqId].file && !attachments[doc.VisitorAttachSeqId].uploaded"
-            [class.uploaded]="!!attachments[doc.VisitorAttachSeqId].file && !!attachments[doc.VisitorAttachSeqId].uploaded">
+            [class.uploaded]="!!attachments[doc.VisitorAttachSeqId].file && !!attachments[doc.VisitorAttachSeqId].uploaded"
+            [class.mandatory-empty]="doc.Mandatory && !attachments[doc.VisitorAttachSeqId].uploaded">
 
             @if (doc.FileBase64 && !attachments[doc.VisitorAttachSeqId].uploaded) {
               <a class="card-left" [href]="getDownloadUrl(doc.FileBase64)" target="_blank" rel="noopener noreferrer">
