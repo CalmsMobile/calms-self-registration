@@ -40,13 +40,15 @@
           <img [src]="logo" alt="Company Logo" class="pre-logo">
 
           <!-- Title -->
+          @if (showWelcomeTitle) {
           <h1 class="pre-title">
             <span class="accent">{{ formattedPageTitle.first || 'Visitor' }}</span><br>
             {{ formattedPageTitle.rest || 'Registration' }}
           </h1>
+          }
 
           <!-- Subtitle / Welcome text -->
-          <p class="pre-subtitle">{{ welcomeText }}</p>
+          <!-- <p class="pre-subtitle">{{ welcomeText }}</p> -->
 
           <!-- Branch Selection -->
           @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
@@ -83,10 +85,12 @@
   <div class="content">
     <!-- Left panel: title + illustration -->
     <div class="left">
+      @if (showWelcomeTitle) {
       <div class="title">
         <span class="accent">{{ formattedPageTitle.first || 'Visitor' }}</span>
         {{ formattedPageTitle.rest || 'Registration' }}
       </div>
+      }
       <div class="subtitle">{{ welcomeText }}</div>
       <img src="assets/visit.png" alt="Visitor illustration" />
     </div>
@@ -229,10 +233,12 @@
     </div>
 
     <!-- Page title -->
+    @if (showWelcomeTitle) {
     <div class="m-post-title">
       <span class="m-post-accent">{{ formattedPageTitle.first || 'Visitor' }}</span><br>
       <span class="m-post-rest">{{ formattedPageTitle.rest || 'Registration' }}</span>
     </div>
+    }
 
     <!-- Form -->
     <div class="m-post-form">
@@ -333,7 +339,6 @@
         <div class="dot"></div>
       </div>
     </div>
-    <p>Loading...</p>
   </div>
 </div>
 }

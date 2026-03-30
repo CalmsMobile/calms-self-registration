@@ -79,10 +79,16 @@
    ============================================ */
 .title-section {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  flex-direction: column;
   padding: 16px 0 12px;
   flex-shrink: 0;
+}
+
+.title-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
 }
 
 .title-left {
@@ -108,8 +114,8 @@
 .subtitle {
   font-size: 14px;
   color: var(--text-muted);
-  margin: 8px 0 0;
-  max-width: 500px;
+  margin: 6px 0 0;
+  width: 100%;
   line-height: 1.5;
 }
 
@@ -119,24 +125,24 @@
   gap: 10px;
   padding: 14px 28px;
   border-radius: 999px;
-  border: 2px dotted #bdbdbd;
-  background: #f9f9f9;
+  border: 2px solid #f5b301;
+  background: transparent;
   font-size: 15px;
   font-weight: 600;
   font-family: 'Poppins', sans-serif;
-  color: #595959;
+  color: #27304a;
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s;
   flex-shrink: 0;
 
   &:hover {
-    background: #f0f0f0;
+    background: rgba(245, 179, 1, 0.08);
   }
 
   i {
     font-size: 16px;
-    color: #707070;
+    color: #27304a;
   }
 }
 
@@ -160,11 +166,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1rem;
-    padding: 2rem;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     min-width: 300px;
     text-align: center;
   }
@@ -266,6 +267,7 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 22px;
   margin-bottom: 14px;
+  padding: 5px;
 
   @media (max-width: 1100px) {
     grid-template-columns: repeat(2, 1fr);
@@ -487,6 +489,18 @@ textarea {
     font-size: 14px !important;
     color: #6b7280 !important;
     pointer-events: none !important;
+  }
+
+  /* Clear icon inside p-select (shown when value selected and showClear=true) */
+  .p-select-clear-icon {
+    position: absolute !important;
+    right: 42px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 3 !important;
+    font-size: 12px !important;
+    color: #6b7280 !important;
+    cursor: pointer !important;
   }
 
   /* Remove default PrimeNG focusing for transparent buttons */
@@ -976,6 +990,11 @@ textarea {
     padding: 0 32px;
   }
 
+  .actions {
+    padding: 12px 32px 28px;
+    margin: 0 -32px;
+  }
+
   .page-header .header-logo {
     width: 160px;
     height: 44px;
@@ -1063,7 +1082,8 @@ textarea {
   .actions {
     flex-direction: column;
     gap: 10px;
-    padding: 12px 0 20px;
+    padding: 12px 16px 20px;
+    margin: 0 -16px;
   }
 
   .actions-right {
@@ -1090,6 +1110,11 @@ textarea {
 @media (max-width: 480px) {
   .page {
     padding: 0 12px;
+  }
+
+  .actions {
+    padding: 10px 12px 20px;
+    margin: 0 -12px;
   }
 
   .main-title {
@@ -1590,16 +1615,20 @@ textarea {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 0 28px;
-  border-top: 2px solid #766e6d;
+  padding: 12px 60px 28px;
+  margin: 0 -60px;
+  border-top: 1px solid #e8e8e8;
+  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.07);
   flex-shrink: 0;
   gap: 12px;
   min-width: 0;
+  background: #f6f6f6;
 }
 
 .actions-right {
   display: flex;
   gap: 14px;
+  margin-left: auto;
 }
 
 .btn {
@@ -1790,6 +1819,49 @@ textarea {
   z-index: 2;
   color: #6b7280;
   font-size: 14px;
+}
+
+/* ============================================
+   FIELD CLEAR BUTTON
+   ============================================ */
+.field-clear-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #b0b0b0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.15s;
+  z-index: 4;
+  padding: 0;
+  flex-shrink: 0;
+
+  &:hover {
+    background: #f0f0f0;
+    color: #555555;
+  }
+
+  i { font-size: 11px; }
+
+  &.ac-clear-btn { right: 42px; }
+}
+
+.wrap-textarea .field-clear-btn {
+  top: 12px;
+  transform: none;
+}
+
+.input-wrap > input.p-inputtext,
+.input-wrap > textarea.p-inputtext {
+  padding-right: 44px;
 }
 
 /* ============================================
@@ -2507,6 +2579,7 @@ textarea {
     & > input.p-inputtext,
     & > textarea.p-inputtext {
       padding-left: 46px !important;
+      padding-right: 44px;
       width: 100%;
       height: 54px;
       border-radius: 24px;
@@ -2523,6 +2596,11 @@ textarea {
       min-height: 54px;
       padding-top: 14px;
       resize: none;
+    }
+
+    &.m-textarea-wrap .field-clear-btn {
+      top: 14px;
+      transform: none;
     }
 
     ::ng-deep .p-select {

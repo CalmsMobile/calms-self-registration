@@ -10,15 +10,15 @@
 
   <!-- Title Section -->
   <section class="title-section">
-    <div class="title-left">
-      <h1 class="main-title">
-        <span class="highlight">{{ formattedPageTitle.first }}</span>
-        <br>
-        <span class="normal">{{ formattedPageTitle.rest }}</span>
-      </h1>
-      <p class="subtitle">{{'please_provide_your_details' | translate}}</p>
-    </div>
-    <div class="title-actions">
+    <div class="title-top-row">
+      <div class="title-left">
+        <h1 class="main-title">
+          <span class="highlight">{{ formattedPageTitle.first }}</span>
+          <br>
+          <span class="normal">{{ formattedPageTitle.rest }}</span>
+        </h1>
+      </div>
+      <div class="title-actions">
       @if (isMultipleVisitorMode && savedVisitors.length > 0) {
       <button type="button" class="btn-saved" (click)="showSavedVisitorsModal = true" title="View saved visitors">
         <i class="pi pi-users"></i>
@@ -31,7 +31,9 @@
         {{ 'returning_visitor' | translate }}?
       </button>
       }
+      </div>
     </div>
+    <p class="subtitle">{{'please_provide_your_details' | translate}}</p>
   </section>
 
   <!-- Loading State -->
@@ -50,7 +52,6 @@
           <div class="dot"></div>
         </div>
       </div>
-      <p>Loading...</p>
     </div>
   </div>
   }
@@ -60,44 +61,6 @@
   <section class="form-section">
     @if (settings && udfSettings !== null) {
     <form [formGroup]="generalForm" class="form-grid">
-
-      <!-- 1. Visitor Image -->
-      @if (settings?.ImageUploadEnabled) {
-      <div class="form-field">
-        <div class="profile-avatar-field" [class.invalid]="isFieldInvalidRequired('profile')" [class.ng-invalid]="isFieldInvalidRequired('profile')">
-          @if (profileImage) {
-          <div class="profile-avatar-wrap">
-            <img [src]="profileImage" class="profile-avatar-img" alt="Profile" />
-            <div class="profile-avatar-actions">
-              <button type="button" class="avatar-action-btn change-btn" (click)="openPhotoCaptureDialog()" title="Change photo">
-                <i class="pi pi-pencil"></i>
-              </button>
-              <button type="button" class="avatar-action-btn delete-btn" (click)="clearPhoto()" title="Remove photo">
-                <i class="pi pi-trash"></i>
-              </button>
-            </div>
-          </div>
-          <div class="profile-avatar-info">
-            <span class="profile-avatar-label">{{ 'profile_picture' | translate }}</span>
-            <span class="profile-avatar-hint">{{ 'profile_picture' | translate:'placeholder' }}</span>
-          </div>
-          } @else {
-          <div class="profile-avatar-empty" (click)="openPhotoCaptureDialog()">
-            <div class="profile-avatar-circle">
-              <i class="pi pi-camera"></i>
-            </div>
-          </div>
-          <div class="profile-avatar-info" (click)="openPhotoCaptureDialog()" style="cursor:pointer">
-            <span class="profile-avatar-label">{{ 'profile_picture' | translate }}</span>
-            <span class="profile-avatar-hint">{{ 'profile_picture' | translate:'placeholder' }}</span>
-          </div>
-          }
-        </div>
-        @if (isFieldInvalidRequired('profile')) {
-        <small class="error-message">{{'profile_picture' | translate}} is required</small>
-        }
-      </div>
-      }
 
       <!-- 2. Title -->
       @if (settings?.TitleEnabled) {
@@ -111,7 +74,7 @@
           <p-select id="title_name" [options]="titleList" formControlName="title"
             [placeholder]="'title' | translate:'placeholder'" optionLabel="Title" optionValue="Title"
             [class]="{'ng-invalid': isFieldInvalidRequired('title')}" [disabled]="isFieldDisabled('title')"
-            appendTo="body">
+            [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('title')) {
@@ -131,6 +94,9 @@
           <span class="field-icon"><i class="pi pi-user"></i></span>
           <input pInputText id="fullName" [placeholder]="'full_name' | translate:'placeholder'" formControlName="fullName"
             [class]="{'ng-invalid': isFieldInvalidRequired('fullName')}" [disabled]="isFieldDisabled('fullName')" (blur)="onFullNameBlur()">
+          @if (generalForm.get('fullName')?.value && !generalForm.get('fullName')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('fullName')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('fullName')) {
         <small class="error-message">{{'full_name' | translate}} is required</small>
@@ -150,7 +116,8 @@
           <p-select id="id_type" [options]="idTypeList" formControlName="visitor_id_type"
             [placeholder]="'id_type' | translate:'placeholder'" optionLabel="IDTYPEDESCRIPTION" optionValue="ID_TYPECODE"
             [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id_type')}"
-            [disabled]="isFieldDisabled('visitor_id_type')" (onChange)="onIdTypeChange($event)" appendTo="body">
+            [disabled]="isFieldDisabled('visitor_id_type')" (onChange)="onIdTypeChange($event)"
+            [showClear]="true" (onClear)="onIdTypeChange({value: null})" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('visitor_id_type')) {
@@ -171,6 +138,9 @@
           <input pInputText id="visitor_id" [placeholder]="'identity_number' | translate:'placeholder'"
             formControlName="visitor_id" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id')}"
             [disabled]="isFieldDisabled('visitor_id')" (blur)="onVisitorIdBlur()">
+          @if (generalForm.get('visitor_id')?.value && !generalForm.get('visitor_id')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('visitor_id')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('visitor_id')) {
         <small class="error-message">{{'identity_number' | translate}} is required</small>
@@ -192,7 +162,7 @@
           <p-datepicker id="id_expired" formControlName="id_expired_date"
             [placeholder]="'id_expired_date' | translate:'placeholder'" [minDate]="minDate" dateFormat="dd/mm/yy"
             [class]="{'ng-invalid': isFieldInvalidRequired('id_expired_date')}"
-            [disabled]="isFieldDisabled('id_expired_date')" appendTo="body">
+            [disabled]="isFieldDisabled('id_expired_date')" [showClear]="true" appendTo="body">
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('id_expired_date')) {
@@ -213,7 +183,7 @@
           <p-select id="gender" [options]="genderOptions" formControlName="gender"
             [placeholder]="'gender' | translate:'placeholder'" optionLabel="Name" optionValue="Value"
             [class]="{'ng-invalid': isFieldInvalidRequired('gender')}" [disabled]="isFieldDisabled('gender')"
-            appendTo="body">
+            [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('gender')) {
@@ -233,6 +203,9 @@
           <span class="field-icon"><i class="pi pi-phone"></i></span>
           <input pInputText id="phone" [placeholder]="'contact_number' | translate:'placeholder'" formControlName="phone"
             [class]="{'ng-invalid': isFieldInvalidRequired('phone')}" [disabled]="isFieldDisabled('phone')">
+          @if (generalForm.get('phone')?.value && !generalForm.get('phone')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('phone')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('phone')) {
         <small class="error-message">{{'contact_number' | translate}} is required</small>
@@ -251,6 +224,9 @@
           <span class="field-icon"><i class="pi pi-envelope"></i></span>
           <input pInputText id="email" [placeholder]="'email_address' | translate:'placeholder'" formControlName="email"
             type="email" [class]="{'ng-invalid': isFieldInvalidRequired('email')}" [disabled]="isFieldDisabled('email')">
+          @if (generalForm.get('email')?.value && !generalForm.get('email')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('email')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isEmailFormatError()) {
         <small class="error-message">Please enter a valid email address</small>
@@ -272,6 +248,9 @@
           <input pInputText id="vehicle_number" [placeholder]="'vehicle_number' | translate:'placeholder'"
             formControlName="vehicle_number" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_number')}"
             [disabled]="isFieldDisabled('vehicle_number')">
+          @if (generalForm.get('vehicle_number')?.value && !generalForm.get('vehicle_number')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_number')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('vehicle_number')) {
         <small class="error-message">{{'vehicle_number' | translate}} is required</small>
@@ -291,6 +270,9 @@
           <input pInputText id="vehicle_brand" [placeholder]="'vehicle_brand' | translate:'placeholder'"
             formControlName="vehicle_brand" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_brand')}"
             [disabled]="isFieldDisabled('vehicle_brand')">
+          @if (generalForm.get('vehicle_brand')?.value && !generalForm.get('vehicle_brand')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_brand')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('vehicle_brand')) {
         <small class="error-message">{{'vehicle_brand' | translate}} is required</small>
@@ -310,6 +292,9 @@
           <input pInputText id="vehicle_model" [placeholder]="'vehicle_model' | translate:'placeholder'"
             formControlName="vehicle_model" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_model')}"
             [disabled]="isFieldDisabled('vehicle_model')">
+          @if (generalForm.get('vehicle_model')?.value && !generalForm.get('vehicle_model')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_model')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('vehicle_model')) {
         <small class="error-message">{{'vehicle_model' | translate}} is required</small>
@@ -329,6 +314,9 @@
           <input pInputText id="vehicle_color" [placeholder]="'vehicle_color' | translate:'placeholder'"
             formControlName="vehicle_color" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_color')}"
             [disabled]="isFieldDisabled('vehicle_color')">
+          @if (generalForm.get('vehicle_color')?.value && !generalForm.get('vehicle_color')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_color')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('vehicle_color')) {
         <small class="error-message">{{'vehicle_color' | translate}} is required</small>
@@ -354,6 +342,9 @@
             [class]="{'ng-invalid': isFieldInvalidRequired('visitor_company')}"
             [disabled]="isFieldDisabled('visitor_company')" appendTo="body">
           </p-autoComplete>
+          @if (generalForm.get('visitor_company')?.value && !generalForm.get('visitor_company')?.disabled) {
+          <button type="button" class="field-clear-btn ac-clear-btn" (click)="clearField('visitor_company')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('visitor_company')) {
         <small class="error-message">{{'my_company' | translate}} is required</small>
@@ -373,6 +364,9 @@
           <textarea pInputText id="visitor_address" cols="3" [placeholder]="'address' | translate:'placeholder'"
             formControlName="visitor_address" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_address')}"
             [disabled]="isFieldDisabled('visitor_address')"></textarea>
+          @if (generalForm.get('visitor_address')?.value && !generalForm.get('visitor_address')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('visitor_address')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('visitor_address')) {
         <small class="error-message">{{'address' | translate}} is required</small>
@@ -392,7 +386,7 @@
           <p-select id="country" [options]="countryList" formControlName="country"
             [placeholder]="'country' | translate:'placeholder'" optionLabel="Name" optionValue="CountrySeqId"
             [class]="{'ng-invalid': isFieldInvalidRequired('country')}" [disabled]="isFieldDisabled('country')"
-            appendTo="body">
+            [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('country')) {
@@ -413,6 +407,9 @@
           <input pInputText id="work_permit_ref" [placeholder]="'permit_to_work_reference' | translate:'placeholder'"
             formControlName="work_permit_ref" [class]="{'ng-invalid': isFieldInvalidRequired('work_permit_ref')}"
             [disabled]="isFieldDisabled('work_permit_ref')">
+          @if (generalForm.get('work_permit_ref')?.value && !generalForm.get('work_permit_ref')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('work_permit_ref')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('work_permit_ref')) {
         <small class="error-message">{{'permit_to_work_reference' | translate}} is required</small>
@@ -435,6 +432,9 @@
             [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
             [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+          @if (generalForm.get(udf.formControlName)?.value && !generalForm.get(udf.formControlName)?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField(udf.formControlName)" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldRequired(udf.formControlName)) {
         <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
@@ -458,7 +458,8 @@
           <p-select [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
             [formControlName]="udf.formControlName"
             [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
-            optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+            optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}"
+            [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
@@ -494,7 +495,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -512,7 +513,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -536,7 +537,8 @@
           <p-select id="host" [options]="hosts" formControlName="host"
             [placeholder]="'whom_you_would_like_to_visit' | translate:'placeholder'" (onChange)="onHostChange($event)"
             optionLabel="HOSTNAME" optionValue="HOSTIC" [class]="{'ng-invalid': isFieldInvalidRequired('host')}"
-            [disabled]="isFieldDisabled('host')" appendTo="body">
+            [disabled]="isFieldDisabled('host')" [showClear]="true" (onClear)="onHostChange({value: null})"
+            appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('host')) {
@@ -557,7 +559,8 @@
           <p-select id="department" [options]="departmentList" formControlName="department"
             [placeholder]="'department' | translate:'placeholder'" optionLabel="DName" optionValue="DepartmentSeqId"
             [class]="{'ng-invalid': isFieldInvalidRequired('department')}" [disabled]="isFieldDisabled('department')"
-            (onChange)="onDepartmentChange($event)" appendTo="body">
+            (onChange)="onDepartmentChange($event)" [showClear]="true" (onClear)="onDepartmentChange({value: null})"
+            appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('department')) {
@@ -576,7 +579,7 @@
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker id="sharedDate" formControlName="sharedDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate" placeholder="Select date"
-            [showTime]="false" (onSelect)="onSharedDateSelect($event)" appendTo="body" dateFormat="dd/mm/yy">
+            [showTime]="false" (onSelect)="onSharedDateSelect($event)" [showClear]="true" appendTo="body" dateFormat="dd/mm/yy">
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('sharedDate')) {
@@ -594,7 +597,7 @@
           <span class="field-icon"><i class="pi pi-question-circle"></i></span>
           <p-select id="facilityPurpose" [options]="facilityPurposeList" formControlName="facilityPurpose"
             placeholder="Select purpose" optionLabel="PurposeName" optionValue="PurposeCode"
-            [class]="{'ng-invalid': isFieldInvalidRequired('facilityPurpose')}" appendTo="body">
+            [class]="{'ng-invalid': isFieldInvalidRequired('facilityPurpose')}" [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('facilityPurpose')) {
@@ -613,7 +616,8 @@
           <p-select id="facilitySelection" [options]="facilityMasterList" formControlName="facilitySelection"
             placeholder="Select facility" optionLabel="FacilityName" optionValue="FacilityCode"
             (onChange)="onFacilitySelectionChange($event.value)"
-            [class]="{'ng-invalid': isFieldInvalidRequired('facilitySelection')}" appendTo="body">
+            [class]="{'ng-invalid': isFieldInvalidRequired('facilitySelection')}"
+            [showClear]="true" (onClear)="onFacilitySelectionChange('')" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('facilitySelection')) {
@@ -707,7 +711,7 @@
           <span class="field-icon"><i class="pi pi-building"></i></span>
           <p-select id="floor" [options]="meetingFloorList" formControlName="floor"
             [placeholder]="'floor' | translate:'placeholder'" optionLabel="floor_desc" optionValue="floor_id"
-            [class]="{'ng-invalid': isFieldInvalidRequired('floor')}" appendTo="body">
+            [class]="{'ng-invalid': isFieldInvalidRequired('floor')}" [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('floor')) {
@@ -728,7 +732,8 @@
           <p-select id="purpose" [options]="purposeList" formControlName="purpose"
             [placeholder]="'purpose_of_your_visit?' | translate:'placeholder'" optionLabel="visitpurpose_desc"
             optionValue="visitpurpose_id" [class]="{'ng-invalid': isFieldInvalidRequired('purpose')}"
-            (onChange)="onPurposeChange($event)" appendTo="body">
+            (onChange)="onPurposeChange($event)" [showClear]="true" (onClear)="onPurposeChange({value: null})"
+            appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('purpose')) {
@@ -751,6 +756,9 @@
             formControlName="remarks" [class]="{'ng-invalid': isFieldInvalidRequired('remarks')}"
             [disabled]="isFieldDisabled('remarks')">
           </textarea>
+          @if (generalForm.get('remarks')?.value && !generalForm.get('remarks')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('remarks')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('remarks')) {
         <small class="error-message">{{'would_you_like_to_add_comments_for_your_visit?' | translate}} is
@@ -792,7 +800,7 @@
           <p-datepicker id="appointmentDate" formControlName="appointmentDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('appointmentDate')}" [minDate]="minDate"
             placeholder="Select appointment date" [showTime]="false" (onSelect)="onAppointmentDateSelect($event)"
-            appendTo="body" dateFormat="dd/mm/yy">
+            [showClear]="true" appendTo="body" dateFormat="dd/mm/yy">
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('appointmentDate')) {
@@ -847,6 +855,9 @@
             [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
             [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+          @if (generalForm.get(udf.formControlName)?.value && !generalForm.get(udf.formControlName)?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField(udf.formControlName)" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldRequired(udf.formControlName)) {
         <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
@@ -870,7 +881,8 @@
           <p-select [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
             [formControlName]="udf.formControlName"
             [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
-            optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+            optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}"
+            [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
@@ -906,7 +918,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -924,7 +936,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -947,21 +959,32 @@
 
   <!-- Actions -->
   <section class="actions">
+    @if (canGoBackToHome) {
     <button type="button" class="btn btn-back" (click)="goBack()">
       <i class="pi pi-arrow-left"></i>
       {{ 'back' | translate }}
     </button>
+    }
     <div class="actions-right">
       @if (isMultipleVisitorMode) {
-      <button type="button" class="btn btn-save-add" (click)="addVisitorToTable()" [disabled]="!isCurrentVisitorFormValid()">
-        {{ 'save_and_add' | translate }}
-        <i class="pi pi-user-plus"></i>
-      </button>
+        @if (editingVisitorIndex >= 0) {
+        <button type="button" class="btn btn-save-add" (click)="addVisitorToTable()" [disabled]="generalForm.dirty && !isCurrentVisitorFormValid()">
+          {{ 'update' | translate }}
+          <i class="pi pi-check"></i>
+        </button>
+        } @else {
+        <button type="button" class="btn btn-save-add" (click)="addVisitorToTable()" [disabled]="generalForm.dirty && !isCurrentVisitorFormValid()">
+          {{ 'save_and_add' | translate }}
+          <i class="pi pi-user-plus"></i>
+        </button>
+        }
       }
-      <button type="button" class="btn btn-continue" (click)="goNext()">
+      @if (!(isMultipleVisitorMode && editingVisitorIndex >= 0)) {
+      <button type="button" class="btn btn-continue" (click)="goNext()" [disabled]="generalForm.dirty && !isCurrentVisitorFormValid()">
         {{ 'save_and_continue' | translate }}
         <i class="pi pi-arrow-right"></i>
       </button>
+      }
     </div>
   </section>
 
@@ -1017,7 +1040,6 @@
           <div class="dot"></div>
         </div>
       </div>
-      <p>Loading...</p>
     </div>
   </div>
   }
@@ -1028,42 +1050,6 @@
     @if (settings && udfSettings !== null) {
     <div class="m-form-scroll">
 
-      <!-- 1. Visitor Image -->
-      @if (settings?.ImageUploadEnabled) {
-      <div class="m-form-field">
-        <div class="m-profile-field" [class.invalid]="isFieldInvalidRequired('profile')">
-          @if (profileImage) {
-          <div class="m-avatar-wrap">
-            <img [src]="profileImage" class="m-avatar-img" alt="Profile" />
-            <div class="m-avatar-actions">
-              <button type="button" class="m-avatar-btn m-change-btn" (click)="openPhotoCaptureDialog()">
-                <i class="pi pi-pencil"></i>
-              </button>
-              <button type="button" class="m-avatar-btn m-delete-btn" (click)="clearPhoto()">
-                <i class="pi pi-trash"></i>
-              </button>
-            </div>
-          </div>
-          <div class="m-avatar-info">
-            <span class="m-avatar-label">{{ 'profile_picture' | translate }}</span>
-            <span class="m-avatar-hint">{{ 'profile_picture' | translate:'placeholder' }}</span>
-          </div>
-          } @else {
-          <div class="m-avatar-empty" (click)="openPhotoCaptureDialog()">
-            <div class="m-avatar-circle"><i class="pi pi-camera"></i></div>
-          </div>
-          <div class="m-avatar-info" (click)="openPhotoCaptureDialog()" style="cursor:pointer">
-            <span class="m-avatar-label">{{ 'profile_picture' | translate }}</span>
-            <span class="m-avatar-hint">{{ 'profile_picture' | translate:'placeholder' }}</span>
-          </div>
-          }
-        </div>
-        @if (isFieldInvalidRequired('profile')) {
-        <small class="m-error">{{'profile_picture' | translate}} is required</small>
-        }
-      </div>
-      }
-
       <!-- 2. Title -->
       @if (settings?.TitleEnabled) {
       <div class="m-form-field">
@@ -1073,7 +1059,7 @@
           <p-select [options]="titleList" formControlName="title"
             [placeholder]="'title' | translate:'placeholder'" optionLabel="Title" optionValue="Title"
             [class]="{'ng-invalid': isFieldInvalidRequired('title')}" [disabled]="isFieldDisabled('title')"
-            appendTo="body">
+            [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('title')) {
@@ -1090,6 +1076,9 @@
           <span class="m-field-icon"><i class="pi pi-user"></i></span>
           <input pInputText [placeholder]="'full_name' | translate:'placeholder'" formControlName="fullName"
             [class]="{'ng-invalid': isFieldInvalidRequired('fullName')}" [disabled]="isFieldDisabled('fullName')" (blur)="onFullNameBlur()">
+          @if (generalForm.get('fullName')?.value && !generalForm.get('fullName')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('fullName')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('fullName')) {
         <small class="m-error">{{'full_name' | translate}} is required</small>
@@ -1106,7 +1095,8 @@
           <p-select [options]="idTypeList" formControlName="visitor_id_type"
             [placeholder]="'id_type' | translate:'placeholder'" optionLabel="IDTYPEDESCRIPTION" optionValue="ID_TYPECODE"
             [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id_type')}"
-            [disabled]="isFieldDisabled('visitor_id_type')" (onChange)="onIdTypeChange($event)" appendTo="body">
+            [disabled]="isFieldDisabled('visitor_id_type')" (onChange)="onIdTypeChange($event)"
+            [showClear]="true" (onClear)="onIdTypeChange({value: null})" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('visitor_id_type')) {
@@ -1124,6 +1114,9 @@
           <input pInputText [placeholder]="'identity_number' | translate:'placeholder'"
             formControlName="visitor_id" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id')}"
             [disabled]="isFieldDisabled('visitor_id')" (blur)="onVisitorIdBlur()">
+          @if (generalForm.get('visitor_id')?.value && !generalForm.get('visitor_id')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('visitor_id')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('visitor_id')) {
         <small class="m-error">{{'identity_number' | translate}} is required</small>
@@ -1140,7 +1133,7 @@
           <p-datepicker formControlName="id_expired_date"
             [placeholder]="'id_expired_date' | translate:'placeholder'" [minDate]="minDate" dateFormat="dd/mm/yy"
             [class]="{'ng-invalid': isFieldInvalidRequired('id_expired_date')}"
-            [disabled]="isFieldDisabled('id_expired_date')" appendTo="body">
+            [disabled]="isFieldDisabled('id_expired_date')" [showClear]="true" appendTo="body">
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('id_expired_date')) {
@@ -1158,7 +1151,7 @@
           <p-select [options]="genderOptions" formControlName="gender"
             [placeholder]="'gender' | translate:'placeholder'" optionLabel="Name" optionValue="Value"
             [class]="{'ng-invalid': isFieldInvalidRequired('gender')}" [disabled]="isFieldDisabled('gender')"
-            appendTo="body">
+            [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('gender')) {
@@ -1175,6 +1168,9 @@
           <span class="m-field-icon"><i class="pi pi-phone"></i></span>
           <input pInputText [placeholder]="'contact_number' | translate:'placeholder'" formControlName="phone"
             [class]="{'ng-invalid': isFieldInvalidRequired('phone')}" [disabled]="isFieldDisabled('phone')">
+          @if (generalForm.get('phone')?.value && !generalForm.get('phone')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('phone')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('phone')) {
         <small class="m-error">{{'contact_number' | translate}} is required</small>
@@ -1190,6 +1186,9 @@
           <span class="m-field-icon"><i class="pi pi-envelope"></i></span>
           <input pInputText [placeholder]="'email_address' | translate:'placeholder'" formControlName="email"
             type="email" [class]="{'ng-invalid': isFieldInvalidRequired('email')}" [disabled]="isFieldDisabled('email')">
+          @if (generalForm.get('email')?.value && !generalForm.get('email')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('email')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isEmailFormatError()) {
         <small class="m-error">Please enter a valid email address</small>
@@ -1208,6 +1207,9 @@
           <input pInputText [placeholder]="'vehicle_number' | translate:'placeholder'"
             formControlName="vehicle_number" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_number')}"
             [disabled]="isFieldDisabled('vehicle_number')">
+          @if (generalForm.get('vehicle_number')?.value && !generalForm.get('vehicle_number')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_number')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('vehicle_number')) {
         <small class="m-error">{{'vehicle_number' | translate}} is required</small>
@@ -1224,6 +1226,9 @@
           <input pInputText [placeholder]="'vehicle_brand' | translate:'placeholder'"
             formControlName="vehicle_brand" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_brand')}"
             [disabled]="isFieldDisabled('vehicle_brand')">
+          @if (generalForm.get('vehicle_brand')?.value && !generalForm.get('vehicle_brand')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_brand')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('vehicle_brand')) {
         <small class="m-error">{{'vehicle_brand' | translate}} is required</small>
@@ -1240,6 +1245,9 @@
           <input pInputText [placeholder]="'vehicle_model' | translate:'placeholder'"
             formControlName="vehicle_model" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_model')}"
             [disabled]="isFieldDisabled('vehicle_model')">
+          @if (generalForm.get('vehicle_model')?.value && !generalForm.get('vehicle_model')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_model')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('vehicle_model')) {
         <small class="m-error">{{'vehicle_model' | translate}} is required</small>
@@ -1256,6 +1264,9 @@
           <input pInputText [placeholder]="'vehicle_color' | translate:'placeholder'"
             formControlName="vehicle_color" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_color')}"
             [disabled]="isFieldDisabled('vehicle_color')">
+          @if (generalForm.get('vehicle_color')?.value && !generalForm.get('vehicle_color')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_color')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('vehicle_color')) {
         <small class="m-error">{{'vehicle_color' | translate}} is required</small>
@@ -1278,6 +1289,9 @@
             [class]="{'ng-invalid': isFieldInvalidRequired('visitor_company')}"
             [disabled]="isFieldDisabled('visitor_company')" appendTo="body">
           </p-autoComplete>
+          @if (generalForm.get('visitor_company')?.value && !generalForm.get('visitor_company')?.disabled) {
+          <button type="button" class="field-clear-btn ac-clear-btn" (click)="clearField('visitor_company')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('visitor_company')) {
         <small class="m-error">{{'my_company' | translate}} is required</small>
@@ -1294,6 +1308,9 @@
           <textarea pInputText cols="3" [placeholder]="'address' | translate:'placeholder'"
             formControlName="visitor_address" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_address')}"
             [disabled]="isFieldDisabled('visitor_address')"></textarea>
+          @if (generalForm.get('visitor_address')?.value && !generalForm.get('visitor_address')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('visitor_address')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('visitor_address')) {
         <small class="m-error">{{'address' | translate}} is required</small>
@@ -1310,7 +1327,7 @@
           <p-select [options]="countryList" formControlName="country"
             [placeholder]="'country' | translate:'placeholder'" optionLabel="Name" optionValue="CountrySeqId"
             [class]="{'ng-invalid': isFieldInvalidRequired('country')}" [disabled]="isFieldDisabled('country')"
-            appendTo="body">
+            [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('country')) {
@@ -1328,6 +1345,9 @@
           <input pInputText [placeholder]="'permit_to_work_reference' | translate:'placeholder'"
             formControlName="work_permit_ref" [class]="{'ng-invalid': isFieldInvalidRequired('work_permit_ref')}"
             [disabled]="isFieldDisabled('work_permit_ref')">
+          @if (generalForm.get('work_permit_ref')?.value && !generalForm.get('work_permit_ref')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('work_permit_ref')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('work_permit_ref')) {
         <small class="m-error">{{'permit_to_work_reference' | translate}} is required</small>
@@ -1346,6 +1366,9 @@
           <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
             [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+          @if (generalForm.get(udf.formControlName)?.value && !generalForm.get(udf.formControlName)?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField(udf.formControlName)" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldRequired(udf.formControlName)) {
         <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
@@ -1360,7 +1383,8 @@
           <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
             [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
             optionLabel="label" optionValue="value"
-            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}"
+            [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
@@ -1390,7 +1414,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1405,7 +1429,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1426,7 +1450,7 @@
           <p-select [options]="hosts" formControlName="host"
             [placeholder]="'whom_you_would_like_to_visit' | translate:'placeholder'" (onChange)="onHostChange($event)"
             optionLabel="HOSTNAME" optionValue="HOSTIC" [class]="{'ng-invalid': isFieldInvalidRequired('host')}"
-            [disabled]="isFieldDisabled('host')" appendTo="body">
+            [disabled]="isFieldDisabled('host')" [showClear]="true" (onClear)="onHostChange({value: null})" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('host')) {
@@ -1444,7 +1468,7 @@
           <p-select [options]="departmentList" formControlName="department"
             [placeholder]="'department' | translate:'placeholder'" optionLabel="DName" optionValue="DepartmentSeqId"
             [class]="{'ng-invalid': isFieldInvalidRequired('department')}" [disabled]="isFieldDisabled('department')"
-            (onChange)="onDepartmentChange($event)" appendTo="body">
+            (onChange)="onDepartmentChange($event)" [showClear]="true" (onClear)="onDepartmentChange({value: null})" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('department')) {
@@ -1462,7 +1486,7 @@
           <p-datepicker formControlName="sharedDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate"
             placeholder="Select date" [showTime]="false" (onSelect)="onSharedDateSelect($event)"
-            appendTo="body" dateFormat="dd/mm/yy">
+            appendTo="body" dateFormat="dd/mm/yy" [showClear]="true">
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('sharedDate')) {
@@ -1478,7 +1502,7 @@
           <span class="m-field-icon"><i class="pi pi-question-circle"></i></span>
           <p-select [options]="facilityPurposeList" formControlName="facilityPurpose"
             placeholder="Select purpose" optionLabel="PurposeName" optionValue="PurposeCode"
-            [class]="{'ng-invalid': isFieldInvalidRequired('facilityPurpose')}" appendTo="body">
+            [class]="{'ng-invalid': isFieldInvalidRequired('facilityPurpose')}" [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('facilityPurpose')) {
@@ -1495,7 +1519,8 @@
           <p-select [options]="facilityMasterList" formControlName="facilitySelection"
             placeholder="Select facility" optionLabel="FacilityName" optionValue="FacilityCode"
             (onChange)="onFacilitySelectionChange($event.value)"
-            [class]="{'ng-invalid': isFieldInvalidRequired('facilitySelection')}" appendTo="body">
+            [class]="{'ng-invalid': isFieldInvalidRequired('facilitySelection')}"
+            [showClear]="true" (onClear)="onFacilitySelectionChange('')" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('facilitySelection')) {
@@ -1534,7 +1559,7 @@
           <span class="m-field-icon"><i class="pi pi-building"></i></span>
           <p-select [options]="meetingFloorList" formControlName="floor"
             [placeholder]="'floor' | translate:'placeholder'" optionLabel="floor_desc" optionValue="floor_id"
-            [class]="{'ng-invalid': isFieldInvalidRequired('floor')}" appendTo="body">
+            [class]="{'ng-invalid': isFieldInvalidRequired('floor')}" [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('floor')) {
@@ -1552,7 +1577,7 @@
           <p-select [options]="purposeList" formControlName="purpose"
             [placeholder]="'purpose_of_your_visit?' | translate:'placeholder'" optionLabel="visitpurpose_desc"
             optionValue="visitpurpose_id" [class]="{'ng-invalid': isFieldInvalidRequired('purpose')}"
-            (onChange)="onPurposeChange($event)" appendTo="body">
+            (onChange)="onPurposeChange($event)" [showClear]="true" (onClear)="onPurposeChange({value: null})" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('purpose')) {
@@ -1572,6 +1597,9 @@
             formControlName="remarks" [class]="{'ng-invalid': isFieldInvalidRequired('remarks')}"
             [disabled]="isFieldDisabled('remarks')">
           </textarea>
+          @if (generalForm.get('remarks')?.value && !generalForm.get('remarks')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('remarks')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldInvalidRequired('remarks')) {
         <small class="m-error">{{'would_you_like_to_add_comments_for_your_visit?' | translate}} is required</small>
@@ -1607,7 +1635,7 @@
           <p-datepicker formControlName="appointmentDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('appointmentDate')}" [minDate]="minDate"
             placeholder="Select appointment date" [showTime]="false" (onSelect)="onAppointmentDateSelect($event)"
-            appendTo="body" dateFormat="dd/mm/yy">
+            appendTo="body" dateFormat="dd/mm/yy" [showClear]="true">
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('appointmentDate')) {
@@ -1651,6 +1679,9 @@
           <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
             [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
+          @if (generalForm.get(udf.formControlName)?.value && !generalForm.get(udf.formControlName)?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField(udf.formControlName)" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
         </div>
         @if (isFieldRequired(udf.formControlName)) {
         <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
@@ -1665,7 +1696,8 @@
           <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
             [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
             optionLabel="label" optionValue="value"
-            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
+            [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}"
+            [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
@@ -1695,7 +1727,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1710,7 +1742,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate"
+            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1734,13 +1766,21 @@
     </button>
     <div class="m-actions-right">
       @if (isMultipleVisitorMode) {
-      <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" [disabled]="!isCurrentVisitorFormValid()">
-        {{ 'save_and_add' | translate }} <i class="pi pi-user-plus"></i>
-      </button>
+        @if (editingVisitorIndex >= 0) {
+        <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" [disabled]="generalForm.dirty && !isCurrentVisitorFormValid()">
+          {{ 'update' | translate }} <i class="pi pi-check"></i>
+        </button>
+        } @else {
+        <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" [disabled]="generalForm.dirty && !isCurrentVisitorFormValid()">
+          {{ 'save_and_add' | translate }} <i class="pi pi-user-plus"></i>
+        </button>
+        }
       }
-      <button type="button" class="m-btn m-btn-continue" (click)="goNext()">
+      @if (!(isMultipleVisitorMode && editingVisitorIndex >= 0)) {
+      <button type="button" class="m-btn m-btn-continue" (click)="goNext()" [disabled]="generalForm.dirty && !isCurrentVisitorFormValid()">
         {{ 'save_and_continue' | translate }} <i class="pi pi-arrow-right"></i>
       </button>
+      }
     </div>
   </div>
 
@@ -1830,7 +1870,7 @@
   <div class="photo-capture-container">
 
     <!-- Close button -->
-    <button type="button" class="photo-close-btn" (click)="closePhotoCaptureDialog()">
+    <button type="button" class="photo-close-btn" (click)="cancelPhotoCaptureDialog()">
       <i class="pi pi-times"></i>
     </button>
 
@@ -1850,7 +1890,7 @@
 
     <div class="photo-actions">
       <!-- Keep existing photo -->
-      <button type="button" class="btn-capture" (click)="closePhotoCaptureDialog()">
+      <button type="button" class="btn-capture" (click)="keepExistingPhoto()">
         <i class="pi pi-check"></i>
         Keep This Photo
       </button>

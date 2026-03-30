@@ -87,6 +87,9 @@ export class HomePageComponent implements AfterViewChecked {
   srWithoutBC = '1'; // Default: allow access without BC param
   srWithoutBCBlockMessage = 'Access denied. Please use the proper registration link with branch code.';
 
+  // ShowWelcomeTitle flag
+  showWelcomeTitle = true;
+
   // Appointment data handling
   isAppointmentFlow = false;
   encryptedAppointmentCode: string | null = null;
@@ -662,6 +665,15 @@ export class HomePageComponent implements AfterViewChecked {
               placeholder: settings.BranchPlaceholder || settings.Placeholder || 'Select Branch'
             };
             
+            // SRWelcomeTitle and ShowWelcomeTitle
+            if (settings.ShowWelcomeTitle !== undefined) {
+              this.showWelcomeTitle = settings.ShowWelcomeTitle === '1' || settings.ShowWelcomeTitle === 1 || settings.ShowWelcomeTitle === true;
+            }
+            if (settings.SRWelcomeTitle) {
+              this.pageTitle = settings.SRWelcomeTitle;
+              this.wizardService.pageTitle = settings.SRWelcomeTitle;
+            }
+
             // Check SRWithoutBC flag
             if (settings.SRWithoutBC !== undefined) {
               this.srWithoutBC = settings.SRWithoutBC;

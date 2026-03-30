@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -153,7 +154,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Saved visitors for single visitor mode
   savedVisitors: any[] = [];
   showSavedVisitorsModal = false;
+
+  // Pending action after photo capture dialog resolves
+  pendingAction: 'goNext' | 'addVisitor' | null = null;
+
   private destroy$ = new Subject<void>();
+
+  get canGoBackToHome(): boolean {
+    return !this.wizardService.appointmentCode &&
+           !this.wizardService.refCatCode &&
+           !this.wizardService.categoryCodeFromQuery;
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -162,7 +173,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     private sanitizer: DomSanitizer,
     private api: ApiService,
     private labelService: LabelService,
-    private sharedService: SharedService
+    private sharedService: SharedService,
+    private router: Router
   ) {
     this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
     this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
@@ -1171,6 +1183,22 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return this.isAppointmentFlow && this.hiddenFieldsInAppointmentFlow.includes(fieldName);
   }
 
+  clearField(controlName: string): void {
+    const control = this.generalForm.get(controlName);
+    if (control) {
+      control.setValue(null);
+      control.markAsTouched();
+      control.markAsDirty();
+    }
+    switch (controlName) {
+      case 'host': this.onHostChange({ value: null }); break;
+      case 'department': this.onDepartmentChange({ value: null }); break;
+      case 'visitor_id_type': this.onIdTypeChange({ value: null }); break;
+      case 'purpose': this.onPurposeChange({ value: null }); break;
+      case 'facilitySelection': this.onFacilitySelectionChange(''); break;
+    }
+  }
+
   /**
    * Parse date string from API to Date object for form controls
    */
@@ -1262,14 +1290,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const formControls: any = {
       profile: [savedData.profile || null],
       profilePreview: [savedData.profilePreview || ''],
-      title: [savedData.title || ''],
+      title: [savedData.title || null],
       fullName: [savedData.fullName || ''],
       email: [savedData.email || ''],
       phone: [savedData.phone || ''],
-      visitor_id_type: [savedData.visitor_id_type || ''],
+      visitor_id_type: [savedData.visitor_id_type || null],
       visitor_id: [savedData.visitor_id || ''],
       id_expired_date: [savedData.id_expired_date || null],
-      gender: [savedData.gender || ''],
+      gender: [savedData.gender || null],
       visitor_company: [savedData.visitor_company || ''],
       vehicle_number: [savedData.vehicle_number || ''],
       vehicle_brand: [savedData.vehicle_brand || ''],
@@ -1278,22 +1306,22 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       expired_date: [savedData.expired_date || ''],
       Reason: [savedData.Reason || ''],
       meeting_location: [savedData.meeting_location || ''],
-      floor: [savedData.floor || ''],
+      floor: [savedData.floor || null],
       visitor_address: [savedData.visitor_address || ''],
-      country: [savedData.country || ''],
+      country: [savedData.country || null],
       work_permit_ref: [savedData.work_permit_ref || ''],
       remarks: [savedData.remarks || ''],
-      host: [savedData.host || (this.shouldHideHostControl ? this.defaultHostId : '') || (this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery ? this.wizardService.hostCodeFromQuery : '')],
+      host: [savedData.host || (this.shouldHideHostControl ? this.defaultHostId : null) || (this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery ? this.wizardService.hostCodeFromQuery : null)],
       startDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.startDate || '')],
       endDate: [isPreFilledData ? (this.parseDate(visitorData.endTime) || '') : (savedData.endDate || '')],
-      department: [savedData.department || ''],
-      appointmentDate: [savedData.appointmentDate || ''],
-      timeSlot: [savedData.timeSlot || ''],
+      department: [savedData.department || null],
+      appointmentDate: [savedData.appointmentDate || null],
+      timeSlot: [savedData.timeSlot || null],
       facilityBooking: [savedData.facilityBooking || false],
-      facilityPurpose: [savedData.facilityPurpose || ''],
-      facilitySelection: [savedData.facilitySelection || ''],
-      sharedDate: [savedData.sharedDate || ''],
-      purpose: [savedData.purpose || ''],
+      facilityPurpose: [savedData.facilityPurpose || null],
+      facilitySelection: [savedData.facilitySelection || null],
+      sharedDate: [savedData.sharedDate || null],
+      purpose: [savedData.purpose || null],
       purposeDesc: [savedData.purposeDesc || '']
     };
 
@@ -1305,7 +1333,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           const controlName = udf.formControlName;  // e.g. 'AUDF1' or 'VUDF1'
 
           // Get value from saved data
-          const controlValue = savedData[controlName] || '';
+          const controlValue = udf.UDFCtrlType === 10 ? (savedData[controlName] || '') : (savedData[controlName] || null);
 
           const validators = [];
           if (udf.UDFCtrlType === 10 && udf.MinLength) {
@@ -1516,6 +1544,28 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const currentForm = this.getCurrentVisitorForm();
 
     if (this.isCurrentVisitorFormValid()) {
+      // If image upload is enabled, show the photo dialog before saving.
+      // After the user captures/uploads/skips, performAddVisitor() will be called.
+      if (this.settings?.ImageUploadEnabled) {
+        this.pendingAction = 'addVisitor';
+        this.openPhotoCaptureDialog();
+        return;
+      }
+      this.performAddVisitor();
+    } else {
+      // Mark only visitor-related required fields as touched to show validation errors
+      const requiredFields = this.getRequiredVisitorFields();
+      requiredFields.forEach(field => {
+        currentForm.get(field)?.markAsTouched();
+      });
+      this.messageService.add({ severity: 'error', ...this.getAlert('all_visitor_fields_required') });
+    }
+  }
+
+  private performAddVisitor(): void {
+    if (!this.isMultipleVisitorMode) return;
+    const currentForm = this.getCurrentVisitorForm();
+
       // Save to savedVisitors array for multiple visitor functionality
       const visitorData = { ...currentForm.value };
 
@@ -1585,18 +1635,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           currentForm.get(field)?.markAsPristine();
         }
       });
-
-    } else {
-      // Mark only visitor-related required fields as touched to show validation errors
-      const requiredFields = this.getRequiredVisitorFields();
-
-      // Mark only required visitor fields as touched
-      requiredFields.forEach(field => {
-        currentForm.get(field)?.markAsTouched();
-      });
-
-      this.messageService.add({ severity: 'error', ...this.getAlert('all_visitor_fields_required') });
-    }
   }
 
   removeVisitor(index: number): void {
@@ -2299,6 +2337,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
         if (closeDialog) {
           this.closePhotoCaptureDialog();
+          this.executePendingAction();
         }
       };
       reader.readAsDataURL(file);
@@ -2344,6 +2383,26 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.dialogPreviousImage = null;
     this.dialogMode = 'camera';
     this.showPhotoCaptureDialog = false;
+  }
+
+  cancelPhotoCaptureDialog(): void {
+    this.pendingAction = null;
+    this.closePhotoCaptureDialog();
+  }
+
+  keepExistingPhoto(): void {
+    this.closePhotoCaptureDialog();
+    this.executePendingAction();
+  }
+
+  private executePendingAction(): void {
+    const action = this.pendingAction;
+    this.pendingAction = null;
+    if (action === 'goNext') {
+      this.wizardService.navigateToNextStep();
+    } else if (action === 'addVisitor') {
+      this.performAddVisitor();
+    }
   }
 
   async startCamera(): Promise<void> {
@@ -2432,10 +2491,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const file = new File([ab], 'photo.jpg', { type: mimeType });
     this.generalForm.patchValue({ profile: file, profilePreview: base64 });
     this.closePhotoCaptureDialog();
+    this.executePendingAction();
   }
 
   skipPhoto(): void {
     this.closePhotoCaptureDialog();
+    this.executePendingAction();
   }
 
   private showError(message: string): void {
@@ -2942,25 +3003,35 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    const prev = this.wizardService.getCurrentStepIndex() - 1;
-    if (prev >= 0) this.wizardService.requestStepChange(prev);
+    if (this.canGoBackToHome) {
+      const queryParams: any = {};
+      if (this.wizardService.refCode) {
+        queryParams['bc'] = this.wizardService.refCode;
+      }
+      if (this.wizardService.hcParam) {
+        queryParams['hc'] = this.wizardService.hcParam;
+      }
+      this.router.navigate(['/'], Object.keys(queryParams).length > 0 ? { queryParams } : {});
+    } else {
+      const prev = this.wizardService.getCurrentStepIndex() - 1;
+      if (prev >= 0) this.wizardService.requestStepChange(prev);
+    }
   }
 
   goNext(): void {
-    // If image upload is REQUIRED and no photo taken yet — open capture dialog to guide the user.
-    // (Optional image: just proceed with normal validation.)
-    if (this.settings?.ImageUploadEnabled && this.settings?.ImageUploadRequired && !this.profileImage) {
-      this.openPhotoCaptureDialog();
-      // Mark profile as touched so the red border appears if the user skips/closes the dialog
-      this.generalForm.get('profile')?.markAsTouched();
-      this.generalForm.get('profile')?.markAsDirty();
-      return;
-    }
     // validateForm() handles markAllAsTouched, setStepValid, and toast errors internally
     const isValid = this.validateForm();
-    if (isValid) {
-      this.wizardService.navigateToNextStep();
+    if (!isValid) return;
+
+    // If image upload is enabled, show the photo capture dialog before proceeding.
+    // The dialog handles both new capture and existing photo preview.
+    if (this.settings?.ImageUploadEnabled) {
+      this.pendingAction = 'goNext';
+      this.openPhotoCaptureDialog();
+      return;
     }
+
+    this.wizardService.navigateToNextStep();
   }
 
 }
