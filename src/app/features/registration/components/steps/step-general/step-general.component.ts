@@ -632,6 +632,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         translateKey: (udf.udfPrefix || 'a') + udf.UDFName.toLowerCase()
       }));
       this.udfOptions = udfSettings.Table1;
+      // If the form was already shown to the user, save their input so it survives reinit
+      if (!this.isLoading) {
+        this.saveFormDataToWizard();
+      }
       this.initializeForm();
       this.setupConditionalControls();
       this.applyDefaultDateTimes();
@@ -669,6 +673,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           // Load hosts immediately when proceeding from homepage (not lazy loading)
           this.loadBranchData();
 
+          // If the form was already shown to the user, save their input so it survives reinit
+          if (!this.isLoading) {
+            this.saveFormDataToWizard();
+          }
           // Reinitialize form with new controls
           this.initializeForm();
           this.setupConditionalControls();
@@ -1216,16 +1224,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   /**
    * Apply default start (now) and end datetime based on AptEndTime setting.
-   * Only applied when not in appointment flow and start/end are not already saved.
+   * startDate always defaults to now when StartEndDtEnabled is true.
+   * endDate default depends on AptEndTime:
    *   AptEndTime = 'Category'    → end = now + time_permit parsed from CategoryTimePermit
    *   AptEndTime = 'DefaultEOD'  → end = today at 23:59:59
+   *   AptEndTime = '' / unset    → end = now + 1 hour (safe fallback)
    */
   private applyDefaultDateTimes(): void {
     // Skip if in appointment flow — dates are pre-filled from visitor ack
     if (this.isAppointmentFlow) return;
 
-    const aptEndTime = this.settings?.AptEndTime;
-    if (!aptEndTime) return;
+    // Only apply when start/end date fields are actually shown
+    const showStartEnd = this.settings?.StartEndDtEnabled && !this.enableVimsApptTimeSlot;
+    if (!showStartEnd) return;
 
     const savedData = this.wizardService.getFormData('general') || {};
     const now = new Date();
@@ -1237,6 +1248,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     if (savedData.endDate) return; // already saved — don't overwrite
 
+    const aptEndTime = this.settings?.AptEndTime;
     let endDate: Date | null = null;
 
     if (aptEndTime === 'DefaultEOD') {
@@ -1246,9 +1258,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       endDate = this.parseTimePermit(timePermit, now);
     }
 
-    if (endDate) {
-      this.generalForm.get('endDate')?.setValue(endDate);
+    // Fallback: default end to 1 hour after start when AptEndTime is not configured
+    if (!endDate) {
+      endDate = new Date(now.getTime() + 60 * 60 * 1000);
     }
+
+    this.generalForm.get('endDate')?.setValue(endDate);
   }
 
   /**
@@ -1369,8 +1384,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.savedVisitors = savedData.savedVisitors;
     }
 
-    // Clear profile image display in multiple visitor mode if visitors exist
-    if (this.isMultipleVisitorMode && this.savedVisitors.length > 0) {
+    // If only 1 visitor, reload it into the form so user can review/edit on back navigation
+    if (this.isMultipleVisitorMode && this.savedVisitors.length === 1) {
+      this.generalForm.patchValue(this.savedVisitors[0]);
+      this.editingVisitorIndex = 0;
+      if (this.savedVisitors[0].profilePreview) {
+        this.profileImage = this.sanitizer.bypassSecurityTrustUrl(this.savedVisitors[0].profilePreview);
+      } else {
+        this.profileImage = '';
+      }
+    } else if (this.isMultipleVisitorMode && this.savedVisitors.length > 1) {
+      // Clear profile image display in multiple visitor mode if multiple visitors exist
       this.profileImage = '';
     } else if (savedData.profilePreview) {
       // Restore profile image preview when navigating back
@@ -1855,7 +1879,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('startDate', showStartEnd, true);
     this.setupControl('endDate', showStartEnd, true);
 
-    this.setupControl('profile', this.settings.ImageUploadEnabled, this.settings.ImageUploadRequired);
+    // profile is handled by the photo-capture dialog — never mark it required here
+    this.setupControl('profile', this.settings.ImageUploadEnabled, false);
 
     this.udfSettings.forEach((udf: any) => {
       if (udf.Enabled) {
@@ -1979,13 +2004,42 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Compute validity across non-FormArray controls only.
     // The visitors FormArray validity depends on its children (visitor sub-forms),
     // which are validated separately via isCurrentVisitorFormValid().
+    // The 'profile' field is excluded here — it is collected via the photo dialog
+    // which fires after this check, so it is never filled at this point.
     const isValid = Object.keys(this.generalForm.controls).every(name => {
       const c = this.generalForm.get(name);
       if (!c || c instanceof FormArray) return true; // Skip FormArrays
+      if (name === 'profile') return true; // Validated by photo-capture dialog, not here
       return !c.enabled || c.valid;
     });
 
-    // Block if visitor is blacklisted
+    // ── DIAGNOSTIC DUMP (always runs) ──────────────────────────────────────
+    const failingFields: any[] = [];
+    Object.keys(this.generalForm.controls).forEach(name => {
+      const c = this.generalForm.get(name);
+      if (c && !(c instanceof FormArray) && c.enabled && c.invalid) {
+        failingFields.push({ field: name, value: c.value, errors: c.errors });
+      }
+    });
+    console.group(`[step-general] validateForm — isValid=${isValid} | multiVisitor=${this.isMultipleVisitorMode} | savedVisitors=${this.savedVisitors.length} | editingIndex=${this.editingVisitorIndex}`);
+    console.log('Settings snapshot:', {
+      StartEndDtEnabled: this.settings?.StartEndDtEnabled,
+      AptEndTime: this.settings?.AptEndTime,
+      HostNameEnabled: this.settings?.HostNameEnabled,
+      HostNameRequired: this.settings?.HostNameRequired,
+      IdProofEnabled: this.settings?.IdProofEnabled,
+      IdProofRequired: this.settings?.IdProofRequired,
+      NameEnabled: this.settings?.NameEnabled,
+      NameRequired: this.settings?.NameRequired,
+    });
+    if (failingFields.length) {
+      console.warn('Failing fields:', failingFields);
+    } else {
+      console.log('All enabled fields valid');
+    }
+    console.groupEnd();
+    // ───────────────────────────────────────────────────────────────────────
+
     if (this.isVisitorBlacklisted) {
       this.messageService.add({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
       this.wizardService.setStepValid(false);
@@ -2109,6 +2163,24 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         return false;
       }
 
+      // Form is valid — auto-save as an additional visitor before proceeding
+      const visitorData = { ...this.generalForm.value };
+      visitorData.Visitor_IC = visitorData.visitor_id || '';
+      visitorData.IdentityNo = visitorData.visitor_id || '';
+      const isDuplicate = this.savedVisitors.some(v =>
+        (visitorData.visitor_id && v.visitor_id === visitorData.visitor_id) ||
+        (visitorData.fullName && v.fullName?.toLowerCase() === visitorData.fullName?.toLowerCase())
+      );
+      if (!isDuplicate) {
+        this.savedVisitors.push(visitorData);
+        ['fullName', 'visitor_id', 'profile', 'profilePreview'].forEach(f => {
+          this.generalForm.get(f)?.reset();
+          this.generalForm.get(f)?.markAsUntouched();
+          this.generalForm.get(f)?.markAsPristine();
+        });
+        this.profileImage = '';
+      }
+
       this.saveFormDataToWizard();
       this.wizardService.setStepValid(true);
       return true;
@@ -2118,9 +2190,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (isValid) {
       this.saveFormDataToWizard();
     }
-
-    console.log('Form validation result:', isValid, '| isMultipleVisitorMode:', this.isMultipleVisitorMode);
-    console.log('Form errors:', this.generalForm.errors);
 
     this.wizardService.setStepValid(isValid);
 
@@ -2495,6 +2564,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   skipPhoto(): void {
+    // If photo is mandatory, do not allow skipping
+    if (this.settings?.ImageUploadRequired) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: '',
+        detail: this.labelService.getLabel('photo_required', 'caption') || 'A photo is required. Please capture or upload one.'
+      });
+      return;
+    }
     this.closePhotoCaptureDialog();
     this.executePendingAction();
   }

@@ -968,23 +968,21 @@
     <div class="actions-right">
       @if (isMultipleVisitorMode) {
         @if (editingVisitorIndex >= 0) {
-        <button type="button" class="btn btn-save-add" (click)="addVisitorToTable()" [disabled]="generalForm.dirty && !isCurrentVisitorFormValid()">
+        <button type="button" class="btn btn-save-add" (click)="addVisitorToTable()" >
           {{ 'update' | translate }}
           <i class="pi pi-check"></i>
         </button>
         } @else {
-        <button type="button" class="btn btn-save-add" (click)="addVisitorToTable()" [disabled]="generalForm.dirty && !isCurrentVisitorFormValid()">
+        <button type="button" class="btn btn-save-add" (click)="addVisitorToTable()" >
           {{ 'save_and_add' | translate }}
           <i class="pi pi-user-plus"></i>
         </button>
         }
       }
-      @if (!(isMultipleVisitorMode && editingVisitorIndex >= 0)) {
-      <button type="button" class="btn btn-continue" (click)="goNext()" [disabled]="generalForm.dirty && !isCurrentVisitorFormValid()">
+      <button type="button" class="btn btn-continue" (click)="goNext()" >
         {{ 'save_and_continue' | translate }}
         <i class="pi pi-arrow-right"></i>
       </button>
-      }
     </div>
   </section>
 
@@ -1767,20 +1765,18 @@
     <div class="m-actions-right">
       @if (isMultipleVisitorMode) {
         @if (editingVisitorIndex >= 0) {
-        <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" [disabled]="generalForm.dirty && !isCurrentVisitorFormValid()">
+        <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
           {{ 'update' | translate }} <i class="pi pi-check"></i>
         </button>
         } @else {
-        <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" [disabled]="generalForm.dirty && !isCurrentVisitorFormValid()">
+        <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
           {{ 'save_and_add' | translate }} <i class="pi pi-user-plus"></i>
         </button>
         }
       }
-      @if (!(isMultipleVisitorMode && editingVisitorIndex >= 0)) {
-      <button type="button" class="m-btn m-btn-continue" (click)="goNext()" [disabled]="generalForm.dirty && !isCurrentVisitorFormValid()">
+      <button type="button" class="m-btn m-btn-continue" (click)="goNext()" >
         {{ 'save_and_continue' | translate }} <i class="pi pi-arrow-right"></i>
       </button>
-      }
     </div>
   </div>
 
