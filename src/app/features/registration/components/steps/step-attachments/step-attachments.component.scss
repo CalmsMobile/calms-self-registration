@@ -69,7 +69,6 @@
 }
 
 .page-header h1 {
-  font-size: 34px;
   font-weight: 600;
   color: #5d5d5d;
 }
@@ -411,11 +410,6 @@
 
   .logo { width: 130px; }
 
-  .page-header h1 {
-    font-size: 22px;
-    font-weight: 600;
-    color: #5d5d5d;
-  }
 
   /* Content layout */
   .content {
@@ -543,6 +537,5 @@
 @media (max-width: 400px) {
   .page { padding: 16px 14px 28px; }
   .logo { width: 110px; }
-  .page-header h1 { font-size: 20px; }
   .btn { padding: 0 14px; font-size: 13px; }
 }
