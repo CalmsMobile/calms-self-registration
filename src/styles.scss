@@ -60,6 +60,23 @@
 }
 
 
+/* Global dropdown overlay style */
+.p-select-overlay,
+.p-multiselect-overlay,
+.p-autocomplete-overlay {
+  border-radius: 14px !important;
+  border: 2px solid #ececec !important;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.1) !important;
+  padding: 6px 0 !important;
+  margin-top: 6px !important;
+
+  .p-select-list-container,
+  .p-multiselect-list-container,
+  .p-autocomplete-list-container {
+    border-radius: 14px;
+  }
+}
+
 // Global PrimeNG overrides for focus rings and highlights
 ::ng-deep {
 
