@@ -18,6 +18,9 @@ export const appConfig: ApplicationConfig = {
     providePrimeNG({
       theme: {
         preset: Material,
+        options: {
+          darkModeSelector: false
+        }
       },
       translation: {
         dateFormat: 'dd/mm/yy'

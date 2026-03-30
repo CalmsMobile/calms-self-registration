@@ -130,6 +130,18 @@
         <div style="display: none;">
           <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
         </div>
+
+        <!-- Checkbox at bottom right -->
+        <div class="terms-checkbox-wrapper" [class.disabled]="!termsScrolledToBottom">
+          <span class="terms-agree-label">{{ 'i_agree_to_the_terms_and_conditions' | translate }}</span>
+          <div class="checkbox-container">
+            <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsScrolledToBottom && (termsAccepted = !termsAccepted)">
+              @if (termsAccepted) {
+              <i class="pi pi-check"></i>
+              }
+            </div>
+          </div>
+        </div>
       </div>
       }
 
@@ -137,7 +149,7 @@
       @if (selectedBranch && selectedCategory) {
       <div class="actions">
         <button class="btn" type="button"
-          [disabled]="shouldShowTerms() && (!termsScrolledToBottom || !termsValid)"
+          [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
           (click)="proceedToWizard()">
           <span>{{ 'agree_and_proceed' | translate }}</span>
           <i class="pi pi-arrow-right btn-icon"></i>
@@ -269,13 +281,25 @@
              (scroll)="onTermsScroll($event)"
              [innerHTML]="getTermsHtml()">
         </div>
+
+        <!-- Checkbox at bottom right -->
+        <div class="terms-checkbox-wrapper" [class.disabled]="!termsScrolledToBottom">
+          <span class="terms-agree-label">{{ 'i_agree_to_the_terms_and_conditions' | translate }}</span>
+          <div class="checkbox-container">
+            <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsScrolledToBottom && (termsAccepted = !termsAccepted)">
+              @if (termsAccepted) {
+              <i class="pi pi-check"></i>
+              }
+            </div>
+          </div>
+        </div>
       </div>
       }
 
       <!-- Continue Button -->
       @if (selectedBranch && selectedCategory) {
       <button class="m-continue" type="button"
-        [disabled]="shouldShowTerms() && (!termsScrolledToBottom || !termsValid)"
+        [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
         (click)="proceedToWizard()">
         <span>{{ 'agree_and_proceed' | translate }}</span>
         <i class="pi pi-arrow-right"></i>
