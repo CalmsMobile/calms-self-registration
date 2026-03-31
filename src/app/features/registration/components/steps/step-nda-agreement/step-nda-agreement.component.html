@@ -14,7 +14,7 @@
         <span class="accent">{{ formattedPageTitle.first }}</span>
         <span>{{ formattedPageTitle.rest }}</span>
       </h2>
-      <p>{{ 'nda_subtitle' | translate }}</p>
+      <p>{{ 'card_nda_subtitle' | translate }}</p>
       <div class="illustration">
         <img [src]="illustrationUrl" alt="NDA illustration" />
       </div>
@@ -39,7 +39,7 @@
           <span class="icon-left">&#8592;</span> {{ 'back' | translate }}
         </button>
         <button class="btn yellow" type="button" (click)="openSignature()" [disabled]="!ndaScrolledToBottom">
-          {{ 'sign' | translate }} <span class="icon-right">&#9998;</span>
+          {{ 'signature' | translate }} <span class="icon-right">&#9998;</span>
         </button>
       </div>
     </div>
@@ -88,10 +88,9 @@
   <!-- Title -->
   <div class="m-title-wrap">
     <h1 class="m-title">
-      <span class="m-accent">NDA</span>
-      <span>{{ 'nda_agreement' | translate }}</span>
+      <span class="m-accent">{{ 'card_nda_title' | translate }}</span>
     </h1>
-    <p class="m-subtitle">{{ 'nda_subtitle' | translate }}</p>
+    <p class="m-subtitle">{{ 'card_nda_subtitle' | translate }}</p>
   </div>
 
   <!-- Terms Card -->
@@ -111,7 +110,7 @@
         <span>&#8592;</span> {{ 'back' | translate }}
       </button>
       <button class="m-btn m-btn-grey" type="button" (click)="openSignature()" [disabled]="!ndaScrolledToBottom">
-        {{ 'sign' | translate }} <span>&#9998;</span>
+        {{ 'signature' | translate }} <span>&#9998;</span>
       </button>
     </div>
     <button class="m-btn m-btn-yellow" type="button" [disabled]="!hasSigned" (click)="mobileNext()">

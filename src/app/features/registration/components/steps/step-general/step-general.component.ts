@@ -2119,7 +2119,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           return false;
         }
         // Auto-save current form as the first (single) visitor
-        const visitorData = { ...this.generalForm.value };
+        const visitorData = { ...this.generalForm.getRawValue() };
         visitorData.Visitor_IC = visitorData.visitor_id || '';
         visitorData.IdentityNo = visitorData.visitor_id || '';
         if (this.settings?.Visitor?.[0]?.SafetyBriefingEnabled) {
@@ -2149,7 +2149,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.wizardService.setStepValid(false);
           return false;
         }
-        const visitorData = { ...this.generalForm.value };
+        const visitorData = { ...this.generalForm.getRawValue() };
         visitorData.Visitor_IC = visitorData.visitor_id || '';
         visitorData.IdentityNo = visitorData.visitor_id || '';
         this.savedVisitors[this.editingVisitorIndex] = visitorData;
@@ -2182,7 +2182,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
 
       // Form is valid — auto-save as an additional visitor before proceeding
-      const visitorData = { ...this.generalForm.value };
+      const visitorData = { ...this.generalForm.getRawValue() };
       visitorData.Visitor_IC = visitorData.visitor_id || '';
       visitorData.IdentityNo = visitorData.visitor_id || '';
       const isDuplicate = this.savedVisitors.some(v =>
@@ -2220,7 +2220,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   private saveFormDataToWizard(): void {
-    const formData = { ...this.generalForm.value };
+    const formData = { ...this.generalForm.getRawValue() };
     // Always persist savedVisitors so they survive back navigation
     if (this.isMultipleVisitorMode) {
       formData.savedVisitors = this.savedVisitors;
@@ -2721,6 +2721,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const selectedId = event.value;
     const selected = this.purposeList.find((p: any) => p.visitpurpose_id === selectedId);
     this.generalForm.get('purposeDesc')?.setValue(selected?.visitpurpose_desc || '', { emitEvent: false });
+    this.saveFormDataToWizard();
   }
 
   onDepartmentChange(event: any): void {

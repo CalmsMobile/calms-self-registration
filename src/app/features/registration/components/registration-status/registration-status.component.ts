@@ -77,12 +77,14 @@ export class RegistrationStatusComponent implements OnInit {
   get branch(): string         { return this.registrationData?.branch || ''; }
 
   get badgeText(): string {
-    return this.status === 'success' ? 'APPROVED' : this.status === 'pending' ? 'PENDING' : 'ERROR';
+    if (this.status === 'success') return (this.labelService.getLabel('approved', 'caption') || 'Approved').toUpperCase();
+    return this.status === 'pending' ? 'PENDING' : 'ERROR';
   }
 
   get statusText(): string {
     if (this.registrationData?.approvalStatus) return this.registrationData.approvalStatus;
-    return this.status === 'success' ? 'Approved' : this.status === 'pending' ? 'Pending' : 'Error';
+    if (this.status === 'success') return this.labelService.getLabel('approved', 'caption') || 'Approved';
+    return this.status === 'pending' ? 'Pending' : 'Error';
   }
 
   private checkAccessSettings() {

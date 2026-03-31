@@ -7,8 +7,8 @@
         <path fill-rule="evenodd" d="M12 2c-.791 0-1.55.314-2.11.874l-.893.893a.985.985 0 0 1-.696.288H7.04A2.984 2.984 0 0 0 4.055 7.04v1.262a.986.986 0 0 1-.288.696l-.893.893a2.984 2.984 0 0 0 0 4.22l.893.893a.985.985 0 0 1 .288.696v1.262a2.984 2.984 0 0 0 2.984 2.984h1.262c.261 0 .512.104.696.288l.893.893a2.984 2.984 0 0 0 4.22 0l.893-.893a.985.985 0 0 1 .696-.288h1.262a2.984 2.984 0 0 0 2.984-2.984V15.7c0-.261.104-.512.288-.696l.893-.893a2.984 2.984 0 0 0 0-4.22l-.893-.893a.985.985 0 0 1-.288-.696V7.04a2.984 2.984 0 0 0-2.984-2.984h-1.262a.985.985 0 0 1-.696-.288l-.893-.893A2.984 2.984 0 0 0 12 2Zm3.683 7.73a1 1 0 1 0-1.414-1.413l-4.253 4.253-1.277-1.277a1 1 0 0 0-1.415 1.414l1.985 1.984a1 1 0 0 0 1.414 0l4.96-4.96Z" clip-rule="evenodd"/>
       </svg>
     </div>
-    <h1 class="title">{{ 'registration_successful' | translate }}</h1>
-    <p class="subtitle">{{ 'visitor_pass_approved' | translate }}</p>
+    <h1 class="title">{{ 'success_message' | translate }}</h1>
+    <p class="subtitle">{{ 'approved' | translate }}</p>
   }
 
   @if (status === 'pending') {
@@ -36,11 +36,11 @@
     <div class="pass-header">
       <div class="pass-brand">
         <div class="brand-name">{{ companyName }}</div>
-        <div class="brand-sub">Visitor Access Pass</div>
+        <div class="brand-sub">{{ 'brand_subtitle' | translate }}</div>
       </div>
       <span class="badge">{{ badgeText }}</span>
       <div class="reg-block">
-        <div class="reg-label">REGISTRATION ID</div>
+        <div class="reg-label">{{ 'reg_id_label' | translate }}</div>
         <div class="reg-value">{{ registrationId }}</div>
       </div>
       <div class="wave"></div>
@@ -109,7 +109,7 @@
       @if (status === 'success' && qrCodeBase64) {
         <div class="qr-section">
           <div class="qr-box">
-            <img [src]="qrCodeBase64" alt="QR Code" />
+            <img [src]="qrCodeBase64" [attr.alt]="'qr_code_alt' | translate" />
           </div>
           <div class="qr-caption">{{ 'scan_qr_code' | translate }}</div>
         </div>
@@ -128,7 +128,7 @@
         <span class="btn-icon">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10l3.5-3.5a1 1 0 1 1 1.4 1.4l-5.2 5.2a1 1 0 0 1-1.4 0L5.1 10.9a1 1 0 0 1 1.4-1.4L10 13V3a1 1 0 0 1 2 0Zm-7 14h14v4H5v-4Z"/></svg>
         </span>
-        {{ 'download_pdf' | translate }}
+        {{ 'print' | translate }}
       </button>
       @if (showNewRegistrationButton) {
         <button class="action-btn green" type="button" (click)="onNewRegistration()">
