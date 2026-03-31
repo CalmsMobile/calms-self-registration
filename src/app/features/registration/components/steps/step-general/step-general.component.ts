@@ -159,6 +159,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   pendingAction: 'goNext' | 'addVisitor' | null = null;
 
   private destroy$ = new Subject<void>();
+  private _activeMessageKeys = new Set<string>();
+
+  /** Adds a toast only when an identical message is not already visible. */
+  private showMessage(msg: { severity: string; summary?: string; detail?: string; life?: number }): void {
+    const key = `${msg.severity}|${msg.summary ?? ''}|${msg.detail ?? ''}`;
+    if (this._activeMessageKeys.has(key)) return;
+    this._activeMessageKeys.add(key);
+    const life = msg.life ?? 3000;
+    this.showMessage({ ...msg, life });
+    setTimeout(() => this._activeMessageKeys.delete(key), life + 200);
+  }
 
   get canGoBackToHome(): boolean {
     return !this.wizardService.appointmentCode &&
@@ -1556,12 +1567,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     if (this.isVisitorBlacklisted) {
-      this.messageService.add({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
+      this.showMessage({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
       return;
     }
 
     if (this.isVisitorNotWhitelisted) {
-      this.messageService.add({ severity: 'error', summary: 'Not Whitelisted', detail: 'Visitor not whitelisted. Please contact admin.', life: 5000 });
+      this.showMessage({ severity: 'error', summary: 'Not Whitelisted', detail: 'Visitor not whitelisted. Please contact admin.', life: 5000 });
       return;
     }
 
@@ -1582,7 +1593,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       requiredFields.forEach(field => {
         currentForm.get(field)?.markAsTouched();
       });
-      this.messageService.add({ severity: 'error', ...this.getAlert('all_visitor_fields_required') });
+      this.showMessage({ severity: 'error', ...this.getAlert('all_visitor_fields_required') });
     }
   }
 
@@ -1617,7 +1628,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.savedVisitors[this.editingVisitorIndex] = visitorData;
         this.editingVisitorIndex = -1; // Reset editing index
 
-        this.messageService.add({ severity: 'success', ...this.getAlert('visitor_update_message') });
+        this.showMessage({ severity: 'success', ...this.getAlert('visitor_update_message') });
       } else {
         // Check for duplicate visitor by visitor_id or fullName
         const isDuplicate = this.savedVisitors.some(v =>
@@ -1626,14 +1637,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         );
 
         if (isDuplicate) {
-          this.messageService.add({ severity: 'warn', ...this.getAlert('duplicate_visitor_alert') });
+          this.showMessage({ severity: 'warn', ...this.getAlert('duplicate_visitor_alert') });
           return;
         }
 
         // Add new visitor
         this.savedVisitors.push(visitorData);
 
-        this.messageService.add({ severity: 'success', ...this.getAlert('visitor_save_message') });
+        this.showMessage({ severity: 'success', ...this.getAlert('visitor_save_message') });
       }
 
       // Save form data immediately after visitor modification
@@ -1792,7 +1803,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Store the index for updating later
       this.editingVisitorIndex = index;
 
-      this.messageService.add({ severity: 'info', ...this.getAlert('edit_mode_message') });
+      this.showMessage({ severity: 'info', ...this.getAlert('edit_mode_message') });
     }
   }
 
@@ -1819,7 +1830,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Save form data immediately after visitor deletion
       this.saveFormDataToWizard();
 
-      this.messageService.add({ severity: 'success', ...this.getAlert('visitor_delete_message') });
+      this.showMessage({ severity: 'success', ...this.getAlert('visitor_delete_message') });
     }
   }
 
@@ -1831,7 +1842,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       currentForm.reset();
       this.profileImage = ''; // Clear photo preview when cancelling edit
 
-      this.messageService.add({ severity: 'info', ...this.getAlert('cancellation_message') });
+      this.showMessage({ severity: 'info', ...this.getAlert('cancellation_message') });
     }
   }
 
@@ -2041,14 +2052,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // ───────────────────────────────────────────────────────────────────────
 
     if (this.isVisitorBlacklisted) {
-      this.messageService.add({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
+      this.showMessage({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
       this.wizardService.setStepValid(false);
       return false;
     }
 
     // Block if visitor failed whitelist validation
     if (this.isVisitorNotWhitelisted) {
-      this.messageService.add({ severity: 'error', summary: 'Not Whitelisted', detail: 'Visitor not whitelisted. Please contact admin.', life: 5000 });
+      this.showMessage({ severity: 'error', summary: 'Not Whitelisted', detail: 'Visitor not whitelisted. Please contact admin.', life: 5000 });
       this.wizardService.setStepValid(false);
       return false;
     }
@@ -2059,7 +2070,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       const hasDate = !!this.generalForm.get(dateField)?.value;
       if (hasDate) {
         const noSlotAlert = this.getAlert('no_time_slots_available');
-        this.messageService.add({
+        this.showMessage({
           severity: 'error',
           summary: noSlotAlert.summary || 'No Slots Available',
           detail: noSlotAlert.detail || 'No time slots available for the selected date'
@@ -2072,7 +2083,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Validate end datetime is after start datetime
     this.checkEndBeforeStart();
     if (this.endBeforeStartError) {
-      this.messageService.add({ severity: 'error', ...this.getAlert('end_date_validation') });
+      this.showMessage({ severity: 'error', ...this.getAlert('end_date_validation') });
       this.wizardService.setStepValid(false);
       return false;
     }
@@ -2081,7 +2092,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (isValid) {
       const idValidation = this.validateVisitorIdAndExpiry();
       if (!idValidation.isValid) {
-        this.messageService.add({
+        this.showMessage({
           severity: 'error',
           summary: 'Validation Error',
           detail: idValidation.errorMessage
@@ -2096,7 +2107,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (this.savedVisitors.length === 0) {
         if (!isValid) {
           this.scrollToFirstError();
-          this.messageService.add({ severity: 'error', ...this.getAlert('all_fields_required') });
+          this.showMessage({ severity: 'error', ...this.getAlert('all_fields_required') });
           this.wizardService.setStepValid(false);
           return false;
         }
@@ -2127,7 +2138,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (this.editingVisitorIndex >= 0) {
         if (!isValid) {
           this.scrollToFirstError();
-          this.messageService.add({ severity: 'error', ...this.getAlert('all_fields_required') });
+          this.showMessage({ severity: 'error', ...this.getAlert('all_fields_required') });
           this.wizardService.setStepValid(false);
           return false;
         }
@@ -2158,7 +2169,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Current form has partial/complete data — require it to be fully valid before proceeding
       if (!isValid) {
         this.scrollToFirstError();
-        this.messageService.add({ severity: 'error', ...this.getAlert('all_fields_required') });
+        this.showMessage({ severity: 'error', ...this.getAlert('all_fields_required') });
         this.wizardService.setStepValid(false);
         return false;
       }
@@ -2195,7 +2206,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     if (!isValid) {
       this.scrollToFirstError();
-      this.messageService.add({ severity: 'error', ...this.getAlert('all_fields_required') });
+      this.showMessage({ severity: 'error', ...this.getAlert('all_fields_required') });
     }
 
     return isValid;
@@ -2212,12 +2223,21 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   private scrollToFirstError(): void {
     setTimeout(() => {
-      const firstInvalidElement = document.querySelector('.ng-invalid');
-      if (firstInvalidElement) {
-        firstInvalidElement.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center'
-        });
+      // Scroll within the correct scrollable container to the first invalid field
+      const containers = [
+        { container: '.form-section', field: '.form-field' },
+        { container: '.m-form-scroll', field: '.m-form-field' },
+      ];
+      for (const { container, field } of containers) {
+        const containerEl = document.querySelector(container) as HTMLElement;
+        if (!containerEl) continue;
+        const fields = containerEl.querySelectorAll(field);
+        for (let i = 0; i < fields.length; i++) {
+          if (fields[i].querySelector('.ng-invalid')) {
+            fields[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+        }
       }
     }, 100);
   }
@@ -2273,13 +2293,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       next: (response: any) => {
         const visitor = response?.Table1?.[0];
         if (!visitor) {
-          this.messageService.add({ severity: 'warn', ...this.getAlert('no_visitor_found_alert') });
+          this.showMessage({ severity: 'warn', ...this.getAlert('no_visitor_found_alert') });
           return;
         }
 
         this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
         if (this.isVisitorBlacklisted) {
-          this.messageService.add({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
+          this.showMessage({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
           return;
         }
 
@@ -2300,7 +2320,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.showReturningVisitorPopup = false;
       },
       error: () => {
-        this.messageService.add({ severity: 'error', ...this.getAlert('search_failed_message') });
+        this.showMessage({ severity: 'error', ...this.getAlert('search_failed_message') });
       }
     });
   }
@@ -2566,7 +2586,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   skipPhoto(): void {
     // If photo is mandatory, do not allow skipping
     if (this.settings?.ImageUploadRequired) {
-      this.messageService.add({
+      this.showMessage({
         severity: 'warn',
         summary: '',
         detail: this.labelService.getLabel('photo_required', 'caption') || 'A photo is required. Please capture or upload one.'
@@ -2578,7 +2598,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   private showError(message: string): void {
-    this.messageService.add({
+    this.showMessage({
       severity: 'error',
       summary: 'Error',
       detail: message
@@ -2777,7 +2797,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
         this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
         if (this.isVisitorBlacklisted) {
-          this.messageService.add({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
+          this.showMessage({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
           return;
         }
 
@@ -2831,7 +2851,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           // Code 20 or unexpected — not whitelisted
           this.isVisitorNotWhitelisted = true;
           const description = result?.Table?.[0]?.Description || 'Visitor not whitelisted. Please contact admin.';
-          this.messageService.add({
+          this.showMessage({
             severity: 'error',
             summary: 'Not Whitelisted',
             detail: description,
