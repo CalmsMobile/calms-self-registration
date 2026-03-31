@@ -233,7 +233,10 @@ export class WizardService {
     console.log(allSettings);
     let settingsData: any = {};
     if (allSettings.Table?.length) {
-      settingsData = { ...allSettings.Table1[0], ...allSettings.Table2?.length ? JSON.parse(allSettings.Table2[0].SettingDetail) : {} };
+      const table1 = allSettings.Table1[0] || {};
+      const settingDetail = allSettings.Table2?.length ? JSON.parse(allSettings.Table2[0].SettingDetail) : {};
+      const localSettings = typeof table1.LocalSettings === 'string' ? JSON.parse(table1.LocalSettings) : (table1.LocalSettings || {});
+      settingsData = { ...table1, ...settingDetail, ...localSettings };
     }
     if (allSettings.Table5?.length) {
       settingsData.VideoUrl = allSettings.Table5[0]?.VideoUrl;
@@ -378,11 +381,16 @@ export class WizardService {
     if (settings?.Visitor?.length > 0) {
       const visitorSettings = settings.Visitor[0];
 
-      loFinalData.HostDeptId = visitorSettings.HostDepartmentEnabled ? (formData.general?.hostDepartment || '') : '';
-      loFinalData.HostDeptDesc = visitorSettings.HostDepartmentEnabled ? (formData.general?.hostDepartmentDesc || '') : '';
+      const masterData = this.getmasterData();
+      const deptId = formData.general?.department?.toString() || '';
+      const deptDesc = masterData?.Table5?.find((d: any) => (d.DepartmentSeqId ?? d.dept_id)?.toString() === deptId)?.dept_desc || deptId;
+      loFinalData.HostDeptId = visitorSettings.HostDepartmentEnabled ? deptId : '';
+      loFinalData.HostDeptDesc = visitorSettings.HostDepartmentEnabled ? deptDesc : '';
 
-      loFinalData.HostId = visitorSettings.HostNameEnabled ? (formData.general?.hostName || '') : (visitorSettings.DefaultHostId?.toString() || '');
-      loFinalData.HostDesc = visitorSettings.HostNameEnabled ? (formData.general?.hostNameDesc || '') : '';
+      const hostId = formData.general?.host?.toString() || '';
+      const hostDesc = masterData?.Table?.find((h: any) => h.HOSTIC === hostId)?.HOSTNAME || '';
+      loFinalData.HostId = visitorSettings.HostNameEnabled ? hostId : (visitorSettings.DefaultHostId?.toString() || '');
+      loFinalData.HostDesc = visitorSettings.HostNameEnabled ? hostDesc : '';
 
       loFinalData.WorkPermitRef = visitorSettings.WorkPermitRefEnabled ? (formData.general?.workPermitRef || null) : null;
     }
@@ -471,8 +479,8 @@ export class WizardService {
       HostDeptId: generalData.department?.toString() || '',
       HostId: generalData.host?.toString() || settings?.DefaultHostId?.toString() || '',
       WorkPermitRef: generalData.work_permit_ref || null,
-      PurposeId: generalData.Reason?.toString() || '',
-      PurposeDesc: '', // Will be populated from master data
+      PurposeId: generalData.purpose?.toString() || '',
+      PurposeDesc: generalData.purposeDesc || '',
       FloorId: generalData.floor?.toString() || '',
       RoomId: generalData.meeting_location?.toString() || '',
       NoApptSave: false,
@@ -585,22 +593,28 @@ export class WizardService {
 
     const buildVisitorEntry = (data: any, isSelf: boolean) => {
       const companyId = extractId(data.visitor_company, 'visitor_comp_code', 'id');
+      const companyDesc = (typeof data.visitor_company === 'object' && data.visitor_company !== null)
+        ? (data.visitor_company.visitor_comp_name || '') : '';
       const countryId = extractId(data.country, 'CountrySeqId', 'id');
       const genderId = extractId(data.gender, 'Value', 'id');
+      const genderDesc = (typeof data.gender === 'object' && data.gender !== null)
+        ? (data.gender.Name || '') : (data.gender || '');
       const rawPhoto = data.profilePreview || (typeof data.profile === 'string' ? data.profile : '') || '';
       return {
         MySelf: isSelf,
         Photo: stripPhotoPrefix(rawPhoto),
+        TitleId: data.title || '',
+        TitleDesc: data.title || '',
         FullName: data.fullName || '',
         IdentityNo: data.visitor_id || '',
         Visitor_IC: data.visitor_id || '',
         GenderId: genderId,
-        GenderDesc: genderId,
+        GenderDesc: genderDesc,
         Email: data.email || '',
         ID_TYPE: data.visitor_id_type || '',
         ID_EXPIRED_DATE: data.id_expired_date || data.expired_date || '',
         CompanyId: companyId,
-        CompanyDesc: '',
+        CompanyDesc: companyDesc,
         Contact: data.phone || '',
         VehicleNo: data.vehicle_number || '',
         VehicleBrand: data.vehicle_brand || '',

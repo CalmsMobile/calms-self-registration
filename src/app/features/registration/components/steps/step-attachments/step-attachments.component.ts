@@ -217,6 +217,14 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     if (isValid) this.saveFormData();
   }
 
+  getMaxSizeLabel(): string {
+    const template = this.labelService.getLabel('max_size_label', 'caption');
+    if (template) {
+      return template.replace('{{maxSize}}', (this.maxSize / 1000000).toString());
+    }
+    return `Max size: ${this.maxSize / 1000000}MB (.pdf, images)`;
+  }
+
   goBack(): void {
     this.saveFormData();
     const prev = this.wizardService.getCurrentStepIndex() - 1;

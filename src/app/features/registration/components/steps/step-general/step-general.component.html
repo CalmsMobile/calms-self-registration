@@ -20,7 +20,7 @@
       </div>
       <div class="title-actions">
       @if (isMultipleVisitorMode && savedVisitors.length > 0) {
-      <button type="button" class="btn-saved" (click)="showSavedVisitorsModal = true" title="View saved visitors">
+      <button type="button" class="btn-saved" (click)="showSavedVisitorsModal = true" [title]="'view_saved_visitors_tooltip' | translate">
         <i class="pi pi-users"></i>
         <span class="count">{{ savedVisitors.length }}</span>
       </button>
@@ -28,7 +28,7 @@
       @if (settings.SearchExistingVisitor) {
       <button type="button" class="returning-btn" (click)="onExistingGuestClick()">
         <i class="pi pi-search"></i>
-        {{ 'returning_visitor' | translate }}?
+        {{ 'return_visitor?' | translate }}?
       </button>
       }
       </div>
@@ -229,7 +229,7 @@
           }
         </div>
         @if (isEmailFormatError()) {
-        <small class="error-message">Please enter a valid email address</small>
+        <small class="error-message">{{ 'email_invalid_error' | translate }}</small>
         } @else if (isFieldInvalidRequired('email')) {
         <small class="error-message">{{'email_address' | translate}} is required</small>
         }
@@ -495,7 +495,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -513,7 +513,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -578,7 +578,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker id="sharedDate" formControlName="sharedDate"
-            [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate" placeholder="Select date"
+            [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate" [placeholder]="'date_placeholder' | translate:'placeholder'"
             [showTime]="false" (onSelect)="onSharedDateSelect($event)" [showClear]="true" appendTo="body" dateFormat="dd/mm/yy">
           </p-datepicker>
         </div>
@@ -596,7 +596,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-question-circle"></i></span>
           <p-select id="facilityPurpose" [options]="facilityPurposeList" formControlName="facilityPurpose"
-            placeholder="Select purpose" optionLabel="PurposeName" optionValue="PurposeCode"
+            [placeholder]="'facility_purpose_placeholder' | translate" optionLabel="PurposeName" optionValue="PurposeCode"
             [class]="{'ng-invalid': isFieldInvalidRequired('facilityPurpose')}" [showClear]="true" appendTo="body">
           </p-select>
         </div>
@@ -614,7 +614,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-building"></i></span>
           <p-select id="facilitySelection" [options]="facilityMasterList" formControlName="facilitySelection"
-            placeholder="Select facility" optionLabel="FacilityName" optionValue="FacilityCode"
+            [placeholder]="'facility_selection_placeholder' | translate" optionLabel="FacilityName" optionValue="FacilityCode"
             (onChange)="onFacilitySelectionChange($event.value)"
             [class]="{'ng-invalid': isFieldInvalidRequired('facilitySelection')}"
             [showClear]="true" (onClear)="onFacilitySelectionChange('')" appendTo="body">
@@ -638,7 +638,7 @@
             [class.unavailable]="slot.availableCount === 0" (click)="selectTimeSlot(slot)">
             <span class="slot-tile-name">{{slot.Name}}</span>
             @if (slot.availableCount === 0) {
-            <span class="slot-tile-full">Full</span>
+            <span class="slot-tile-full">{{ 'slot_full_label' | translate }}</span>
             }
           </div>
           }
@@ -649,7 +649,7 @@
         } @else {
         <div class="time-slot-empty">
           <i class="pi pi-calendar-times"></i>
-          <span>No time slots available for the selected date</span>
+          <span>{{ 'no_time_slots_available' | translate }}</span>
         </div>
         }
       </div>
@@ -661,19 +661,19 @@
         <div class="booking-legend">
           <div class="legend-item">
             <div class="legend-color available"></div>
-            <span class="legend-text">Available</span>
+            <span class="legend-text">{{ 'slot_available_label' | translate }}</span>
           </div>
           <div class="legend-item">
             <div class="legend-color booked"></div>
-            <span class="legend-text">Booked</span>
+            <span class="legend-text">{{ 'slot_booked_label' | translate }}</span>
           </div>
           <div class="legend-item">
             <div class="legend-color expired"></div>
-            <span class="legend-text">Expired</span>
+            <span class="legend-text">{{ 'slot_expired_label' | translate }}</span>
           </div>
           <div class="legend-item">
             <div class="legend-color selected"></div>
-            <span class="legend-text">Selected</span>
+            <span class="legend-text">{{ 'slot_selected_label' | translate }}</span>
           </div>
         </div>
         <div class="booking-slots-container" id="showbookings">
@@ -687,7 +687,7 @@
                   <div class="slot-content">
                     <div class="slot-time">{{getSlotTimeDisplay(slot.StartTime, slot.EndTime)}}</div>
                     @if (slot.BookingID) {
-                    <div class="slot-status">Booked</div>
+                    <div class="slot-status">{{ 'slot_booked_label' | translate }}</div>
                     }
                   </div>
                 </div>
@@ -784,7 +784,7 @@
         @if (endBeforeStartError) {
         <small class="error-message">{{ 'end_date_error_message' | translate }}</small>
         } @else if (isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate')) {
-        <small class="error-message">Appointment date &amp; time is required</small>
+        <small class="error-message">{{ 'appointment_datetime_required' | translate }}</small>
         }
       </div>
       }
@@ -799,7 +799,7 @@
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker id="appointmentDate" formControlName="appointmentDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('appointmentDate')}" [minDate]="minDate"
-            placeholder="Select appointment date" [showTime]="false" (onSelect)="onAppointmentDateSelect($event)"
+            [placeholder]="'appointment_date' | translate:'placeholder'" [showTime]="false" (onSelect)="onAppointmentDateSelect($event)"
             [showClear]="true" appendTo="body" dateFormat="dd/mm/yy">
           </p-datepicker>
         </div>
@@ -821,7 +821,7 @@
             [class.unavailable]="slot.availableCount === 0" (click)="selectTimeSlot(slot)">
             <span class="slot-tile-name">{{slot.Name}}</span>
             @if (slot.availableCount === 0) {
-            <span class="slot-tile-full">Full</span>
+            <span class="slot-tile-full">{{ 'slot_full_label' | translate }}</span>
             }
           </div>
           }
@@ -832,7 +832,7 @@
         } @else {
         <div class="time-slot-empty">
           <i class="pi pi-calendar-times"></i>
-          <span>No time slots available for the selected date</span>
+          <span>{{ 'no_time_slots_available' | translate }}</span>
         </div>
         }
       </div>
@@ -918,7 +918,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -936,7 +936,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1008,7 +1008,7 @@
     </div>
     <div class="m-top-actions">
       @if (isMultipleVisitorMode && savedVisitors.length > 0) {
-      <button type="button" class="m-btn-saved" (click)="showSavedVisitorsModal = true" title="View saved visitors">
+      <button type="button" class="m-btn-saved" (click)="showSavedVisitorsModal = true" [title]="'view_saved_visitors_tooltip' | translate">
         <i class="pi pi-users"></i>
         <span class="m-count">{{ savedVisitors.length }}</span>
       </button>
@@ -1016,7 +1016,7 @@
       @if (settings.SearchExistingVisitor) {
       <button type="button" class="m-returning-btn" (click)="onExistingGuestClick()">
         <i class="pi pi-search"></i>
-        {{ 'returning_visitor' | translate }}?
+        {{ 'return_visitor?' | translate }}?
       </button>
       }
     </div>
@@ -1189,7 +1189,7 @@
           }
         </div>
         @if (isEmailFormatError()) {
-        <small class="m-error">Please enter a valid email address</small>
+        <small class="m-error">{{ 'email_invalid_error' | translate }}</small>
         } @else if (isFieldInvalidRequired('email')) {
         <small class="m-error">{{'email_address' | translate}} is required</small>
         }
@@ -1412,7 +1412,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1427,7 +1427,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1483,7 +1483,7 @@
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker formControlName="sharedDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate"
-            placeholder="Select date" [showTime]="false" (onSelect)="onSharedDateSelect($event)"
+            [placeholder]="'date_placeholder' | translate:'placeholder'" [showTime]="false" (onSelect)="onSharedDateSelect($event)"
             appendTo="body" dateFormat="dd/mm/yy" [showClear]="true">
           </p-datepicker>
         </div>
@@ -1499,7 +1499,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-question-circle"></i></span>
           <p-select [options]="facilityPurposeList" formControlName="facilityPurpose"
-            placeholder="Select purpose" optionLabel="PurposeName" optionValue="PurposeCode"
+            [placeholder]="'facility_purpose_placeholder' | translate" optionLabel="PurposeName" optionValue="PurposeCode"
             [class]="{'ng-invalid': isFieldInvalidRequired('facilityPurpose')}" [showClear]="true" appendTo="body">
           </p-select>
         </div>
@@ -1515,7 +1515,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-building"></i></span>
           <p-select [options]="facilityMasterList" formControlName="facilitySelection"
-            placeholder="Select facility" optionLabel="FacilityName" optionValue="FacilityCode"
+            [placeholder]="'facility_selection_placeholder' | translate" optionLabel="FacilityName" optionValue="FacilityCode"
             (onChange)="onFacilitySelectionChange($event.value)"
             [class]="{'ng-invalid': isFieldInvalidRequired('facilitySelection')}"
             [showClear]="true" (onClear)="onFacilitySelectionChange('')" appendTo="body">
@@ -1536,7 +1536,7 @@
           <div class="time-slot-tile" [class.selected]="generalForm.get('timeSlot')?.value === slot.Code"
             [class.unavailable]="slot.availableCount === 0" (click)="selectTimeSlot(slot)">
             <span class="slot-tile-name">{{slot.Name}}</span>
-            @if (slot.availableCount === 0) { <span class="slot-tile-full">Full</span> }
+            @if (slot.availableCount === 0) { <span class="slot-tile-full">{{ 'slot_full_label' | translate }}</span> }
           </div>
           }
         </div>
@@ -1544,7 +1544,7 @@
         <small class="m-error">{{'time_slot' | translate}} is required</small>
         }
         } @else {
-        <div class="time-slot-empty"><i class="pi pi-calendar-times"></i><span>No time slots available</span></div>
+        <div class="time-slot-empty"><i class="pi pi-calendar-times"></i><span>{{ 'no_time_slots_available' | translate }}</span></div>
         }
       </div>
       }
@@ -1619,7 +1619,7 @@
         @if (endBeforeStartError) {
         <small class="m-error">{{ 'end_date_error_message' | translate }}</small>
         } @else if (isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate')) {
-        <small class="m-error">Appointment date &amp; time is required</small>
+        <small class="m-error">{{ 'appointment_datetime_required' | translate }}</small>
         }
       </div>
       }
@@ -1632,7 +1632,7 @@
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker formControlName="appointmentDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('appointmentDate')}" [minDate]="minDate"
-            placeholder="Select appointment date" [showTime]="false" (onSelect)="onAppointmentDateSelect($event)"
+            [placeholder]="'appointment_date' | translate:'placeholder'" [showTime]="false" (onSelect)="onAppointmentDateSelect($event)"
             appendTo="body" dateFormat="dd/mm/yy" [showClear]="true">
           </p-datepicker>
         </div>
@@ -1651,7 +1651,7 @@
           <div class="time-slot-tile" [class.selected]="generalForm.get('timeSlot')?.value === slot.Code"
             [class.unavailable]="slot.availableCount === 0" (click)="selectTimeSlot(slot)">
             <span class="slot-tile-name">{{slot.Name}}</span>
-            @if (slot.availableCount === 0) { <span class="slot-tile-full">Full</span> }
+            @if (slot.availableCount === 0) { <span class="slot-tile-full">{{ 'slot_full_label' | translate }}</span> }
           </div>
           }
         </div>
@@ -1659,7 +1659,7 @@
         <small class="m-error">{{'time_slot' | translate}} is required</small>
         }
         } @else {
-        <div class="time-slot-empty"><i class="pi pi-calendar-times"></i><span>No time slots available for the selected date</span></div>
+        <div class="time-slot-empty"><i class="pi pi-calendar-times"></i><span>{{ 'no_time_slots_available' | translate }}</span></div>
         }
       </div>
       }
@@ -1725,7 +1725,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1740,7 +1740,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" placeholder="dd/mm/yy" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1808,10 +1808,10 @@
           }
         </div>
         <div class="visitor-row-actions">
-          <button type="button" class="icon-btn edit-btn" (click)="editSavedVisitor(i); showSavedVisitorsModal = false" title="Edit">
+          <button type="button" class="icon-btn edit-btn" (click)="editSavedVisitor(i); showSavedVisitorsModal = false" [title]="'edit_tooltip' | translate">
             <i class="pi pi-pencil"></i>
           </button>
-          <button type="button" class="icon-btn delete-btn" (click)="deleteSavedVisitor(i)" title="Delete">
+          <button type="button" class="icon-btn delete-btn" (click)="deleteSavedVisitor(i)" [title]="'delete_tooltip' | translate">
             <i class="pi pi-trash"></i>
           </button>
         </div>
@@ -1838,7 +1838,7 @@
       </div>
       <div>
         <h2 class="sp-title">{{ 'search_profile' | translate }}</h2>
-        <p class="sp-desc">Enter your Phone Number, Email, or NRIC to find your existing profile and skip the form.</p>
+        <p class="sp-desc">{{ 'search_profile_desc' | translate }}</p>
       </div>
     </div>
 
@@ -1876,8 +1876,8 @@
          retake with camera, or browse a new file.
          ══════════════════════════════════════════════════════ -->
     @if (dialogMode === 'preview' && dialogPreviousImage) {
-    <h2 class="photo-title">Your Photo</h2>
-    <p class="photo-subtitle">Current profile photo — update or keep it</p>
+    <h2 class="photo-title">{{ 'your_photo_title' | translate }}</h2>
+    <p class="photo-subtitle">{{ 'your_photo_subtitle' | translate }}</p>
 
     <div class="preview-photo-wrap">
       <img [src]="dialogPreviousImage" class="preview-photo-img" alt="Current photo" />
@@ -1888,13 +1888,13 @@
       <!-- Keep existing photo -->
       <button type="button" class="btn-capture" (click)="keepExistingPhoto()">
         <i class="pi pi-check"></i>
-        Keep This Photo
+        {{ 'btn_keep_photo' | translate }}
       </button>
 
       <!-- Switch to live camera -->
       <button type="button" class="btn-retake" (click)="switchToCamera()">
         <i class="pi pi-camera"></i>
-        Take New Photo
+        {{ 'btn_take_new_photo' | translate }}
       </button>
 
       <!-- Browse from device -->
@@ -1902,7 +1902,7 @@
         (change)="handleFileUpload($event, undefined, true)">
       <button type="button" class="btn-upload" (click)="dialogFileInput.click()">
         <i class="pi pi-upload"></i>
-        Upload from Device
+        {{ 'btn_upload_device' | translate }}
       </button>
     </div>
     }
@@ -1912,16 +1912,16 @@
          Live camera feed or captured snapshot.
          ══════════════════════════════════════════════════════ -->
     @if (dialogMode === 'camera') {
-    <h2 class="photo-title">Capture Your Photo</h2>
-    <p class="photo-subtitle">Align your face inside the frame</p>
+    <h2 class="photo-title">{{ 'camera_dialog_title' | translate }}</h2>
+    <p class="photo-subtitle">{{ 'camera_align_label' | translate }}</p>
 
     <!-- Camera controls -->
     <div class="camera-area">
       <div class="camera-controls-top">
-        <button type="button" class="camera-ctrl-btn" (click)="toggleFlash()" [class.active]="useFlash" title="Flash">
+        <button type="button" class="camera-ctrl-btn" (click)="toggleFlash()" [class.active]="useFlash" [title]="'flash_tooltip' | translate">
           <i class="pi pi-bolt"></i>
         </button>
-        <button type="button" class="camera-ctrl-btn" (click)="flipCamera()" title="Flip camera">
+        <button type="button" class="camera-ctrl-btn" (click)="flipCamera()" [title]="'flip_camera_tooltip' | translate">
           <i class="pi pi-sync"></i>
         </button>
       </div>
@@ -1948,22 +1948,22 @@
       </div>
     </div>
 
-    <p class="camera-hint">Make sure your face is clearly visible</p>
+    <p class="camera-hint">{{ 'camera_visible_label' | translate }}</p>
 
     <div class="photo-actions">
       @if (!capturedImage) {
       <button type="button" class="btn-capture" (click)="capturePhoto()" [disabled]="!isCameraOn">
         <i class="pi pi-camera"></i>
-        Capture Photo
+        {{ 'btn_capture_photo' | translate }}
       </button>
       } @else {
       <button type="button" class="btn-capture" (click)="useCapture()">
         <i class="pi pi-check"></i>
-        Use This Photo
+        {{ 'btn_use_photo' | translate }}
       </button>
       <button type="button" class="btn-retake" (click)="retakePhoto()">
         <i class="pi pi-refresh"></i>
-        Retake
+        {{ 'btn_retake' | translate }}
       </button>
       }
 
@@ -1971,17 +1971,17 @@
         (change)="handleFileUpload($event, undefined, true)">
       <button type="button" class="btn-upload" (click)="dialogFileInput.click()">
         <i class="pi pi-upload"></i>
-        Upload from Device
+        {{ 'btn_upload_device' | translate }}
       </button>
 
       <!-- Back to existing preview if one exists -->
       @if (dialogPreviousImage) {
       <button type="button" class="btn-skip" (click)="dialogMode = 'preview'">
-        ← Back to current photo
+        {{ 'btn_back_to_photo' | translate }}
       </button>
       } @else if (!settings?.ImageUploadRequired) {
       <button type="button" class="btn-skip" (click)="skipPhoto()">
-        Skip
+        {{ 'btn_skip_photo' | translate }}
       </button>
       }
     </div>
@@ -2001,8 +2001,8 @@
       <div class="sd-header-left">
         <span class="sd-icon"><i class="pi pi-clock"></i></span>
         <div>
-          <h3 class="sd-title">Schedule a meeting</h3>
-          <p class="sd-subtitle">Create your next meeting easily.</p>
+          <h3 class="sd-title">{{ 'schedule_dialog_title' | translate }}</h3>
+          <p class="sd-subtitle">{{ 'schedule_dialog_subtitle' | translate }}</p>
         </div>
       </div>
       <button type="button" class="sd-close" (click)="closeScheduleDialog()">
@@ -2024,7 +2024,7 @@
     <div class="sd-fields">
       <div class="sd-field" [class.sd-field-active]="scheduleActiveField === 'start'"
         (click)="scheduleActiveField = 'start'">
-        <label class="sd-label">Start date*</label>
+        <label class="sd-label">{{ 'schedule_start_date' | translate }}</label>
         <div class="sd-row">
           <div class="sd-date-box">{{ formatScheduleDate(scheduleStartDate) }}</div>
           <input type="time" class="sd-time-box" [(ngModel)]="scheduleStartTime" />
@@ -2032,7 +2032,7 @@
       </div>
       <div class="sd-field" [class.sd-field-active]="scheduleActiveField === 'end'"
         (click)="scheduleActiveField = 'end'">
-        <label class="sd-label">End date*</label>
+        <label class="sd-label">{{ 'schedule_end_date' | translate }}</label>
         <div class="sd-row">
           <div class="sd-date-box">{{ formatScheduleDate(scheduleEndDate) }}</div>
           <input type="time" class="sd-time-box" [(ngModel)]="scheduleEndTime" />
@@ -2048,10 +2048,10 @@
         from {{ formatTime12(scheduleStartTime) }} – {{ formatTime12(scheduleEndTime) }}
       </span>
       <div class="sd-footer-btns">
-        <button type="button" class="sd-btn-cancel" (click)="closeScheduleDialog()">Cancel</button>
+        <button type="button" class="sd-btn-cancel" (click)="closeScheduleDialog()">{{ 'btn_cancel' | translate }}</button>
         <button type="button" class="sd-btn-schedule"
           [disabled]="!scheduleStartDate || !scheduleEndDate"
-          (click)="applySchedule()">Schedule</button>
+          (click)="applySchedule()">{{ 'btn_schedule' | translate }}</button>
       </div>
     </div>
   </ng-template>

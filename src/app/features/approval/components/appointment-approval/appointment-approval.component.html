@@ -12,7 +12,7 @@
         <div class="logo-mark" aria-hidden="true"></div>
       }
       <div class="brand-copy">
-     
+
         <div class="brand-right">
           <strong>{{ companyName || 'CALMS' }}</strong>
           <span>Visitor Approval</span>
@@ -43,15 +43,13 @@
         (click)="openModal('documents-modal')"
         (keydown.enter)="openModal('documents-modal')"
         (keydown.space)="$event.preventDefault(); openModal('documents-modal')"
-        aria-label="Open Supporting
-Documents">
+        aria-label="Open Supporting Documents">
         <div class="decl-left">
           <div class="icon-chip chip-doc" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M9 3h7l5 5v13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v6h6"/><path d="m10.5 14.5 2 2 4-4"/></svg>
           </div>
           <div class="decl-text">
-            <h2 class="decl-title">Supporting
-Documents</h2>
+            <h2 class="decl-title">Supporting Documents</h2>
             <p class="decl-sub">{{ docsData.length > 0 ? docsData.length + ' File' + (docsData.length > 1 ? 's' : '') + ' Uploaded' : 'No Files' }}</p>
           </div>
         </div>

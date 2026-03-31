@@ -902,7 +902,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Process visit purposes from Table10 (or Table3 as fallback)
     const purposes = response?.Table10 || response?.Table3 || [];
     if (purposes.length > 0) {
-      this.purposeList = purposes;
+      // Normalize to ensure visitpurpose_id and visitpurpose_desc are always present
+      // regardless of the field names used by the API (PurposeCode/PurposeName or visitpurpose_id/visitpurpose_desc)
+      this.purposeList = purposes.map((p: any) => ({
+        ...p,
+        visitpurpose_id: p.visitpurpose_id ?? p.PurposeCode ?? p.purpose_id ?? '',
+        visitpurpose_desc: p.visitpurpose_desc ?? p.PurposeName ?? p.purpose_name ?? '',
+      }));
       console.log('Visit purposes loaded from branch data:', this.purposeList.length);
     } else if (this.settings?.PurposeEnabled) {
       // Fallback: load from VimsAppFacilityPurposeList if no purposes in branch data
