@@ -1,4 +1,6 @@
 import { Component, ElementRef, ViewChild, AfterViewInit, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { LabelService } from '../../../../../core/services/label.service';
 import { SharedService } from '../../../../../shared/shared.service';
@@ -32,6 +34,9 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
   logo = 'assets/logo.png';
   companyTitle = '';
 
+  private destroy$ = new Subject<void>();
+  private _activeMessageKeys = new Set<string>();
+
   get formattedPageTitle(): { first: string; rest: string } {
     const text = this.labelService.getLabel('sbv_title', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
     const i = text.indexOf(' ');
@@ -47,7 +52,7 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     private sharedService: SharedService
   ) {
     // Subscribe to validation requests from wizard
-    this.wizardService.onValidationRequest.subscribe(() => {
+    this.wizardService.onValidationRequest.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.validateStep();
     });
     this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
@@ -60,7 +65,7 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
       this.videoSource = environment.proURL + 'FS/' + videoSettings.VideoUrl;
     } else {
       //this.wizardService.gotoHomePage();
-      this.messageService.add({
+      this.showMessage({
         severity: 'warn',
         summary: 'Warning',
         detail: 'Safety briefing video is not available.'
@@ -162,7 +167,7 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     } catch (error) {
       console.error('Playback failed:', error);
       this.showPlayButton = true;
-      this.messageService.add({
+      this.showMessage({
         severity: 'error',
         summary: 'Playback Error',
         detail: 'Please click play to start the video'
@@ -220,7 +225,7 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     this.wizardService.setStepValid(isValid);
 
     if (!isValid) {
-      this.messageService.add({
+      this.showMessage({
         severity: 'error',
         summary: this.labelService.getLabel('safety_briefing_required', 'caption'),
         detail: this.labelService.getLabel('sbv_instruction', 'caption'),
@@ -382,7 +387,7 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     if (this.isFullscreen && !this.videoEnded) {
       keyboardEvent.preventDefault();
       keyboardEvent.stopPropagation();
-      this.messageService.add({
+      this.showMessage({
         severity: 'warn',
         summary: 'Attention',
         detail: 'Please watch the complete safety video',
@@ -445,7 +450,7 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
       this.wizardService.setStepValid(true);
       this.wizardService.navigateToNextStep();
     } else {
-      this.messageService.add({
+      this.showMessage({
         severity: 'error',
         summary: this.labelService.getLabel('safety_briefing_required', 'caption'),
         detail: this.labelService.getLabel('sbv_instruction', 'caption'),
@@ -454,9 +459,22 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     }
   }
 
+  private showMessage(msg: { severity: string; summary?: string; detail?: string; life?: number }): void {
+    const key = `${msg.severity}|${msg.summary}|${msg.detail}`;
+    if (this._activeMessageKeys.has(key)) return;
+    this._activeMessageKeys.add(key);
+    const life = msg.life ?? 3000;
+    setTimeout(() => this._activeMessageKeys.delete(key), life);
+    this.messageService.add(msg);
+  }
+
   ngOnDestroy(): void {
     console.log('Component destroying - cleaning up');
-    
+
+    // Unsubscribe all takeUntil-guarded observables
+    this.destroy$.next();
+    this.destroy$.complete();
+
     // Stop monitoring body styles
     this.stopBodyStyleObserver();
     
