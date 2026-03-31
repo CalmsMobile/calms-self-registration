@@ -7,8 +7,10 @@
   --card-bg: #ffffff;
   --shadow: 0 14px 26px rgba(0, 0, 0, 0.08);
 
-  display: block;
-  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  height: 100vh;
+  overflow: hidden;
   font-family: 'Poppins', sans-serif;
   background: #f5f5f5 url('../../../../../../assets/back.png') no-repeat center top / cover;
   color: var(--text-dark);
@@ -25,8 +27,11 @@
 .page {
   width: 100%;
   max-width: 1440px;
-  margin: 0 auto;
   padding: 24px 52px 28px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* ===== HEADER ===== */
@@ -69,8 +74,11 @@
   display: grid;
   grid-template-columns: 0.8fr 1px 1.2fr;
   gap: 40px;
-  align-items: start;
+  align-items: stretch;
   margin-top: 45px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .left h2 {
@@ -114,6 +122,14 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  overflow-y: auto;
+  height: 100%;
+  padding-right: 6px;
+  padding-bottom: 16px;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: rgba(0,0,0,0.04); border-radius: 10px; }
+  &::-webkit-scrollbar-thumb { background: #f5b400; border-radius: 10px; }
 }
 
 .card {
@@ -243,12 +259,12 @@
   max-width: calc(100vw - 32px);
   max-height: 95vh;
   overflow-y: auto;
-  background: #2f2f2f;
+  background: #ffffff;
   border-radius: 18px;
   padding: 18px 22px 20px;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
+  color: var(--text-dark);
+  border: 1px solid #e0e5f1;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
 }
 
 .modal-header {
@@ -261,29 +277,35 @@
 .modal-title {
   font-size: 18px;
   font-weight: 600;
-  color: #ffffff;
+  color: #2f2f2f;
 }
 
 .modal-close {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid #ff6b6b;
-  color: #ff6b6b;
-  background: transparent;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: none;
+  color: #4b4b4b;
+  background: #d9d9d9;
   font-size: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: inherit;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #c8c8c8;
+  }
 }
 
 .signature-box {
-  border: 2px dashed #bfc4d1;
+  border: 2px solid #dfe4ef;
   border-radius: 16px;
   background: #ffffff;
   height: min(260px, 40vh);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .signature-canvas {
@@ -296,7 +318,7 @@
 
 .signature-label {
   font-size: 14px;
-  color: #ffffff;
+  color: #6b7280;
   margin: 10px 0 12px;
 }
 
@@ -305,11 +327,6 @@
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-
-  .btn.grey {
-    background: #f5f5f5;
-    color: #4b4b4b;
-  }
 }
 
 @media (max-width: 900px) {

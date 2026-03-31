@@ -5,8 +5,10 @@
   --text-dark: #3c3c3c;
   --text-muted: #6f7785;
 
-  display: block;
-  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  height: 100vh;
+  overflow: hidden;
   font-family: 'Poppins', sans-serif;
   background: #f5f5f5 url('../../../../../../assets/back.png') no-repeat center top / cover;
   color: var(--text-dark);
@@ -19,9 +21,13 @@
 }
 
 .page {
+  width: 100%;
   max-width: 1440px;
-  margin: 0 auto;
   padding: 24px 52px 28px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* ===== HEADER ===== */
@@ -64,8 +70,11 @@
   display: grid;
   grid-template-columns: 1fr 1px 1fr;
   gap: 40px;
-  align-items: start;
+  align-items: stretch;
   margin-top: 45px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* ===== LEFT PANEL ===== */
@@ -108,6 +117,14 @@
   flex-direction: column;
   gap: 22px;
   padding-top: 6px;
+  overflow-y: auto;
+  height: 100%;
+  padding-right: 6px;
+  padding-bottom: 16px;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: rgba(0,0,0,0.04); border-radius: 10px; }
+  &::-webkit-scrollbar-thumb { background: #f5b400; border-radius: 10px; }
 }
 
 /* ===== FORM ===== */
@@ -172,20 +189,20 @@
 /* ===== ADD BUTTON ===== */
 .btn-outline {
   align-self: flex-end;
-  margin-top: 6px;
-  padding: 12px 24px;
-  border-radius: 999px;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
   border: 2px dotted #c4c4c4;
   background: #f9f9f9;
-  font-size: 16px;
-  font-weight: 600;
   color: #4f4f4f;
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   cursor: pointer;
   font-family: 'Poppins', sans-serif;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .btn-outline:disabled {
@@ -206,6 +223,13 @@
 }
 
 .add-icon svg { width: 100%; height: 100%; fill: currentColor; }
+
+.duplicate-error {
+  color: #e53e3e;
+  font-size: 13px;
+  font-weight: 500;
+  padding-left: 4px;
+}
 
 /* ===== DIRECTION ROW ===== */
 .direction-row {
@@ -505,19 +529,20 @@
 
   .m-add-btn {
     align-self: flex-end;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 11px 22px;
-    border-radius: 999px;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 50%;
     border: 2px dotted #c4c4c4;
     background: #f9f9f9;
-    font-size: 15px;
-    font-weight: 600;
     color: #4f4f4f;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     font-family: 'Poppins', sans-serif;
     transition: all 0.2s;
+    flex-shrink: 0;
 
     svg {
       flex-shrink: 0;
@@ -533,6 +558,13 @@
       opacity: 0.45;
       cursor: not-allowed;
     }
+  }
+
+  .m-duplicate-error {
+    color: #e53e3e;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 0 4px;
   }
 
   /* Items List Card */

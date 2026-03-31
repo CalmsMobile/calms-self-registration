@@ -26,6 +26,7 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   newItem = { description: '', serialNumber: '', direction: '' };
   canAdd = false;
   showFieldErrors = false;
+  duplicateError = '';
 
   get partiallyFilled(): boolean {
     const { description, serialNumber, direction } = this.newItem;
@@ -70,10 +71,20 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
                   !!this.newItem.serialNumber.trim() &&
                   !!this.newItem.direction;
     this.showFieldErrors = this.partiallyFilled;
+    this.duplicateError = '';
   }
 
   addItem(): void {
     if (!this.canAdd) return;
+    const isDuplicate = this.declaredItems.some(
+      item => item.serialNumber.trim().toLowerCase() === this.newItem.serialNumber.trim().toLowerCase()
+           && item.direction === this.newItem.direction
+    );
+    if (isDuplicate) {
+      this.duplicateError = `Serial number "${this.newItem.serialNumber}" with direction ${this.newItem.direction} already exists.`;
+      return;
+    }
+    this.duplicateError = '';
     this.declaredItems.push({ ...this.newItem });
     this.newItem = { description: '', serialNumber: '', direction: '' };
     this.canAdd = false;

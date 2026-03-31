@@ -1593,6 +1593,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       requiredFields.forEach(field => {
         currentForm.get(field)?.markAsTouched();
       });
+      this.scrollToFirstError();
       this.showMessage({ severity: 'error', ...this.getAlert('all_visitor_fields_required') });
     }
   }
