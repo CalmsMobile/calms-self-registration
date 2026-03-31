@@ -75,6 +75,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   minVisitTime: Date | undefined = undefined;
   minEndTime: Date | undefined = undefined;
   endBeforeStartError = false;
+  scheduleEndBeforeStartError = false;
   showIdExpiryField = false;
 
   // Schedule dialog
@@ -358,6 +359,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     } else {
       this.scheduleEndDate = new Date(date);
     }
+    this.checkScheduleTimes();
   }
 
   applySchedule(): void {
@@ -368,6 +370,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     start.setHours(sh, sm, 0, 0);
     const end = new Date(this.scheduleEndDate);
     end.setHours(eh, em, 0, 0);
+    if (end <= start) {
+      this.scheduleEndBeforeStartError = true;
+      return;
+    }
+    this.scheduleEndBeforeStartError = false;
     this.generalForm.get('startDate')?.setValue(start);
     this.generalForm.get('startDate')?.markAsTouched();
     this.generalForm.get('endDate')?.setValue(end);
@@ -386,6 +393,20 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const period = h >= 12 ? 'PM' : 'AM';
     const hour12 = h % 12 || 12;
     return `${hour12}:${m.toString().padStart(2, '0')} ${period}`;
+  }
+
+  checkScheduleTimes(): void {
+    if (!this.scheduleStartDate || !this.scheduleEndDate) {
+      this.scheduleEndBeforeStartError = false;
+      return;
+    }
+    const [sh, sm] = this.scheduleStartTime.split(':').map(Number);
+    const [eh, em] = this.scheduleEndTime.split(':').map(Number);
+    const start = new Date(this.scheduleStartDate);
+    start.setHours(sh, sm, 0, 0);
+    const end = new Date(this.scheduleEndDate);
+    end.setHours(eh, em, 0, 0);
+    this.scheduleEndBeforeStartError = end <= start;
   }
 
   getScheduleDisplayText(): string {
@@ -2432,6 +2453,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         }
 
         if (closeDialog) {
+          // In multi-visitor mode, sync the uploaded photo to the latest savedVisitor
+          // so back-navigation can restore it correctly (same as useCapture).
+          if (this.isMultipleVisitorMode && this.savedVisitors.length > 0) {
+            const targetIdx = this.savedVisitors.length - 1;
+            this.savedVisitors[targetIdx] = { ...this.savedVisitors[targetIdx], profile: file, profilePreview: e.target.result };
+            this.saveFormDataToWizard();
+          }
           this.closePhotoCaptureDialog();
           this.executePendingAction();
         }
@@ -2586,6 +2614,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
     const file = new File([ab], 'photo.jpg', { type: mimeType });
     this.generalForm.patchValue({ profile: file, profilePreview: base64 });
+    // In multi-visitor mode, sync the captured photo back to the corresponding savedVisitor
+    // so back-navigation can restore it and show 'preview' mode in the dialog.
+    if (this.isMultipleVisitorMode && this.savedVisitors.length > 0) {
+      const targetIdx = this.savedVisitors.length - 1;
+      this.savedVisitors[targetIdx] = { ...this.savedVisitors[targetIdx], profile: file, profilePreview: base64 };
+      this.saveFormDataToWizard();
+    }
     this.closePhotoCaptureDialog();
     this.executePendingAction();
   }
@@ -3133,6 +3168,16 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // The dialog handles both new capture and existing photo preview.
     if (this.settings?.ImageUploadEnabled) {
       this.pendingAction = 'goNext';
+      // In multi-visitor mode, validateForm() auto-saves the visitor and clears profilePreview
+      // from the form before this runs. Restore the photo from savedVisitors so the dialog
+      // detects it and shows 'preview' mode instead of opening the camera again.
+      if (this.isMultipleVisitorMode && !this.generalForm.get('profilePreview')?.value && this.savedVisitors.length > 0) {
+        const lastVisitor = this.savedVisitors[this.savedVisitors.length - 1];
+        if (lastVisitor?.profilePreview) {
+          this.generalForm.patchValue({ profilePreview: lastVisitor.profilePreview }, { emitEvent: false });
+          this.profileImage = this.sanitizer.bypassSecurityTrustUrl(lastVisitor.profilePreview);
+        }
+      }
       this.openPhotoCaptureDialog();
       return;
     }

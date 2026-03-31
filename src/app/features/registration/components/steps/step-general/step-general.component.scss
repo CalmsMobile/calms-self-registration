@@ -2063,6 +2063,16 @@ textarea {
 
   &.sd-field-active { border-color: #f5b400; }
 
+  &.sd-field-error { border-color: #ff3b3b; }
+
+  .sd-error {
+    display: block;
+    color: #ff3b3b;
+    font-size: 12px;
+    margin-top: 6px;
+    font-family: 'Poppins', sans-serif;
+  }
+
   .sd-label {
     display: block;
     font-size: 12px;

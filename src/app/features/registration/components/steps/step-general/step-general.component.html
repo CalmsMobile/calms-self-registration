@@ -2015,7 +2015,8 @@
     <!-- Inline Calendar -->
     <div class="sd-calendar">
       <p-datepicker [inline]="true" [(ngModel)]="scheduleCalendarDate"
-        [minDate]="minDate" [showTime]="false" dateFormat="dd/mm/yy"
+        [minDate]="scheduleActiveField === 'end' && scheduleStartDate ? scheduleStartDate : minDate"
+        [showTime]="false" dateFormat="dd/mm/yy"
         (onSelect)="onScheduleCalendarSelect($event)">
       </p-datepicker>
     </div>
@@ -2027,16 +2028,20 @@
         <label class="sd-label">{{ 'schedule_start_date' | translate }}</label>
         <div class="sd-row">
           <div class="sd-date-box">{{ formatScheduleDate(scheduleStartDate) }}</div>
-          <input type="time" class="sd-time-box" [(ngModel)]="scheduleStartTime" />
+          <input type="time" class="sd-time-box" [(ngModel)]="scheduleStartTime" (ngModelChange)="checkScheduleTimes()" />
         </div>
       </div>
       <div class="sd-field" [class.sd-field-active]="scheduleActiveField === 'end'"
+        [class.sd-field-error]="scheduleEndBeforeStartError"
         (click)="scheduleActiveField = 'end'">
         <label class="sd-label">{{ 'schedule_end_date' | translate }}</label>
         <div class="sd-row">
           <div class="sd-date-box">{{ formatScheduleDate(scheduleEndDate) }}</div>
-          <input type="time" class="sd-time-box" [(ngModel)]="scheduleEndTime" />
+          <input type="time" class="sd-time-box" [(ngModel)]="scheduleEndTime" (ngModelChange)="checkScheduleTimes()" />
         </div>
+        @if (scheduleEndBeforeStartError) {
+        <small class="sd-error">End date/time must be after start date/time</small>
+        }
       </div>
     </div>
   </div>
@@ -2050,7 +2055,7 @@
       <div class="sd-footer-btns">
         <button type="button" class="sd-btn-cancel" (click)="closeScheduleDialog()">{{ 'btn_cancel' | translate }}</button>
         <button type="button" class="sd-btn-schedule"
-          [disabled]="!scheduleStartDate || !scheduleEndDate"
+          [disabled]="!scheduleStartDate || !scheduleEndDate || scheduleEndBeforeStartError"
           (click)="applySchedule()">{{ 'btn_schedule' | translate }}</button>
       </div>
     </div>
