@@ -5,7 +5,7 @@
   --text-dark: #3c3c3c;
   --text-muted: #6f7785;
   --card-bg: #ffffff;
-  --shadow: 0 18px 30px rgba(0, 0, 0, 0.08);
+  --shadow: 0 0px 10px rgba(0, 0, 0, 0.08);
 
   display: flex;
   justify-content: center;
@@ -31,7 +31,7 @@
 .page {
   width: 100%;
   max-width: 1440px;
-  padding: 24px 52px 8px;
+  padding: 24px 52px 0;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -76,7 +76,7 @@
 /* ===== CONTENT GRID ===== */
 .content {
   display: grid;
-  grid-template-columns: 1fr 1px 1fr;
+  grid-template-columns: 0.7fr 1px 1.2fr;
   gap: 40px;
   align-items: stretch;
   margin-top: 45px;
@@ -132,7 +132,7 @@
   gap: 22px;
   height: 100%;
   overflow-y: auto;
-  padding-right: 6px;
+  padding-right: 40px;
   padding-bottom: 16px;
 
   &::-webkit-scrollbar { width: 4px; }
@@ -154,7 +154,7 @@
 }
 
 .card .title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   margin-bottom: 4px;
 }
@@ -256,7 +256,7 @@
 
 .card.mandatory-empty {
   box-shadow: 0 0 0 1px rgb(255 59 59) !important;
-      margin-top: 2px;
+      margin-top: 4px;
     margin-left: 2px;
 }
 
@@ -322,7 +322,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 54px;
+  //margin-top: 54px;
 }
 
 .actions-left {

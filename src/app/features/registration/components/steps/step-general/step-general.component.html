@@ -11,12 +11,11 @@
   <!-- Title Section -->
   <section class="title-section">
     <div class="title-top-row">
-      <div class="title-left">
-        <h1 class="main-title">
-          <span class="highlight">{{ formattedPageTitle.first }}</span>
-          <br>
-          <span class="normal">{{ formattedPageTitle.rest }}</span>
-        </h1>
+      <div class="left">
+         <h2>
+          <span class="accent">{{ formattedPageTitle.first }}</span>
+          <span>{{ formattedPageTitle.rest }}</span>
+        </h2>
       </div>
       <div class="title-actions">
       @if (isMultipleVisitorMode && savedVisitors.length > 0) {
@@ -35,6 +34,7 @@
     </div>
     <p class="subtitle">{{'please_provide_your_details' | translate}}</p>
   </section>
+  <hr class="title-divider">
 
   <!-- Loading State -->
   @if (isLoading) {
@@ -361,9 +361,9 @@
         </label>
         <div class="input-wrap wrap-textarea">
           <span class="field-icon"><i class="pi pi-map-marker"></i></span>
-          <textarea pInputText id="visitor_address" cols="3" [placeholder]="'address' | translate:'placeholder'"
+          <input pInputText id="visitor_address" cols="3" [placeholder]="'address' | translate:'placeholder'"
             formControlName="visitor_address" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_address')}"
-            [disabled]="isFieldDisabled('visitor_address')"></textarea>
+            [disabled]="isFieldDisabled('visitor_address')">
           @if (generalForm.get('visitor_address')?.value && !generalForm.get('visitor_address')?.disabled) {
           <button type="button" class="field-clear-btn" (click)="clearField('visitor_address')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
@@ -751,11 +751,10 @@
         </label>
         <div class="input-wrap wrap-textarea">
           <span class="field-icon"><i class="pi pi-comment"></i></span>
-          <textarea pInputText id="remarks" cols="3" rows="1"
+          <input pInputText id="remarks" cols="3" rows="1"
             [placeholder]="'would_you_like_to_add_comments_for_your_visit?' | translate:'placeholder'"
             formControlName="remarks" [class]="{'ng-invalid': isFieldInvalidRequired('remarks')}"
             [disabled]="isFieldDisabled('remarks')">
-          </textarea>
           @if (generalForm.get('remarks')?.value && !generalForm.get('remarks')?.disabled) {
           <button type="button" class="field-clear-btn" (click)="clearField('remarks')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
@@ -1303,9 +1302,9 @@
         <label class="m-field-label">{{'address' | translate}} <span class="m-req">{{settings?.AddressRequired ? '*' : ''}}</span></label>
         <div class="m-input-wrap m-textarea-wrap">
           <span class="m-field-icon m-icon-top"><i class="pi pi-map-marker"></i></span>
-          <textarea pInputText cols="3" [placeholder]="'address' | translate:'placeholder'"
+          <input pInputText cols="3" [placeholder]="'address' | translate:'placeholder'"
             formControlName="visitor_address" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_address')}"
-            [disabled]="isFieldDisabled('visitor_address')"></textarea>
+            [disabled]="isFieldDisabled('visitor_address')">
           @if (generalForm.get('visitor_address')?.value && !generalForm.get('visitor_address')?.disabled) {
           <button type="button" class="field-clear-btn" (click)="clearField('visitor_address')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
@@ -1590,11 +1589,10 @@
         <label class="m-field-label">{{'would_you_like_to_add_comments_for_your_visit?' | translate}} <span class="m-req">{{settings?.RemarksRequired ? '*' : ''}}</span></label>
         <div class="m-input-wrap m-textarea-wrap">
           <span class="m-field-icon m-icon-top"><i class="pi pi-comment"></i></span>
-          <textarea pInputText cols="3" rows="1"
+          <input pInputText cols="3" rows="1"
             [placeholder]="'would_you_like_to_add_comments_for_your_visit?' | translate:'placeholder'"
             formControlName="remarks" [class]="{'ng-invalid': isFieldInvalidRequired('remarks')}"
             [disabled]="isFieldDisabled('remarks')">
-          </textarea>
           @if (generalForm.get('remarks')?.value && !generalForm.get('remarks')?.disabled) {
           <button type="button" class="field-clear-btn" (click)="clearField('remarks')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
@@ -1917,15 +1915,6 @@
 
     <!-- Camera controls -->
     <div class="camera-area">
-      <div class="camera-controls-top">
-        <button type="button" class="camera-ctrl-btn" (click)="toggleFlash()" [class.active]="useFlash" [title]="'flash_tooltip' | translate">
-          <i class="pi pi-bolt"></i>
-        </button>
-        <button type="button" class="camera-ctrl-btn" (click)="flipCamera()" [title]="'flip_camera_tooltip' | translate">
-          <i class="pi pi-sync"></i>
-        </button>
-      </div>
-
       <div class="camera-frame-wrapper">
         <!-- Live video feed -->
         <video #cameraVideo autoplay playsinline [style.display]="isCameraOn && !capturedImage ? 'block' : 'none'"
