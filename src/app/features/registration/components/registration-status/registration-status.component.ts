@@ -1,6 +1,5 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { LabelService } from '../../../../core/services/label.service';
-import { SharedService } from '../../../../shared/shared.service';
 import { ApiService } from '../../../../core/services/api.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { MessageService } from 'primeng/api';
@@ -38,10 +37,10 @@ export interface RegistrationData {
 })
 export class RegistrationStatusComponent implements OnInit {
   @Input() registrationData!: RegistrationData;
+  /** Controlled by the page component based on how the app was started. */
+  @Input() showNewRegistration: boolean = true;
   @Output() newRegistration = new EventEmitter<void>();
   @Output() printDocument = new EventEmitter<void>();
-
-  showNewRegistrationButton = true;
   qrCodeBase64 = '';
 
   readonly companyName = 'CALMS Technologies';
@@ -56,16 +55,11 @@ export class RegistrationStatusComponent implements OnInit {
 
   constructor(
     private labelService: LabelService,
-    private sharedService: SharedService,
     private api: ApiService,
     private messageService: MessageService
   ) {}
 
   ngOnInit() {
-    this.sharedService.isAccessDenied.subscribe(denied => {
-      this.showNewRegistrationButton = !denied;
-    });
-
     if (this.status === 'success' && this.qrCodeValue) {
       this.fetchQrCodeData();
     }
@@ -76,7 +70,7 @@ export class RegistrationStatusComponent implements OnInit {
     return this.registrationData?.isAutoApproved ? 'success' : 'pending';
   }
 
-  get registrationId(): string    { return this.registrationData?.registrationId || '—'; }
+  
   get visitorName(): string       { return this.registrationData?.visitorName || '—'; }
   get email(): string             { return this.registrationData?.email || ''; }
   get visitFrom(): string         { return this.registrationData?.visitFrom || ''; }
@@ -85,8 +79,6 @@ export class RegistrationStatusComponent implements OnInit {
   get meetingLocation(): string   { return this.registrationData?.meetingLocation || ''; }
   get visitType(): string         { return this.registrationData?.visitType || ''; }
   get visitPurpose(): string      { return this.registrationData?.visitPurpose || ''; }
-  get visitDate(): string         { return this.registrationData?.visitDate || ''; }
-  get time(): string              { return this.registrationData?.time || ''; }
   get branch(): string            { return this.registrationData?.branch || ''; }
 
   get badgeText(): string {
@@ -99,12 +91,6 @@ export class RegistrationStatusComponent implements OnInit {
     if (this.registrationData?.approvalStatus) return this.registrationData.approvalStatus;
     if (this.status === 'success') return this.labelService.getLabel('approved', 'caption') || 'Approved';
     return this.status === 'pending' ? 'Pending' : 'Error';
-  }
-
-  private checkAccessSettings() {
-    this.sharedService.isAccessDenied.subscribe(isAccessDenied => {
-      this.showNewRegistrationButton = !isAccessDenied;
-    });
   }
 
   private get qrCodeValue(): string {

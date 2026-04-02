@@ -111,7 +111,9 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.saveFormData();
+    if (this.wizardService.currentBranchID) {
+      this.saveFormData();
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }

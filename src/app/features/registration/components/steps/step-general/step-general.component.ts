@@ -2655,7 +2655,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopCamera();
-    this.saveFormDataToWizard();
+    if (this.wizardService.currentBranchID) {
+      this.saveFormDataToWizard();
+    }
 
     // Clear host search timeout
     if (this.hostSearchTimeout) {

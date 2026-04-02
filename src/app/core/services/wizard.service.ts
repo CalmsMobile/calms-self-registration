@@ -141,8 +141,18 @@ export class WizardService {
     this.categoryCodeFromQuery = '';
     this.isHostFromQuery = false;
     this.formDataStore.next({});
+    this.settings$.next(null);
+    this.attachmentSetting$.next(null);
+    this.questionsSetting$.next(null);
+    this.pagesSetting$.next(null);
+    this.selfRegistrationSetting$.next(null);
+    this.udfSetting$.next(null);
+    this.currentStep$.next(0);
+    this.stepValidity$.next(false);
+    this.enabledSteps = [];
     this.visitorAckData = null;
     this.masterData = null;
+    this.branchHostData = null;
     this.updateHeader();
   }
 
@@ -718,6 +728,70 @@ export class WizardService {
 
   clearFormData(): void {
     this.formDataStore.next({});
+  }
+
+  /**
+   * Builds a human-readable summary from the current form data + master data.
+   * Call this BEFORE clearSessionStorage() so all lookups still work.
+   */
+  buildRegistrationSummary(): {
+    visitorName: string; email: string;
+    visitFrom: string; visitTo: string;
+    meetingWith: string; meetingLocation: string;
+    visitType: string; visitPurpose: string;
+    branch: string;
+  } {
+    const formData  = this.formDataStore.value;
+    const general   = formData.general || {};
+    const master    = this.getmasterData();
+
+    const fmt = (date: any): string => {
+      if (!date) return '';
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return String(date);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    // Host name
+    const hostId = general.host?.toString() || '';
+    const hostRow = master?.Table?.find((h: any) =>
+      (h.HOSTIC || h.HostIC || h.SeqId)?.toString() === hostId
+    );
+    const meetingWith = hostRow?.HOSTNAME || hostRow?.Name || general.hostName || '';
+
+    // Meeting room / location
+    const roomId = general.meeting_location?.toString() || general.room?.toString() || '';
+    const roomRow = master?.Table1?.find((r: any) =>
+      (r.MeetingRoomSeqId || r.SeqId)?.toString() === roomId
+    );
+    const meetingLocation = roomRow?.MeetingRoomDesc || roomRow?.Name || general.roomDesc || '';
+
+    // Category name (visit type)
+    const catDesc = this.getCategoryDescription(this.selectedVisitCategory);
+
+    // Purpose name
+    const purposeId = general.purpose?.toString() || '';
+    const purposeRow = master?.Table3?.find((p: any) =>
+      (p.visitpurpose_id || p.SeqId)?.toString() === purposeId
+    );
+    const visitPurpose = purposeRow?.visitpurpose_desc || purposeRow?.Name || general.purposeDesc || '';
+
+    // Primary visitor name + email
+    const visitorName = this.getPrimaryVisitorFullName(formData);
+    const email = general.email || '';
+
+    return {
+      visitorName,
+      email,
+      visitFrom: fmt(general.startDate),
+      visitTo:   fmt(general.endDate),
+      meetingWith,
+      meetingLocation,
+      visitType: catDesc,
+      visitPurpose,
+      branch: this.currentBranchName,
+    };
   }
 
   setCurrentStep(step: number): void {

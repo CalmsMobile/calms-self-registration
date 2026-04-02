@@ -72,7 +72,7 @@
           </span>
           <div>
             <div class="info-label">{{ 'visit_from' | translate }}</div>
-            <div class="info-value">{{ visitFrom || visitDate || '—' }}</div>
+            <div class="info-value">{{ visitFrom || '—' }}</div>
           </div>
         </div>
         <div class="info-item">
@@ -164,7 +164,7 @@
         </span>
         {{ 'share_via_whatsapp' | translate }}
       </button>
-      @if (showNewRegistrationButton) {
+      @if (showNewRegistration) {
         <button class="action-btn green" type="button" (click)="onNewRegistration()">
           <span class="btn-icon">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.3 4h2.2A5 5 0 1 0 12 7V4l4 3-4 3V7Z"/></svg>
@@ -175,7 +175,7 @@
     </div>
   }
 
-  @if (status === 'pending' && showNewRegistrationButton) {
+  @if (status === 'pending' && showNewRegistration) {
     <button class="action-btn pending-btn" type="button" (click)="onNewRegistration()">
       <span class="btn-icon">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.3 4h2.2A5 5 0 1 0 12 7V4l4 3-4 3V7Z"/></svg>

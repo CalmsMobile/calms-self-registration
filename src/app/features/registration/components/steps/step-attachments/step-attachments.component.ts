@@ -6,7 +6,7 @@ import { SharedService } from '../../../../../shared/shared.service';
 import { LabelService } from '../../../../../core/services/label.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
-import { Subject } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import { environment } from '../../../../../../environments/environment';
 import { MessageService } from 'primeng/api';
@@ -62,14 +62,16 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private labelService: LabelService
   ) {
-    this.wizardService.onValidationRequest.subscribe(() => {
-      this.validateStep();
-    });
     this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
     this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
   }
 
   ngOnInit(): void {
+    // Subscribe here (not constructor) so takeUntil properly cleans it up on destroy
+    this.wizardService.onValidationRequest
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.validateStep());
+
     const mainSettings = this.wizardService.getSettings();
     this.attachmentUploadEnabled = mainSettings?.AttachmentUploadEnabled ?? false;
 
@@ -86,7 +88,12 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.saveFormData();
+    // Only save if the wizard session is still active.
+    // clearSessionStorage() sets currentBranchID to '' — if empty, submission already
+    // cleared everything and we must NOT write stale data back into formDataStore.
+    if (this.wizardService.currentBranchID) {
+      this.saveFormData();
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -185,7 +192,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
 
     this.attachments[docId].uploadProgress = 0;
 
-    this.http.post(uploadUrl, formData, { reportProgress: true, observe: 'events' }).subscribe({
+    this.http.post(uploadUrl, formData, { reportProgress: true, observe: 'events' }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (event: any) => {
         if (event.type === HttpEventType.UploadProgress && event.total) {
           this.attachments[docId].uploadProgress = Math.round(100 * event.loaded / event.total);

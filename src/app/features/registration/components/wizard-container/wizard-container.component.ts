@@ -351,10 +351,16 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               const isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1;
               const approvalStatus: string = responseData?.Approval_Status || (isAutoApproved ? 'Approved' : 'Pending');
 
-              // Get branch info before clearing session storage
+              // Get branch info and start-mode BEFORE clearing session storage
               const branchName = this.wizardService.currentBranchName;
               const branchID = this.wizardService.currentBranchID;
-              const generalFormData = this.wizardService.getFormData('general') || {};
+              const summary = this.wizardService.buildRegistrationSummary();
+              const startMode = this.wizardService.appointmentCode
+                ? 'ac'
+                : this.wizardService.refCode ? 'bc' : 'plain';
+              const savedRefCode = this.wizardService.refCode;
+              const savedRefCatCode = this.wizardService.refCatCode;
+              const savedHcParam = this.wizardService.hcParam;
 
               // Clear session storage after successful submission
               this.wizardService.clearSessionStorage();
@@ -370,14 +376,22 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                     qrCodeData: responseData?.HexCode || '',
                     isDynamicQR: isDynamicQR,
                     registrationId: responseData?.appointment_group_id || responseData?.SEQ_ID?.toString() || '',
-                    visitorName: visitorAckData.FullName,
-                    visitDate: visitorAckData.StartDateTime?.split(' ')[0] || '',
-                    time: visitorAckData.StartDateTime?.split(' ')[1] || '',
-                    branch: branchName,
-                    meetingWith: generalFormData.host_name || generalFormData.hostName || ''
+                    visitorName:     summary.visitorName,
+                    email:           summary.email,
+                    visitFrom:       summary.visitFrom,
+                    visitTo:         summary.visitTo,
+                    meetingWith:     summary.meetingWith,
+                    meetingLocation: summary.meetingLocation,
+                    visitType:       summary.visitType,
+                    visitPurpose:    summary.visitPurpose,
+                    branch:          summary.branch,
                   },
                   branchName: branchName,
-                  branchID: branchID
+                  branchID: branchID,
+                  startMode: startMode,
+                  refCode: savedRefCode,
+                  refCatCode: savedRefCatCode,
+                  hcParam: savedHcParam
                 }
               });
             },
@@ -393,6 +407,12 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
 
               const branchName = this.wizardService.currentBranchName;
               const branchID = this.wizardService.currentBranchID;
+              const errStartMode = this.wizardService.appointmentCode
+                ? 'ac'
+                : this.wizardService.refCode ? 'bc' : 'plain';
+              const errRefCode    = this.wizardService.refCode;
+              const errRefCatCode = this.wizardService.refCatCode;
+              const errHcParam    = this.wizardService.hcParam;
 
               this.router.navigate(['/registration-status'], {
                 state: {
@@ -402,7 +422,11 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                     branch: branchName
                   },
                   branchName: branchName,
-                  branchID: branchID
+                  branchID: branchID,
+                  startMode: errStartMode,
+                  refCode: errRefCode,
+                  refCatCode: errRefCatCode,
+                  hcParam: errHcParam
                 }
               });
             }

@@ -85,7 +85,9 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   ngOnDestroy(): void {
-    this.saveFormData();
+    if (this.wizardService.currentBranchID) {
+      this.saveFormData();
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }

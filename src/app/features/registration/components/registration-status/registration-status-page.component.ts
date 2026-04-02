@@ -4,6 +4,8 @@ import { SharedService } from '../../../../shared/shared.service';
 import { environment } from '../../../../../environments/environment';
 import { RegistrationStatusComponent } from './registration-status.component';
 
+/** How the app was originally launched. Persisted through navigation state. */
+type StartMode = 'plain' | 'bc' | 'ac';
 
 @Component({
   selector: 'app-registration-status-page',
@@ -15,6 +17,7 @@ import { RegistrationStatusComponent } from './registration-status.component';
     @if (registrationData) {
       <app-registration-status
         [registrationData]="registrationData"
+        [showNewRegistration]="showNewRegistration"
         (newRegistration)="onNewRegistration()"
         (printDocument)="onPrintDocument()">
       </app-registration-status>
@@ -57,6 +60,13 @@ export class RegistrationStatusPageComponent implements OnInit {
   private branchName: string = '';
   private branchID: string = '';
 
+  /** How the registration flow was originally started. */
+  private startMode: StartMode = 'plain';
+  /** Preserved bc/vc/hc params so we can navigate back to home with same params. */
+  private refCode    = '';
+  private refCatCode = '';
+  private hcParam    = '';
+
   constructor(
     private router: Router,
     private sharedService: SharedService
@@ -64,19 +74,18 @@ export class RegistrationStatusPageComponent implements OnInit {
     // Get data from navigation state
     const navigation = this.router.currentNavigation();
     if (navigation?.extras?.state) {
-      this.registrationData = navigation.extras.state['registrationData'];
-      this.branchName = navigation.extras.state['branchName'];
-      this.branchID = navigation.extras.state['branchID'];
+      const s = navigation.extras.state;
+      this.registrationData = s['registrationData'];
+      this.branchName       = s['branchName']  || '';
+      this.branchID         = s['branchID']    || '';
+      this.startMode        = (s['startMode'] as StartMode) || 'plain';
+      this.refCode          = s['refCode']     || '';
+      this.refCatCode       = s['refCatCode']  || '';
+      this.hcParam          = s['hcParam']     || '';
     }
   }
 
   ngOnInit() {
-    // If no data in navigation state, check for stored data
-    if (!this.registrationData) {
-      // You might want to check sessionStorage or localStorage
-      // for registration data if navigation state is lost
-    }
-    
     // Update header with branch information if available
     if (this.branchName && this.branchID) {
       this.sharedService.updateHeader(
@@ -86,8 +95,28 @@ export class RegistrationStatusPageComponent implements OnInit {
     }
   }
 
+  /**
+   * Show the "New Registration" button only when the app was NOT started
+   * via an appointment code (ac). For ac flows the link is single-use.
+   */
+  get showNewRegistration(): boolean {
+    return this.startMode !== 'ac';
+  }
+
   onNewRegistration() {
-    this.router.navigate(['/']);
+    // Navigate back to home page with the same query params used at startup.
+    // home-page constructor calls clearSessionStorage(), so all form data,
+    // uploaded docs, signatures, questionnaire answers, etc. are wiped clean.
+    if (this.startMode === 'bc') {
+      const queryParams: Record<string, string> = {};
+      if (this.refCode)    queryParams['bc'] = this.refCode;
+      if (this.refCatCode) queryParams['vc'] = this.refCatCode;
+      if (this.hcParam)    queryParams['hc'] = this.hcParam;
+      this.router.navigate(['/'], { queryParams });
+    } else {
+      // plain URL → just go home
+      this.router.navigate(['/']);
+    }
   }
 
   onPrintDocument() {
