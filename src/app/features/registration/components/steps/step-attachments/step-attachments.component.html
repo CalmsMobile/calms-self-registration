@@ -43,7 +43,7 @@
                     <path d="M15 14l-3 3-3-3" />
                   </svg>
                 </div>
-                <!-- <div class="small">{{ 'download' | translate }}</div> -->
+                <!-- <div class="small">{{ 'download_visitor_pass' | translate }}</div> -->
               </a>
               <div class="card-col-divider"></div>
             }
@@ -91,7 +91,7 @@
                     <path d="M9 12l3-3l3 3" />
                   </svg>
                 </div>
-                <!-- <div class="small">{{ 'no_file_chosen' | translate }}</div> -->
+                <!-- <div class="small">{{ 'instruction' | translate }}</div> -->
               </div>
             }
 
@@ -120,16 +120,16 @@
       <div class="actions">
         <div class="actions-left">
           <button class="btn grey" type="button" (click)="goBack()">
-            <span class="icon-left">&larr;</span> {{ 'back' | translate }}
+            <span class="icon-left">&larr;</span> {{ 'button_back' | translate }}
           </button>
           @if (!hasMandatoryDocuments) {
             <button class="btn grey" type="button" (click)="skipStep()">
-              {{ 'skip' | translate }} <span class="icon-right">&rarr;</span>
+              {{ 'button_skip' | translate }} <span class="icon-right">&rarr;</span>
             </button>
           }
         </div>
         <button class="btn yellow" type="button" (click)="proceedToNext()">
-          {{ 'continue' | translate }} <span class="icon-right">&rarr;</span>
+          {{ 'button_continue' | translate }} <span class="icon-right">&rarr;</span>
         </button>
       </div>
     </div>

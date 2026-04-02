@@ -14,7 +14,7 @@
           <span class="accent">{{ formattedPageTitle.first }}</span>
           <span>{{ formattedPageTitle.rest }}</span>
         </h2>
-        <p>{{ 'questionnaire_subtitle' | translate }}</p>
+        <p>{{ 'instruction' | translate }}</p>
         <div class="illustration">
           <img [src]="illustrationUrl" alt="Questionnaire illustration" />
         </div>
@@ -56,10 +56,10 @@
 
           <div class="actions">
             <button class="btn grey" type="button" (click)="goBack()">
-              <span class="icon-left">&larr;</span> {{ 'back' | translate }}
+              <span class="icon-left">&larr;</span> {{ 'button_back' | translate }}
             </button>
             <button class="btn yellow" type="button" [disabled]="!hasAnyAnswer" (click)="mobileNext()">
-              {{ 'continue' | translate }} <span class="icon-right">&rarr;</span>
+              {{ 'button_continue' | translate }} <span class="icon-right">&rarr;</span>
             </button>
           </div>
         </div>
@@ -80,9 +80,9 @@
   <!-- Title -->
   <div class="m-title-wrap">
     <h1 class="m-title">
-      <span class="m-accent">{{ 'questionnaire_title' | translate }}</span>
+      <span class="m-accent">{{ 'page_title' | translate }}</span>
     </h1>
-    <p class="m-subtitle">{{ 'questionnaire_subtitle' | translate }}</p>
+    <p class="m-subtitle">{{ 'instruction' | translate }}</p>
   </div>
 
   <!-- Questions -->
@@ -120,11 +120,11 @@
   <div class="m-actions">
     <div class="m-actions-row">
       <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
-        <span>&#8592;</span> {{ 'back' | translate }}
+        <span>&#8592;</span> {{ 'button_back' | translate }}
       </button>
     </div>
     <button class="m-btn m-btn-yellow" type="button" [disabled]="!hasAnyAnswer" (click)="mobileNext()">
-      {{ 'continue' | translate }} <span>&#8594;</span>
+      {{ 'button_continue' | translate }} <span>&#8594;</span>
     </button>
   </div>
 </div>

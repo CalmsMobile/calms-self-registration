@@ -107,7 +107,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2H4V7Zm0 4h16v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7Zm5 3a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2H9Z"/></svg>
           </span>
           <div>
-            <div class="info-label">{{ 'visit_type' | translate }}</div>
+            <div class="info-label">{{ 'category' | translate }}</div>
             <div class="info-value">{{ visitType || '—' }}</div>
           </div>
         </div>
@@ -127,7 +127,7 @@
       @if (status === 'success' && qrCodeBase64) {
         <div class="qr-section">
           <div class="qr-box">
-            <img [src]="qrCodeBase64" [attr.alt]="'qr_code_alt' | translate" />
+            <img [src]="qrCodeBase64" [attr.alt]="'qr_code_text' | translate" />
           </div>
           <div class="qr-caption">{{ 'scan_qr_code' | translate }}</div>
         </div>

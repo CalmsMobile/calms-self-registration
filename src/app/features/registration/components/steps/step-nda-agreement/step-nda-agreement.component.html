@@ -14,7 +14,7 @@
         <span class="accent">{{ formattedPageTitle.first }}</span>
         <span>{{ formattedPageTitle.rest }}</span>
       </h2>
-      <p>{{ 'card_nda_subtitle' | translate }}</p>
+      <p>{{ 'instruction' | translate }}</p>
       <div class="illustration">
         <img [src]="illustrationUrl" alt="NDA illustration" />
       </div>
@@ -31,12 +31,12 @@
       </div>
 
       @if (showValidationError) {
-        <span class="error-message">{{ 'signature_required' | translate }}</span>
+        <span class="error-message">{{ 'draw_signature_below' | translate }}</span>
       }
 
       <div class="actions">
         <button class="btn grey" type="button" (click)="goBack()">
-          <span class="icon-left">&#8592;</span> {{ 'back' | translate }}
+          <span class="icon-left">&#8592;</span> {{ 'button_back' | translate }}
         </button>
         <button class="btn yellow" type="button" (click)="openSignature()" [disabled]="!ndaScrolledToBottom">
           {{ 'signature' | translate }} <span class="icon-right">&#9998;</span>
@@ -69,8 +69,8 @@
     </div>
     <div class="signature-label">{{ 'draw_signature_below' | translate }}</div>
     <div class="modal-actions">
-      <button class="btn grey" type="button" (click)="clearSignature()">{{ 'clear' | translate }}</button>
-      <button class="btn yellow" type="button" (click)="submitSignature()" [disabled]="!hasSigned">{{ 'submit' | translate }}</button>
+      <button class="btn grey" type="button" (click)="clearSignature()">{{ 'button_clear' | translate }}</button>
+      <button class="btn yellow" type="button" (click)="submitSignature()" [disabled]="!hasSigned">{{ 'button_submit' | translate }}</button>
     </div>
   </div>
 </div>
@@ -88,9 +88,9 @@
   <!-- Title -->
   <div class="m-title-wrap">
     <h1 class="m-title">
-      <span class="m-accent">{{ 'card_nda_title' | translate }}</span>
+      <span class="m-accent">{{ 'nda_pad_title' | translate }}</span>
     </h1>
-    <p class="m-subtitle">{{ 'card_nda_subtitle' | translate }}</p>
+    <p class="m-subtitle">{{ 'instruction' | translate }}</p>
   </div>
 
   <!-- Terms Card -->
@@ -100,21 +100,21 @@
   </div>
 
   @if (showValidationError) {
-  <p class="m-error">{{ 'signature_required' | translate }}</p>
+  <p class="m-error">{{ 'draw_signature_below' | translate }}</p>
   }
 
   <!-- Actions -->
   <div class="m-actions">
     <div class="m-actions-row">
       <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
-        <span>&#8592;</span> {{ 'back' | translate }}
+        <span>&#8592;</span> {{ 'button_back' | translate }}
       </button>
       <button class="m-btn m-btn-grey" type="button" (click)="openSignature()" [disabled]="!ndaScrolledToBottom">
         {{ 'signature' | translate }} <span>&#9998;</span>
       </button>
     </div>
     <button class="m-btn m-btn-yellow" type="button" [disabled]="!hasSigned" (click)="mobileNext()">
-      {{ 'continue' | translate }} <span>&#8594;</span>
+      {{ 'button_continue' | translate }} <span>&#8594;</span>
     </button>
   </div>
 </div>

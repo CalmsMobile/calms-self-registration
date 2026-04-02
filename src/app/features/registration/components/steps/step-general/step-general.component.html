@@ -130,12 +130,12 @@
       @if (settings?.IdProofEnabled) {
       <div class="form-field">
         <label class="field-label" for="visitor_id">
-          {{'identity_number' | translate}}
+          {{'nric' | translate}}
           <span class="required-star">{{settings?.IdProofRequired ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-id-card"></i></span>
-          <input pInputText id="visitor_id" [placeholder]="'identity_number' | translate:'placeholder'"
+          <input pInputText id="visitor_id" [placeholder]="'nric' | translate:'placeholder'"
             formControlName="visitor_id" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id')}"
             [disabled]="isFieldDisabled('visitor_id')" (blur)="onVisitorIdBlur()">
           @if (generalForm.get('visitor_id')?.value && !generalForm.get('visitor_id')?.disabled) {
@@ -143,7 +143,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('visitor_id')) {
-        <small class="error-message">{{'identity_number' | translate}} is required</small>
+        <small class="error-message">{{'nric' | translate}} is required</small>
         }
       </div>
       }
@@ -229,7 +229,7 @@
           }
         </div>
         @if (isEmailFormatError()) {
-        <small class="error-message">{{ 'email_invalid_error' | translate }}</small>
+        <small class="error-message">{{ 'error_invalid_email' | translate }}</small>
         } @else if (isFieldInvalidRequired('email')) {
         <small class="error-message">{{'email_address' | translate}} is required</small>
         }
@@ -573,7 +573,7 @@
       @if ((enableVimsApptTimeSlot && enableFBInSelfReg) || (enableFBInSelfReg && generalForm.get('facilityBooking')?.value)) {
       <div class="form-field">
         <label class="field-label" for="sharedDate">
-          {{'date' | translate}} <span class="required-star">*</span>
+          {{'date_placeholder' | translate}} <span class="required-star">*</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
@@ -583,7 +583,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('sharedDate')) {
-        <small class="error-message">{{'date' | translate}} is required</small>
+        <small class="error-message">{{'date_placeholder' | translate}} is required</small>
         }
       </div>
       }
@@ -591,17 +591,17 @@
       @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value) {
       <div class="form-field">
         <label class="field-label" for="facilityPurpose">
-          {{'purpose' | translate}} <span class="required-star">*</span>
+          {{'purpose_of_your_visit?' | translate}} <span class="required-star">*</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-question-circle"></i></span>
           <p-select id="facilityPurpose" [options]="facilityPurposeList" formControlName="facilityPurpose"
-            [placeholder]="'facility_purpose_placeholder' | translate" optionLabel="PurposeName" optionValue="PurposeCode"
+            [placeholder]="'select_facility_placeholder' | translate" optionLabel="PurposeName" optionValue="PurposeCode"
             [class]="{'ng-invalid': isFieldInvalidRequired('facilityPurpose')}" [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('facilityPurpose')) {
-        <small class="error-message">{{'purpose' | translate}} is required</small>
+        <small class="error-message">{{'purpose_of_your_visit?' | translate}} is required</small>
         }
       </div>
       }
@@ -609,19 +609,19 @@
       @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value) {
       <div class="form-field">
         <label class="field-label" for="facilitySelection">
-          {{'facility' | translate}} <span class="required-star">*</span>
+          {{'select_facility_placeholder' | translate}} <span class="required-star">*</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-building"></i></span>
           <p-select id="facilitySelection" [options]="facilityMasterList" formControlName="facilitySelection"
-            [placeholder]="'facility_selection_placeholder' | translate" optionLabel="FacilityName" optionValue="FacilityCode"
+            [placeholder]="'select_facility_placeholder' | translate" optionLabel="FacilityName" optionValue="FacilityCode"
             (onChange)="onFacilitySelectionChange($event.value)"
             [class]="{'ng-invalid': isFieldInvalidRequired('facilitySelection')}"
             [showClear]="true" (onClear)="onFacilitySelectionChange('')" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('facilitySelection')) {
-        <small class="error-message">{{'facility' | translate}} is required</small>
+        <small class="error-message">{{'select_facility_placeholder' | translate}} is required</small>
         }
       </div>
       }
@@ -803,7 +803,7 @@
         @if (endBeforeStartError) {
         <small class="error-message">{{ 'end_date_error_message' | translate }}</small>
         } @else if (isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate')) {
-        <small class="error-message">{{ 'appointment_datetime_required' | translate }}</small>
+        <small class="error-message">{{ 'error_appt_required' | translate }}</small>
         }
       </div>
       }
@@ -981,7 +981,7 @@
     @if (canGoBackToHome) {
     <button type="button" class="btn btn-back" (click)="goBack()">
       <i class="pi pi-arrow-left"></i>
-      {{ 'back' | translate }}
+      {{ 'button_back' | translate }}
     </button>
     }
     <div class="actions-right">
@@ -1020,8 +1020,8 @@
   <section class="m-top-section">
     <div class="m-left-title">
       <h2 class="m-hero-title">
-        <span class="m-accent">{{'visitor' | translate}}</span>
-        <span class="m-normal">{{'information' | translate}}</span>
+        <span class="m-accent">{{'visitor_name' | translate}}</span>
+        <span class="m-normal">{{'instruction' | translate}}</span>
       </h2>
       <p class="m-hero-subtext">{{'please_provide_your_details' | translate}}</p>
     </div>
@@ -1125,10 +1125,10 @@
       <!-- 5. Visitor ID -->
       @if (settings?.IdProofEnabled) {
       <div class="m-form-field">
-        <label class="m-field-label">{{'identity_number' | translate}} <span class="m-req">{{settings?.IdProofRequired ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{'nric' | translate}} <span class="m-req">{{settings?.IdProofRequired ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-id-card"></i></span>
-          <input pInputText [placeholder]="'identity_number' | translate:'placeholder'"
+          <input pInputText [placeholder]="'nric' | translate:'placeholder'"
             formControlName="visitor_id" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id')}"
             [disabled]="isFieldDisabled('visitor_id')" (blur)="onVisitorIdBlur()">
           @if (generalForm.get('visitor_id')?.value && !generalForm.get('visitor_id')?.disabled) {
@@ -1136,7 +1136,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('visitor_id')) {
-        <small class="m-error">{{'identity_number' | translate}} is required</small>
+        <small class="m-error">{{'nric' | translate}} is required</small>
         }
       </div>
       }
@@ -1208,7 +1208,7 @@
           }
         </div>
         @if (isEmailFormatError()) {
-        <small class="m-error">{{ 'email_invalid_error' | translate }}</small>
+        <small class="m-error">{{ 'error_invalid_email' | translate }}</small>
         } @else if (isFieldInvalidRequired('email')) {
         <small class="m-error">{{'email_address' | translate}} is required</small>
         }
@@ -1497,7 +1497,7 @@
       <!-- 17. Meeting Location (Facility) -->
       @if ((enableVimsApptTimeSlot && enableFBInSelfReg) || (enableFBInSelfReg && generalForm.get('facilityBooking')?.value)) {
       <div class="m-form-field">
-        <label class="m-field-label">{{'date' | translate}} <span class="m-req">*</span></label>
+        <label class="m-field-label">{{'date_placeholder' | translate}} <span class="m-req">*</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker formControlName="sharedDate"
@@ -1507,41 +1507,41 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('sharedDate')) {
-        <small class="m-error">{{'date' | translate}} is required</small>
+        <small class="m-error">{{'date_placeholder' | translate}} is required</small>
         }
       </div>
       }
 
       @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value) {
       <div class="m-form-field">
-        <label class="m-field-label">{{'purpose' | translate}} <span class="m-req">*</span></label>
+        <label class="m-field-label">{{'purpose_of_your_visit?' | translate}} <span class="m-req">*</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-question-circle"></i></span>
           <p-select [options]="facilityPurposeList" formControlName="facilityPurpose"
-            [placeholder]="'facility_purpose_placeholder' | translate" optionLabel="PurposeName" optionValue="PurposeCode"
+            [placeholder]="'select_facility_placeholder' | translate" optionLabel="PurposeName" optionValue="PurposeCode"
             [class]="{'ng-invalid': isFieldInvalidRequired('facilityPurpose')}" [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('facilityPurpose')) {
-        <small class="m-error">{{'purpose' | translate}} is required</small>
+        <small class="m-error">{{'purpose_of_your_visit?' | translate}} is required</small>
         }
       </div>
       }
 
       @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value) {
       <div class="m-form-field">
-        <label class="m-field-label">{{'facility' | translate}} <span class="m-req">*</span></label>
+        <label class="m-field-label">{{'select_facility_placeholder' | translate}} <span class="m-req">*</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-building"></i></span>
           <p-select [options]="facilityMasterList" formControlName="facilitySelection"
-            [placeholder]="'facility_selection_placeholder' | translate" optionLabel="FacilityName" optionValue="FacilityCode"
+            [placeholder]="'select_facility_placeholder' | translate" optionLabel="FacilityName" optionValue="FacilityCode"
             (onChange)="onFacilitySelectionChange($event.value)"
             [class]="{'ng-invalid': isFieldInvalidRequired('facilitySelection')}"
             [showClear]="true" (onClear)="onFacilitySelectionChange('')" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('facilitySelection')) {
-        <small class="m-error">{{'facility' | translate}} is required</small>
+        <small class="m-error">{{'select_facility_placeholder' | translate}} is required</small>
         }
       </div>
       }
@@ -1654,7 +1654,7 @@
         @if (endBeforeStartError) {
         <small class="m-error">{{ 'end_date_error_message' | translate }}</small>
         } @else if (isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate')) {
-        <small class="m-error">{{ 'appointment_datetime_required' | translate }}</small>
+        <small class="m-error">{{ 'error_appt_required' | translate }}</small>
         }
       </div>
       }
@@ -1795,7 +1795,7 @@
   <!-- Actions -->
   <div class="m-actions">
     <button type="button" class="m-btn m-btn-back" (click)="goBack()">
-      <i class="pi pi-arrow-left"></i> {{ 'back' | translate }}
+      <i class="pi pi-arrow-left"></i> {{ 'button_back' | translate }}
     </button>
     <div class="m-actions-right">
       @if (isMultipleVisitorMode) {
@@ -1824,8 +1824,8 @@
     <button type="button" class="close-btn" (click)="showSavedVisitorsModal = false">
       <i class="pi pi-times"></i>
     </button>
-    <h2 class="dialog-title"><span class="highlight">{{ 'saved' | translate }}</span> {{ 'visitors' | translate }}</h2>
-    <p class="dialog-subtitle">{{ savedVisitors.length }} {{ 'visitor' | translate }} saved</p>
+    <h2 class="dialog-title"><span class="highlight">{{ 'visitor_saved' | translate }}</span> {{ 'visitors' | translate }}</h2>
+    <p class="dialog-subtitle">{{ savedVisitors.length }} {{ 'visitor_name' | translate }} saved</p>
     <div class="saved-card-list">
       @for (visitor of savedVisitors; track visitor; let i = $index) {
       <div class="saved-row-item" [class.editing]="editingVisitorIndex === i">
@@ -1837,7 +1837,7 @@
           }
         </div>
         <div class="visitor-info">
-          <span class="visitor-name">{{ visitor.fullName || (('visitor' | translate) + ' ' + (i + 1)) }}</span>
+          <span class="visitor-name">{{ visitor.fullName || (('visitor_name' | translate) + ' ' + (i + 1)) }}</span>
           @if (visitor.phone) {
           <span class="visitor-sub">{{ visitor.phone }}</span>
           }
@@ -1932,13 +1932,13 @@
       <!-- Keep existing photo -->
       <button type="button" class="btn-capture" (click)="keepExistingPhoto()">
         <i class="pi pi-check"></i>
-        {{ 'btn_keep_photo' | translate }}
+        {{ 'button_keep_photo' | translate }}
       </button>
 
       <!-- Switch to live camera -->
       <button type="button" class="btn-retake" (click)="switchToCamera()">
         <i class="pi pi-camera"></i>
-        {{ 'btn_take_new_photo' | translate }}
+        {{ 'button_take_new_photo' | translate }}
       </button>
 
       <!-- Browse from device -->
@@ -1946,7 +1946,7 @@
         (change)="handleFileUpload($event, undefined, true)">
       <button type="button" class="btn-upload" (click)="dialogFileInput.click()">
         <i class="pi pi-upload"></i>
-        {{ 'btn_upload_device' | translate }}
+        {{ 'button_upload_device' | translate }}
       </button>
     </div>
     }
@@ -1989,16 +1989,16 @@
       @if (!capturedImage) {
       <button type="button" class="btn-capture" (click)="capturePhoto()" [disabled]="!isCameraOn">
         <i class="pi pi-camera"></i>
-        {{ 'btn_capture_photo' | translate }}
+        {{ 'button_capture_photo' | translate }}
       </button>
       } @else {
       <button type="button" class="btn-capture" (click)="useCapture()">
         <i class="pi pi-check"></i>
-        {{ 'btn_use_photo' | translate }}
+        {{ 'button_use_photo' | translate }}
       </button>
       <button type="button" class="btn-retake" (click)="retakePhoto()">
         <i class="pi pi-refresh"></i>
-        {{ 'btn_retake' | translate }}
+        {{ 'button_retake' | translate }}
       </button>
       }
 
@@ -2006,17 +2006,17 @@
         (change)="handleFileUpload($event, undefined, true)">
       <button type="button" class="btn-upload" (click)="dialogFileInput.click()">
         <i class="pi pi-upload"></i>
-        {{ 'btn_upload_device' | translate }}
+        {{ 'button_upload_device' | translate }}
       </button>
 
       <!-- Back to existing preview if one exists -->
       @if (dialogPreviousImage) {
       <button type="button" class="btn-skip" (click)="dialogMode = 'preview'">
-        {{ 'btn_back_to_photo' | translate }}
+        {{ 'button_back_to_photo' | translate }}
       </button>
       } @else if (!settings?.ImageUploadRequired) {
       <button type="button" class="btn-skip" (click)="skipPhoto()">
-        {{ 'btn_skip_photo' | translate }}
+        {{ 'button_skip_photo' | translate }}
       </button>
       }
     </div>
@@ -2084,14 +2084,14 @@
   <ng-template pTemplate="footer">
     <div class="sd-footer">
       <span class="sd-summary">
-        Event: {{ formatScheduleDate(scheduleStartDate) }} – {{ formatScheduleDate(scheduleEndDate) }},
-        from {{ formatTime12(scheduleStartTime) }} – {{ formatTime12(scheduleEndTime) }}
+        {{ 'event' | translate }}: {{ formatScheduleDate(scheduleStartDate) }} – {{ formatScheduleDate(scheduleEndDate) }},
+        {{ 'from' | translate }} {{ formatTime12(scheduleStartTime) }} – {{ formatTime12(scheduleEndTime) }}
       </span>
       <div class="sd-footer-btns">
-        <button type="button" class="sd-btn-cancel" (click)="closeScheduleDialog()">{{ 'btn_cancel' | translate }}</button>
+        <button type="button" class="sd-btn-cancel" (click)="closeScheduleDialog()">{{ 'button_cancel' | translate }}</button>
         <button type="button" class="sd-btn-schedule"
           [disabled]="!scheduleStartDate || !scheduleEndDate || scheduleEndBeforeStartError"
-          (click)="applySchedule()">{{ 'btn_schedule' | translate }}</button>
+          (click)="applySchedule()">{{ 'button_schedule' | translate }}</button>
       </div>
     </div>
   </ng-template>

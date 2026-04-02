@@ -14,14 +14,14 @@
       <span class="accent">{{ formattedPageTitle.first }}</span>
       <span>{{ formattedPageTitle.rest }}</span>
     </h2>
-    <p>{{ 'sbv_instruction' | translate }}</p>
+    <p>{{ 'instruction' | translate }}</p>
     @if (isFullscreen && !videoEnded) {
     <p class="fullscreen-msg">
-      {{ 'press_the_replay_button_after_the_video_completes_to_exit_fullscreen' | translate }}
+      {{ 'full_screen_exit_note' | translate }}
     </p>
     }
     @if (isReplaying && !videoEnded && !isFullscreen) {
-    <p class="replay-msg">{{ 'replaying_video' | translate }}</p>
+    <p class="replay-msg">{{ 'button_replaying_video' | translate }}</p>
     }
   </section>
 
@@ -66,10 +66,10 @@
   <!-- Actions -->
   <section class="actions">
     <button class="btn grey" type="button" (click)="goBack()">
-      <span class="icon-left">&larr;</span> {{ 'sbv_previous_step' | translate }}
+      <span class="icon-left">&larr;</span> {{ 'previous_step' | translate }}
     </button>
     <button class="btn yellow" type="button" (click)="onNext()" [disabled]="!videoEnded">
-      {{ 'sbv_next_step' | translate }} <span class="icon-right">&rarr;</span>
+      {{ 'next_step' | translate }} <span class="icon-right">&rarr;</span>
     </button>
   </section>
 </main>

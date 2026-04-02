@@ -1,4 +1,4 @@
-﻿@if (!isLoading) {
+@if (!isLoading) {
 <div class="page">
   <!-- Error / Access Denied overlay -->
   @if (isAccessDenied || (hasInvalidUrl && !isAccessDenied)) {
@@ -9,14 +9,14 @@
       <div class="error-content">
         <i class="pi pi-ban error-icon"></i>
         <p class="error-message">{{ baseUrlAccessDeniedInstruction }}</p>
-        <p class="error-subtitle">{{ 'please_contact_your_administrator_for_a_valid_registration_link.' | translate }}</p>
+        <p class="error-subtitle">{{ 'invalid_url_alert' | translate }}</p>
       </div>
       } @else {
-      <h1>{{ 'invalid_url' | translate }}</h1>
+      <h1>{{ 'invalid_url_alert' | translate }}</h1>
       <div class="error-content">
         <i class="pi pi-exclamation-triangle error-icon"></i>
         <p class="error-message">{{ errorMessage }}</p>
-        <p class="error-subtitle">{{ 'please_contact_your_administrator_for_a_valid_registration_link.' | translate }}</p>
+        <p class="error-subtitle">{{ 'invalid_url_alert' | translate }}</p>
       </div>
       }
     </div>
@@ -91,7 +91,7 @@
         {{ formattedPageTitle.rest || 'Registration' }}
       </div>
       }
-      <div class="subtitle">{{ welcomeText }}</div>
+      <div class="subtitle">{{ 'instruction' | translate }}</div>
       <img src="assets/visit.png" alt="Visitor illustration" />
     </div>
 
@@ -183,7 +183,7 @@
       <i class="pi pi-exclamation-triangle m-error-icon"></i>
       <p class="m-error-message">{{ errorMessage }}</p>
       }
-      <p class="m-error-subtitle">{{ 'please_contact_your_administrator_for_a_valid_registration_link.' | translate }}</p>
+      <p class="m-error-subtitle">{{ 'invalid_url_alert' | translate }}</p>
     </div>
   </div>
   }
@@ -198,8 +198,8 @@
   <div class="m-content">
     <img [src]="logo" alt="Company Logo" class="m-logo" />
     <p class="m-company-name">{{ title }}</p>
-    <h1 class="m-welcome">{{ welcomeText }}</h1>
-    <p class="m-subtitle">{{ 'please_select_your_branch_location' | translate }}</p>
+    <h1 class="m-welcome">{{ 'instruction' | translate }}</h1>
+    <p class="m-subtitle">{{ 'branch' | translate }}</p>
     <div class="m-form">
       <div class="m-field-group">
         <label class="m-label">{{ branchTranslation.caption || ('branch' | translate) }}</label>
@@ -264,7 +264,7 @@
       <!-- Category Selection -->
       @if (categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
       <div class="m-field-group">
-        <label class="m-label">{{ 'type_of_visit' | translate }} <span class="m-optional">(Optional)</span></label>
+        <label class="m-label">{{ 'category' | translate }} <span class="m-optional">(Optional)</span></label>
         <div class="m-select-wrap" [class.open]="visitOpen">
           <button class="m-select-btn" type="button" (click)="toggleVisit()">
             <span [class.m-placeholder]="!selectedCategoryName">{{ selectedCategoryName || ('category' | translate:'placeholder') }}</span>

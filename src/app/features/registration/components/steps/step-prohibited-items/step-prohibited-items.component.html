@@ -13,7 +13,7 @@
         <span class="accent">{{ formattedPageTitle.first }}</span>
         <span>{{ formattedPageTitle.rest }}</span>
       </h2>
-      <p>{{ 'em_instruction' | translate }}</p>
+      <p>{{ 'instruction' | translate }}</p>
       <div class="illustration">
         <img src="assets/item.png" alt="Equipment movement illustration" />
       </div>
@@ -39,10 +39,10 @@
         </label>
         <div class="direction-row">
           <label class="field" [class.field-error]="showFieldErrors && !newItem.direction">
-            <span class="label">{{ 'em_direction' | translate }}</span>
+            <span class="label">{{ 'direction' | translate }}</span>
             <div class="select-wrap">
               <select [(ngModel)]="newItem.direction" (ngModelChange)="checkInputs()">
-                <option value="">{{ 'em_direction' | translate:'placeholder' }}</option>
+                <option value="">{{ 'direction' | translate:'placeholder' }}</option>
                 <option value="IN">IN</option>
                 <option value="OUT">OUT</option>
               </select>
@@ -83,10 +83,10 @@
 
       <div class="actions">
         <div class="actions-left">
-          <button class="btn grey" type="button" (click)="goBack()"><span class="icon-left">&larr;</span> {{ 'back' | translate }}</button>
-          <button class="btn grey" type="button" (click)="skipStep()">{{ 'skip' | translate }} <span class="icon-right">&rarr;</span></button>
+          <button class="btn grey" type="button" (click)="goBack()"><span class="icon-left">&larr;</span> {{ 'button_back' | translate }}</button>
+          <button class="btn grey" type="button" (click)="skipStep()">{{ 'button_skip' | translate }} <span class="icon-right">&rarr;</span></button>
         </div>
-        <button class="btn yellow" type="button" [disabled]="partiallyFilled" (click)="proceedToNext()">{{ 'continue' | translate }} <span class="icon-right">&rarr;</span></button>
+        <button class="btn yellow" type="button" [disabled]="partiallyFilled" (click)="proceedToNext()">{{ 'button_continue' | translate }} <span class="icon-right">&rarr;</span></button>
       </div>
     </div>
   </section>
@@ -105,7 +105,7 @@
     <h1 class="m-title">
       <span class="m-accent">{{ 'equipment_movement' | translate }}</span>
     </h1>
-    <p class="m-subtitle">{{ 'em_instruction' | translate }}</p>
+    <p class="m-subtitle">{{ 'instruction' | translate }}</p>
   </div>
 
   <!-- Form Card -->
@@ -127,10 +127,10 @@
       </div>
       <div class="m-direction-row">
         <div class="m-field" [class.m-field-error]="showFieldErrors && !newItem.direction">
-          <span class="m-label">{{ 'em_direction' | translate }}</span>
+          <span class="m-label">{{ 'direction' | translate }}</span>
           <div class="m-select-wrap">
             <select class="m-input" [(ngModel)]="newItem.direction" (ngModelChange)="checkInputs()">
-              <option value="">{{ 'em_direction' | translate:'placeholder' }}</option>
+              <option value="">{{ 'direction' | translate:'placeholder' }}</option>
               <option value="IN">IN</option>
               <option value="OUT">OUT</option>
             </select>
@@ -176,14 +176,14 @@
   <div class="m-actions">
     <div class="m-actions-row">
       <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
-        <span>&#8592;</span> {{ 'back' | translate }}
+        <span>&#8592;</span> {{ 'button_back' | translate }}
       </button>
       <button class="m-btn m-btn-grey" type="button" (click)="skipStep()">
-        {{ 'skip' | translate }} <span>&#8594;</span>
+        {{ 'button_skip' | translate }} <span>&#8594;</span>
       </button>
     </div>
     <button class="m-btn m-btn-yellow" type="button" [disabled]="partiallyFilled" (click)="proceedToNext()">
-      {{ 'continue' | translate }} <span>&#8594;</span>
+      {{ 'button_continue' | translate }} <span>&#8594;</span>
     </button>
   </div>
 </div>
