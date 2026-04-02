@@ -34,6 +34,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   ndaDoc: string = '';
   ndaUrl: SafeResourceUrl = '';
   itemCaptions = { desc: 'Equipment Detail', serial: 'Serial Number', type: 'Type' };
+  approvalSteps: any[] = [];
 
   isLoading = true;
   isSubmitting = false;
@@ -87,6 +88,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
         this.visitorImg = rawImg
           ? (rawImg.startsWith('data:') || rawImg.startsWith('http') ? rawImg : 'data:image/jpeg;base64,' + rawImg)
           : '';
+        this.approvalSteps = res.detail?.Table2 || [];
         this.seqId  = String(this.appointmentData?.SEQ_ID || '');
         this.hostIc = this.appointmentData?.STAFF_IC      || this.hostIc;
 
@@ -258,6 +260,42 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
       a.target = '_blank';
       a.click();
     });
+  }
+
+  getInitials(name: string): string {
+    if (!name) return '?';
+    return name.trim().split(/\s+/).map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  getStepStatusKey(step: any): 'approved' | 'progress' | 'pending' {
+    const s = (step.ApprovalStatus || step.Status || step.Approval_Status || '').toLowerCase();
+    if (s === 'approved' || s === 'a') return 'approved';
+    if (s === 'in progress' || s === 'inprogress' || s === 'i') return 'progress';
+    return 'pending';
+  }
+
+  getStepClass(step: any): string {
+    return 'step-circle ' + this.getStepStatusKey(step);
+  }
+
+  getStepPillClass(step: any): string {
+    const key = this.getStepStatusKey(step);
+    return 'step-pill pill-' + key;
+  }
+
+  getStepStatusLabel(step: any): string {
+    const key = this.getStepStatusKey(step);
+    if (key === 'approved') return 'Approved';
+    if (key === 'progress') return 'In Progress';
+    return 'Pending';
+  }
+
+  get approvalProgressWidth(): string {
+    if (!this.approvalSteps.length) return '0%';
+    const approvedCount = this.approvalSteps.filter(s => this.getStepStatusKey(s) === 'approved').length;
+    const progressCount = this.approvalSteps.filter(s => this.getStepStatusKey(s) === 'progress').length;
+    const effectiveDone = approvedCount + (progressCount > 0 ? 0.5 : 0);
+    return Math.round((effectiveDone / (this.approvalSteps.length - 1 || 1)) * 100) + '%';
   }
 
   @HostListener('document:keydown.escape')

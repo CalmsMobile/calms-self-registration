@@ -771,7 +771,7 @@
       @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
       <div class="form-field">
         <label class="field-label">
-          {{'appointment_start_date_time' | translate}} &amp; {{'appointment_end_date_time' | translate}}
+          {{'date_and_time' | translate}}
           <span class="required-star">*</span>
         </label>
         <div class="schedule-trigger"
@@ -1608,7 +1608,7 @@
       <!-- 20 & 21. Appointment Start / End — schedule dialog trigger (mobile) -->
       @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
       <div class="m-form-field">
-        <label class="m-field-label">{{'appointment_start_date_time' | translate}} &amp; {{'appointment_end_date_time' | translate}} <span class="m-req">*</span></label>
+        <label class="m-field-label">{{'date_and_time' | translate}} <span class="m-req">*</span></label>
         <div class="schedule-trigger m-schedule-trigger"
           [class.ng-invalid]="isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate') || endBeforeStartError"
           (click)="openScheduleDialog()">

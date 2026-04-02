@@ -257,6 +257,40 @@
             </article>
           }
         </div>
+
+        @if (approvalSteps.length > 0) {
+          <section class="approval-status" aria-label="Approval Status">
+            <p class="approval-label">Approval Status</p>
+            <div class="approval-card">
+              <div class="approval-track" aria-hidden="true">
+                <div class="progress" [style.width]="approvalProgressWidth"></div>
+                <div class="dot"></div>
+              </div>
+              @for (step of approvalSteps; track $index) {
+                <div class="approval-step">
+                  <div [class]="getStepClass(step)">{{ getInitials(step.ApproverName || step.HostName || step.Approver) }}</div>
+                  <div [class]="getStepPillClass(step)">{{ getStepStatusLabel(step) }}</div>
+                  <div class="step-title">{{ step.ApproverRole || step.Role || step.Department || 'Approver' }}</div>
+                  @if (step.ApproverName || step.HostName || step.Approver) {
+                    <div class="step-name">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4.5 6-6 8-6s6.5 1.5 8 6"/></svg>
+                      {{ step.ApproverName || step.HostName || step.Approver }}
+                    </div>
+                  }
+                  @if (step.ApprovedDate || step.ApprovedDateTime || step.ActionDate) {
+                    <div class="step-meta">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+                      {{ formatDate(step.ApprovedDate || step.ApprovedDateTime || step.ActionDate) }}
+                      •
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/></svg>
+                      {{ formatTime(step.ApprovedTime || step.ApprovedDateTime || step.ActionDate) }}
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </section>
+        }
       </div>
     </section>
   </main>

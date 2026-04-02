@@ -509,6 +509,157 @@
   align-content: start;
 }
 
+// Approval Status section
+.approval-status {
+  margin-top: 48px;
+}
+
+.approval-label {
+  margin: 0 0 12px;
+  font-size: 18px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #2a3950;
+  font-weight: 800;
+}
+
+.approval-card {
+  width: 100%;
+  background: #f8f9fd;
+  border-radius: 28px;
+  padding: 24px 32px;
+  box-shadow: 0 18px 36px rgba(22, 29, 45, 0.18);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+}
+
+.approval-track {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  top: 52px;
+  height: 8px;
+  background: #d9dfec;
+  border-radius: 999px;
+
+  .progress {
+    height: 4px;
+    background: #16c78f;
+    border-radius: 999px;
+    margin-top: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .dot {
+    position: absolute;
+    top: -3px;
+    left: var(--dot-pos, 44%);
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #ff2f63;
+    box-shadow: 0 0 0 4px #f5f7fb;
+  }
+}
+
+.approval-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+  min-width: 80px;
+}
+
+.step-circle {
+  width: 52px;
+  height: 62px;
+  border-radius: 46%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 14px;
+
+  &.approved {
+    background: #16c78f;
+    color: #fff;
+  }
+
+  &.progress,
+  &.pending {
+    background: #fff;
+    color: #ff2f63;
+    border: 3px solid #ff2f63;
+  }
+}
+
+.step-pill {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  min-width: 86px;
+  text-align: center;
+  font-weight: 600;
+
+  &.pill-approved {
+    background: #dff7ee;
+    color: #06a874;
+    border: 1px solid #bfead7;
+  }
+
+  &.pill-progress,
+  &.pill-pending {
+    background: #ffe5ea;
+    color: #ff2f63;
+    border: 1px solid #ffc0d0;
+  }
+}
+
+.step-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.step-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2c3b52;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  svg {
+    width: 12px;
+    height: 12px;
+    stroke: #9aa8c3;
+    stroke-width: 1.8;
+    fill: none;
+  }
+}
+
+.step-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #7f91ad;
+
+  svg {
+    width: 11px;
+    height: 11px;
+    stroke: #9aa8c3;
+    stroke-width: 1.8;
+    fill: none;
+  }
+}
+
 .detail-item {
   display: flex;
   align-items: flex-start;
