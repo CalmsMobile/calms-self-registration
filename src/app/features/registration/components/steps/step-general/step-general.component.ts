@@ -110,8 +110,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   isVisitorBlacklisted = false;
   isVisitorNotWhitelisted = false;
   shouldFilterHostByQueryParam = false; // Flag to indicate if host should be filtered for query param flow
-  // Fields that are allowed to be edited in appointment flow (visitor acknowledgment)
-  allowedEditableFields = ['fullName', 'visitor_id', 'email', 'phone', 'gender', 'host']; // Temporarily enable host for testing
+  // Fields that are LOCKED (non-editable) in appointment flow — everything else remains editable
+  lockedFieldsInAppointmentFlow = ['startDate', 'endDate'];
+  // Keep allowedEditableFields for backward compat with isFieldDisabled() references
+  get allowedEditableFields(): string[] { return []; }
 
   // Fields that should be hidden in appointment flow
   hiddenFieldsInAppointmentFlow: string[] = []; // Temporarily enable host to test auto-selection
@@ -1216,8 +1218,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return false; // In normal flow, no fields are disabled
     }
 
-    // In appointment flow, disable fields that are not in the allowed editable list
-    return !this.allowedEditableFields.includes(fieldName);
+    // In appointment flow, lock only the structural appointment fields
+    return this.lockedFieldsInAppointmentFlow.includes(fieldName);
   }
 
   /**
@@ -1344,26 +1346,26 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       profile: [savedData.profile || null],
       profilePreview: [savedData.profilePreview || ''],
       title: [savedData.title || null],
-      fullName: [savedData.fullName || ''],
-      email: [savedData.email || ''],
-      phone: [savedData.phone || ''],
-      visitor_id_type: [savedData.visitor_id_type || null],
-      visitor_id: [savedData.visitor_id || ''],
-      id_expired_date: [savedData.id_expired_date || null],
-      gender: [savedData.gender || null],
-      visitor_company: [savedData.visitor_company || ''],
-      vehicle_number: [savedData.vehicle_number || ''],
-      vehicle_brand: [savedData.vehicle_brand || ''],
-      vehicle_model: [savedData.vehicle_model || ''],
-      vehicle_color: [savedData.vehicle_color || ''],
+      fullName: [isPreFilledData ? (visitorData.fullName || savedData.fullName || '') : (savedData.fullName || '')],
+      email: [isPreFilledData ? (visitorData.email || savedData.email || '') : (savedData.email || '')],
+      phone: [isPreFilledData ? (visitorData.phone || savedData.phone || '') : (savedData.phone || '')],
+      visitor_id_type: [isPreFilledData ? (visitorData.idType || savedData.visitor_id_type || null) : (savedData.visitor_id_type || null)],
+      visitor_id: [isPreFilledData ? (visitorData.identityNo || savedData.visitor_id || '') : (savedData.visitor_id || '')],
+      id_expired_date: [isPreFilledData ? (visitorData.expiredDate ? new Date(visitorData.expiredDate) : (savedData.id_expired_date || null)) : (savedData.id_expired_date || null)],
+      gender: [isPreFilledData ? (visitorData.genderId || savedData.gender || null) : (savedData.gender || null)],
+      visitor_company: [isPreFilledData ? (visitorData.company || savedData.visitor_company || '') : (savedData.visitor_company || '')],
+      vehicle_number: [isPreFilledData ? (visitorData.vehicleNumber || savedData.vehicle_number || '') : (savedData.vehicle_number || '')],
+      vehicle_brand: [isPreFilledData ? (visitorData.vehicleBrand || savedData.vehicle_brand || '') : (savedData.vehicle_brand || '')],
+      vehicle_model: [isPreFilledData ? (visitorData.vehicleModel || savedData.vehicle_model || '') : (savedData.vehicle_model || '')],
+      vehicle_color: [isPreFilledData ? (visitorData.vehicleColor || savedData.vehicle_color || '') : (savedData.vehicle_color || '')],
       expired_date: [savedData.expired_date || ''],
       Reason: [savedData.Reason || ''],
       meeting_location: [savedData.meeting_location || ''],
-      floor: [savedData.floor || null],
-      visitor_address: [savedData.visitor_address || ''],
-      country: [savedData.country || null],
+      floor: [isPreFilledData ? (visitorData.floorId || savedData.floor || null) : (savedData.floor || null)],
+      visitor_address: [isPreFilledData ? (visitorData.address || savedData.visitor_address || '') : (savedData.visitor_address || '')],
+      country: [isPreFilledData ? (visitorData.countryId || savedData.country || null) : (savedData.country || null)],
       work_permit_ref: [savedData.work_permit_ref || ''],
-      remarks: [savedData.remarks || ''],
+      remarks: [isPreFilledData ? (visitorData.remarks || savedData.remarks || '') : (savedData.remarks || '')],
       host: [savedData.host || (this.shouldHideHostControl ? this.defaultHostId : null) || (this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery ? this.wizardService.hostCodeFromQuery : null)],
       startDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.startDate || '')],
       endDate: [isPreFilledData ? (this.parseDate(visitorData.endTime) || '') : (savedData.endDate || '')],
@@ -1385,8 +1387,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         if (udf.Enabled) {
           const controlName = udf.formControlName;  // e.g. 'AUDF1' or 'VUDF1'
 
-          // Get value from saved data
-          const controlValue = udf.UDFCtrlType === 10 ? (savedData[controlName] || '') : (savedData[controlName] || null);
+          // Get value from saved data, fall back to visitorData in appointment flow
+          const appointmentValue = isPreFilledData ? (visitorData[controlName] ?? null) : null;
+          const controlValue = udf.UDFCtrlType === 10
+            ? (savedData[controlName] || appointmentValue || '')
+            : (savedData[controlName] ?? appointmentValue ?? null);
 
           const validators = [];
           if (udf.UDFCtrlType === 10 && udf.MinLength) {
@@ -1967,15 +1972,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.setupControl('timeSlot', true, this.timeSlotList.length > 0);
     }
 
-    // In appointment flow, re-disable non-editable fields after all setup
-    // (setupControl may have re-enabled them)
+    // In appointment flow, lock only the appointment-structural fields (startDate, endDate)
     if (this.isAppointmentFlow) {
-      Object.keys(this.generalForm.controls).forEach(controlName => {
-        if (!this.allowedEditableFields.includes(controlName)) {
-          const control = this.generalForm.get(controlName);
-          if (control) {
-            control.disable({ emitEvent: false });
-          }
+      this.lockedFieldsInAppointmentFlow.forEach(controlName => {
+        const control = this.generalForm.get(controlName);
+        if (control) {
+          control.disable({ emitEvent: false });
         }
       });
     }
@@ -3151,6 +3153,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
       if (this.wizardService.hcParam) {
         queryParams['hc'] = this.wizardService.hcParam;
+      }
+      // Pass current branch/category so home page can restore selections
+      if (!this.wizardService.refCode && this.wizardService.currentBranchID) {
+        queryParams['_branchId'] = this.wizardService.currentBranchID;
+      }
+      if (!this.wizardService.refCatCode && this.wizardService.selectedVisitCategory) {
+        queryParams['_catId'] = this.wizardService.selectedVisitCategory;
       }
       this.router.navigate(['/'], Object.keys(queryParams).length > 0 ? { queryParams } : {});
     } else {

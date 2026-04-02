@@ -57,6 +57,10 @@ export class HomePageComponent implements AfterViewChecked {
   private termsAutoChecked = false;
   private _cachedTermsHtml: SafeHtml | string = '';
   private _cachedTermsTemplate = '';
+  /** Holds the category to restore on back-navigation (see goBack() in step-general). */
+  private _backNavRestoreCategory: any = null;
+  /** When true, onCategoryChange will load settings but will NOT auto-proceed to wizard. */
+  private _suppressAutoProceed = false;
   branchList: Branch[] = [];
   currentLanguage: any;
 
@@ -258,6 +262,11 @@ export class HomePageComponent implements AfterViewChecked {
 
         // Directly call APIs using RefCode (don't use onBranchChange which needs a resolved branch)
         this.loadBranches().then(() => {
+          // Back-nav: restore previously selected category when no vc param was used
+          if (p['_catid'] && !vcParam) {
+            const backCatId = p['_catid'];
+            this._backNavRestoreCategory = !isNaN(Number(backCatId)) ? Number(backCatId) : backCatId;
+          }
           this.getPageSettings();
           this.loadBranchHostDataAsync(null);
         });
@@ -299,7 +308,24 @@ export class HomePageComponent implements AfterViewChecked {
           });
         }
 
-        this.loadBranches();
+        // Restore branch/category when the user navigated back from step-general.
+        // Both dropdowns remain fully editable so the user can change either.
+        const backBranchId = p['_branchid'];
+        const backCatId = p['_catid'];
+        if (backBranchId) {
+          this.selectedBranch = !isNaN(Number(backBranchId)) ? Number(backBranchId) : backBranchId;
+          // isBranchFromQuery stays false → branch dropdown stays visible
+          if (backCatId) {
+            // Buffer the category; loadCategories will pre-select it and keep the dropdown editable.
+            this._backNavRestoreCategory = !isNaN(Number(backCatId)) ? Number(backCatId) : backCatId;
+          }
+          this.loadBranches().then(() => {
+            // Trigger branch change to load categories + page settings
+            this.onBranchChange(this.selectedBranch);
+          });
+        } else {
+          this.loadBranches();
+        }
       }
     });
 
@@ -367,6 +393,19 @@ export class HomePageComponent implements AfterViewChecked {
           this.hasInvalidUrl = true;
           this.errorMessage = 'Invalid visitor acknowledgment link: ' + errorMsg;
           this.isLoading = false;
+          return;
+        }
+
+        // Check for status/notification message in Table (e.g. expired appointment)
+        const tableStatusData = data?.Table;
+        if (tableStatusData?.length > 0 && tableStatusData[0]?.code !== undefined && tableStatusData[0].code !== 'S') {
+          const message = tableStatusData[0].description || 'An error occurred with your appointment.';
+          console.warn('Appointment status message:', tableStatusData[0].code, message);
+          this.hasInvalidUrl = true;
+          this.errorMessage = message;
+          this.isLoading = false;
+          alert(message);
+          window.close();
           return;
         }
 
@@ -724,6 +763,23 @@ export class HomePageComponent implements AfterViewChecked {
       this.categories = [];
     }
 
+    // Back-nav restore: pre-select previous category without locking the dropdown
+    if (this._backNavRestoreCategory != null) {
+      const catToRestore = this._backNavRestoreCategory;
+      this._backNavRestoreCategory = null;
+      const match = this.categories.find(c =>
+        String(c.visitor_ctg_id) === String(catToRestore)
+      );
+      if (match) {
+        this.selectedCategory = match.visitor_ctg_id;
+        this._suppressAutoProceed = true;
+        this.onCategoryChange(this.selectedCategory); // loads settings, no auto-proceed
+        setTimeout(() => { this._suppressAutoProceed = false; }, 1000);
+      }
+      this.isCategoryFromQuery = false; // ensure category dropdown is visible
+      return; // skip normal auto-select / auto-proceed logic
+    }
+
     // Auto-select category based on different scenarios
     if (this.categories.length === 1) {
       this.selectedCategory = this.categories[0].visitor_ctg_id;
@@ -750,8 +806,8 @@ export class HomePageComponent implements AfterViewChecked {
     this.isLoading = true;
     let lsBranchName = this.getBranchName(newValue);
 
-    // Don't reset category in appointment flow or when set from query param
-    if (!this.isAppointmentFlow && !this.isCategoryFromQuery) {
+    // Don't reset category in appointment flow, query param flow, or back-nav restore
+    if (!this.isAppointmentFlow && !this.isCategoryFromQuery && this._backNavRestoreCategory == null) {
       this.selectedCategory = null;
       this.categories = [];
     }
@@ -790,7 +846,8 @@ export class HomePageComponent implements AfterViewChecked {
           this.wizardService.setSettings(allSettings);
           
           // Check if terms are disabled - if so, auto-proceed to wizard
-          if (!this.shouldShowTerms()) {
+          // _suppressAutoProceed is set during back-nav category restore to prevent jumping.
+          if (!this.shouldShowTerms() && !this._suppressAutoProceed) {
             console.log('Terms disabled - auto-proceeding to wizard');
             setTimeout(() => {
               this.proceedToWizard();
