@@ -1821,7 +1821,7 @@
 </p-dialog>
 
 <p-dialog [(visible)]="showReturningVisitorPopup" [modal]="true" [draggable]="false" [resizable]="false"
-  styleClass="search-profile-dialog" [showHeader]="false">
+  styleClass="search-profile-dialog" [showHeader]="false" (onHide)="visitorNotFound = false; searchQuery = ''">
   <div class="search-profile-container">
 
     <!-- Close -->
@@ -1847,8 +1847,17 @@
       <i class="pi pi-search sp-search-icon"></i>
       <input type="text" class="sp-search-input" [(ngModel)]="searchQuery"
         [placeholder]="'search_profile' | translate:'placeholder'"
+        (ngModelChange)="visitorNotFound = false"
         (keyup.enter)="searchProfile()" />
     </div>
+
+    <!-- Visitor not found alert -->
+    @if (visitorNotFound) {
+    <div class="sp-not-found-alert">
+      <i class="pi pi-exclamation-circle"></i>
+      <span>{{ 'no_visitor_found_alert' | translate }}</span>
+    </div>
+    }
 
     <!-- Button -->
     <button type="button" class="sp-btn" (click)="searchProfile()">
