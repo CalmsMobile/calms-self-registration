@@ -700,6 +700,26 @@
       </div>
       }
 
+      <!-- Meeting Location (Room) -->
+      @if (settings?.RoomEnabled) {
+      <div class="form-field">
+        <label class="field-label" for="meeting_location">
+          {{'meeting_location' | translate}}
+          <span class="required-star">{{settings?.RoomRequired ? '*' : ''}}</span>
+        </label>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-map-marker"></i></span>
+          <p-select id="meeting_location" [options]="meetingLocList" formControlName="meeting_location"
+            [placeholder]="'meeting_location' | translate:'placeholder'" optionLabel="MeetingRoomDesc" optionValue="MeetingRoomSeqId"
+            [class]="{'ng-invalid': isFieldInvalidRequired('meeting_location')}" [showClear]="true" appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('meeting_location')) {
+        <small class="error-message">{{'meeting_location' | translate}} is required</small>
+        }
+      </div>
+      }
+
       <!-- 18. Visiting Floor -->
       @if (settings?.FloorEnabled) {
       <div class="form-field">
@@ -1544,6 +1564,23 @@
         }
         } @else {
         <div class="time-slot-empty"><i class="pi pi-calendar-times"></i><span>{{ 'no_time_slots_available' | translate }}</span></div>
+        }
+      </div>
+      }
+
+      <!-- Meeting Location (Room) -->
+      @if (settings?.RoomEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'meeting_location' | translate}} <span class="m-req">{{settings?.RoomRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-map-marker"></i></span>
+          <p-select [options]="meetingLocList" formControlName="meeting_location"
+            [placeholder]="'meeting_location' | translate:'placeholder'" optionLabel="MeetingRoomDesc" optionValue="MeetingRoomSeqId"
+            [class]="{'ng-invalid': isFieldInvalidRequired('meeting_location')}" [showClear]="true" appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('meeting_location')) {
+        <small class="m-error">{{'meeting_location' | translate}} is required</small>
         }
       </div>
       }

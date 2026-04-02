@@ -1757,6 +1757,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (this.settings.VehicleNumberEnabled && this.settings.VehicleNumberRequired) requiredFields.push('vehicle_number');
       if (this.settings.AddressEnabled && this.settings.AddressRequired) requiredFields.push('visitor_address');
       if (this.settings.CountryEnabled && this.settings.CountryRequired) requiredFields.push('country');
+      if (this.settings.RoomEnabled && this.settings.RoomRequired) requiredFields.push('meeting_location');
       if (this.settings.HostNameEnabled && this.settings.HostNameRequired) requiredFields.push('host');
       if (this.settings.ImageUploadEnabled && this.settings.ImageUploadRequired) requiredFields.push('profile');
 
@@ -1914,6 +1915,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('vehicle_color', this.settings.VehicleColorEnabled, this.settings.VehicleColorRequired);
     this.setupControl('visitor_address', this.settings.AddressEnabled, this.settings.AddressRequired);
     this.setupControl('country', this.settings.CountryEnabled, this.settings.CountryRequired);
+    this.setupControl('meeting_location', this.settings.RoomEnabled, this.settings.RoomRequired);
     this.setupControl('work_permit_ref', this.settings.WorkPermitRefEnabled, false);
     this.setupControl('remarks', this.settings.RemarksEnabled, this.settings.RemarksRequired);
     // Don't require host when it's auto-selected from the hc query param

@@ -286,6 +286,7 @@ export class WizardService {
       ImageUploadEnabled: false,
       WorkPermitRefEnabled: false,
       RemarksEnabled: false,
+      RoomEnabled: false,
       NDAEnabled: false,
     };
     settingsData = { ...fieldEnableDefaults, ...settingsData };
@@ -415,8 +416,10 @@ export class WizardService {
       loFinalData.FloorId = generalSettings.FloorEnabled ? (formData.general?.floor || '') : '';
       loFinalData.FloorDesc = generalSettings.FloorEnabled ? (formData.general?.floorDesc || '') : '';
 
-      loFinalData.RoomId = generalSettings.RoomEnabled ? (formData.general?.room || '') : '';
-      loFinalData.RoomDesc = generalSettings.RoomEnabled ? (formData.general?.roomDesc || '') : '';
+      const roomId = formData.general?.meeting_location?.toString() || formData.general?.room?.toString() || '';
+      const roomDesc = masterData?.Table1?.find((r: any) => (r.MeetingRoomSeqId || r.SeqId)?.toString() === roomId)?.MeetingRoomDesc || formData.general?.roomDesc || '';
+      loFinalData.RoomId = generalSettings.RoomEnabled ? roomId : '';
+      loFinalData.RoomDesc = generalSettings.RoomEnabled ? roomDesc : '';
 
       loFinalData.Remarks = generalSettings.RemarksEnabled ? (formData.general?.remarks || '') : '';
 
