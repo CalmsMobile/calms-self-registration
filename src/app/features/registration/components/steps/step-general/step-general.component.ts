@@ -144,6 +144,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   hostSearchText: string = '';
   showReturningVisitorPopup = false;
   searchQuery = '';
+  visitorNotFound = false;
   isHostSearching: boolean = false;
 
   // Original host data for filtering
@@ -2323,6 +2324,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       next: (response: any) => {
         const visitor = response?.Table1?.[0];
         if (!visitor) {
+          this.visitorNotFound = true;
           this.showMessage({ severity: 'warn', ...this.getAlert('no_visitor_found_alert') });
           return;
         }
@@ -2346,10 +2348,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           SafetyBriefVideoViewed: visitor.SafetyBriefVideoViewed
         });
 
+        this.visitorNotFound = false;
         this.applyVisitorToForm(visitor);
         this.showReturningVisitorPopup = false;
       },
       error: () => {
+        this.visitorNotFound = true;
         this.showMessage({ severity: 'error', ...this.getAlert('search_failed_message') });
       }
     });
