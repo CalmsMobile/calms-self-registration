@@ -256,8 +256,8 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/GetAppointmentDetailBySeqId`, loParam);
   }
 
-  AppointmentApprovalByVisitor(seqId: string, status: string, hostIc: string, cancelRemarks: string, actualStatus: string, hostSeqId: string | number) {
-    const loParam = {
+  AppointmentApprovalByVisitor(seqId: string, status: string, hostIc: string, cancelRemarks: string, actualStatus: string, hostSeqId: string | number, createdBy?: number | null, refApptApprovalLevelSeqId?: number | null) {
+    const loParam: any = {
       "SEQ_ID": seqId,
       "Status": status,
       "HOSTIC": hostIc,
@@ -265,6 +265,8 @@ export class ApiService {
       "ActualStatus": actualStatus,
       "Authorize": { "AuDeviceUID": "WEB", "AuHostSeqId": hostSeqId }
     };
+    if (createdBy != null) loParam["CreatedBy"] = createdBy;
+    if (refApptApprovalLevelSeqId != null) loParam["RefApptApprovalLevelSeqId"] = refApptApprovalLevelSeqId;
     return this.apiBase.post(`${this.baseUrl}/AppointmentApprovalByVisitor`, loParam);
   }
 

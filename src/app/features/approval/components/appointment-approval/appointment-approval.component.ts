@@ -36,6 +36,9 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   itemCaptions = { desc: 'Equipment Detail', serial: 'Serial Number', type: 'Type' };
   approvalSteps: any[] = [];
 
+  createdBy: number | null = null;
+  refApptApprovalLevelSeqId: number | null = null;
+
   isLoading = true;
   isSubmitting = false;
   errorMessage = '';
@@ -88,9 +91,11 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
         this.visitorImg = rawImg
           ? (rawImg.startsWith('data:') || rawImg.startsWith('http') ? rawImg : 'data:image/jpeg;base64,' + rawImg)
           : '';
-        this.approvalSteps = res.detail?.Table2 || [];
+        this.approvalSteps = res.detail?.Table5 || res.detail?.Table2 || [];
         this.seqId  = String(this.appointmentData?.SEQ_ID || '');
         this.hostIc = this.appointmentData?.STAFF_IC      || this.hostIc;
+        this.createdBy = this.appointmentData?.CreatedBy ?? null;
+        this.refApptApprovalLevelSeqId = this.appointmentData?.RefApptApprovalLevelSeqId ?? null;
 
         const branch     = this.appointmentData?.Branch           || this.clientConfig?.Branch || '';
         const visitorCtg = this.appointmentData?.Visitor_category || '';
@@ -184,7 +189,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     if (this.isSubmitting) return;
     this.isSubmitting = true;
     this.apiService.AppointmentApprovalByVisitor(
-      this.seqId, 'Approved', this.hostIc, '', '', this.hostSeqId
+      this.seqId, 'Approved', this.hostIc, '', '', this.hostSeqId, this.createdBy, this.refApptApprovalLevelSeqId
     ).subscribe({
       next: () => {
         this.isSubmitting = false;
@@ -201,7 +206,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     if (this.isSubmitting || !this.rejectRemarks.trim()) return;
     this.isSubmitting = true;
     this.apiService.AppointmentApprovalByVisitor(
-      this.seqId, 'Cancelled', this.hostIc, this.rejectRemarks, 'Rejected', this.hostSeqId
+      this.seqId, 'Cancelled', this.hostIc, this.rejectRemarks, 'Rejected', this.hostSeqId, this.createdBy, this.refApptApprovalLevelSeqId
     ).subscribe({
       next: () => {
         this.isSubmitting = false;
@@ -268,6 +273,10 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   }
 
   getStepStatusKey(step: any): 'approved' | 'progress' | 'pending' {
+    // Table5 fields: ApprovedBy (name), ApprovedOn (date)
+    if (step.ApprovedBy && step.ApprovedOn) return 'approved';
+    if (step.ApprovedBy && !step.ApprovedOn) return 'progress';
+    // Fallback for Table2 legacy fields
     const s = (step.ApprovalStatus || step.Status || step.Approval_Status || '').toLowerCase();
     if (s === 'approved' || s === 'a') return 'approved';
     if (s === 'in progress' || s === 'inprogress' || s === 'i') return 'progress';
