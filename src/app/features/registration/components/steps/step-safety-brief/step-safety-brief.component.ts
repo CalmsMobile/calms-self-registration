@@ -29,6 +29,7 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
   isFullscreen = false;
   videoSource = '';
   isReplaying = false; // Track if user is replaying video
+  isPausedMidVideo = false; // Track if video was paused due to visibility/focus loss
   videoDuration = 0;       // total duration in seconds (loaded from metadata)
   currentTime = 0;         // current playback position in seconds
   logo = 'assets/logo.png';
@@ -88,6 +89,11 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     
     // Add window focus listener to re-enable scroll if user switches tabs/windows
     window.addEventListener('focus', this.handleWindowFocus);
+    
+    // Pause video when tab is hidden (tab switch, minimize, OS switching)
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    // Pause video when another window covers the browser
+    window.addEventListener('blur', this.handleWindowBlur);
   }
 
   ngAfterViewInit(): void {
@@ -151,8 +157,11 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
       this.videoEnded = false;
       this.showReplay = false;
 
-      // Reset and prepare video
-      video.currentTime = 0;
+      // Only reset to beginning if starting fresh (not resuming after visibility/blur pause)
+      if (!this.isPausedMidVideo) {
+        video.currentTime = 0;
+      }
+      this.isPausedMidVideo = false;
 
       // Must be triggered by user gesture
       await video.play();
@@ -491,11 +500,39 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     
     // Remove window focus listener
     window.removeEventListener('focus', this.handleWindowFocus);
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    window.removeEventListener('blur', this.handleWindowBlur);
   }
   
   // Window focus handler to enable scroll when user returns to page
   private handleWindowFocus = () => {
-    console.log('Window focused - ensuring scroll enabled');
     setTimeout(() => this.forceEnableScroll(), 50);
   };
+
+  // Pause video when tab becomes hidden (tab switch, window minimize)
+  private handleVisibilityChange = () => {
+    if (document.hidden) {
+      this.pauseVideoOnHide();
+    }
+  };
+
+  // Pause video when window loses focus (another window/app comes to front)
+  private handleWindowBlur = () => {
+    this.pauseVideoOnHide();
+  };
+
+  /**
+   * Pause the video if it is currently playing mid-way.
+   * Shows the play overlay so the user can tap to resume.
+   */
+  private pauseVideoOnHide(): void {
+    const video = this.videoElement?.nativeElement;
+    if (video && !video.paused && !this.videoEnded) {
+      video.pause();
+      this.isPausedMidVideo = true;
+      this.showPlayButton = true;
+      // Exit fullscreen so the page is accessible when user returns
+      this.exitFullscreen();
+    }
+  }
 }
