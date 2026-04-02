@@ -154,6 +154,42 @@
   background-size: 18px 18px;
 }
 
+/* ── Inner banner (below wave, above body) ── */
+.pass-inner-banner {
+  padding: 10px 16px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.page-success .pass-inner-banner {
+  background: #eafff2;
+  color: #2b9b55;
+}
+
+.page-pending .pass-inner-banner {
+  background: #f8e7c2;
+  color: #9c7a10;
+}
+
+.page-error .pass-inner-banner {
+  background: #ead2cf;
+  color: #8b2020;
+}
+
+/* ── Card footer text (thank you / error message) ── */
+.card-footer-text {
+  text-align: center;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.6;
+  padding: 8px 4px 4px;
+
+  p + p { margin-top: 2px; }
+}
+
 .pass-body {
   padding: 18px 16px 16px;
 }

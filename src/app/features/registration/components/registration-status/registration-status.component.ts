@@ -10,7 +10,14 @@ export interface RegistrationData {
   approvalStatus?: string;   // raw Approval_Status from API e.g. "Pending"
   registrationId?: string;
   visitorName?: string;
+  email?: string;
+  visitFrom?: string;
+  visitTo?: string;
   meetingWith?: string;
+  meetingLocation?: string;
+  visitType?: string;
+  visitPurpose?: string;
+  // legacy fields
   visitDate?: string;
   time?: string;
   branch?: string;
@@ -69,16 +76,23 @@ export class RegistrationStatusComponent implements OnInit {
     return this.registrationData?.isAutoApproved ? 'success' : 'pending';
   }
 
-  get registrationId(): string { return this.registrationData?.registrationId || '—'; }
-  get visitorName(): string    { return this.registrationData?.visitorName || '—'; }
-  get meetingWith(): string    { return this.registrationData?.meetingWith || ''; }
-  get visitDate(): string      { return this.registrationData?.visitDate || ''; }
-  get time(): string           { return this.registrationData?.time || ''; }
-  get branch(): string         { return this.registrationData?.branch || ''; }
+  get registrationId(): string    { return this.registrationData?.registrationId || '—'; }
+  get visitorName(): string       { return this.registrationData?.visitorName || '—'; }
+  get email(): string             { return this.registrationData?.email || ''; }
+  get visitFrom(): string         { return this.registrationData?.visitFrom || ''; }
+  get visitTo(): string           { return this.registrationData?.visitTo || ''; }
+  get meetingWith(): string       { return this.registrationData?.meetingWith || ''; }
+  get meetingLocation(): string   { return this.registrationData?.meetingLocation || ''; }
+  get visitType(): string         { return this.registrationData?.visitType || ''; }
+  get visitPurpose(): string      { return this.registrationData?.visitPurpose || ''; }
+  get visitDate(): string         { return this.registrationData?.visitDate || ''; }
+  get time(): string              { return this.registrationData?.time || ''; }
+  get branch(): string            { return this.registrationData?.branch || ''; }
 
   get badgeText(): string {
     if (this.status === 'success') return (this.labelService.getLabel('approved', 'caption') || 'Approved').toUpperCase();
-    return this.status === 'pending' ? 'PENDING' : 'ERROR';
+    if (this.status === 'pending') return 'WAITING';
+    return 'ERROR';
   }
 
   get statusText(): string {
@@ -139,5 +153,7 @@ export class RegistrationStatusComponent implements OnInit {
   }
 
   onPrint() { this.printDocument.emit(); }
+  onDownloadPdf() { this.printDocument.emit(); }
+  onShareWhatsapp() { /* WhatsApp share — handled by parent or future implementation */ }
   onNewRegistration() { this.newRegistration.emit(); }
 }
