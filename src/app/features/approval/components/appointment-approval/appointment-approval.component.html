@@ -265,8 +265,7 @@
         @if (approvalSteps.length > 0) {
           <section class="approval-status" aria-label="Approval Status">
             <p class="approval-label">Approval Status</p>
-            <div class="approval-card">
-              @if (approvalSteps.length > 1) {
+            @if (approvalSteps.length > 1) {
                 <div class="approval-track" aria-hidden="true">
                   <div class="progress" [style.width]="approvalProgressWidth"></div>
                   <div class="dot"></div>
@@ -294,7 +293,6 @@
                   }
                 </div>
               }
-            </div>
           </section>
         }
       </div>
