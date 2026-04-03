@@ -51,7 +51,11 @@ export class ApiService {
         let globalIndex = 0;
 
         const processUDFs = (udfs: any[], udfPrefix: string) => {
-          (udfs || []).forEach((udf: any) => {
+          const sorted = (udfs || []).slice().sort((a: any, b: any) => {
+            const n = (s: string) => parseInt(s.replace(/\D/g, ''), 10) || 0;
+            return n(a.UDFName) - n(b.UDFName);
+          });
+          sorted.forEach((udf: any) => {
             table.push({
               UDFName: udf.UDFName,
               UDFCtrlType: udf.UDFCtrlType,

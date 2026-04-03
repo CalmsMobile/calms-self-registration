@@ -78,7 +78,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('title')) {
-        <small class="error-message">{{'title' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('title') }}</small>
         }
       </div>
       }
@@ -99,7 +99,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('fullName')) {
-        <small class="error-message">{{'full_name' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('full_name') }}</small>
         }
       </div>
       }
@@ -121,7 +121,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('visitor_id_type')) {
-        <small class="error-message">{{'id_type' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('id_type') }}</small>
         }
       </div>
       }
@@ -143,7 +143,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('visitor_id')) {
-        <small class="error-message">{{'nric' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('nric') }}</small>
         }
       </div>
       }
@@ -166,7 +166,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('id_expired_date')) {
-        <small class="error-message">{{'id_expired_date' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('id_expired_date') }}</small>
         }
       </div>
       }
@@ -187,7 +187,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('gender')) {
-        <small class="error-message">{{'gender' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('gender') }}</small>
         }
       </div>
       }
@@ -208,7 +208,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('phone')) {
-        <small class="error-message">{{'contact_number' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('contact_number') }}</small>
         }
       </div>
       }
@@ -231,7 +231,7 @@
         @if (isEmailFormatError()) {
         <small class="error-message">{{ 'error_invalid_email' | translate }}</small>
         } @else if (isFieldInvalidRequired('email')) {
-        <small class="error-message">{{'email_address' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('email_address') }}</small>
         }
       </div>
       }
@@ -253,73 +253,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('vehicle_number')) {
-        <small class="error-message">{{'vehicle_number' | translate}} is required</small>
-        }
-      </div>
-      }
-
-      <!-- Vehicle Brand -->
-      @if (settings?.VehicleBrandModelEnabled) {
-      <div class="form-field">
-        <label class="field-label" for="vehicle_brand">
-          {{'vehicle_brand' | translate}}
-          <span class="required-star">{{settings?.VehicleBrandModelRequired ? '*' : ''}}</span>
-        </label>
-        <div class="input-wrap">
-          <span class="field-icon"><i class="pi pi-car"></i></span>
-          <input pInputText id="vehicle_brand" [placeholder]="'vehicle_brand' | translate:'placeholder'"
-            formControlName="vehicle_brand" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_brand')}"
-            [disabled]="isFieldDisabled('vehicle_brand')">
-          @if (generalForm.get('vehicle_brand')?.value && !generalForm.get('vehicle_brand')?.disabled) {
-          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_brand')" tabindex="-1"><i class="pi pi-times"></i></button>
-          }
-        </div>
-        @if (isFieldInvalidRequired('vehicle_brand')) {
-        <small class="error-message">{{'vehicle_brand' | translate}} is required</small>
-        }
-      </div>
-      }
-
-      <!-- Vehicle Model -->
-      @if (settings?.VehicleBrandModelEnabled) {
-      <div class="form-field">
-        <label class="field-label" for="vehicle_model">
-          {{'vehicle_model' | translate}}
-          <span class="required-star">{{settings?.VehicleBrandModelRequired ? '*' : ''}}</span>
-        </label>
-        <div class="input-wrap">
-          <span class="field-icon"><i class="pi pi-cog"></i></span>
-          <input pInputText id="vehicle_model" [placeholder]="'vehicle_model' | translate:'placeholder'"
-            formControlName="vehicle_model" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_model')}"
-            [disabled]="isFieldDisabled('vehicle_model')">
-          @if (generalForm.get('vehicle_model')?.value && !generalForm.get('vehicle_model')?.disabled) {
-          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_model')" tabindex="-1"><i class="pi pi-times"></i></button>
-          }
-        </div>
-        @if (isFieldInvalidRequired('vehicle_model')) {
-        <small class="error-message">{{'vehicle_model' | translate}} is required</small>
-        }
-      </div>
-      }
-
-      <!-- Vehicle Color -->
-      @if (settings?.VehicleColorEnabled) {
-      <div class="form-field">
-        <label class="field-label" for="vehicle_color">
-          {{'vehicle_color' | translate}}
-          <span class="required-star">{{settings?.VehicleColorRequired ? '*' : ''}}</span>
-        </label>
-        <div class="input-wrap">
-          <span class="field-icon"><i class="pi pi-palette"></i></span>
-          <input pInputText id="vehicle_color" [placeholder]="'vehicle_color' | translate:'placeholder'"
-            formControlName="vehicle_color" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_color')}"
-            [disabled]="isFieldDisabled('vehicle_color')">
-          @if (generalForm.get('vehicle_color')?.value && !generalForm.get('vehicle_color')?.disabled) {
-          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_color')" tabindex="-1"><i class="pi pi-times"></i></button>
-          }
-        </div>
-        @if (isFieldInvalidRequired('vehicle_color')) {
-        <small class="error-message">{{'vehicle_color' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('vehicle_number') }}</small>
         }
       </div>
       }
@@ -347,7 +281,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('visitor_company')) {
-        <small class="error-message">{{'my_company' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('my_company') }}</small>
         }
       </div>
       }
@@ -369,7 +303,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('visitor_address')) {
-        <small class="error-message">{{'address' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('address') }}</small>
         }
       </div>
       }
@@ -390,7 +324,73 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('country')) {
-        <small class="error-message">{{'country' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('country') }}</small>
+        }
+      </div>
+      }
+
+      <!-- Vehicle Brand -->
+      @if (settings?.VehicleBrandModelEnabled) {
+      <div class="form-field">
+        <label class="field-label" for="vehicle_brand">
+          {{'vehicle_brand' | translate}}
+          <span class="required-star">{{settings?.VehicleBrandModelRequired ? '*' : ''}}</span>
+        </label>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-car"></i></span>
+          <input pInputText id="vehicle_brand" [placeholder]="'vehicle_brand' | translate:'placeholder'"
+            formControlName="vehicle_brand" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_brand')}"
+            [disabled]="isFieldDisabled('vehicle_brand')">
+          @if (generalForm.get('vehicle_brand')?.value && !generalForm.get('vehicle_brand')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_brand')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
+        </div>
+        @if (isFieldInvalidRequired('vehicle_brand')) {
+        <small class="error-message">{{ getRequiredError('vehicle_brand') }}</small>
+        }
+      </div>
+      }
+
+      <!-- Vehicle Model -->
+      @if (settings?.VehicleBrandModelEnabled) {
+      <div class="form-field">
+        <label class="field-label" for="vehicle_model">
+          {{'vehicle_model' | translate}}
+          <span class="required-star">{{settings?.VehicleBrandModelRequired ? '*' : ''}}</span>
+        </label>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-cog"></i></span>
+          <input pInputText id="vehicle_model" [placeholder]="'vehicle_model' | translate:'placeholder'"
+            formControlName="vehicle_model" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_model')}"
+            [disabled]="isFieldDisabled('vehicle_model')">
+          @if (generalForm.get('vehicle_model')?.value && !generalForm.get('vehicle_model')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_model')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
+        </div>
+        @if (isFieldInvalidRequired('vehicle_model')) {
+        <small class="error-message">{{ getRequiredError('vehicle_model') }}</small>
+        }
+      </div>
+      }
+
+      <!-- Vehicle Color -->
+      @if (settings?.VehicleColorEnabled) {
+      <div class="form-field">
+        <label class="field-label" for="vehicle_color">
+          {{'vehicle_color' | translate}}
+          <span class="required-star">{{settings?.VehicleColorRequired ? '*' : ''}}</span>
+        </label>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-palette"></i></span>
+          <input pInputText id="vehicle_color" [placeholder]="'vehicle_color' | translate:'placeholder'"
+            formControlName="vehicle_color" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_color')}"
+            [disabled]="isFieldDisabled('vehicle_color')">
+          @if (generalForm.get('vehicle_color')?.value && !generalForm.get('vehicle_color')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_color')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
+        </div>
+        @if (isFieldInvalidRequired('vehicle_color')) {
+        <small class="error-message">{{ getRequiredError('vehicle_color') }}</small>
         }
       </div>
       }
@@ -412,7 +412,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('work_permit_ref')) {
-        <small class="error-message">{{'permit_to_work_reference' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('permit_to_work_reference') }}</small>
         }
       </div>
       }
@@ -424,7 +424,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-align-left"></i></span>
@@ -437,13 +437,13 @@
           }
         </div>
         @if (isFieldRequired(udf.formControlName)) {
-        <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        <small class="error-message">{{ getUdfRequiredError(udf) }}</small>
         }
         @if (isFieldMinLengthError(udf.formControlName)) {
-        <small class="error-message">Minimum {{udf.MinLength}} characters required</small>
+        <small class="error-message">{{ getMinLengthError(udf.MinLength) }}</small>
         }
         @if (isFieldMaxLengthError(udf.formControlName)) {
-        <small class="error-message">Maximum {{udf.MaxLength}} characters allowed</small>
+        <small class="error-message">{{ getMaxLengthError(udf.MaxLength) }}</small>
         }
       </div>
       }
@@ -451,7 +451,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-list"></i></span>
@@ -471,7 +471,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-list"></i></span>
@@ -490,7 +490,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
@@ -500,7 +500,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        <small class="error-message">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -508,7 +508,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
@@ -518,7 +518,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        <small class="error-message">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -542,7 +542,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('host')) {
-        <small class="error-message">{{'whom_you_would_like_to_visit' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('whom_you_would_like_to_visit') }}</small>
         }
       </div>
       }
@@ -564,7 +564,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('department')) {
-        <small class="error-message">{{'department' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('department') }}</small>
         }
       </div>
       }
@@ -583,7 +583,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('sharedDate')) {
-        <small class="error-message">{{'date_placeholder' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('date_placeholder') }}</small>
         }
       </div>
       }
@@ -601,7 +601,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('facilityPurpose')) {
-        <small class="error-message">{{'purpose_of_your_visit?' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('purpose_of_your_visit?') }}</small>
         }
       </div>
       }
@@ -621,7 +621,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('facilitySelection')) {
-        <small class="error-message">{{'select_facility_placeholder' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('select_facility_placeholder') }}</small>
         }
       </div>
       }
@@ -644,7 +644,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('timeSlot')) {
-        <small class="error-message">{{'time_slot' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('time_slot') }}</small>
         }
         } @else {
         <div class="time-slot-empty">
@@ -715,7 +715,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('meeting_location')) {
-        <small class="error-message">{{'meeting_location' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('meeting_location') }}</small>
         }
       </div>
       }
@@ -735,7 +735,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('floor')) {
-        <small class="error-message">{{'floor' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('floor') }}</small>
         }
       </div>
       }
@@ -757,34 +757,12 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('purpose')) {
-        <small class="error-message">{{'purpose_of_your_visit?' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('purpose_of_your_visit?') }}</small>
         }
       </div>
       }
 
       <!-- 19. Remarks -->
-      @if (settings?.EventEnabled) {
-      <div class="form-field">
-        <label class="field-label" for="event_name">
-          {{'event' | translate}}
-          <span class="required-star">{{settings?.EventRequired ? '*' : ''}}</span>
-        </label>
-        <div class="input-wrap">
-          <span class="field-icon"><i class="pi pi-calendar-clock"></i></span>
-          <input pInputText id="event_name"
-            [placeholder]="'event' | translate:'placeholder'"
-            formControlName="event_name" [class]="{'ng-invalid': isFieldInvalidRequired('event_name')}"
-            [disabled]="isFieldDisabled('event_name')">
-          @if (generalForm.get('event_name')?.value && !generalForm.get('event_name')?.disabled) {
-          <button type="button" class="field-clear-btn" (click)="clearField('event_name')" tabindex="-1"><i class="pi pi-times"></i></button>
-          }
-        </div>
-        @if (isFieldInvalidRequired('event_name')) {
-        <small class="error-message">{{'event' | translate}} is required</small>
-        }
-      </div>
-      }
-
       @if (settings?.RemarksEnabled) {
       <div class="form-field">
         <label class="field-label" for="remarks">
@@ -802,8 +780,29 @@
           }
         </div>
         @if (isFieldInvalidRequired('remarks')) {
-        <small class="error-message">{{'would_you_like_to_add_comments_for_your_visit?' | translate}} is
-          required</small>
+        <small class="error-message">{{ getRequiredError('would_you_like_to_add_comments_for_your_visit?') }}</small>
+        }
+      </div>
+      }
+
+      @if (settings?.EventEnabled) {
+      <div class="form-field">
+        <label class="field-label" for="event_name">
+          {{'event' | translate}}
+          <span class="required-star">{{settings?.EventRequired ? '*' : ''}}</span>
+        </label>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-calendar-clock"></i></span>
+          <input pInputText id="event_name"
+            [placeholder]="'event' | translate:'placeholder'"
+            formControlName="event_name" [class]="{'ng-invalid': isFieldInvalidRequired('event_name')}"
+            [disabled]="isFieldDisabled('event_name')">
+          @if (generalForm.get('event_name')?.value && !generalForm.get('event_name')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('event_name')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
+        </div>
+        @if (isFieldInvalidRequired('event_name')) {
+        <small class="error-message">{{ getRequiredError('event') }}</small>
         }
       </div>
       }
@@ -845,7 +844,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('appointmentDate')) {
-        <small class="error-message">{{'appointment_date' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('appointment_date') }}</small>
         }
       </div>
       }
@@ -868,7 +867,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('timeSlot')) {
-        <small class="error-message">{{'time_slot' | translate}} is required</small>
+        <small class="error-message">{{ getRequiredError('time_slot') }}</small>
         }
         } @else {
         <div class="time-slot-empty">
@@ -888,7 +887,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-align-left"></i></span>
@@ -901,13 +900,13 @@
           }
         </div>
         @if (isFieldRequired(udf.formControlName)) {
-        <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        <small class="error-message">{{ getUdfRequiredError(udf) }}</small>
         }
         @if (isFieldMinLengthError(udf.formControlName)) {
-        <small class="error-message">Minimum {{udf.MinLength}} characters required</small>
+        <small class="error-message">{{ getMinLengthError(udf.MinLength) }}</small>
         }
         @if (isFieldMaxLengthError(udf.formControlName)) {
-        <small class="error-message">Maximum {{udf.MaxLength}} characters allowed</small>
+        <small class="error-message">{{ getMaxLengthError(udf.MaxLength) }}</small>
         }
       </div>
       }
@@ -915,7 +914,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-list"></i></span>
@@ -935,7 +934,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-list"></i></span>
@@ -954,7 +953,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
@@ -964,7 +963,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        <small class="error-message">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -972,7 +971,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
@@ -982,7 +981,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="error-message">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        <small class="error-message">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -1102,7 +1101,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('title')) {
-        <small class="m-error">{{'title' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('title') }}</small>
         }
       </div>
       }
@@ -1120,7 +1119,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('fullName')) {
-        <small class="m-error">{{'full_name' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('full_name') }}</small>
         }
       </div>
       }
@@ -1139,7 +1138,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('visitor_id_type')) {
-        <small class="m-error">{{'id_type' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('id_type') }}</small>
         }
       </div>
       }
@@ -1158,7 +1157,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('visitor_id')) {
-        <small class="m-error">{{'nric' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('nric') }}</small>
         }
       </div>
       }
@@ -1176,7 +1175,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('id_expired_date')) {
-        <small class="m-error">{{'id_expired_date' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('id_expired_date') }}</small>
         }
       </div>
       }
@@ -1194,7 +1193,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('gender')) {
-        <small class="m-error">{{'gender' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('gender') }}</small>
         }
       </div>
       }
@@ -1212,7 +1211,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('phone')) {
-        <small class="m-error">{{'contact_number' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('contact_number') }}</small>
         }
       </div>
       }
@@ -1232,7 +1231,7 @@
         @if (isEmailFormatError()) {
         <small class="m-error">{{ 'error_invalid_email' | translate }}</small>
         } @else if (isFieldInvalidRequired('email')) {
-        <small class="m-error">{{'email_address' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('email_address') }}</small>
         }
       </div>
       }
@@ -1251,64 +1250,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('vehicle_number')) {
-        <small class="m-error">{{'vehicle_number' | translate}} is required</small>
-        }
-      </div>
-      }
-
-      <!-- Vehicle Brand -->
-      @if (settings?.VehicleBrandModelEnabled) {
-      <div class="m-form-field">
-        <label class="m-field-label">{{'vehicle_brand' | translate}} <span class="m-req">{{settings?.VehicleBrandModelRequired ? '*' : ''}}</span></label>
-        <div class="m-input-wrap">
-          <span class="m-field-icon"><i class="pi pi-car"></i></span>
-          <input pInputText [placeholder]="'vehicle_brand' | translate:'placeholder'"
-            formControlName="vehicle_brand" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_brand')}"
-            [disabled]="isFieldDisabled('vehicle_brand')">
-          @if (generalForm.get('vehicle_brand')?.value && !generalForm.get('vehicle_brand')?.disabled) {
-          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_brand')" tabindex="-1"><i class="pi pi-times"></i></button>
-          }
-        </div>
-        @if (isFieldInvalidRequired('vehicle_brand')) {
-        <small class="m-error">{{'vehicle_brand' | translate}} is required</small>
-        }
-      </div>
-      }
-
-      <!-- Vehicle Model -->
-      @if (settings?.VehicleBrandModelEnabled) {
-      <div class="m-form-field">
-        <label class="m-field-label">{{'vehicle_model' | translate}} <span class="m-req">{{settings?.VehicleBrandModelRequired ? '*' : ''}}</span></label>
-        <div class="m-input-wrap">
-          <span class="m-field-icon"><i class="pi pi-cog"></i></span>
-          <input pInputText [placeholder]="'vehicle_model' | translate:'placeholder'"
-            formControlName="vehicle_model" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_model')}"
-            [disabled]="isFieldDisabled('vehicle_model')">
-          @if (generalForm.get('vehicle_model')?.value && !generalForm.get('vehicle_model')?.disabled) {
-          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_model')" tabindex="-1"><i class="pi pi-times"></i></button>
-          }
-        </div>
-        @if (isFieldInvalidRequired('vehicle_model')) {
-        <small class="m-error">{{'vehicle_model' | translate}} is required</small>
-        }
-      </div>
-      }
-
-      <!-- Vehicle Color -->
-      @if (settings?.VehicleColorEnabled) {
-      <div class="m-form-field">
-        <label class="m-field-label">{{'vehicle_color' | translate}} <span class="m-req">{{settings?.VehicleColorRequired ? '*' : ''}}</span></label>
-        <div class="m-input-wrap">
-          <span class="m-field-icon"><i class="pi pi-palette"></i></span>
-          <input pInputText [placeholder]="'vehicle_color' | translate:'placeholder'"
-            formControlName="vehicle_color" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_color')}"
-            [disabled]="isFieldDisabled('vehicle_color')">
-          @if (generalForm.get('vehicle_color')?.value && !generalForm.get('vehicle_color')?.disabled) {
-          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_color')" tabindex="-1"><i class="pi pi-times"></i></button>
-          }
-        </div>
-        @if (isFieldInvalidRequired('vehicle_color')) {
-        <small class="m-error">{{'vehicle_color' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('vehicle_number') }}</small>
         }
       </div>
       }
@@ -1333,7 +1275,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('visitor_company')) {
-        <small class="m-error">{{'my_company' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('my_company') }}</small>
         }
       </div>
       }
@@ -1352,7 +1294,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('visitor_address')) {
-        <small class="m-error">{{'address' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('address') }}</small>
         }
       </div>
       }
@@ -1370,7 +1312,64 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('country')) {
-        <small class="m-error">{{'country' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('country') }}</small>
+        }
+      </div>
+      }
+
+      <!-- Vehicle Brand -->
+      @if (settings?.VehicleBrandModelEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'vehicle_brand' | translate}} <span class="m-req">{{settings?.VehicleBrandModelRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-car"></i></span>
+          <input pInputText [placeholder]="'vehicle_brand' | translate:'placeholder'"
+            formControlName="vehicle_brand" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_brand')}"
+            [disabled]="isFieldDisabled('vehicle_brand')">
+          @if (generalForm.get('vehicle_brand')?.value && !generalForm.get('vehicle_brand')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_brand')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
+        </div>
+        @if (isFieldInvalidRequired('vehicle_brand')) {
+        <small class="m-error">{{ getRequiredError('vehicle_brand') }}</small>
+        }
+      </div>
+      }
+
+      <!-- Vehicle Model -->
+      @if (settings?.VehicleBrandModelEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'vehicle_model' | translate}} <span class="m-req">{{settings?.VehicleBrandModelRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-cog"></i></span>
+          <input pInputText [placeholder]="'vehicle_model' | translate:'placeholder'"
+            formControlName="vehicle_model" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_model')}"
+            [disabled]="isFieldDisabled('vehicle_model')">
+          @if (generalForm.get('vehicle_model')?.value && !generalForm.get('vehicle_model')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_model')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
+        </div>
+        @if (isFieldInvalidRequired('vehicle_model')) {
+        <small class="m-error">{{ getRequiredError('vehicle_model') }}</small>
+        }
+      </div>
+      }
+
+      <!-- Vehicle Color -->
+      @if (settings?.VehicleColorEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'vehicle_color' | translate}} <span class="m-req">{{settings?.VehicleColorRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-palette"></i></span>
+          <input pInputText [placeholder]="'vehicle_color' | translate:'placeholder'"
+            formControlName="vehicle_color" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_color')}"
+            [disabled]="isFieldDisabled('vehicle_color')">
+          @if (generalForm.get('vehicle_color')?.value && !generalForm.get('vehicle_color')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('vehicle_color')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
+        </div>
+        @if (isFieldInvalidRequired('vehicle_color')) {
+        <small class="m-error">{{ getRequiredError('vehicle_color') }}</small>
         }
       </div>
       }
@@ -1389,7 +1388,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('work_permit_ref')) {
-        <small class="m-error">{{'permit_to_work_reference' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('permit_to_work_reference') }}</small>
         }
       </div>
       }
@@ -1399,7 +1398,7 @@
       @if (udf.Enabled && udf.udfPrefix === 'v') {
       @if (udf.UDFCtrlType === 10) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-align-left"></i></span>
           <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
@@ -1410,13 +1409,13 @@
           }
         </div>
         @if (isFieldRequired(udf.formControlName)) {
-        <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        <small class="m-error">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
       @if (udf.UDFCtrlType === 20) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-list"></i></span>
           <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
@@ -1433,7 +1432,7 @@
       }
       @if (udf.UDFCtrlType === 30) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-list"></i></span>
           <p-multiSelect [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
@@ -1449,7 +1448,7 @@
       }
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
@@ -1458,13 +1457,13 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        <small class="m-error">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
@@ -1473,7 +1472,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        <small class="m-error">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -1493,7 +1492,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('host')) {
-        <small class="m-error">{{'whom_you_would_like_to_visit' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('whom_you_would_like_to_visit') }}</small>
         }
       </div>
       }
@@ -1511,7 +1510,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('department')) {
-        <small class="m-error">{{'department' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('department') }}</small>
         }
       </div>
       }
@@ -1529,7 +1528,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('sharedDate')) {
-        <small class="m-error">{{'date_placeholder' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('date_placeholder') }}</small>
         }
       </div>
       }
@@ -1545,7 +1544,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('facilityPurpose')) {
-        <small class="m-error">{{'purpose_of_your_visit?' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('purpose_of_your_visit?') }}</small>
         }
       </div>
       }
@@ -1563,7 +1562,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('facilitySelection')) {
-        <small class="m-error">{{'select_facility_placeholder' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('select_facility_placeholder') }}</small>
         }
       </div>
       }
@@ -1582,7 +1581,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('timeSlot')) {
-        <small class="m-error">{{'time_slot' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('time_slot') }}</small>
         }
         } @else {
         <div class="time-slot-empty"><i class="pi pi-calendar-times"></i><span>{{ 'no_time_slots_available' | translate }}</span></div>
@@ -1602,7 +1601,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('meeting_location')) {
-        <small class="m-error">{{'meeting_location' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('meeting_location') }}</small>
         }
       </div>
       }
@@ -1619,7 +1618,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('floor')) {
-        <small class="m-error">{{'floor' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('floor') }}</small>
         }
       </div>
       }
@@ -1637,31 +1636,12 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('purpose')) {
-        <small class="m-error">{{'purpose_of_your_visit?' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('purpose_of_your_visit?') }}</small>
         }
       </div>
       }
 
       <!-- 19. Remarks -->
-      @if (settings?.EventEnabled) {
-      <div class="m-form-field">
-        <label class="m-field-label">{{'event' | translate}} <span class="m-req">{{settings?.EventRequired ? '*' : ''}}</span></label>
-        <div class="m-input-wrap">
-          <span class="m-field-icon"><i class="pi pi-calendar-clock"></i></span>
-          <input pInputText
-            [placeholder]="'event' | translate:'placeholder'"
-            formControlName="event_name" [class]="{'ng-invalid': isFieldInvalidRequired('event_name')}"
-            [disabled]="isFieldDisabled('event_name')">
-          @if (generalForm.get('event_name')?.value && !generalForm.get('event_name')?.disabled) {
-          <button type="button" class="field-clear-btn" (click)="clearField('event_name')" tabindex="-1"><i class="pi pi-times"></i></button>
-          }
-        </div>
-        @if (isFieldInvalidRequired('event_name')) {
-        <small class="m-error">{{'event' | translate}} is required</small>
-        }
-      </div>
-      }
-
       @if (settings?.RemarksEnabled) {
       <div class="m-form-field">
         <label class="m-field-label">{{'would_you_like_to_add_comments_for_your_visit?' | translate}} <span class="m-req">{{settings?.RemarksRequired ? '*' : ''}}</span></label>
@@ -1676,7 +1656,26 @@
           }
         </div>
         @if (isFieldInvalidRequired('remarks')) {
-        <small class="m-error">{{'would_you_like_to_add_comments_for_your_visit?' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('would_you_like_to_add_comments_for_your_visit?') }}</small>
+        }
+      </div>
+      }
+
+      @if (settings?.EventEnabled) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'event' | translate}} <span class="m-req">{{settings?.EventRequired ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-calendar-clock"></i></span>
+          <input pInputText
+            [placeholder]="'event' | translate:'placeholder'"
+            formControlName="event_name" [class]="{'ng-invalid': isFieldInvalidRequired('event_name')}"
+            [disabled]="isFieldDisabled('event_name')">
+          @if (generalForm.get('event_name')?.value && !generalForm.get('event_name')?.disabled) {
+          <button type="button" class="field-clear-btn" (click)="clearField('event_name')" tabindex="-1"><i class="pi pi-times"></i></button>
+          }
+        </div>
+        @if (isFieldInvalidRequired('event_name')) {
+        <small class="m-error">{{ getRequiredError('event') }}</small>
         }
       </div>
       }
@@ -1713,7 +1712,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('appointmentDate')) {
-        <small class="m-error">{{'appointment_date' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('appointment_date') }}</small>
         }
       </div>
       }
@@ -1732,7 +1731,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('timeSlot')) {
-        <small class="m-error">{{'time_slot' | translate}} is required</small>
+        <small class="m-error">{{ getRequiredError('time_slot') }}</small>
         }
         } @else {
         <div class="time-slot-empty"><i class="pi pi-calendar-times"></i><span>{{ 'no_time_slots_available' | translate }}</span></div>
@@ -1747,7 +1746,7 @@
       @if (udf.Enabled && udf.udfPrefix === 'a') {
       @if (udf.UDFCtrlType === 10) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-align-left"></i></span>
           <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
@@ -1758,13 +1757,13 @@
           }
         </div>
         @if (isFieldRequired(udf.formControlName)) {
-        <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        <small class="m-error">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
       @if (udf.UDFCtrlType === 20) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-list"></i></span>
           <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
@@ -1781,7 +1780,7 @@
       }
       @if (udf.UDFCtrlType === 30) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-list"></i></span>
           <p-multiSelect [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
@@ -1797,7 +1796,7 @@
       }
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
@@ -1806,13 +1805,13 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        <small class="m-error">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
@@ -1821,7 +1820,7 @@
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="m-error">{{(udf.translateKey | translate) || udf.Caption}} is required</small>
+        <small class="m-error">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
