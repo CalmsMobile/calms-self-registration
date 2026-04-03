@@ -299,6 +299,14 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     return 'Pending';
   }
 
+  get showApprove(): boolean {
+    return this.appointmentData?.ShowApprove === true || this.appointmentData?.ShowApprove === 1;
+  }
+
+  get showReject(): boolean {
+    return this.appointmentData?.ShowReject === true || this.appointmentData?.ShowReject === 1;
+  }
+
   get approvalProgressWidth(): string {
     if (!this.approvalSteps.length) return '0%';
     const approvedCount = this.approvalSteps.filter(s => this.getStepStatusKey(s) === 'approved').length;

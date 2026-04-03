@@ -20,14 +20,18 @@
       </div>
     </div>
     <div class="desktop-actions" aria-label="Actions">
-      <button class="btn btn-reject" type="button" (click)="openModal('reject-modal')">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
-        Reject
-      </button>
-      <button class="btn btn-approve" type="button" (click)="openModal('approve-modal')">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>
-        Approve
-      </button>
+      @if (showReject) {
+        <button class="btn btn-reject" type="button" (click)="openModal('reject-modal')">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          Reject
+        </button>
+      }
+      @if (showApprove) {
+        <button class="btn btn-approve" type="button" (click)="openModal('approve-modal')">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>
+          Approve
+        </button>
+      }
     </div>
   </header>
 
@@ -262,10 +266,12 @@
           <section class="approval-status" aria-label="Approval Status">
             <p class="approval-label">Approval Status</p>
             <div class="approval-card">
-              <div class="approval-track" aria-hidden="true">
-                <div class="progress" [style.width]="approvalProgressWidth"></div>
-                <div class="dot"></div>
-              </div>
+              @if (approvalSteps.length > 1) {
+                <div class="approval-track" aria-hidden="true">
+                  <div class="progress" [style.width]="approvalProgressWidth"></div>
+                  <div class="dot"></div>
+                </div>
+              }
               @for (step of approvalSteps; track $index) {
                 <div class="approval-step">
                   <div [class]="getStepClass(step)">{{ getInitials(step.ApprovedBy || step.ApproverName || step.HostName) }}</div>
@@ -297,16 +303,22 @@
 
   <footer class="footer">&copy; 2026 CALMS Technologies. Secure Approval System.</footer>
 
-  <div class="mobile-action-bar" aria-label="Mobile Actions">
-    <button class="btn btn-reject" type="button" (click)="openModal('reject-modal')">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
-      Reject
-    </button>
-    <button class="btn btn-approve" type="button" (click)="openModal('approve-modal')">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>
-      Approve
-    </button>
-  </div>
+  @if (showApprove || showReject) {
+    <div class="mobile-action-bar" aria-label="Mobile Actions">
+      @if (showReject) {
+        <button class="btn btn-reject" type="button" (click)="openModal('reject-modal')">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          Reject
+        </button>
+      }
+      @if (showApprove) {
+        <button class="btn btn-approve" type="button" (click)="openModal('approve-modal')">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10" /></svg>
+          Approve
+        </button>
+      }
+    </div>
+  }
 </div>
 
 <!-- Modal overlay -->

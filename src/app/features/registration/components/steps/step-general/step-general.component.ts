@@ -662,8 +662,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     ).subscribe((udfSettings: any) => {
       this.udfSettings = (udfSettings.Table || []).map((udf: any) => ({
         ...udf,
-        Enabled: !!this.settings?.[udf.UDFName + 'Enabled'],
-        Required: !!this.settings?.[udf.UDFName + 'Required'],
+        Enabled: !!this.settings?.[udf.udfPrefix === 'v' ? udf.formControlName + 'Enabled' : udf.UDFName + 'Enabled'],
+        Required: !!this.settings?.[udf.udfPrefix === 'v' ? udf.formControlName + 'Required' : udf.UDFName + 'Required'],
         translateKey: (udf.udfPrefix || 'a') + udf.UDFName.toLowerCase()
       }));
       this.udfOptions = udfSettings.Table1;
@@ -1366,6 +1366,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       visitor_address: [isPreFilledData ? (visitorData.address || savedData.visitor_address || '') : (savedData.visitor_address || '')],
       country: [isPreFilledData ? (visitorData.countryId || savedData.country || null) : (savedData.country || null)],
       work_permit_ref: [savedData.work_permit_ref || ''],
+      event_name: [savedData.event_name || ''],
       remarks: [isPreFilledData ? (visitorData.remarks || savedData.remarks || '') : (savedData.remarks || '')],
       host: [savedData.host || (this.shouldHideHostControl ? this.defaultHostId : null) || (this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery ? this.wizardService.hostCodeFromQuery : null)],
       startDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.startDate || '')],
@@ -1916,7 +1917,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('visitor_address', this.settings.AddressEnabled, this.settings.AddressRequired);
     this.setupControl('country', this.settings.CountryEnabled, this.settings.CountryRequired);
     this.setupControl('meeting_location', this.settings.RoomEnabled, this.settings.RoomRequired);
-    this.setupControl('work_permit_ref', this.settings.WorkPermitRefEnabled, false);
+    this.setupControl('work_permit_ref', this.settings.WorkPermitRefEnabled, this.settings.WorkPermitRefRequired);
+    this.setupControl('event_name', this.settings.EventEnabled, this.settings.EventRequired);
     this.setupControl('remarks', this.settings.RemarksEnabled, this.settings.RemarksRequired);
     // Don't require host when it's auto-selected from the hc query param
     const hostRequired = this.settings.HostNameRequired && !(this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery);
@@ -2428,6 +2430,30 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const control = this.generalForm.get(field);
     if (!control || !control.enabled) return false;
     return control.hasError('maxlength') && (control.dirty || control.touched);
+  }
+
+  getRequiredError(fieldKey: string): string {
+    const key = fieldKey?.trim()?.toLowerCase().replace(/\s+/g, '_') || '';
+    const template = this.labelService.getLabel('error_required', 'caption') || '{Field} is required';
+    const fieldLabel = this.labelService.getLabel(key, 'caption') || fieldKey;
+    return template.replace('{Field}', fieldLabel);
+  }
+
+  getUdfRequiredError(udf: any): string {
+    const template = this.labelService.getLabel('error_required', 'caption') || '{Field} is required';
+    const key = udf.translateKey?.trim()?.toLowerCase().replace(/\s+/g, '_') || '';
+    const label = this.labelService.getLabel(key, 'caption') || udf.Caption || udf.UDFName || '';
+    return template.replace('{Field}', label);
+  }
+
+  getMinLengthError(min: number): string {
+    const template = this.labelService.getLabel('error_min_length', 'caption') || 'Minimum {udf.MinLength} characters required';
+    return template.replace('{udf.MinLength}', String(min));
+  }
+
+  getMaxLengthError(max: number): string {
+    const template = this.labelService.getLabel('error_max_length', 'caption') || 'Maximum {udf.MaxLength} characters required';
+    return template.replace('{udf.MaxLength}', String(max));
   }
 
   handleFileUpload(event: any, visitorIndex?: number, closeDialog = false): void {
