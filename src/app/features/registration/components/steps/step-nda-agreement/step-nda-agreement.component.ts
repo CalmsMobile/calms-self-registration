@@ -40,7 +40,7 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   companyTitle = '';
 
   get formattedPageTitle(): { first: string; rest: string } {
-    const text = this.labelService.getLabel('nda_title', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
+    const text = this.labelService.getLabel('nda_agreement_page_title', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
     const i = text.indexOf(' ');
     return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
   }

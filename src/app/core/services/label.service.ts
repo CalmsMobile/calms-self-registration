@@ -21,17 +21,24 @@ export class LabelService {
 
   updateLabels(settings: any[]): void {
     const labelConfig: LabelConfig = {};
-    
+
     settings.forEach(item => {
       //if (item.SettingType === "CP" && item.Caption) {
       if (item.SettingType === "CP" || item.SettingType === "SW") {
-        const key = this.getLabelKey(item);
-        labelConfig[key] = {
+        const titleKey = this.getLabelKey(item);
+        const value = {
           caption: item.Caption,
           placeholder: item.Placeholder,
           title: item.Title,
           settingType: item.SettingType
         };
+        labelConfig[titleKey] = value;
+
+        // Also store with screen-prefixed key to avoid conflicts across screens
+        if (item.ScreenName) {
+          const screenPrefix = item.ScreenName.toLowerCase().replace(/\s+/g, '_');
+          labelConfig[`${screenPrefix}_${titleKey}`] = value;
+        }
       }
     });    this.labels$.next(labelConfig);
   }

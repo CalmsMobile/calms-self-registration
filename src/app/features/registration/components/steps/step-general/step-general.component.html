@@ -32,7 +32,7 @@
       }
       </div>
     </div>
-    <p class="subtitle">{{'please_provide_your_details' | translate}}</p>
+    <p class="subtitle">{{'registration_page_instruction' | translate}}</p>
   </section>
   <hr class="title-divider">
 
@@ -1020,10 +1020,10 @@
   <section class="m-top-section">
     <div class="m-left-title">
       <h2 class="m-hero-title">
-        <span class="m-accent">{{'visitor_name' | translate}}</span>
-        <span class="m-normal">{{'instruction' | translate}}</span>
+        <span class="m-accent">{{ formattedPageTitle.first }}</span>
+        <span class="m-normal">{{ formattedPageTitle.rest }}</span>
       </h2>
-      <p class="m-hero-subtext">{{'please_provide_your_details' | translate}}</p>
+      <p class="m-hero-subtext">{{'registration_page_instruction' | translate}}</p>
     </div>
     <div class="m-top-actions">
       @if (isMultipleVisitorMode && savedVisitors.length > 0) {
