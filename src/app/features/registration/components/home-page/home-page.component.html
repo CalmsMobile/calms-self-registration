@@ -193,16 +193,15 @@
   <!-- ===== STATE 1: No branch yet — hero image layout ===== -->
   @if (!selectedBranch && branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
   <div class="m-hero">
-    <app-language-selector class="m-lang"></app-language-selector>
+    <!-- <app-language-selector class="m-lang"></app-language-selector> -->
   </div>
   <div class="m-content">
     <img [src]="logo" alt="Company Logo" class="m-logo" />
     <p class="m-company-name">{{ title }}</p>
     <h1 class="m-welcome">{{ 'home_page_page_title' | translate }}</h1>
-    <p class="m-subtitle">{{ 'branch' | translate }}</p>
     <div class="m-form">
       <div class="m-field-group">
-        <div class="m-label">{{ branchTranslation.caption || ('branch' | translate) }}</div>
+        <div class="m-label" style="text-align: center;">{{ branchTranslation.caption || ('branch' | translate) }}</div>
         <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
           [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
           optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"

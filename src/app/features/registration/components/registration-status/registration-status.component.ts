@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LabelService } from '../../../../core/services/label.service';
 import { ApiService } from '../../../../core/services/api.service';
@@ -24,7 +24,9 @@ export interface RegistrationData {
   // QR (success state)
   visitorId?: string;
   qrCodeData?: string;
-  isDynamicQR?: boolean;
+  IsDynamicQR?: boolean;        // API response property (capital I)
+  isDynamicQR?: boolean;        // Alternate property name
+  DynamicQrIntervalSec?: number | string;  // Refresh interval in seconds (can be string from API)
   // legacy support
   isAutoApproved?: boolean;
 }
@@ -36,7 +38,7 @@ export interface RegistrationData {
   templateUrl: './registration-status.component.html',
   styleUrl: './registration-status.component.scss'
 })
-export class RegistrationStatusComponent implements OnInit {
+export class RegistrationStatusComponent implements OnInit, OnDestroy {
   @Input() registrationData!: RegistrationData;
   /** Controlled by the page component based on how the app was started. */
   @Input() showNewRegistration: boolean = true;
@@ -44,6 +46,10 @@ export class RegistrationStatusComponent implements OnInit {
   @Output() printDocument = new EventEmitter<void>();
   qrCodeBase64 = '';
   qrCodeLoading = true;
+  qrCodeError = false;
+  qrCountdown = 0;
+  private qrRefreshInterval: any = null;
+  private qrCountdownInterval: any = null;
 
   readonly companyName = 'CALMS Technologies';
 
@@ -64,7 +70,33 @@ export class RegistrationStatusComponent implements OnInit {
   ngOnInit() {
     if (this.status === 'success' && this.qrCodeValue) {
       this.fetchQrCodeData();
+      
+      // If dynamic QR, set up auto-refresh
+      if (this.isDynamicQREnabled && this.getRefreshIntervalSec) {
+        const intervalSec = this.getRefreshIntervalSec;
+        if (intervalSec > 0) {
+          this.qrCountdown = intervalSec;
+          
+          // Refresh QR code at specified interval
+          this.qrRefreshInterval = setInterval(() => {
+            this.fetchQrCodeData();
+            this.qrCountdown = intervalSec;
+          }, intervalSec * 1000);
+          
+          // Update countdown every second
+          this.qrCountdownInterval = setInterval(() => {
+            if (this.qrCountdown > 0) {
+              this.qrCountdown--;
+            }
+          }, 1000);
+        }
+      }
     }
+  }
+
+  ngOnDestroy() {
+    if (this.qrRefreshInterval) clearInterval(this.qrRefreshInterval);
+    if (this.qrCountdownInterval) clearInterval(this.qrCountdownInterval);
   }
 
   get status(): 'success' | 'pending' | 'error' {
@@ -99,22 +131,57 @@ export class RegistrationStatusComponent implements OnInit {
     return this.registrationData?.visitorId || this.registrationData?.qrCodeData || '';
   }
 
+  private get isDynamicQREnabled(): boolean {
+    return !!(this.registrationData?.IsDynamicQR || this.registrationData?.isDynamicQR);
+  }
+
+  private get getRefreshIntervalSec(): number {
+    const interval = this.registrationData?.DynamicQrIntervalSec;
+    return interval ? Number(interval) : 0;
+  }
+
   private fetchQrCodeData(): void {
     const qrData = this.qrCodeValue;
     if (!qrData) return;
 
-    const loParam: any = { SEQ_ID: qrData, SeqIdEncrypted: false };
-    if (this.registrationData?.isDynamicQR) {
-      loParam.CurrentDate = this.formatDateAsKendo(new Date());
-    }
+    this.qrCodeLoading = true;
+    this.qrCodeError = false;
 
-    this.api.GetVisitorDataForQRCode(loParam).subscribe({
-      next: (poReturn: any) => this.handleQrCodeResponse(poReturn),
-      error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to generate QR code.' })
-    });
+    if (this.registrationData?.isDynamicQR) {
+      // Dynamic QR: call GetVisitorDataForQRCodeDynamic with SeqIdEncrypted true
+      const loParam: any = { SEQ_ID: qrData, SeqIdEncrypted: false };
+      this.api.GetVisitorDataForQRCodeDynamic(loParam).subscribe({
+        next: (poReturn: any) => this.handleQrCodeResponse(poReturn),
+        error: () => {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to generate QR code.' });
+          this.qrCodeLoading = false;
+          this.qrCodeError = true;
+        }
+      });
+    } else {
+      // Static QR: call GetVisitorDataForQRCode with SeqIdEncrypted false
+      const loParam: any = { SEQ_ID: qrData, SeqIdEncrypted: false };
+      this.api.GetVisitorDataForQRCode(loParam).subscribe({
+        next: (poReturn: any) => this.handleQrCodeResponse(poReturn),
+        error: () => {
+          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to generate QR code.' });
+          this.qrCodeLoading = false;
+          this.qrCodeError = true;
+        }
+      });
+    }
   }
 
   private handleQrCodeResponse(poData: any): void {
+    // Check for API error response structure (Status: false means error)
+    if (poData && poData.Status === false) {
+      const errorDetail = poData.ErrorLog?.[0]?.Error || 'Failed to generate QR code.';
+      this.messageService.add({ severity: 'error', summary: 'Error', detail: errorDetail });
+      this.qrCodeLoading = false;
+      this.qrCodeError = true;
+      return;
+    }
+
     if (poData.Table?.length > 0) {
       const code = poData.Table[0].code?.toUpperCase();
       const msgMap: Record<string, string> = {
@@ -127,16 +194,26 @@ export class RegistrationStatusComponent implements OnInit {
       if (msgMap[code]) {
         this.messageService.add({ severity: 'info', summary: 'Oops...', detail: msgMap[code] });
         this.qrCodeLoading = false;
+        this.qrCodeError = true;
         return;
       }
     }
     const loResult = poData.Table1?.[0];
     if (loResult?.DataString) {
-      this.qrCodeBase64 = `data:image/png;base64,${loResult.DataString}`;
-      this.qrCodeLoading = true; // Reset for new image
+      const newBase64 = `data:image/png;base64,${loResult.DataString}`;
+      const isFirstLoad = !this.qrCodeBase64;
+      this.qrCodeBase64 = newBase64;
+      this.qrCodeError = false;
+      // Only show loader on first load; on refresh the data URI renders instantly
+      this.qrCodeLoading = isFirstLoad;
     } else {
       this.qrCodeLoading = false;
+      this.qrCodeError = true;
     }
+  }
+
+  onRetryQrCode(): void {
+    this.fetchQrCodeData();
   }
 
   private formatDateAsKendo(date: Date): string {

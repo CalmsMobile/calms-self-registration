@@ -348,7 +348,8 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               // api-base.service unwraps response[0].Data, so response = { Table: [...] }
               const responseData = response?.Table?.[0];
               const isAutoApproved = responseData?.AutoApprove === 1 || responseData?.AutoApprove === true;
-              const isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1;
+              const isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1 || responseData?.IsDynamicQR === 'true';
+              const dynamicQrIntervalSec = responseData?.DynamicQrIntervalSec ? Number(responseData.DynamicQrIntervalSec) : 0;
               const approvalStatus: string = responseData?.Approval_Status || (isAutoApproved ? 'Approved' : 'Pending');
 
               // Get branch info and start-mode BEFORE clearing session storage
@@ -375,6 +376,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                     visitorId: responseData?.SEQ_ID?.toString() || '',
                     qrCodeData: responseData?.HexCode || '',
                     isDynamicQR: isDynamicQR,
+                    DynamicQrIntervalSec: dynamicQrIntervalSec,
                     registrationId: responseData?.appointment_group_id || responseData?.SEQ_ID?.toString() || '',
                     visitorName:     summary.visitorName,
                     email:           summary.email,

@@ -133,9 +133,23 @@
                 <div class="spinner"></div>
               </div>
             }
+            @if (qrCodeError) {
+              <div class="qr-error-overlay">
+                <div class="error-content">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <p>{{ 'failed_to_load_qr_code' | translate }}</p>
+                  <button type="button" class="qr-retry-btn" (click)="onRetryQrCode()">
+                    <i class="pi pi-refresh"></i> {{ 'retry' | translate }}
+                  </button>
+                </div>
+              </div>
+            }
             <img [src]="qrCodeBase64" [attr.alt]="'qr_code_text' | translate" (load)="onQrImageLoaded()" [style.display]="qrCodeLoading ? 'none' : 'block'" />
           </div>
           <div class="qr-caption">{{ 'scan_qr_code' | translate }}</div>
+          @if ((registrationData.isDynamicQR || registrationData.IsDynamicQR) && registrationData.DynamicQrIntervalSec) {
+            <div class="qr-countdown">{{ 'refresh_in' | translate }}: <span class="countdown-timer">{{ qrCountdown }}s</span></div>
+          }
         </div>
       }
 

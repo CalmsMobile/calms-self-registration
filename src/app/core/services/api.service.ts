@@ -238,6 +238,15 @@ export class ApiService {
   }
 
   /**
+   * Get QR code data for dynamic/refreshing QR codes
+   * @param loParam Parameters including SEQ_ID and SeqIdEncrypted
+   */
+  GetVisitorDataForQRCodeDynamic(loParam: any) {
+    const finalParam = { ...this.deviceParams, ...loParam };
+    return this.apiBase.post(`${this.baseUrl}/GetVisitorDataForQRCodeDynamic`, finalParam);
+  }
+
+  /**
    * Get host data from a shared/short URL host code
    * @param refHostCode The host code from the hc query parameter
    * @param refCatCode Optional encrypted category code from the vc query parameter
