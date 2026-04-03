@@ -128,7 +128,12 @@
       @if (status === 'success' && qrCodeBase64) {
         <div class="qr-section">
           <div class="qr-box">
-            <img [src]="qrCodeBase64" [attr.alt]="'qr_code_text' | translate" />
+            @if (qrCodeLoading) {
+              <div class="qr-loader">
+                <div class="spinner"></div>
+              </div>
+            }
+            <img [src]="qrCodeBase64" [attr.alt]="'qr_code_text' | translate" (load)="onQrImageLoaded()" [style.display]="qrCodeLoading ? 'none' : 'block'" />
           </div>
           <div class="qr-caption">{{ 'scan_qr_code' | translate }}</div>
         </div>

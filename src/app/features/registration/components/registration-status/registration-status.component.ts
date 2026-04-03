@@ -1,4 +1,5 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { LabelService } from '../../../../core/services/label.service';
 import { ApiService } from '../../../../core/services/api.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
@@ -31,7 +32,7 @@ export interface RegistrationData {
 @Component({
   selector: 'app-registration-status',
   standalone: true,
-  imports: [TranslatePipe],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './registration-status.component.html',
   styleUrl: './registration-status.component.scss'
 })
@@ -42,6 +43,7 @@ export class RegistrationStatusComponent implements OnInit {
   @Output() newRegistration = new EventEmitter<void>();
   @Output() printDocument = new EventEmitter<void>();
   qrCodeBase64 = '';
+  qrCodeLoading = true;
 
   readonly companyName = 'CALMS Technologies';
 
@@ -124,18 +126,26 @@ export class RegistrationStatusComponent implements OnInit {
       };
       if (msgMap[code]) {
         this.messageService.add({ severity: 'info', summary: 'Oops...', detail: msgMap[code] });
+        this.qrCodeLoading = false;
         return;
       }
     }
     const loResult = poData.Table1?.[0];
     if (loResult?.DataString) {
       this.qrCodeBase64 = `data:image/png;base64,${loResult.DataString}`;
+      this.qrCodeLoading = true; // Reset for new image
+    } else {
+      this.qrCodeLoading = false;
     }
   }
 
   private formatDateAsKendo(date: Date): string {
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  }
+
+  onQrImageLoaded(): void {
+    this.qrCodeLoading = false;
   }
 
   onPrint() { this.printDocument.emit(); }
