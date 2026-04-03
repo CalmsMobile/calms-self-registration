@@ -124,6 +124,7 @@ export interface VisitorAck {
   EndDate: string;
   FBRemarks: string;
   WorkPermitRef: string;
+  EventName: string;
 
   SafetyBriefViewed: boolean;
   VisitorsList: VisitorSelfData[];

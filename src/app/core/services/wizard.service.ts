@@ -288,6 +288,7 @@ export class WizardService {
       RemarksEnabled: false,
       RoomEnabled: false,
       NDAEnabled: false,
+      EventEnabled: false,
     };
     settingsData = { ...fieldEnableDefaults, ...settingsData };
 
@@ -492,6 +493,7 @@ export class WizardService {
       HostDeptId: generalData.department?.toString() || '',
       HostId: generalData.host?.toString() || settings?.DefaultHostId?.toString() || '',
       WorkPermitRef: generalData.work_permit_ref || null,
+      EventName: generalData.event_name || '',
       PurposeId: generalData.purpose?.toString() || '',
       PurposeDesc: generalData.purposeDesc || '',
       FloorId: generalData.floor?.toString() || '',

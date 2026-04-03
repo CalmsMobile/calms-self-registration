@@ -1366,6 +1366,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       visitor_address: [isPreFilledData ? (visitorData.address || savedData.visitor_address || '') : (savedData.visitor_address || '')],
       country: [isPreFilledData ? (visitorData.countryId || savedData.country || null) : (savedData.country || null)],
       work_permit_ref: [savedData.work_permit_ref || ''],
+      event_name: [savedData.event_name || ''],
       remarks: [isPreFilledData ? (visitorData.remarks || savedData.remarks || '') : (savedData.remarks || '')],
       host: [savedData.host || (this.shouldHideHostControl ? this.defaultHostId : null) || (this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery ? this.wizardService.hostCodeFromQuery : null)],
       startDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.startDate || '')],
@@ -1917,6 +1918,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('country', this.settings.CountryEnabled, this.settings.CountryRequired);
     this.setupControl('meeting_location', this.settings.RoomEnabled, this.settings.RoomRequired);
     this.setupControl('work_permit_ref', this.settings.WorkPermitRefEnabled, false);
+    this.setupControl('event_name', this.settings.EventEnabled, this.settings.EventRequired);
     this.setupControl('remarks', this.settings.RemarksEnabled, this.settings.RemarksRequired);
     // Don't require host when it's auto-selected from the hc query param
     const hostRequired = this.settings.HostNameRequired && !(this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery);
