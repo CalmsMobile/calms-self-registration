@@ -424,7 +424,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-align-left"></i></span>
@@ -451,7 +451,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-list"></i></span>
@@ -471,7 +471,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-list"></i></span>
@@ -490,7 +490,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
@@ -508,7 +508,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
@@ -866,7 +866,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-align-left"></i></span>
@@ -893,7 +893,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-list"></i></span>
@@ -913,7 +913,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-list"></i></span>
@@ -932,7 +932,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
@@ -950,7 +950,7 @@
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
           {{(udf.translateKey | translate) || udf.Caption}}
-          <span class="required-star">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span>
+          <span class="required-star">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
@@ -1377,7 +1377,7 @@
       @if (udf.Enabled && udf.udfPrefix === 'v') {
       @if (udf.UDFCtrlType === 10) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-align-left"></i></span>
           <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
@@ -1394,7 +1394,7 @@
       }
       @if (udf.UDFCtrlType === 20) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-list"></i></span>
           <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
@@ -1411,7 +1411,7 @@
       }
       @if (udf.UDFCtrlType === 30) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-list"></i></span>
           <p-multiSelect [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
@@ -1427,7 +1427,7 @@
       }
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
@@ -1442,7 +1442,7 @@
       }
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
@@ -1706,7 +1706,7 @@
       @if (udf.Enabled && udf.udfPrefix === 'a') {
       @if (udf.UDFCtrlType === 10) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-align-left"></i></span>
           <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
@@ -1723,7 +1723,7 @@
       }
       @if (udf.UDFCtrlType === 20) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-list"></i></span>
           <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
@@ -1740,7 +1740,7 @@
       }
       @if (udf.UDFCtrlType === 30) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-list"></i></span>
           <p-multiSelect [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
@@ -1756,7 +1756,7 @@
       }
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
@@ -1771,7 +1771,7 @@
       }
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.UDFName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{(settings[udf.formControlName + "Required"] || udf.Required) ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
