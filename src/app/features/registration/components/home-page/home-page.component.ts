@@ -77,6 +77,7 @@ export class HomePageComponent implements AfterViewChecked {
 
   // Branch translation data
   branchTranslation: any = {};
+  categoryTranslation: any = {};
   pageTitle = '';
 
   // Welcome page data from API
@@ -597,6 +598,15 @@ export class HomePageComponent implements AfterViewChecked {
         this.branchTranslation = {
           caption: branchField.Caption || 'Branch',
           placeholder: branchField.Placeholder || 'Select Branch'
+        };
+      }
+
+      // Find the Category field translation
+      const categoryField = translationData.find((item: any) => item.Title === 'Category');
+      if (categoryField) {
+        this.categoryTranslation = {
+          caption: categoryField.Caption || 'Category',
+          placeholder: categoryField.Placeholder || 'Select Category'
         };
       }
 
