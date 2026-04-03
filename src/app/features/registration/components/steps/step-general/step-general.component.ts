@@ -2594,11 +2594,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Mirror if using front camera
-    if (this.cameraFacingMode === 'user') {
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-    }
+    // Draw the raw video frame — no canvas-level mirroring.
+    // The live preview is mirrored via CSS (scaleX(-1)) for selfie UX,
+    // but the saved photo should be the natural/correct orientation.
     ctx.drawImage(video, 0, 0);
     this.capturedImage = canvas.toDataURL('image/jpeg', 0.85);
     this.stopCamera();

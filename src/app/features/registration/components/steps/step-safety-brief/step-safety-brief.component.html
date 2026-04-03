@@ -1,11 +1,23 @@
 ﻿<main class="page">
-  <!-- Header -->
+  <!-- Header Desktop -->
   <header class="page-header flex-header">
     <div class="header-center">
       <img class="logo" [src]="logo" alt="Company Logo" />
       <h1>{{ companyTitle }}</h1>
     </div>
     <app-language-selector class="step-lang"></app-language-selector>
+  </header>
+
+  <!-- Header Mobile -->
+  <header class="m-header">
+    <button type="button" class="m-btn-back-top" (click)="goBack()" [title]="'button_back' | translate">
+      <i class="pi pi-arrow-left"></i>
+    </button>
+    <div class="m-header-center">
+      <img [src]="logo" alt="Logo" class="m-logo" />
+      <span class="m-company">{{ companyTitle }}</span>
+    </div>
+    <app-language-selector class="m-header-lang"></app-language-selector>
   </header>
 
   <!-- Title section -->
@@ -65,7 +77,7 @@
 
   <!-- Actions -->
   <section class="actions">
-    <button class="btn grey" type="button" (click)="goBack()">
+    <button class="btn grey m-action-back" type="button" (click)="goBack()">
       <span class="icon-left">&larr;</span> {{ 'previous_step' | translate }}
     </button>
     <button class="btn yellow" type="button" (click)="onNext()" [disabled]="!videoEnded">

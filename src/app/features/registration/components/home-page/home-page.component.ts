@@ -100,9 +100,6 @@ export class HomePageComponent implements AfterViewChecked {
   appointmentData: any = null;
 
   // Mobile dropdown toggle states
-  branchOpen = false;
-  visitOpen = false;
-
   get isLoading(): boolean {
     return this._isLoading;
   }
@@ -640,8 +637,14 @@ export class HomePageComponent implements AfterViewChecked {
 
   ngAfterViewChecked() {
     if (!this.termsAutoChecked && this.shouldShowTerms()) {
-      const el = this.termsBodyEl?.nativeElement ?? this.mTermsBodyEl?.nativeElement;
-      if (el && el.scrollHeight > 0) {
+      const desktopEl = this.termsBodyEl?.nativeElement;
+      const mobileEl = this.mTermsBodyEl?.nativeElement;
+      // Prefer the element that is actually visible/laid out (scrollHeight > 0).
+      // The desktop element lives inside display:none on mobile so its scrollHeight is always 0.
+      const el = (mobileEl && mobileEl.scrollHeight > 0) ? mobileEl
+               : (desktopEl && desktopEl.scrollHeight > 0) ? desktopEl
+               : null;
+      if (el) {
         this.termsAutoChecked = true;
         if (el.scrollHeight <= el.clientHeight + 2) {
           // Content fits without scrolling — enable checkbox immediately
@@ -839,6 +842,10 @@ export class HomePageComponent implements AfterViewChecked {
 
   onCategoryChange(newValue: any) {
     this.isLoading = true;
+    // Reset terms state so the scroll-to-enable check reruns for the new category
+    this.termsScrolledToBottom = false;
+    this.termsAccepted = false;
+    this.termsAutoChecked = false;
 
     this.api.GetVisitorDeclarationSettings(this.selectedBranch, newValue, this.wizardService.refCode || undefined, this.wizardService.refCatCode || undefined)
       .subscribe({
@@ -928,50 +935,13 @@ export class HomePageComponent implements AfterViewChecked {
     return category ? category.Name : '';
   }
 
-  // ===== Mobile helpers =====
-
-  get selectedBranchName(): string {
-    if (!this.selectedBranch) return '';
-    const branch = this.branchList.find(b => b.RefBranchSeqID === this.selectedBranch);
-    return branch ? branch.Branch_Name : '';
-  }
-
-  get selectedCategoryName(): string {
-    if (!this.selectedCategory) return '';
-    const cat = this.categories.find(c => c.visitor_ctg_id === this.selectedCategory);
-    return cat ? (cat.visitor_ctg_desc || cat.Name) : '';
-  }
-
-  toggleBranch() {
-    this.branchOpen = !this.branchOpen;
-    this.visitOpen = false;
-  }
-
-  toggleVisit() {
-    this.visitOpen = !this.visitOpen;
-    this.branchOpen = false;
-  }
-
-  selectMobileBranch(branchId: any) {
-    this.selectedBranch = branchId;
-    this.branchOpen = false;
-    this.onBranchChange(branchId);
-  }
-
-  selectMobileCategory(categoryId: any) {
-    this.selectedCategory = categoryId;
-    this.visitOpen = false;
-    this.onCategoryChange(categoryId);
-  }
-
   shouldShowTerms(): boolean {
     const selfRegSettings = this.wizardService.getSelfRegistrationSettings();
     return selfRegSettings?.TermsnCondEnabled ?? false;
   }
 
   getTermsHtml(): SafeHtml {
-    const selfRegSettings = this.wizardService.getSelfRegistrationSettings();
-    const template = selfRegSettings?.TermsnCondTemplate ?? '';
+    const template = this.labelService.getLabel('tc', 'caption') || '';
     if (template !== this._cachedTermsTemplate) {
       this._cachedTermsTemplate = template;
       this._cachedTermsHtml = template

@@ -2463,23 +2463,53 @@ textarea {
   /* Header */
   .m-header {
     display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 16px 16px 12px;
+    background: #fff;
+    border-bottom: 1px solid #ebebeb;
+    gap: 8px;
+  }
+
+  .m-btn-back-top {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #f0f0f0;
+    color: #4a4a4a;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+
+    &:hover { background: #e0e0e0; }
+  }
+
+  .m-header-center {
+    flex: 1;
+    display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 24px 16px 14px;
-    background: #fff;
+  }
+
+  .m-header-lang {
+    flex-shrink: 0;
   }
 
   .m-logo {
-    width: 160px;
+    width: 80px;
     height: auto;
     object-fit: contain;
   }
 
   .m-brand {
-    font-size: 22px;
+    font-size: 15px;
     font-weight: 600;
-    color: #5a5a5a;
+    color: #3c3c3c;
   }
 
   /* Top section */
@@ -2657,7 +2687,7 @@ textarea {
       padding-right: 44px;
       width: 100%;
       height: 54px;
-      border-radius: 24px;
+      border-radius: 0;
       border: 1px solid #e5e7ef;
       background: #fff;
       box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
@@ -2681,7 +2711,7 @@ textarea {
     ::ng-deep .p-select {
       width: 100%;
       height: 54px !important;
-      border-radius: 24px !important;
+      border-radius: 0 !important;
       border: 1px solid #e5e7ef !important;
       background: #fff !important;
       box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
@@ -2700,7 +2730,7 @@ textarea {
     ::ng-deep .p-datepicker {
       width: 100%;
       height: 54px !important;
-      border-radius: 24px !important;
+      border-radius: 0 !important;
       border: 1px solid #e5e7ef !important;
       background: #fff !important;
       box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
@@ -2728,7 +2758,7 @@ textarea {
     ::ng-deep .p-multiselect {
       width: 100%;
       height: 54px !important;
-      border-radius: 24px !important;
+      border-radius: 0 !important;
       border: 1px solid #e5e7ef !important;
       background: #fff !important;
       box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
@@ -2749,7 +2779,7 @@ textarea {
   .m-form-field > ::ng-deep .p-datepicker {
     width: 100%;
     height: 54px !important;
-    border-radius: 24px !important;
+    border-radius: 0 !important;
     border: 1px solid #e5e7ef !important;
     background: #fff !important;
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
@@ -2760,7 +2790,7 @@ textarea {
   .m-form-field > input.p-inputtext {
     width: 100%;
     height: 54px;
-    border-radius: 24px;
+    border-radius: 0;
     border: 1px solid #e5e7ef;
     background: #fff;
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
@@ -2885,14 +2915,14 @@ textarea {
     gap: 10px;
     padding: 14px 22px 32px;
     background: #fff;
-    border-top: 2px solid #ffe8e7;
+    border-top: 1px solid #e5e7ef;
     flex-shrink: 0;
   }
 
   .m-actions-right {
     display: flex;
     gap: 10px;
-    width: 100%;
+    flex: 1;
   }
 
   .m-btn {
@@ -2918,15 +2948,12 @@ textarea {
   }
 
   .m-btn-back {
-    width: 100%;
-    background: #e0e0e0;
-    color: #4a4a4a;
-    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    display: none;
   }
 
   .m-btn-save-add,
   .m-btn-continue {
-    flex: 1;
+    width: 100%;
     background: #f5b301;
     color: #1f1f1f;
     box-shadow: 0 10px 22px rgba(245, 179, 1, 0.35);

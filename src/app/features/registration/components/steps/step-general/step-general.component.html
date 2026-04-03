@@ -1012,8 +1012,14 @@
 
   <!-- Header -->
   <header class="m-header">
-    <img [src]="logo" alt="Logo" class="m-logo" />
-    <span class="m-brand">{{ companyTitle }}</span>
+    <button type="button" class="m-btn-back-top" (click)="goBack()" [title]="'button_back' | translate">
+      <i class="pi pi-arrow-left"></i>
+    </button>
+    <div class="m-header-center">
+      <img [src]="logo" alt="Logo" class="m-logo" />
+      <span class="m-brand">{{ companyTitle }}</span>
+    </div>
+    <app-language-selector class="m-header-lang"></app-language-selector>
   </header>
 
   <!-- Top Section: title + action buttons -->
@@ -1794,25 +1800,20 @@
 
   <!-- Actions -->
   <div class="m-actions">
-    <button type="button" class="m-btn m-btn-back" (click)="goBack()">
-      <i class="pi pi-arrow-left"></i> {{ 'button_back' | translate }}
-    </button>
-    <div class="m-actions-right">
-      @if (isMultipleVisitorMode) {
-        @if (editingVisitorIndex >= 0) {
-        <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
-          {{ 'update' | translate }} <i class="pi pi-check"></i>
-        </button>
-        } @else {
-        <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
-          {{ 'save_and_add' | translate }} <i class="pi pi-user-plus"></i>
-        </button>
-        }
-      }
-      <button type="button" class="m-btn m-btn-continue" (click)="goNext()" >
-        {{ 'save_and_continue' | translate }} <i class="pi pi-arrow-right"></i>
+    @if (isMultipleVisitorMode) {
+      @if (editingVisitorIndex >= 0) {
+      <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
+        {{ 'update' | translate }} <i class="pi pi-check"></i>
       </button>
-    </div>
+      } @else {
+      <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
+        {{ 'save_and_add' | translate }} <i class="pi pi-user-plus"></i>
+      </button>
+      }
+    }
+    <button type="button" class="m-btn m-btn-continue" (click)="goNext()" >
+      {{ 'save_and_continue' | translate }} <i class="pi pi-arrow-right"></i>
+    </button>
   </div>
 
 </div>

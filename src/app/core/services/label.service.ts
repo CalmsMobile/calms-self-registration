@@ -24,7 +24,7 @@ export class LabelService {
 
     settings.forEach(item => {
       //if (item.SettingType === "CP" && item.Caption) {
-      if (item.SettingType === "CP" || item.SettingType === "SW") {
+      if (item.SettingType === "CP" || item.SettingType === "SW" || item.SettingType === "TC") {
         const titleKey = this.getLabelKey(item);
         const value = {
           caption: item.Caption,

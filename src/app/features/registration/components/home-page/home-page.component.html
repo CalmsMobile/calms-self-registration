@@ -202,18 +202,13 @@
     <p class="m-subtitle">{{ 'branch' | translate }}</p>
     <div class="m-form">
       <div class="m-field-group">
-        <label class="m-label">{{ branchTranslation.caption || ('branch' | translate) }}</label>
-        <div class="m-select-wrap" [class.open]="branchOpen">
-          <button class="m-select-btn" type="button" (click)="toggleBranch()">
-            <span [class.m-placeholder]="!selectedBranchName">{{ selectedBranchName || branchTranslation.placeholder || ('branch' | translate:'placeholder') }}</span>
-          </button>
-          <span class="m-chev" aria-hidden="true">⌄</span>
-          <ul class="m-select-list" role="listbox">
-            @for (branch of branchList; track branch.RefBranchSeqID) {
-            <li [class.active]="branch.RefBranchSeqID === selectedBranch" (click)="selectMobileBranch(branch.RefBranchSeqID)" role="option">{{ branch.Branch_Name }}</li>
-            }
-          </ul>
-        </div>
+        <div class="m-label">{{ branchTranslation.caption || ('branch' | translate) }}</div>
+        <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
+          [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
+          optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
+          [autofocus]="false" appendTo="body" styleClass="home-select"
+          [class.select-empty]="!selectedBranch">
+        </p-select>
       </div>
     </div>
   </div>
@@ -223,14 +218,17 @@
   @if (selectedBranch || branchList.length === 1 || isBranchFromQuery || isAppointmentFlow) {
   <div class="m-post-wrap">
 
-    <!-- Header: logo + company name -->
-    <div class="m-post-header">
+    <!-- Header: back + logo + company name + language -->
+    <header class="m-post-header">
+      <button type="button" class="m-post-back" (click)="goBack()" [title]="'button_back' | translate">
+        <i class="pi pi-arrow-left"></i>
+      </button>
       <div class="m-post-header-center">
         <img [src]="logo" alt="Company Logo" class="m-post-logo" />
         <p class="m-post-company">{{ title }}</p>
       </div>
       <app-language-selector class="m-post-lang"></app-language-selector>
-    </div>
+    </header>
 
     <!-- Page title -->
     @if (showWelcomeTitle) {
@@ -246,36 +244,26 @@
       <!-- Branch Selection -->
       @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
       <div class="m-field-group">
-        <label class="m-label">{{ branchTranslation.caption || ('branch' | translate) }} <span class="m-optional">(Optional)</span></label>
-        <div class="m-select-wrap" [class.open]="branchOpen">
-          <button class="m-select-btn" type="button" (click)="toggleBranch()">
-            <span [class.m-placeholder]="!selectedBranchName">{{ selectedBranchName || branchTranslation.placeholder || ('branch' | translate:'placeholder') }}</span>
-          </button>
-          <span class="m-chev" aria-hidden="true">⌄</span>
-          <ul class="m-select-list" role="listbox">
-            @for (branch of branchList; track branch.RefBranchSeqID) {
-            <li [class.active]="branch.RefBranchSeqID === selectedBranch" (click)="selectMobileBranch(branch.RefBranchSeqID)" role="option">{{ branch.Branch_Name }}</li>
-            }
-          </ul>
-        </div>
+        <div class="m-label">{{ branchTranslation.caption || ('branch' | translate) }}</div>
+        <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
+          [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
+          optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
+          [autofocus]="false" appendTo="body" styleClass="home-select"
+          [class.select-empty]="!selectedBranch">
+        </p-select>
       </div>
       }
 
       <!-- Category Selection -->
       @if (categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
       <div class="m-field-group">
-        <label class="m-label">{{ 'category' | translate }} <span class="m-optional">(Optional)</span></label>
-        <div class="m-select-wrap" [class.open]="visitOpen">
-          <button class="m-select-btn" type="button" (click)="toggleVisit()">
-            <span [class.m-placeholder]="!selectedCategoryName">{{ selectedCategoryName || ('category' | translate:'placeholder') }}</span>
-          </button>
-          <span class="m-chev" aria-hidden="true">⌄</span>
-          <ul class="m-select-list" role="listbox">
-            @for (cat of categories; track cat.visitor_ctg_id) {
-            <li [class.active]="cat.visitor_ctg_id === selectedCategory" (click)="selectMobileCategory(cat.visitor_ctg_id)" role="option">{{ cat.visitor_ctg_desc }}</li>
-            }
-          </ul>
-        </div>
+        <div class="m-label">{{ 'category' | translate }}</div>
+        <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
+          [placeholder]="'category' | translate:'placeholder'" optionLabel="visitor_ctg_desc"
+          optionValue="visitor_ctg_id" [showClear]="true"
+          [autofocus]="false" appendTo="body" styleClass="home-select"
+          [class.select-empty]="!selectedCategory">
+        </p-select>
       </div>
       }
 
