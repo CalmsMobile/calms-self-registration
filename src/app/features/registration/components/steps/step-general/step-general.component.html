@@ -463,7 +463,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="error-message">Please select {{(udf.translateKey | translate) || udf.Caption}}</small>
+        <small class="error-message">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -482,7 +482,7 @@
           </p-multiSelect>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="error-message">Please select at least one {{(udf.translateKey | translate) || udf.Caption}}</small>
+        <small class="error-message">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -926,7 +926,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="error-message">Please select {{(udf.translateKey | translate) || udf.Caption}}</small>
+        <small class="error-message">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -945,7 +945,7 @@
           </p-multiSelect>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="error-message">Please select at least one {{(udf.translateKey | translate) || udf.Caption}}</small>
+        <small class="error-message">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -1438,7 +1438,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="m-error">Please select {{(udf.translateKey | translate) || udf.Caption}}</small>
+        <small class="m-error">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -1454,7 +1454,7 @@
           </p-multiSelect>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="m-error">Please select at least one {{(udf.translateKey | translate) || udf.Caption}}</small>
+        <small class="m-error">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -1792,7 +1792,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="m-error">Please select {{(udf.translateKey | translate) || udf.Caption}}</small>
+        <small class="m-error">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -1808,7 +1808,7 @@
           </p-multiSelect>
         </div>
         @if (isFieldInvalidRequired(udf.formControlName)) {
-        <small class="m-error">Please select at least one {{(udf.translateKey | translate) || udf.Caption}}</small>
+        <small class="m-error">{{ getUdfRequiredError(udf) }}</small>
         }
       </div>
       }
@@ -2128,7 +2128,7 @@
           <input type="time" class="sd-time-box" [(ngModel)]="scheduleEndTime" (ngModelChange)="checkScheduleTimes()" />
         </div>
         @if (scheduleEndBeforeStartError) {
-        <small class="sd-error">End date/time must be after start date/time</small>
+        <small class="sd-error">{{ 'end_date_error_message' | translate }}</small>
         }
       </div>
     </div>
