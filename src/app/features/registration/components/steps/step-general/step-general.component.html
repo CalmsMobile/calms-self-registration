@@ -1411,6 +1411,12 @@
         @if (isFieldRequired(udf.formControlName)) {
         <small class="m-error">{{ getUdfRequiredError(udf) }}</small>
         }
+        @if (isFieldMinLengthError(udf.formControlName)) {
+        <small class="m-error">{{ getMinLengthError(udf.MinLength) }}</small>
+        }
+        @if (isFieldMaxLengthError(udf.formControlName)) {
+        <small class="m-error">{{ getMaxLengthError(udf.MaxLength) }}</small>
+        }
       </div>
       }
       @if (udf.UDFCtrlType === 20) {
@@ -1758,6 +1764,12 @@
         </div>
         @if (isFieldRequired(udf.formControlName)) {
         <small class="m-error">{{ getUdfRequiredError(udf) }}</small>
+        }
+        @if (isFieldMinLengthError(udf.formControlName)) {
+        <small class="m-error">{{ getMinLengthError(udf.MinLength) }}</small>
+        }
+        @if (isFieldMaxLengthError(udf.formControlName)) {
+        <small class="m-error">{{ getMaxLengthError(udf.MaxLength) }}</small>
         }
       </div>
       }
