@@ -33,7 +33,6 @@
 
     <!-- Right panel — content -->
     <div class="pre-right">
-      <!-- <app-language-selector class="pre-lang"></app-language-selector> -->
       <div class="pre-right-scroll">
         <div class="pre-center">
           <!-- Logo -->
@@ -48,7 +47,6 @@
           }
 
           <!-- Subtitle / Welcome text -->
-          <!-- <p class="pre-subtitle">{{ welcomeText }}</p> -->
 
           <!-- Branch Selection -->
           @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
@@ -115,9 +113,9 @@
       <!-- Category Selection -->
       @if (selectedBranch && categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
       <div class="field field-visit">
-        <div class="label">{{ 'category' | translate }}</div>
+        <div class="label">{{ categoryTranslation.caption || ('category' | translate) }}</div>
         <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
-          [placeholder]="'category' | translate:'placeholder'" optionLabel="visitor_ctg_desc"
+          [placeholder]="categoryTranslation.placeholder || ('category' | translate:'placeholder')" optionLabel="visitor_ctg_desc"
           optionValue="visitor_ctg_id" [showClear]="true"
           [autofocus]="false" appendTo="body" styleClass="home-select"
           [class.select-empty]="!selectedCategory">
@@ -256,9 +254,9 @@
       <!-- Category Selection -->
       @if (categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
       <div class="m-field-group">
-        <div class="m-label">{{ 'category' | translate }}</div>
+        <div class="m-label">{{ categoryTranslation.caption || ('category' | translate) }}</div>
         <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
-          [placeholder]="'category' | translate:'placeholder'" optionLabel="visitor_ctg_desc"
+          [placeholder]="categoryTranslation.placeholder || ('category' | translate:'placeholder')" optionLabel="visitor_ctg_desc"
           optionValue="visitor_ctg_id" [showClear]="true"
           [autofocus]="false" appendTo="body" styleClass="home-select"
           [class.select-empty]="!selectedCategory">

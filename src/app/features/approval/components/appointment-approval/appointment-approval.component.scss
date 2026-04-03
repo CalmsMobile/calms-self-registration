@@ -648,7 +648,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: 14px;
   color: #7f91ad;
 
   svg {
@@ -691,13 +691,16 @@
 
 .detail-label {
   margin: 0;
-  color: #265fae;
-  font-size: 18px;
-  letter-spacing: 0.5px;
+  display: inline-block;
+  background: #e4eaf6;
+  color: #33455f;
+  border-radius: 999px;
+  font-size: 13px;
+  padding: 4px 14px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  text-decoration: underline;
-  font-weight: 700;
-  line-height: 1.12;
+  line-height: 1.4;
 }
 
 .detail-value {
@@ -1274,7 +1277,7 @@
   .host-name { font-size: 24px; }
   .host-dept { font-size: 16px; }
   .meta-pill { font-size: 17px; }
-  .detail-label { font-size: 15px; }
+  .detail-label { font-size: 13px; }
   .detail-value { font-size: 22px; }
   .footer { font-size: 15px; }
   .modal-title { font-size: 25px; }
