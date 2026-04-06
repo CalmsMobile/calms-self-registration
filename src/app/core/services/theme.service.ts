@@ -68,7 +68,7 @@ export class ThemeService {
 
     // --- Background Image Opacity ---
     if (themeData.BgImageOpacity !== undefined && themeData.BgImageOpacity !== null) {
-      const opacity = Math.min(100, Math.max(0, Number(themeData.BgImageOpacity)));
+      const opacity = Math.min(1, Math.max(0, Number(themeData.BgImageOpacity)));
       root.style.setProperty('--app-bg-opacity', String(opacity));
     }
   }

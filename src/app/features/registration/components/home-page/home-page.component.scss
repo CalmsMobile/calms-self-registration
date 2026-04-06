@@ -1,10 +1,10 @@
-ï»¿@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 :host {
   display: block;
   width: 100vw;
   height: 100vh;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   color: #5a5a5a;
   overflow: hidden;
 }
@@ -22,11 +22,34 @@
   height: 100vh;
   position: relative;
   overflow: hidden;
+  z-index: 0;
   background: linear-gradient(180deg, #ffffff 0%, #f1f1f1 43%, #ffffff 100%);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--app-bg-image);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 1;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, var(--app-bg-opacity));
+    pointer-events: none;
+    z-index: -1;
+  }
 }
 
 /* =====================================================
-   STATE 1: Before branch selected â€” centered 2-panel
+   STATE 1: Before branch selected — centered 2-panel
    ===================================================== */
 .pre-branch {
   display: flex;
@@ -93,7 +116,7 @@
   margin: 0 0 8px;
 
   .accent {
-    color: #f5b400;
+    color: var(--theme-primary-yellow);
   }
 }
 
@@ -127,7 +150,7 @@
 }
 
 /* =====================================================
-   STATE 2: After branch selected â€” 3-column layout
+   STATE 2: After branch selected — 3-column layout
    ===================================================== */
 .header {
   position: absolute;
@@ -201,7 +224,7 @@
     color: #5a5a5a;
 
     .accent {
-      color: #f5b400;
+      color: var(--theme-primary-yellow);
       display: block;
     }
   }
@@ -256,7 +279,7 @@
     background: #ffffff;
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.10);
     padding: 0 20px;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     font-size: 16px;
     transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
     flex-direction: row;
@@ -271,7 +294,7 @@
     &.p-focus,
     &.p-inputwrapper-focus,
     &.p-select-open {
-      border-color: #f5b400;
+      border-color: var(--theme-primary-yellow);
       box-shadow: 0 12px 26px rgba(0, 0, 0, 0.16), 0 0 0 4px rgba(245, 180, 0, 0.14);
       transform: translateY(-1px);
     }
@@ -322,7 +345,7 @@
     }
 
     .p-select-option {
-      font-family: 'Poppins', sans-serif;
+      font-family: var(--font-family);
       font-size: 15px;
       color: #4a4a4a;
       padding: 11px 18px;
@@ -349,7 +372,7 @@
           width: 4px;
           height: 18px;
           border-radius: 4px;
-          background: #e6c15b;
+          background: var(--theme-primary-yellow);
         }
       }
     }
@@ -396,7 +419,7 @@
     }
 
     &::-webkit-scrollbar-thumb {
-      background: #f5b400;
+      background: var(--theme-primary-yellow);
       border-radius: 10px;
     }
 
@@ -461,15 +484,15 @@
     transition: all 0.2s ease;
 
     &:hover {
-      border-color: #f5b400;
+      border-color: var(--theme-primary-yellow);
     }
 
     &.checked {
-      background: #f5b400;
-      border-color: #f5b400;
+      background: var(--theme-primary-yellow);
+      border-color: var(--theme-primary-yellow);
 
       i {
-        color: #fff;
+        color: var(--theme-primary-fg-color);
         font-size: 14px;
         font-weight: 700;
       }
@@ -488,16 +511,16 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(180deg, #f7d26a 0%, #f1b733 100%);
+  background: var(--theme-primary-yellow);
   border: none;
-  color: #1f1f1f;
+  color: var(--theme-primary-fg-color);
   font-weight: 600;
   font-size: 16px;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   border-radius: 999px;
   padding: 0 32px;
   height: 52px;
-  box-shadow: 0 10px 22px rgba(245, 180, 0, 0.35);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   transition: background 180ms ease, transform 180ms ease, box-shadow 180ms ease;
   margin-bottom: 32px;
@@ -508,9 +531,9 @@
   }
 
   &:hover:not(:disabled) {
-    background: linear-gradient(180deg, #ffc926, #e8a900);
+    background: var(--p-primary-hover-color);
     transform: translateY(-2px);
-    box-shadow: 0 14px 28px rgba(245, 180, 0, 0.42);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
 
     .btn-icon {
       transform: translateX(3px);
@@ -519,7 +542,7 @@
 
   &:active:not(:disabled) {
     transform: translateY(0);
-    box-shadow: 0 6px 14px rgba(245, 180, 0, 0.3);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
   }
 
   &:disabled {
@@ -630,7 +653,7 @@
   left: 0;
   width: 56px;
   height: 28px;
-  background: #f2c300;
+  background: var(--theme-primary-yellow);
 }
 
 .pacman .top {
@@ -658,7 +681,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #f2c300;
+  background: var(--theme-primary-yellow);
   animation: dotFeed 1s infinite linear;
 }
 
@@ -899,7 +922,7 @@
 }
 
 /* =====================================================
-   MOBILE VIEW  (â‰¤ 768 px)
+   MOBILE VIEW  (= 768 px)
    ===================================================== */
 
 /* Hidden by default on desktop */
@@ -925,8 +948,32 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background: #ffffff;
-    font-family: 'Poppins', sans-serif;
+    background: #f5f5f5;
+    font-family: var(--font-family);
+    position: relative;
+    z-index: 0;
+
+    &::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: var(--app-bg-image);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      opacity: 1;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    &::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, var(--app-bg-opacity));
+      pointer-events: none;
+      z-index: -1;
+    }
   }
 
   /* ---- Hero image ---- */
@@ -952,7 +999,7 @@
     }
   }
 
-  /* Language selector â€“ top-right, floating above the image */
+  /* Language selector – top-right, floating above the image */
   .m-lang {
     position: absolute;
     top: 14px;
@@ -981,7 +1028,7 @@
   .m-company-name {
     font-size: 17px;
     font-weight: 600;
-    color: #f5b400;
+    color: var(--theme-primary-yellow);
     margin-top: 2px;
     text-align: center;
     letter-spacing: 0.01em;
@@ -1066,7 +1113,7 @@
     }
 
     &::-webkit-scrollbar-thumb {
-      background: #f5b400;
+      background: var(--theme-primary-yellow);
       border-radius: 10px;
     }
   }
@@ -1096,12 +1143,12 @@
     height: 56px;
     border-radius: 999px;
     border: none;
-    background: linear-gradient(180deg, #f7d26a 0%, #f1b733 100%);
-    color: #1f1f1f;
+    background: var(--theme-primary-yellow);
+    color: var(--theme-primary-fg-color);
     font-size: 16px;
     font-weight: 600;
-    font-family: 'Poppins', sans-serif;
-    box-shadow: 0 10px 22px rgba(245, 180, 0, 0.35);
+    font-family: var(--font-family);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.2);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1116,9 +1163,9 @@
     }
 
     &:hover:not(:disabled) {
-      background: linear-gradient(180deg, #ffc926, #e8a900);
+      background: var(--p-primary-hover-color);
       transform: translateY(-2px);
-      box-shadow: 0 14px 28px rgba(245, 180, 0, 0.42);
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25);
 
       i {
         transform: translateX(3px);
@@ -1127,7 +1174,7 @@
 
     &:active:not(:disabled) {
       transform: translateY(0);
-      box-shadow: 0 6px 14px rgba(245, 180, 0, 0.3);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
     }
 
     &:disabled {
@@ -1176,7 +1223,7 @@
     flex-direction: column;
     min-height: 100vh;
     padding: 0 0 48px;
-    background: #ffffff;
+    background: transparent;
   }
 
   .m-post-header {
@@ -1239,7 +1286,7 @@
   }
 
   .m-post-accent {
-    color: #f5b400;
+    color: var(--theme-primary-yellow);
   }
 
   .m-post-rest {

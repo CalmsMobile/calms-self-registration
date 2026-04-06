@@ -1,6 +1,6 @@
 :root {
   color-scheme: light only;
-  --font-family: 'Inter', sans-serif;
+  --font-family: 'Poppins', sans-serif;
   --theme-bg-color: #D9D9D9;
   --theme-bg-light-color: #f2f2f2;
   --theme-bg-dark-color: #b1b0b0;
@@ -15,7 +15,7 @@
 
   /* Dynamic background image (set by ThemeService from BgImage / BgImageOpacity) */
   --app-bg-image: none;
-  --app-bg-opacity: 1;
+  --app-bg-opacity: 0;
 
   /* PrimeNG aura/material common overrides */
   --p-primary-color: #f5b942;

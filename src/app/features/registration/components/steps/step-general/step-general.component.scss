@@ -1,34 +1,52 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 /* ============================================
-   VARIABLES
+   HOST & PAGE LAYOUT
    ============================================ */
-:root {
-  --primary: #f5b400;
+:host {
+  --primary: var(--theme-primary-yellow);
   --text-dark: #3b3b3b;
   --text-muted: #8b8b8b;
   --error: #ff3b3b;
   --success: #28a745;
   --border: #d1d5db;
-}
 
-/* ============================================
-   HOST & PAGE LAYOUT
-   ============================================ */
-:host {
   display: block;
   width: 100vw;
   height: 100vh;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   color: var(--text-dark);
   overflow: hidden;
+  position: relative;
+  z-index: 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--app-bg-image);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 1;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, var(--app-bg-opacity));
+    pointer-events: none;
+    z-index: -1;
+  }
 }
 
 .page {
   width: 100%;
   height: 100vh;
-  background: #f6f6f6 url('../../../../../../assets/back.png') no-repeat center center;
-  background-size: cover;
+  background: #f6f6f6;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -120,7 +138,7 @@
 }
 
 .left .accent {
-  color: #f5b301;
+  color: var(--primary);
 }
 
 .left p {
@@ -154,7 +172,7 @@
   background: transparent;
   font-size: 15px;
   font-weight: 600;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   color: #6b7280;
   cursor: pointer;
   white-space: nowrap;
@@ -221,7 +239,7 @@
   left: 0;
   width: 56px;
   height: 28px;
-  background: #f2c300;
+  background: var(--primary);
 }
 
 .pacman .top {
@@ -249,7 +267,7 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #f2c300;
+  background: var(--primary);
   animation: dotFeed 1s infinite linear;
 }
 
@@ -391,7 +409,7 @@ textarea,
   background: white !important;
   box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06);
   font-size: 15px;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -568,8 +586,8 @@ textarea {
     td.p-datepicker-day-selected > span,
     .p-datepicker-calendar td.p-highlight > span,
     .p-datepicker-calendar .p-highlight span {
-      background: #f5b301 !important;
-      color: #27304a !important;
+      background: var(--primary) !important;
+      color: var(--theme-primary-fg-color) !important;
       border-radius: 4px !important;
     }
 
@@ -661,7 +679,7 @@ textarea {
   height: 70px;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid #f5b400;
+  border: 2px solid var(--primary);
   display: block;
 }
 
@@ -689,9 +707,9 @@ textarea {
   i { font-size: 11px; }
 
   &.change-btn {
-    background: #f5b400;
-    color: #fff;
-    &:hover { background: #d99e00; }
+    background: var(--primary);
+    color: var(--theme-primary-fg-color);
+    &:hover { background: var(--p-primary-hover-color); }
   }
 
   &.delete-btn {
@@ -743,7 +761,7 @@ textarea {
   background: #fff;
   cursor: pointer;
   white-space: nowrap;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   font-size: 13px;
   font-weight: 500;
   color: var(--text-dark);
@@ -751,12 +769,12 @@ textarea {
   flex-shrink: 0;
 
   &:hover {
-    border-color: #f5b400;
+    border-color: var(--primary);
     background: #fffdf4;
   }
 
   &.active {
-    border-color: #f5b400;
+    border-color: var(--primary);
     background: #fffbee;
     font-weight: 600;
   }
@@ -774,13 +792,13 @@ textarea {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: #f5b400;
+  background: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 12px;
-  color: #fff;
+  color: var(--theme-primary-fg-color);
   flex-shrink: 0;
 }
 
@@ -842,15 +860,15 @@ textarea {
     gap: 0.2rem;
 
     &:hover:not(.unavailable) {
-      border-color: var(--primary-color, #f1aa63);
+      border-color: var(--primary);
       background: #f5f5ff;
       transform: translateY(-1px);
       box-shadow: 0 3px 8px rgba(99, 102, 241, 0.15);
     }
 
     &.selected {
-      border-color: var(--primary-color, #f9b122);
-      background: var(--primary-color, #f5b942);
+      border-color: var(--primary);
+      background: var(--primary);
 
       .slot-tile-name {
         color: #444343;
@@ -1226,7 +1244,7 @@ textarea {
 
 
 ::ng-deep .p-button {
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
 }
 
 /* ============================================
@@ -1270,7 +1288,7 @@ textarea {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
 }
 
 .photo-close-btn {
@@ -1337,7 +1355,7 @@ textarea {
   flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid #f5b400;
+  border: 3px solid var(--primary);
   box-shadow: 0 4px 20px rgba(245, 180, 0, 0.25);
 }
 
@@ -1383,7 +1401,7 @@ textarea {
   width: 180px;
   height: 180px;
   border-radius: 50%;
-  border: 3px dashed #f5b400;
+  border: 3px dashed var(--primary);
   pointer-events: none;
   box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.12);
 }
@@ -1416,13 +1434,13 @@ textarea {
 .btn-capture {
   width: 100%;
   height: 48px;
-  background: linear-gradient(180deg, #f7d26a 0%, #f1b733 100%);
+  background: linear-gradient(180deg, var(--primary) 0%, var(--p-primary-hover-color) 100%);
   border: none;
   border-radius: 24px;
   font-size: 15px;
   font-weight: 600;
-  font-family: 'Poppins', sans-serif;
-  color: #1a1a1a;
+  font-family: var(--font-family);
+  color: var(--theme-primary-fg-color);
   cursor: pointer;
   box-shadow: 0 6px 16px rgba(245, 180, 0, 0.3);
   transition: all 0.2s;
@@ -1446,7 +1464,7 @@ textarea {
   border-radius: 22px;
   font-size: 14px;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   color: #555;
   cursor: pointer;
   transition: all 0.2s;
@@ -1462,7 +1480,7 @@ textarea {
   border-radius: 22px;
   font-size: 14px;
   font-weight: 500;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   color: #444;
   cursor: pointer;
   display: flex;
@@ -1480,7 +1498,7 @@ textarea {
   font-size: 13px;
   color: #aaa;
   cursor: pointer;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   text-decoration: underline;
   padding: 4px 0;
   align-self: center;
@@ -1495,7 +1513,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
 
   /* Close button — red circle top-right */
   .sp-close {
@@ -1534,14 +1552,14 @@ textarea {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    i { color: #f5b400; font-size: 18px; }
+    i { color: var(--primary); font-size: 18px; }
   }
 
   .sp-title {
     margin: 0 0 4px;
     font-size: 20px;
     font-weight: 700;
-    color: #f5b400;
+    color: var(--primary);
   }
 
   .sp-desc {
@@ -1568,7 +1586,7 @@ textarea {
       left: 16px;
       top: 50%;
       transform: translateY(-50%);
-      color: #f5b400;
+      color: var(--primary);
       font-size: 15px;
       pointer-events: none;
     }
@@ -1580,7 +1598,7 @@ textarea {
       border: 1.5px solid #e6e6e6;
       padding: 0 18px 0 44px;
       font-size: 14px;
-      font-family: 'Poppins', sans-serif;
+      font-family: var(--font-family);
       color: #3b3b3b;
       background: #fafafa;
       outline: none;
@@ -1589,7 +1607,7 @@ textarea {
 
       &::placeholder { color: #aaa; }
       &:focus {
-        border-color: #f5b400;
+        border-color: var(--primary);
         box-shadow: 0 0 0 3px rgba(245, 180, 0, 0.12);
         background: #fff;
       }
@@ -1622,11 +1640,11 @@ textarea {
     height: 52px;
     border-radius: 26px;
     border: none;
-    background: #f5b400;
-    color: #000;
+    background: var(--primary);
+    color: var(--theme-primary-fg-color);
     font-size: 15px;
     font-weight: 700;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     cursor: pointer;
     letter-spacing: 0.3px;
     box-shadow: 0 4px 16px rgba(245, 180, 0, 0.28);
@@ -1702,7 +1720,7 @@ textarea {
   padding: 14px 26px;
   border-radius: 999px;
   border: none;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   font-weight: 600;
   font-size: 15px;
   cursor: pointer;
@@ -1727,13 +1745,13 @@ textarea {
 
 .btn-save-add,
 .btn-continue {
-  background: #f5b301;
-  color: #27304a;
-  box-shadow: 0 10px 24px rgba(245, 179, 1, 0.35);
+  background: var(--primary);
+  color: var(--theme-primary-fg-color);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
 
   &:hover:not(:disabled) {
-    background: #e8a900;
-    box-shadow: 0 12px 28px rgba(245, 179, 1, 0.45);
+    background: var(--p-primary-hover-color);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
     transform: translateY(-1px);
   }
 }
@@ -1765,8 +1783,8 @@ textarea {
   height: 42px;
   border-radius: 50%;
   background: #fff8e1;
-  border: 2px solid #f5b400;
-  color: #f5b400;
+  border: 2px solid var(--primary);
+  color: var(--primary);
   font-size: 18px;
   cursor: pointer;
   display: flex;
@@ -1794,7 +1812,7 @@ textarea {
     align-items: center;
     justify-content: center;
     line-height: 1;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
   }
 }
 
@@ -1944,7 +1962,7 @@ textarea {
   box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06);
   cursor: pointer;
   font-size: 15px;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   color: #3b3b3b;
   transition: all 0.2s ease;
   box-sizing: border-box;
@@ -2066,7 +2084,7 @@ textarea {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     font-size: 11px;
     font-weight: 700;
     color: #8b8b8b;
@@ -2082,7 +2100,7 @@ textarea {
     flex-shrink: 0;
 
     &.m-sd-dot-start { background: #34c759; }
-    &.m-sd-dot-end   { background: #f5b301; }
+    &.m-sd-dot-end   { background: var(--primary); }
   }
 
   .m-sd-card-inputs {
@@ -2123,7 +2141,7 @@ textarea {
       box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
 
       &:focus {
-        border-color: #f5b301 !important;
+        border-color: var(--primary) !important;
         box-shadow: 0 0 0 3px rgba(245, 179, 1, 0.12) !important;
       }
 
@@ -2172,7 +2190,7 @@ textarea {
     align-items: center;
     gap: 5px;
     margin-top: 8px;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     font-size: 11px;
     color: #ff3b3b;
 
@@ -2189,7 +2207,7 @@ textarea {
     background: #f0fdf4;
     border: 1px solid #bbf7d0;
     border-radius: 30px;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     font-size: 12px;
     font-weight: 500;
     color: #15803d;
@@ -2231,14 +2249,14 @@ textarea {
     font-size: 18px;
     font-weight: 700;
     color: var(--primary);
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
   }
 
   .sd-subtitle {
     margin: 2px 0 0;
     font-size: 13px;
     color: #8b8b8b;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
   }
 
   .sd-close {
@@ -2336,7 +2354,7 @@ textarea {
   cursor: pointer;
   transition: border-color 0.2s;
 
-  &.sd-field-active { border-color: #f5b400; }
+  &.sd-field-active { border-color: var(--primary); }
 
   &.sd-field-error { border-color: #ff3b3b; }
 
@@ -2345,7 +2363,7 @@ textarea {
     color: #ff3b3b;
     font-size: 12px;
     margin-top: 6px;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
   }
 
   .sd-label {
@@ -2354,7 +2372,7 @@ textarea {
     font-weight: 600;
     color: #8b8b8b;
     margin-bottom: 8px;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
   }
 
   .sd-row {
@@ -2367,7 +2385,7 @@ textarea {
     flex: 1;
     font-size: 14px;
     color: #3b3b3b;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2380,7 +2398,7 @@ textarea {
     border-radius: 8px;
     padding: 6px 8px;
     font-size: 14px;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     color: #3b3b3b;
     outline: none;
     cursor: pointer;
@@ -2440,7 +2458,7 @@ textarea {
   .sd-summary {
     font-size: 13px;
     color: #8b8b8b;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     flex: 1;
   }
 
@@ -2456,7 +2474,7 @@ textarea {
     background: white;
     color: #3b3b3b;
     font-size: 14px;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     cursor: pointer;
     &:hover { background: #f5f5f5; }
   }
@@ -2465,11 +2483,11 @@ textarea {
     padding: 14px 26px;
     border-radius: 999px;
     border: none;
-    background: #f5b301 !important;
-    color: #27304a !important;
+    background: var(--primary) !important;
+    color: var(--theme-primary-fg-color) !important;
     font-size: 15px;
     font-weight: 600;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     cursor: pointer;
     box-shadow: 0 10px 24px rgba(245, 179, 1, 0.35);
     &:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
@@ -2581,7 +2599,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   position: relative;
 
   .close-btn {
@@ -2605,7 +2623,7 @@ textarea {
     color: #1a1a1a;
     margin: 0;
 
-    .highlight { color: #f5b400; }
+    .highlight { color: var(--primary); }
   }
 
   .dialog-subtitle {
@@ -2637,15 +2655,15 @@ textarea {
   border: 1.5px solid #eeeeee;
   transition: border-color 0.2s;
 
-  &:hover { border-color: #f5b400; }
-  &.editing { border-color: #f5b400; background: #fffdf0; }
+  &:hover { border-color: var(--primary); }
+  &.editing { border-color: var(--primary); background: #fffdf0; }
 }
 
 .visitor-avatar {
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #f5b400, #f7c948);
+  background: linear-gradient(135deg, var(--primary), #f7c948);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2662,7 +2680,7 @@ textarea {
     font-size: 15px;
     font-weight: 700;
     color: #fff;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
   }
 }
 
@@ -2723,10 +2741,10 @@ textarea {
   width: 100%;
   height: 44px;
   border-radius: 22px;
-  border: 2px dashed #f5b400;
+  border: 2px dashed var(--primary);
   background: transparent;
-  color: #f5b400;
-  font-family: 'Poppins', sans-serif;
+  color: var(--primary);
+  font-family: var(--font-family);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -2819,7 +2837,7 @@ textarea {
     height: 100vh;
     overflow: hidden;
     background: #ffffff;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
   }
 
   /* Header */
@@ -2897,7 +2915,7 @@ textarea {
   }
 
   .m-accent {
-    color: #f5b400;
+    color: var(--primary);
   }
 
   .m-normal {
@@ -2925,8 +2943,8 @@ textarea {
     height: 40px;
     border-radius: 50%;
     background: #fff8e1;
-    border: 2px solid #f5b400;
-    color: #f5b400;
+    border: 2px solid var(--primary);
+    color: var(--primary);
     font-size: 16px;
     cursor: pointer;
     display: flex;
@@ -3054,7 +3072,7 @@ textarea {
       background: #fff;
       box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
       font-size: 14px;
-      font-family: 'Poppins', sans-serif;
+      font-family: var(--font-family);
       color: #4a4a4a;
     }
 
@@ -3157,7 +3175,7 @@ textarea {
     background: #fff;
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
     font-size: 14px;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     color: #4a4a4a;
     padding: 0 18px;
   }
@@ -3215,7 +3233,7 @@ textarea {
     height: 64px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #f5b400;
+    border: 2px solid var(--primary);
     display: block;
   }
 
@@ -3243,7 +3261,7 @@ textarea {
     }
 
     &.m-change-btn {
-      background: #f5b400;
+      background: var(--primary);
       color: #fff;
     }
 
@@ -3296,7 +3314,7 @@ textarea {
     padding: 0 20px;
     border-radius: 999px;
     border: none;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
@@ -3316,12 +3334,12 @@ textarea {
   .m-btn-save-add,
   .m-btn-continue {
     width: 100%;
-    background: #f5b301;
-    color: #1f1f1f;
-    box-shadow: 0 10px 22px rgba(245, 179, 1, 0.35);
+    background: var(--primary);
+    color: var(--theme-primary-fg-color);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.15);
 
     &:hover:not(:disabled) {
-      background: #e8a900;
+      background: var(--p-primary-hover-color);
     }
   }
 }

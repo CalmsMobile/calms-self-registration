@@ -1,7 +1,7 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 :host {
-  --primary: #f5b301;
+  --primary: var(--theme-primary-yellow);
   --text-dark: #3c3c3c;
   --text-muted: #6f7785;
   --card-bg: #ffffff;
@@ -9,9 +9,9 @@
   display: block;
   height: 100vh;
   overflow: hidden;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   color: var(--text-dark);
-  background: #f5f5f5 url('../../../../../../assets/back.png') no-repeat center top / cover;
+  background: #f5f5f5;
 }
 
 :host,
@@ -23,11 +23,35 @@
 
 .page {
   height: 100%;
-  max-width: 1440px;
+  //max-width: 1440px;
   margin: 0 auto;
   padding: 24px 52px 20px;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--app-bg-image);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 1;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, var(--app-bg-opacity));
+    pointer-events: none;
+    z-index: -1;
+  }
 }
 
 /* ===== HEADER ===== */
@@ -258,7 +282,7 @@
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
-    font-family: 'Poppins', sans-serif;
+    font-family: var(--font-family);
 
     i { margin-right: 6px; }
 
@@ -284,7 +308,7 @@
   border-radius: 999px;
   font-size: 15px;
   font-weight: 600;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-family);
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -301,12 +325,13 @@
   }
 
   &.yellow {
-    background: #f5b301;
-    color: #2b2b2b;
-    box-shadow: 0 4px 16px rgba(245, 179, 1, 0.3);
+    background: var(--primary);
+    color: var(--theme-primary-fg-color);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 
     &:hover {
-      box-shadow: 0 6px 20px rgba(245, 179, 1, 0.4);
+      background: var(--p-primary-hover-color);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
       transform: translateY(-1px);
     }
 

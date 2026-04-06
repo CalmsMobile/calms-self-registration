@@ -96,9 +96,7 @@
 <div class="mobile-page">
   <!-- Header -->
   <header class="m-header">
-    <button type="button" class="m-btn-back-top" (click)="goBack()" [title]="'button_back' | translate">
-      <i class="pi pi-arrow-left"></i>
-    </button>
+    <div class="m-header-spacer"></div>
     <div class="m-header-center">
       <img [src]="logo" alt="Logo" class="m-logo" />
       <span class="m-company">{{ companyTitle }}</span>
@@ -181,9 +179,14 @@
 
   <!-- Actions -->
   <div class="m-actions">
-    <button class="m-btn m-btn-grey" type="button" (click)="skipStep()">
-      {{ 'button_skip' | translate }} <span>&#8594;</span>
-    </button>
+    <div class="m-actions-row">
+      <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
+        <span>&#8592;</span> {{ 'button_back' | translate }}
+      </button>
+      <button class="m-btn m-btn-grey" type="button" (click)="skipStep()">
+        {{ 'button_skip' | translate }} <span>&#8594;</span>
+      </button>
+    </div>
     <button class="m-btn m-btn-yellow" type="button" [disabled]="partiallyFilled" (click)="proceedToNext()">
       {{ 'button_continue' | translate }} <span>&#8594;</span>
     </button>

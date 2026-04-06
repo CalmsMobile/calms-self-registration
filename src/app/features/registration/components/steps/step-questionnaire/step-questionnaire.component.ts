@@ -55,6 +55,10 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
+  get hasSkippableQuestions(): boolean {
+    return this.questions.some(q => !q.ValidationRequired);
+  }
+
   get hasAnyAnswer(): boolean {
     return this.questions.some(q => {
       if (this.isMultipleAnswerQuestion(q)) {
@@ -422,6 +426,11 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     this.saveFormData();
     const prev = this.wizardService.getCurrentStepIndex() - 1;
     if (prev >= 0) this.wizardService.requestStepChange(prev);
+  }
+
+  skipStep(): void {
+    this.saveFormData();
+    this.wizardService.skipToNextStep();
   }
 
   rewatchSafetyBrief(): void {
