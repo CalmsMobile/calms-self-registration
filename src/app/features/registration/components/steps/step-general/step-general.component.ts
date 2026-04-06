@@ -134,6 +134,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   enableFBInSelfReg = false;
   timeSlotList: any[] = [];
   timeSlotsLoaded = false;
+  timeSlotStartTime: string | null = null;
+  timeSlotEndTime: string | null = null;
   facilityPurposeList: any[] = [];
   facilityMasterList: any[] = [];
   facilityBookingSlots: any[] = [];
@@ -477,6 +479,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Clear time slot when date changes
     this.timeSlotsLoaded = false;
     this.timeSlotList = [];
+    this.timeSlotStartTime = null;
+    this.timeSlotEndTime = null;
     this.generalForm.patchValue({ timeSlot: '' });
   }
 
@@ -679,6 +683,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       } else {
         this.timeSlotList = [];
         this.setupControl('timeSlot', true, false);
+        const alert = this.getAlert('no_time_slots_available');
+        this.messageService.add({
+          severity: 'warn',
+          summary: alert.summary || 'No Slots Available',
+          detail: alert.detail || 'No time slots available for the selected date',
+          life: 5000
+        });
       }
       this.timeSlotsLoaded = true;
     });
@@ -2282,6 +2293,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this.isMultipleVisitorMode) {
       formData.savedVisitors = this.savedVisitors;
     }
+    // Include slot times and flag for submit payload
+    formData.timeSlotStartTime = this.timeSlotStartTime;
+    formData.timeSlotEndTime = this.timeSlotEndTime;
+    formData.enableVimsApptTimeSlot = this.enableVimsApptTimeSlot;
     this.wizardService.updateFormData('general', formData);
   }
 
@@ -3061,6 +3076,27 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
     this.generalForm.get('timeSlot')?.setValue(slot.Code);
     this.generalForm.get('timeSlot')?.markAsTouched();
+  }
+
+  onTimeSlotDropdownChange(code: string | null): void {
+    if (!code) {
+      this.timeSlotStartTime = null;
+      this.timeSlotEndTime = null;
+      return;
+    }
+    const slot = this.timeSlotList.find(s => s.Code === code);
+    if (slot && slot.availableCount === 0) {
+      this.showError('Oops.. This slot\'s appointment is full or not available now');
+      this.generalForm.get('timeSlot')?.setValue(null);
+      this.timeSlotStartTime = null;
+      this.timeSlotEndTime = null;
+    } else {
+      this.generalForm.get('timeSlot')?.markAsTouched();
+      // Code format: "10:30-12:30" — parse start and end times
+      const parts = (slot?.Code || '').split('-');
+      this.timeSlotStartTime = parts[0]?.trim() || null;
+      this.timeSlotEndTime = parts[1]?.trim() || null;
+    }
   }
 
   validateVisitorIdAndExpiry(): { isValid: boolean; errorMessage?: string } {
