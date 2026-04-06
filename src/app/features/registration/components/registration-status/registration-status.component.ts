@@ -117,8 +117,8 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
 
   get badgeText(): string {
     if (this.status === 'success') return (this.labelService.getLabel('approved', 'caption') || 'Approved').toUpperCase();
-    if (this.status === 'pending') return 'WAITING';
-    return 'ERROR';
+    if (this.status === 'pending') return (this.labelService.getLabel('pending', 'caption') || 'WAITING').toUpperCase();
+    return (this.labelService.getLabel('error', 'caption') || 'ERROR').toUpperCase();
   }
 
   get statusText(): string {
