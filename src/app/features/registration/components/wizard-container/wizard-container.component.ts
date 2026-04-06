@@ -55,6 +55,8 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
   private readonly ownNavRoutes: string[] = [];
 
   private destroy$ = new Subject<void>();
+  /** True when the wizard was reached via a page refresh — triggers home redirect in ngOnInit. */
+  private isRefreshRedirect = false;
 
   constructor(
     private wizardService: WizardService,
@@ -64,6 +66,14 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     private languageService: LanguageService,
     private sharedService: SharedService
   ) {
+    // Detect browser refresh or direct URL access: isNavigatedFromHome is an in-memory
+    // flag that is never persisted to sessionStorage, so it is always false after a reload.
+    // We cannot navigate inside the constructor — defer to ngOnInit.
+    if (!this.wizardService.isNavigatedFromHome) {
+      this.isRefreshRedirect = true;
+      return;
+    }
+
     this.sharedService.currentTitle.subscribe(t => { this.title = t; });
     this.sharedService.currentLogo.subscribe(l => { this.logo = l; });
     this.showSharedLayout = !this.ownLayoutRoutes.some(r => this.router.url.includes(r));
@@ -95,6 +105,13 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // If this is a refresh/direct-URL load, redirect to home page and stop.
+    if (this.isRefreshRedirect) {
+      const qs = this.wizardService.originalQueryString || sessionStorage.getItem('originalQueryString') || '';
+      this.router.navigateByUrl('/' + qs);
+      return;
+    }
+
     // Subscribe to step change requests from child step components
     this.wizardService.onStepChangeRequest
       .pipe(takeUntil(this.destroy$))

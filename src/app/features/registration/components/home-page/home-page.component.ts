@@ -162,6 +162,15 @@ export class HomePageComponent implements AfterViewChecked {
       const p: { [key: string]: string } = {};
       Object.keys(params).forEach(key => p[key.toLowerCase()] = params[key]);
 
+      // Capture the original query string so we can restore it if the page is refreshed
+      // while the user is in the wizard. Only capture when meaningful params are present.
+      const hasQueryParams = !!(p['ac'] || p['bc'] || p['hc'] || p['vc']);
+      if (hasQueryParams) {
+        const qs = window.location.search;
+        this.wizardService.originalQueryString = qs;
+        sessionStorage.setItem('originalQueryString', qs);
+      }
+
       if (p['ac']) {
         // Appointment flow: use encrypted appointment code directly
         try {
@@ -980,6 +989,7 @@ export class HomePageComponent implements AfterViewChecked {
       }
       this.wizardService.currentBranchID = this.selectedBranch;
       this.wizardService.selectedVisitCategory = this.selectedCategory;
+      this.wizardService.isNavigatedFromHome = true;
       this.wizardService.setDataToSessionStorage();
 
       // Navigate to wizard

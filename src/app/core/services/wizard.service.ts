@@ -65,6 +65,10 @@ export class WizardService {
   hostCodeFromQuery = ''; // host IC resolved from hc param (GetSelfRegShareURLData response)
   categoryCodeFromQuery = ''; // category code resolved from vc+hc params (GetSelfRegShareURLData response)
   isHostFromQuery = false; // true when hc query param was used to pre-fill host
+  /** True only when the wizard was reached via proceedToWizard() — reset on page refresh. */
+  isNavigatedFromHome = false;
+  /** The original query string from the home page URL (e.g. "?bc=ABC&vc=XYZ"). */
+  originalQueryString = '';
 
   // Static variables for safety brief - will be replaced with dynamic data later
   SafetyBriefing_Date = "2026-03-03T14:02:43.957";
@@ -95,6 +99,9 @@ export class WizardService {
     if (this.hcParam) {
       this.isHostFromQuery = true;
     }
+    if (!this.originalQueryString) {
+      this.originalQueryString = sessionStorage.getItem('originalQueryString') || '';
+    }
 
     if (this.currentBranchID && this.currentBranchName) {
       this.updateHeader(20, this.currentBranchID);
@@ -120,6 +127,7 @@ export class WizardService {
     if (this.refCatCode) sessionStorage.setItem('refCatCode', this.refCatCode);
     if (this.appointmentCode) sessionStorage.setItem('appointmentCode', this.appointmentCode);
     if (this.hcParam) sessionStorage.setItem('hcParam', this.hcParam);
+    if (this.originalQueryString) sessionStorage.setItem('originalQueryString', this.originalQueryString);
   }
 
   clearSessionStorage() {
@@ -130,6 +138,7 @@ export class WizardService {
     sessionStorage.removeItem('refCatCode');
     sessionStorage.removeItem('appointmentCode');
     sessionStorage.removeItem('hcParam');
+    sessionStorage.removeItem('originalQueryString');
     this.currentBranchID = '';
     this.selectedVisitCategory = '';
     this.currentBranchName = '';
@@ -140,6 +149,8 @@ export class WizardService {
     this.hostCodeFromQuery = '';
     this.categoryCodeFromQuery = '';
     this.isHostFromQuery = false;
+    this.isNavigatedFromHome = false;
+    this.originalQueryString = '';
     this.formDataStore.next({});
     this.settings$.next(null);
     this.attachmentSetting$.next(null);
