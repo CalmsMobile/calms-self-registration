@@ -478,6 +478,19 @@ export class WizardService {
 
       return `${month}-${day}-${year} ${hours}:${minutes}`;
     };
+
+    // Combine an appointment date with a slot time string "HH:mm"
+    const formatSlotDateTime = (date: any, timeStr: string | null): string => {
+      if (!date || !timeStr) return formatDateForAPI(date);
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return this.getDefaultDateTimeForAPI();
+      const [h, m] = timeStr.split(':').map(Number);
+      d.setHours(h, m, 0, 0);
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${month}-${day}-${year} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    };
     // Strip data URL prefix — send raw base64 only
     const stripBase64Prefix = (src: string): string => {
       if (!src) return '';
@@ -499,8 +512,12 @@ export class WizardService {
       FloorId: generalData.floor?.toString() || '',
       RoomId: generalData.meeting_location?.toString() || '',
       NoApptSave: false,
-      StartDateTime: formatDateForAPI(generalData.startDate),
-      EndDateTime: formatDateForAPI(generalData.endDate),
+      StartDateTime: generalData.enableVimsApptTimeSlot
+        ? formatSlotDateTime(generalData.appointmentDate, generalData.timeSlotStartTime)
+        : formatDateForAPI(generalData.startDate),
+      EndDateTime: generalData.enableVimsApptTimeSlot
+        ? formatSlotDateTime(generalData.appointmentDate, generalData.timeSlotEndTime)
+        : formatDateForAPI(generalData.endDate),
       Remarks: generalData.remarks || '',
       IsSelfRegistrationImageRectangle: settings?.Visitor?.[0]?.IsSelfRegistrationImageRectangle || false,
       allowSMS: false,

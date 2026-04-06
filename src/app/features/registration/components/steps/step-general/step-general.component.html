@@ -627,32 +627,26 @@
       }
 
       @if (enableVimsApptTimeSlot && enableFBInSelfReg && !generalForm.get('facilityBooking')?.value && timeSlotsLoaded) {
-      <div class="form-field full-width">
+      @if (timeSlotList.length > 0) {
+      <div class="form-field">
         <label class="field-label">
           {{'time_slot' | translate}} <span class="required-star">*</span>
         </label>
-        @if (timeSlotList.length > 0) {
-        <div class="time-slot-tiles" [class.invalid]="isFieldInvalidRequired('timeSlot')">
-          @for (slot of timeSlotList; track slot.Code) {
-          <div class="time-slot-tile" [class.selected]="generalForm.get('timeSlot')?.value === slot.Code"
-            [class.unavailable]="slot.availableCount === 0" (click)="selectTimeSlot(slot)">
-            <span class="slot-tile-name">{{slot.Name}}</span>
-            @if (slot.availableCount === 0) {
-            <span class="slot-tile-full">{{ 'slot_full_label' | translate }}</span>
-            }
-          </div>
-          }
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-clock"></i></span>
+          <p-select [options]="timeSlotList" formControlName="timeSlot"
+            [placeholder]="'time_slot' | translate:'placeholder'"
+            optionLabel="Name" optionValue="Code"
+            (onChange)="onTimeSlotDropdownChange($event.value)"
+            [class]="{'ng-invalid': isFieldInvalidRequired('timeSlot')}"
+            [showClear]="true" appendTo="body">
+          </p-select>
         </div>
         @if (isFieldInvalidRequired('timeSlot')) {
         <small class="error-message">{{ getRequiredError('time_slot') }}</small>
         }
-        } @else {
-        <div class="time-slot-empty">
-          <i class="pi pi-calendar-times"></i>
-          <span>{{ 'no_time_slots_available' | translate }}</span>
-        </div>
-        }
       </div>
+      }
       }
 
       @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value && facilityBookingSlots.length > 0) {
@@ -850,32 +844,26 @@
       }
 
       @if (enableVimsApptTimeSlot && !enableFBInSelfReg && timeSlotsLoaded) {
-      <div class="form-field full-width">
+      @if (timeSlotList.length > 0) {
+      <div class="form-field">
         <label class="field-label">
           {{'time_slot' | translate}} <span class="required-star">*</span>
         </label>
-        @if (timeSlotList.length > 0) {
-        <div class="time-slot-tiles" [class.invalid]="isFieldInvalidRequired('timeSlot')">
-          @for (slot of timeSlotList; track slot.Code) {
-          <div class="time-slot-tile" [class.selected]="generalForm.get('timeSlot')?.value === slot.Code"
-            [class.unavailable]="slot.availableCount === 0" (click)="selectTimeSlot(slot)">
-            <span class="slot-tile-name">{{slot.Name}}</span>
-            @if (slot.availableCount === 0) {
-            <span class="slot-tile-full">{{ 'slot_full_label' | translate }}</span>
-            }
-          </div>
-          }
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-clock"></i></span>
+          <p-select [options]="timeSlotList" formControlName="timeSlot"
+            [placeholder]="'time_slot' | translate:'placeholder'"
+            optionLabel="Name" optionValue="Code"
+            (onChange)="onTimeSlotDropdownChange($event.value)"
+            [class]="{'ng-invalid': isFieldInvalidRequired('timeSlot')}"
+            [showClear]="true" appendTo="body">
+          </p-select>
         </div>
         @if (isFieldInvalidRequired('timeSlot')) {
         <small class="error-message">{{ getRequiredError('time_slot') }}</small>
         }
-        } @else {
-        <div class="time-slot-empty">
-          <i class="pi pi-calendar-times"></i>
-          <span>{{ 'no_time_slots_available' | translate }}</span>
-        </div>
-        }
       </div>
+      }
       }
 
       <!-- 22. Appointment UDF fields -->
@@ -1578,25 +1566,24 @@
       }
 
       @if (enableVimsApptTimeSlot && enableFBInSelfReg && !generalForm.get('facilityBooking')?.value && timeSlotsLoaded) {
+      @if (timeSlotList.length > 0) {
       <div class="m-form-field">
         <label class="m-field-label">{{'time_slot' | translate}} <span class="m-req">*</span></label>
-        @if (timeSlotList.length > 0) {
-        <div class="time-slot-tiles" [class.invalid]="isFieldInvalidRequired('timeSlot')">
-          @for (slot of timeSlotList; track slot.Code) {
-          <div class="time-slot-tile" [class.selected]="generalForm.get('timeSlot')?.value === slot.Code"
-            [class.unavailable]="slot.availableCount === 0" (click)="selectTimeSlot(slot)">
-            <span class="slot-tile-name">{{slot.Name}}</span>
-            @if (slot.availableCount === 0) { <span class="slot-tile-full">{{ 'slot_full_label' | translate }}</span> }
-          </div>
-          }
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-clock"></i></span>
+          <p-select [options]="timeSlotList" formControlName="timeSlot"
+            [placeholder]="'time_slot' | translate:'placeholder'"
+            optionLabel="Name" optionValue="Code"
+            (onChange)="onTimeSlotDropdownChange($event.value)"
+            [class]="{'ng-invalid': isFieldInvalidRequired('timeSlot')}"
+            [showClear]="true" appendTo="body">
+          </p-select>
         </div>
         @if (isFieldInvalidRequired('timeSlot')) {
         <small class="m-error">{{ getRequiredError('time_slot') }}</small>
         }
-        } @else {
-        <div class="time-slot-empty"><i class="pi pi-calendar-times"></i><span>{{ 'no_time_slots_available' | translate }}</span></div>
-        }
       </div>
+      }
       }
 
       <!-- Meeting Location (Room) -->
@@ -1728,25 +1715,24 @@
       }
 
       @if (enableVimsApptTimeSlot && !enableFBInSelfReg && timeSlotsLoaded) {
+      @if (timeSlotList.length > 0) {
       <div class="m-form-field">
         <label class="m-field-label">{{'time_slot' | translate}} <span class="m-req">*</span></label>
-        @if (timeSlotList.length > 0) {
-        <div class="time-slot-tiles" [class.invalid]="isFieldInvalidRequired('timeSlot')">
-          @for (slot of timeSlotList; track slot.Code) {
-          <div class="time-slot-tile" [class.selected]="generalForm.get('timeSlot')?.value === slot.Code"
-            [class.unavailable]="slot.availableCount === 0" (click)="selectTimeSlot(slot)">
-            <span class="slot-tile-name">{{slot.Name}}</span>
-            @if (slot.availableCount === 0) { <span class="slot-tile-full">{{ 'slot_full_label' | translate }}</span> }
-          </div>
-          }
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-clock"></i></span>
+          <p-select [options]="timeSlotList" formControlName="timeSlot"
+            [placeholder]="'time_slot' | translate:'placeholder'"
+            optionLabel="Name" optionValue="Code"
+            (onChange)="onTimeSlotDropdownChange($event.value)"
+            [class]="{'ng-invalid': isFieldInvalidRequired('timeSlot')}"
+            [showClear]="true" appendTo="body">
+          </p-select>
         </div>
         @if (isFieldInvalidRequired('timeSlot')) {
         <small class="m-error">{{ getRequiredError('time_slot') }}</small>
         }
-        } @else {
-        <div class="time-slot-empty"><i class="pi pi-calendar-times"></i><span>{{ 'no_time_slots_available' | translate }}</span></div>
-        }
       </div>
+      }
       }
 
       <!-- 22. Appointment UDF fields -->

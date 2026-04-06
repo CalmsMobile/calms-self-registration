@@ -134,6 +134,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   enableFBInSelfReg = false;
   timeSlotList: any[] = [];
   timeSlotsLoaded = false;
+  timeSlotStartTime: string | null = null;
+  timeSlotEndTime: string | null = null;
   facilityPurposeList: any[] = [];
   facilityMasterList: any[] = [];
   facilityBookingSlots: any[] = [];
@@ -171,14 +173,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this._activeMessageKeys.has(key)) return;
     this._activeMessageKeys.add(key);
     const life = msg.life ?? 3000;
-    this.showMessage({ ...msg, life });
+    this.messageService.add({ ...msg, life });
     setTimeout(() => this._activeMessageKeys.delete(key), life + 200);
   }
 
   get canGoBackToHome(): boolean {
     return !this.wizardService.appointmentCode &&
-           !this.wizardService.refCatCode &&
-           !this.wizardService.categoryCodeFromQuery;
+      !this.wizardService.refCatCode &&
+      !this.wizardService.categoryCodeFromQuery;
   }
 
   constructor(
@@ -477,6 +479,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Clear time slot when date changes
     this.timeSlotsLoaded = false;
     this.timeSlotList = [];
+    this.timeSlotStartTime = null;
+    this.timeSlotEndTime = null;
     this.generalForm.patchValue({ timeSlot: '' });
   }
 
@@ -679,6 +683,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       } else {
         this.timeSlotList = [];
         this.setupControl('timeSlot', true, false);
+        const alert = this.getAlert('No Slots Available error');
+        this.messageService.add({
+          severity: 'warn',
+          summary: alert.summary || 'No Slots Available',
+          detail: alert.detail || 'No Slots Available error',
+          life: 5000
+        });
       }
       this.timeSlotsLoaded = true;
     });
@@ -1665,75 +1676,75 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!this.isMultipleVisitorMode) return;
     const currentForm = this.getCurrentVisitorForm();
 
-      // Save to savedVisitors array for multiple visitor functionality
-      const visitorData = { ...currentForm.value };
+    // Save to savedVisitors array for multiple visitor functionality
+    const visitorData = { ...currentForm.value };
 
-      // Initialize Visitor_IC and IdentityNo fields
-      visitorData.Visitor_IC = visitorData.visitor_id || '';
-      visitorData.IdentityNo = visitorData.visitor_id || '';
+    // Initialize Visitor_IC and IdentityNo fields
+    visitorData.Visitor_IC = visitorData.visitor_id || '';
+    visitorData.IdentityNo = visitorData.visitor_id || '';
 
-      // Apply Singapore PDPA formatting for visitor_id if enabled
-      if (this.isSingaporePDPARequired && visitorData.visitor_id && visitorData.fullName) {
-        const formattedId = this.formatVisitorIdForPDPA(visitorData.visitor_id, visitorData.fullName);
-        visitorData.visitor_id = formattedId;
-        visitorData.Visitor_IC = formattedId;
-        visitorData.IdentityNo = formattedId;
+    // Apply Singapore PDPA formatting for visitor_id if enabled
+    if (this.isSingaporePDPARequired && visitorData.visitor_id && visitorData.fullName) {
+      const formattedId = this.formatVisitorIdForPDPA(visitorData.visitor_id, visitorData.fullName);
+      visitorData.visitor_id = formattedId;
+      visitorData.Visitor_IC = formattedId;
+      visitorData.IdentityNo = formattedId;
+    }
+
+    // Automatically set "myself" flag based on safety briefing and first visitor
+    if (this.settings?.Visitor?.[0]?.SafetyBriefingEnabled && this.savedVisitors.length === 0) {
+      visitorData.myself = true; // First visitor is always "myself" when safety briefing is enabled
+    } else {
+      visitorData.myself = false; // Subsequent visitors are not "myself"
+    }
+
+    if (this.editingVisitorIndex >= 0) {
+      // Update existing visitor
+      this.savedVisitors[this.editingVisitorIndex] = visitorData;
+      this.editingVisitorIndex = -1; // Reset editing index
+
+      this.showMessage({ severity: 'success', ...this.getAlert('visitor_update_message') });
+    } else {
+      // Check for duplicate visitor by visitor_id or fullName
+      const isDuplicate = this.savedVisitors.some(v =>
+        (visitorData.visitor_id && v.visitor_id === visitorData.visitor_id) ||
+        (visitorData.fullName && v.fullName?.toLowerCase() === visitorData.fullName?.toLowerCase())
+      );
+
+      if (isDuplicate) {
+        this.showMessage({ severity: 'warn', ...this.getAlert('duplicate_visitor_alert') });
+        return;
       }
 
-      // Automatically set "myself" flag based on safety briefing and first visitor
-      if (this.settings?.Visitor?.[0]?.SafetyBriefingEnabled && this.savedVisitors.length === 0) {
-        visitorData.myself = true; // First visitor is always "myself" when safety briefing is enabled
-      } else {
-        visitorData.myself = false; // Subsequent visitors are not "myself"
+      // Add new visitor
+      this.savedVisitors.push(visitorData);
+
+      this.showMessage({ severity: 'success', ...this.getAlert('visitor_save_message') });
+    }
+
+    // Save form data immediately after visitor modification
+    this.saveFormDataToWizard();
+
+    // Clear visitor identification fields including the profile preview so the next
+    // visitor doesn't accidentally inherit the previous visitor's photo.
+    const fieldsToReset = ['fullName', 'visitor_id', 'profile', 'profilePreview'];
+
+    fieldsToReset.forEach(field => {
+      if (currentForm.get(field)) {
+        currentForm.get(field)?.reset();
       }
+    });
 
-      if (this.editingVisitorIndex >= 0) {
-        // Update existing visitor
-        this.savedVisitors[this.editingVisitorIndex] = visitorData;
-        this.editingVisitorIndex = -1; // Reset editing index
+    // Reset profile image display
+    this.profileImage = '';
 
-        this.showMessage({ severity: 'success', ...this.getAlert('visitor_update_message') });
-      } else {
-        // Check for duplicate visitor by visitor_id or fullName
-        const isDuplicate = this.savedVisitors.some(v =>
-          (visitorData.visitor_id && v.visitor_id === visitorData.visitor_id) ||
-          (visitorData.fullName && v.fullName?.toLowerCase() === visitorData.fullName?.toLowerCase())
-        );
-
-        if (isDuplicate) {
-          this.showMessage({ severity: 'warn', ...this.getAlert('duplicate_visitor_alert') });
-          return;
-        }
-
-        // Add new visitor
-        this.savedVisitors.push(visitorData);
-
-        this.showMessage({ severity: 'success', ...this.getAlert('visitor_save_message') });
+    // Reset form touched state for the cleared fields only
+    fieldsToReset.forEach(field => {
+      if (currentForm.get(field)) {
+        currentForm.get(field)?.markAsUntouched();
+        currentForm.get(field)?.markAsPristine();
       }
-
-      // Save form data immediately after visitor modification
-      this.saveFormDataToWizard();
-
-      // Clear visitor identification fields including the profile preview so the next
-      // visitor doesn't accidentally inherit the previous visitor's photo.
-      const fieldsToReset = ['fullName', 'visitor_id', 'profile', 'profilePreview'];
-
-      fieldsToReset.forEach(field => {
-        if (currentForm.get(field)) {
-          currentForm.get(field)?.reset();
-        }
-      });
-
-      // Reset profile image display
-      this.profileImage = '';
-
-      // Reset form touched state for the cleared fields only
-      fieldsToReset.forEach(field => {
-        if (currentForm.get(field)) {
-          currentForm.get(field)?.markAsUntouched();
-          currentForm.get(field)?.markAsPristine();
-        }
-      });
+    });
   }
 
   removeVisitor(index: number): void {
@@ -2133,11 +2144,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       const dateField = this.enableFBInSelfReg ? 'sharedDate' : 'appointmentDate';
       const hasDate = !!this.generalForm.get(dateField)?.value;
       if (hasDate) {
-        const noSlotAlert = this.getAlert('no_time_slots_available');
+        const noSlotAlert = this.getAlert('No Slots Available error');
         this.showMessage({
-          severity: 'error',
+          severity: 'warn',
           summary: noSlotAlert.summary || 'No Slots Available',
-          detail: noSlotAlert.detail || 'No time slots available for the selected date'
+          detail: noSlotAlert.detail || 'No Slots Available error'
         });
         this.wizardService.setStepValid(false);
         return false;
@@ -2282,6 +2293,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this.isMultipleVisitorMode) {
       formData.savedVisitors = this.savedVisitors;
     }
+    // Include slot times and flag for submit payload
+    formData.timeSlotStartTime = this.timeSlotStartTime;
+    formData.timeSlotEndTime = this.timeSlotEndTime;
+    formData.enableVimsApptTimeSlot = this.enableVimsApptTimeSlot;
     this.wizardService.updateFormData('general', formData);
   }
 
@@ -2634,7 +2649,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this.cameraStream) {
       const track = this.cameraStream.getVideoTracks()[0];
       if (track) {
-        (track.applyConstraints as any)({ advanced: [{ torch: this.useFlash }] }).catch(() => {});
+        (track.applyConstraints as any)({ advanced: [{ torch: this.useFlash }] }).catch(() => { });
       }
     }
   }
@@ -3056,11 +3071,44 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   selectTimeSlot(slot: any): void {
     if (slot.availableCount === 0) {
-      this.showError('Oops.. This slot\'s appointment is full or not available now');
+      const alert = this.getAlert('slot is fully booked error');
+      this.showMessage({
+        severity: 'warn',
+        summary: alert.summary || 'Slot Full',
+        detail: alert.detail || 'This appointment slot is fully booked or currently unavailable.',
+        life: 5000
+      });
       return;
     }
     this.generalForm.get('timeSlot')?.setValue(slot.Code);
     this.generalForm.get('timeSlot')?.markAsTouched();
+  }
+
+  onTimeSlotDropdownChange(code: string | null): void {
+    if (!code) {
+      this.timeSlotStartTime = null;
+      this.timeSlotEndTime = null;
+      return;
+    }
+    const slot = this.timeSlotList.find(s => s.Code === code);
+    if (slot && slot.availableCount === 0) {
+      const alert = this.getAlert('slot is fully booked error');
+      this.showMessage({
+        severity: 'warn',
+        summary: alert.summary || 'Slot Full',
+        detail: alert.detail || 'This appointment slot is fully booked or currently unavailable.',
+        life: 5000
+      });
+      setTimeout(() => this.generalForm.get('timeSlot')?.setValue(null));
+      this.timeSlotStartTime = null;
+      this.timeSlotEndTime = null;
+    } else {
+      this.generalForm.get('timeSlot')?.markAsTouched();
+      // Code format: "10:30-12:30" — parse start and end times
+      const parts = (slot?.Code || '').split('-');
+      this.timeSlotStartTime = parts[0]?.trim() || null;
+      this.timeSlotEndTime = parts[1]?.trim() || null;
+    }
   }
 
   validateVisitorIdAndExpiry(): { isValid: boolean; errorMessage?: string } {
