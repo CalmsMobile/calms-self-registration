@@ -7,10 +7,15 @@
   --theme-primary-text-color: #4d525c;
   --theme-secondary-text-color: #373737;
   --theme-primary-yellow: #f5b942;
+  --theme-primary-fg-color: #000000; /* Default fg for primary buttons; overridden by ColorFg */
   --theme-primary-green-color: var(--theme-primary-yellow);
   --theme-error-color: #e80505;
   --theme-border-radius: 20px;
   --theme-glossy-white: rgba(255, 255, 255, 0.85);
+
+  /* Dynamic background image (set by ThemeService from BgImage / BgImageOpacity) */
+  --app-bg-image: none;
+  --app-bg-opacity: 1;
 
   /* PrimeNG aura/material common overrides */
   --p-primary-color: #f5b942;
@@ -110,12 +115,25 @@
   border-radius: var(--theme-border-radius) !important;
   background-color: var(--theme-primary-yellow) !important;
   border-color: var(--theme-primary-yellow) !important;
-  color: #000 !important;
+  color: var(--theme-primary-fg-color) !important;
 
   &:disabled {
     opacity: 0.6 !important;
     cursor: not-allowed !important;
   }
+}
+
+/* Dynamic background image overlay — applied to .app-bg-overlay elements */
+.app-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: var(--app-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: var(--app-bg-opacity);
+  pointer-events: none;
+  z-index: 0;
 }
 
 body {

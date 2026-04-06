@@ -390,6 +390,35 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
+  get scheduleStartDateStr(): string {
+    if (!this.scheduleStartDate) return '';
+    const d = this.scheduleStartDate;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  set scheduleStartDateStr(val: string) {
+    if (!val) { this.scheduleStartDate = null; return; }
+    const [y, m, d] = val.split('-').map(Number);
+    this.scheduleStartDate = new Date(y, m - 1, d);
+    this.checkScheduleTimes();
+  }
+
+  get scheduleEndDateStr(): string {
+    if (!this.scheduleEndDate) return '';
+    const d = this.scheduleEndDate;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  set scheduleEndDateStr(val: string) {
+    if (!val) { this.scheduleEndDate = null; return; }
+    const [y, m, d] = val.split('-').map(Number);
+    this.scheduleEndDate = new Date(y, m - 1, d);
+    this.checkScheduleTimes();
+  }
+
+  get minDateStr(): string {
+    const d = this.minDate;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
   formatTime12(time: string): string {
     if (!time) return '';
     const [h, m] = time.split(':').map(Number);

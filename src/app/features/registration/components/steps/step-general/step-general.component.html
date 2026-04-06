@@ -2095,7 +2095,8 @@
     </div>
   </ng-template>
 
-  <div class="sd-body">
+  <!-- ── DESKTOP BODY ── -->
+  <div class="sd-body sd-body-desktop">
     <!-- Inline Calendar -->
     <div class="sd-calendar">
       <p-datepicker [inline]="true" [(ngModel)]="scheduleCalendarDate"
@@ -2128,6 +2129,70 @@
         }
       </div>
     </div>
+  </div>
+
+  <!-- ── MOBILE BODY ── -->
+  <div class="sd-body-mobile">
+    <!-- Start -->
+    <div class="m-sd-card" [class.m-sd-error]="false">
+      <div class="m-sd-card-label">
+        <span class="m-sd-dot m-sd-dot-start"></span>
+        {{ 'schedule_start_date' | translate }}
+      </div>
+      <div class="m-sd-card-inputs">
+        <div class="m-sd-input-wrap">
+          <i class="pi pi-calendar m-sd-input-icon"></i>
+          <input type="date" class="m-sd-input" [(ngModel)]="scheduleStartDateStr" [min]="minDateStr" />
+        </div>
+        <div class="m-sd-input-wrap">
+          <i class="pi pi-clock m-sd-input-icon"></i>
+          <input type="time" class="m-sd-input" [(ngModel)]="scheduleStartTime" (ngModelChange)="checkScheduleTimes()" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Arrow connector -->
+    <div class="m-sd-connector">
+      <div class="m-sd-connector-line"></div>
+      <div class="m-sd-connector-dot"><i class="pi pi-arrow-down"></i></div>
+      <div class="m-sd-connector-line"></div>
+    </div>
+
+    <!-- End -->
+    <div class="m-sd-card" [class.m-sd-error]="scheduleEndBeforeStartError">
+      <div class="m-sd-card-label">
+        <span class="m-sd-dot m-sd-dot-end"></span>
+        {{ 'schedule_end_date' | translate }}
+      </div>
+      <div class="m-sd-card-inputs">
+        <div class="m-sd-input-wrap">
+          <i class="pi pi-calendar m-sd-input-icon"></i>
+          <input type="date" class="m-sd-input" [(ngModel)]="scheduleEndDateStr" [min]="scheduleStartDateStr || minDateStr" />
+        </div>
+        <div class="m-sd-input-wrap">
+          <i class="pi pi-clock m-sd-input-icon"></i>
+          <input type="time" class="m-sd-input" [(ngModel)]="scheduleEndTime" (ngModelChange)="checkScheduleTimes()" />
+        </div>
+      </div>
+      @if (scheduleEndBeforeStartError) {
+        <div class="m-sd-error-msg">
+          <i class="pi pi-exclamation-circle"></i>
+          {{ 'end_date_error_message' | translate }}
+        </div>
+      }
+    </div>
+
+    <!-- Summary pill -->
+    @if (scheduleStartDate && scheduleEndDate && !scheduleEndBeforeStartError) {
+      <div class="m-sd-summary">
+        <i class="pi pi-check-circle"></i>
+        {{ formatTime12(scheduleStartTime) }} – {{ formatTime12(scheduleEndTime) }} &nbsp;·&nbsp;
+        {{ formatScheduleDate(scheduleStartDate) }}
+        @if (scheduleStartDateStr !== scheduleEndDateStr) {
+          &nbsp;→ {{ formatScheduleDate(scheduleEndDate) }}
+        }
+      </div>
+    }
   </div>
 
   <ng-template pTemplate="footer">

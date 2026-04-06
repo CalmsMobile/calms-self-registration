@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ApiService } from './api.service';
+import { ThemeService } from './theme.service';
 
 interface LabelConfig {
   [key: string]: {
@@ -17,7 +18,7 @@ export class LabelService {
   private currentBranch: any;
   private currentLanguage: any;
 
-  constructor(private api: ApiService) { }
+  constructor(private api: ApiService, private themeService: ThemeService) { }
 
   updateLabels(settings: any[]): void {
     const labelConfig: LabelConfig = {};
@@ -76,6 +77,10 @@ export class LabelService {
           const allItems = [...(settings?.Table || []), ...(settings?.Table2 || [])];
           if (allItems.length) {
             this.updateLabels(allItems);
+          }
+          // Apply dynamic theme from Table1[0]
+          if (settings?.Table1?.[0]) {
+            this.themeService.applyTheme(settings.Table1[0]);
           }
           resolve(settings); // Return the full response
         });

@@ -107,3 +107,10 @@
   font-size: 14px;
   color: inherit;
 }
+@media (max-width: 768px) {
+ .lang-btn{
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+}
+}
