@@ -218,61 +218,180 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
     this.fetchQrCodeData();
   }
 
-  private formatDateAsKendo(date: Date): string {
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-  }
-
-  onQrImageLoaded(): void {
+onQrImageLoaded(): void {
     this.qrCodeLoading = false;
   }
 
   onPrint() { this.printDocument.emit(); }
-  onDownloadPdf() { this.printDocument.emit(); }
+
+  onDownloadPdf() {
+    const w = window.open('', '_blank', 'width=500,height=800');
+    if (!w) { this.printDocument.emit(); return; }
+
+    type StatusTheme = { headerBg: string; headerColor: string; bannerBg: string; bannerColor: string; badgeColor: string };
+    const themes: Record<string, StatusTheme> = {
+      success: { headerBg: 'linear-gradient(90deg,#b6fbd2 0%,#2ec96c 100%)', headerColor: '#3c3c3c', bannerBg: '#eafff2', bannerColor: '#2b9b55', badgeColor: '#2ec96c' },
+      pending: { headerBg: 'linear-gradient(90deg,#f6ce55 0%,#f0b642 100%)', headerColor: '#3b3b3b', bannerBg: '#f8e7c2', bannerColor: '#9c7a10', badgeColor: '#9c7a10' },
+      error:   { headerBg: 'linear-gradient(90deg,#ff5257 0%,#5b1010 100%)', headerColor: '#ffffff', bannerBg: '#ead2cf', bannerColor: '#8b2020', badgeColor: '#d64545' }
+    };
+    const t = themes[this.status] || themes['pending'];
+    const badge = this.badgeText;
+
+    const qrHtml = (this.status === 'success' && this.qrCodeBase64)
+      ? `<div class="qr-section">
+           <div class="qr-box"><img src="${this.qrCodeBase64}" alt="QR Code"/></div>
+           <div class="qr-caption">Scan QR code at the entrance</div>
+         </div>
+         <div class="divider"></div>`
+      : '';
+
+    const allRows: { label: string; value: string }[] = [
+      { label: 'Visitor Name', value: this.visitorName },
+      { label: 'Email',        value: this.email },
+      { label: 'Visit From',   value: this.visitFrom },
+      { label: 'Visit To',     value: this.visitTo },
+      { label: 'Meeting With', value: this.meetingWith },
+      { label: 'Location',     value: this.meetingLocation },
+      { label: 'Category',     value: this.visitType },
+      { label: 'Purpose',      value: this.visitPurpose },
+    ];
+    const infoGrid = allRows
+      .filter(r => r.value)
+      .map(r => `<div class="info-item"><div class="info-label">${r.label}</div><div class="info-value">${r.value}</div></div>`)
+      .join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Visitor Pass</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+  @page { size: 440px auto; margin: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #ffffff; font-family: "Poppins", "Segoe UI", Arial, sans-serif; }
+  body { display: flex; justify-content: center; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* ── Card ── */
+  .pass-card { width: 440px; background: #ffffff; overflow: hidden; }
+
+  /* ── Header ── */
+  .pass-header {
+    position: relative;
+    padding: 16px 16px 26px;
+    background: ${t.headerBg};
+    color: ${t.headerColor};
+  }
+  .brand-name { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+  .badge {
+    position: absolute; top: 14px; right: 14px;
+    background: #ffffff; color: ${t.badgeColor};
+    font-size: 11px; font-weight: 700;
+    padding: 4px 12px; border-radius: 999px;
+  }
+  .wave {
+    position: absolute; left: 0; bottom: -9px;
+    width: 100%; height: 18px;
+    background: radial-gradient(circle at 9px 9px, #ffffff 9px, transparent 10px) repeat-x;
+    background-size: 18px 18px;
+  }
+
+  /* ── Inner banner ── */
+  .pass-inner-banner {
+    padding: 10px 16px;
+    text-align: center; font-weight: 700;
+    font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;
+    background: ${t.bannerBg}; color: ${t.bannerColor};
+  }
+
+  /* ── Body ── */
+  .pass-body { padding: 18px 16px 16px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin-bottom: 14px; }
+  .info-item {}
+  .info-label { font-size: 10px; color: #9aa0a6; margin-bottom: 2px; }
+  .info-value { font-size: 13px; font-weight: 600; color: #3e3e3e; word-break: break-word; }
+  .divider { border: none; border-top: 1px dashed #e3d2aa; margin: 10px 0 12px; }
+
+  /* ── QR ── */
+  .qr-section { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-bottom: 8px; }
+  .qr-box { width: 150px; height: 150px; display: flex; align-items: center; justify-content: center; border: 1px solid #efefef; border-radius: 8px; }
+  .qr-box img { width: 130px; height: 130px; object-fit: contain; }
+  .qr-caption { font-size: 12px; color: #9aa0a6; }
+
+  /* ── Footer ── */
+  .card-footer-text {
+    text-align: center; font-size: 12px; color: #6b7280;
+    line-height: 1.6; padding: 8px 4px 12px;
+    background: ${t.bannerBg};
+  }
+  .card-footer-text p + p { margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="pass-card">
+  <div class="pass-header">
+    <div class="brand-name">${this.companyName}</div>
+    <span class="badge">${badge}</span>
+    <div class="pass-inner-banner">Visitor Access Pass</div>
+    <div class="wave"></div>
+  </div>
+  <div class="pass-body">
+    <div class="info-grid">${infoGrid}</div>
+    <div class="divider"></div>
+    ${qrHtml}
+    <div class="card-footer-text">
+      <p>Thank you for visiting us.</p>
+      <p>Please present this pass at the entrance.</p>
+    </div>
+  </div>
+</div>
+<script>
+  window.onload = function() { setTimeout(function() { window.print(); }, 500); };
+</script>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    w.location.href = url;
+    w.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
+  }
   onShareWhatsapp() {
-    const name = this.registrationData?.visitorName || '';
-    const id = this.registrationData?.registrationId || '';
-    const from = this.registrationData?.visitFrom || '';
-    const to = this.registrationData?.visitTo || '';
-    const host = this.registrationData?.meetingWith || '';
-    const location = this.registrationData?.meetingLocation || '';
-    const purpose = this.registrationData?.visitPurpose || '';
+    const d = this.registrationData;
+    const lines: string[] = [
+      '🎫 *Visitor Access Pass*',
+    ];
+    if (d?.visitorName)      lines.push(`👤 Name: ${d.visitorName}`);
+    if (d?.registrationId)   lines.push(`🆔 Registration ID: ${d.registrationId}`);
+    if (d?.visitFrom)        lines.push(`📅 Visit From: ${d.visitFrom}`);
+    if (d?.visitTo)          lines.push(`📅 Visit To: ${d.visitTo}`);
+    if (d?.meetingWith)      lines.push(`🤝 Meeting With: ${d.meetingWith}`);
+    if (d?.meetingLocation)  lines.push(`📍 Location: ${d.meetingLocation}`);
+    if (d?.visitPurpose)     lines.push(`📋 Purpose: ${d.visitPurpose}`);
+    const caption = lines.join('\n');
 
-    const lines: string[] = [];
-    lines.push(`*Visitor Access Pass*`);
-    if (name) lines.push(`Name: ${name}`);
-    if (id) lines.push(`Registration ID: ${id}`);
-    if (from) lines.push(`Visit From: ${from}`);
-    if (to) lines.push(`Visit To: ${to}`);
-    if (host) lines.push(`Meeting With: ${host}`);
-    if (location) lines.push(`Location: ${location}`);
-    if (purpose) lines.push(`Purpose: ${purpose}`);
-
-    const text = lines.join('\n');
-
-    // Use Web Share API to share QR image + text if supported
-    if (this.qrCodeBase64 && navigator.canShare) {
+    // Mobile: Web Share API — shares QR image with caption to WhatsApp
+    if (this.qrCodeBase64 && typeof navigator.canShare === 'function') {
       try {
-        const byteString = atob(this.qrCodeBase64);
-        const bytes = new Uint8Array(byteString.length);
-        for (let i = 0; i < byteString.length; i++) {
-          bytes[i] = byteString.charCodeAt(i);
-        }
-        const blob = new Blob([bytes], { type: 'image/png' });
-        const file = new File([blob], 'visitor-pass-qr.png', { type: 'image/png' });
+        const base64Data = this.qrCodeBase64.replace(/^data:image\/\w+;base64,/, '');
+        const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+        const file = new File([bytes], 'visitor-qr.png', { type: 'image/png' });
 
         if (navigator.canShare({ files: [file] })) {
-          navigator.share({ files: [file], text }).catch(() => {
-            // fallback if user cancels or share fails
-            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-          });
+          navigator.share({ files: [file], text: caption, title: 'Visitor Access Pass' })
+            .catch(() => this.openWhatsappText(caption));
           return;
         }
       } catch {
-        // fall through to text-only
+        // fall through
       }
     }
 
+    // Desktop fallback: open WhatsApp web with caption text
+    this.openWhatsappText(caption);
+  }
+
+  private openWhatsappText(text: string) {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   }
   onNewRegistration() { this.newRegistration.emit(); }
