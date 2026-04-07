@@ -300,9 +300,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   }
 
   get isExpired(): boolean {
-    const endDate = this.appointmentData?.END_DATE || this.appointmentData?.EndDate || this.appointmentData?.START_DATE;
-    if (!endDate) return false;
-    return new Date(endDate) < new Date();
+    return this.appointmentData?.IsExpired === 1 || this.appointmentData?.IsExpired === true;
   }
 
   get showApprove(): boolean {

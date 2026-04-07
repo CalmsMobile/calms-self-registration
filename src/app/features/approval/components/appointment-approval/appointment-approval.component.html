@@ -43,62 +43,68 @@
     <h1 class="title">Visit Request #{{ appointmentData?.SEQ_ID || seqId }}</h1>
 
     <section class="declarations" aria-label="Declaration Cards">
-      <article class="declaration-card modal-trigger" role="button" tabindex="0"
-        (click)="openModal('documents-modal')"
-        (keydown.enter)="openModal('documents-modal')"
-        (keydown.space)="$event.preventDefault(); openModal('documents-modal')"
-        aria-label="Open Supporting Documents">
-        <div class="decl-left">
-          <div class="icon-chip chip-doc" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M9 3h7l5 5v13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v6h6"/><path d="m10.5 14.5 2 2 4-4"/></svg>
+      @if (docsData.length > 0) {
+        <article class="declaration-card modal-trigger" role="button" tabindex="0"
+          (click)="openModal('documents-modal')"
+          (keydown.enter)="openModal('documents-modal')"
+          (keydown.space)="$event.preventDefault(); openModal('documents-modal')"
+          aria-label="Open Supporting Documents">
+          <div class="decl-left">
+            <div class="icon-chip chip-doc" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M9 3h7l5 5v13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v6h6"/><path d="m10.5 14.5 2 2 4-4"/></svg>
+            </div>
+            <div class="decl-text">
+              <h2 class="decl-title">View Supporting Documents</h2>
+              <p class="decl-sub">{{ docsData.length }} File{{ docsData.length > 1 ? 's' : '' }} Uploaded</p>
+            </div>
           </div>
-          <div class="decl-text">
-            <h2 class="decl-title">View Supporting Documents</h2>
-            <p class="decl-sub">{{ docsData.length > 0 ? docsData.length + ' File' + (docsData.length > 1 ? 's' : '') + ' Uploaded' : 'No Files' }}</p>
+          <div class="decl-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 18 18 6"/><path d="M9 6h9v9"/></svg>
           </div>
-        </div>
-        <div class="decl-arrow" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M6 18 18 6"/><path d="M9 6h9v9"/></svg>
-        </div>
-      </article>
+        </article>
+      }
 
-      <article class="declaration-card modal-trigger" role="button" tabindex="0"
-        (click)="openModal('safety-modal')"
-        (keydown.enter)="openModal('safety-modal')"
-        (keydown.space)="$event.preventDefault(); openModal('safety-modal')"
-        aria-label="Open safety declaration review">
-        <div class="decl-left">
-          <div class="icon-chip chip-self" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M9 3h7l5 5v13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v6h6"/><path d="M11 13h6M11 17h6M11 9h2"/></svg>
+      @if (questionnaireData.length > 0) {
+        <article class="declaration-card modal-trigger" role="button" tabindex="0"
+          (click)="openModal('safety-modal')"
+          (keydown.enter)="openModal('safety-modal')"
+          (keydown.space)="$event.preventDefault(); openModal('safety-modal')"
+          aria-label="Open safety declaration review">
+          <div class="decl-left">
+            <div class="icon-chip chip-self" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M9 3h7l5 5v13a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M16 3v6h6"/><path d="M11 13h6M11 17h6M11 9h2"/></svg>
+            </div>
+            <div class="decl-text">
+              <h2 class="decl-title">View Questionnaire</h2>
+              <p class="decl-sub">{{ questionnaireData.length }} Question{{ questionnaireData.length > 1 ? 's' : '' }}</p>
+            </div>
           </div>
-          <div class="decl-text">
-            <h2 class="decl-title">View Questionnaire</h2>
-            <p class="decl-sub">{{ questionnaireData.length > 0 ? questionnaireData.length + ' Question' + (questionnaireData.length > 1 ? 's' : '') : 'Health & Safety' }}</p>
+          <div class="decl-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 18 18 6"/><path d="M9 6h9v9"/></svg>
           </div>
-        </div>
-        <div class="decl-arrow" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M6 18 18 6"/><path d="M9 6h9v9"/></svg>
-        </div>
-      </article>
+        </article>
+      }
 
-      <article class="declaration-card modal-trigger" role="button" tabindex="0"
-        (click)="openModal('items-modal')"
-        (keydown.enter)="openModal('items-modal')"
-        (keydown.space)="$event.preventDefault(); openModal('items-modal')"
-        aria-label="Open item declaration details">
-        <div class="decl-left">
-          <div class="icon-chip chip-item" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="m12 3 8 4.5-8 4.5L4 7.5 12 3Z"/><path d="M4 7.5V16l8 5 8-5V7.5"/><path d="M12 12v9"/></svg>
+      @if (itemsData.length > 0) {
+        <article class="declaration-card modal-trigger" role="button" tabindex="0"
+          (click)="openModal('items-modal')"
+          (keydown.enter)="openModal('items-modal')"
+          (keydown.space)="$event.preventDefault(); openModal('items-modal')"
+          aria-label="Open item declaration details">
+          <div class="decl-left">
+            <div class="icon-chip chip-item" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="m12 3 8 4.5-8 4.5L4 7.5 12 3Z"/><path d="M4 7.5V16l8 5 8-5V7.5"/><path d="M12 12v9"/></svg>
+            </div>
+            <div class="decl-text">
+              <h2 class="decl-title">View Equipment Movement</h2>
+              <p class="decl-sub">{{ itemsData.length }} Item{{ itemsData.length > 1 ? 's' : '' }}</p>
+            </div>
           </div>
-          <div class="decl-text">
-            <h2 class="decl-title">View Equipment Movement</h2>
-            <p class="decl-sub">{{ itemsData.length > 0 ? itemsData.length + ' Item' + (itemsData.length > 1 ? 's' : '') : 'No Items' }}</p>
+          <div class="decl-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 18 18 6"/><path d="M9 6h9v9"/></svg>
           </div>
-        </div>
-        <div class="decl-arrow" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M6 18 18 6"/><path d="M9 6h9v9"/></svg>
-        </div>
-      </article>
+        </article>
+      }
 
       @if (ndaDoc) {
         <article class="declaration-card modal-trigger" role="button" tabindex="0"
@@ -264,8 +270,12 @@
 
         @if (approvalSteps.length > 0) {
           <section class="approval-status" aria-label="Approval Status">
-            <p class="approval-label">Approval Status</p>
-            @if (approvalSteps.length > 1) {
+            <p class="approval-label">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Approval Status
+            </p>
+            <div class="approval-card">
+              @if (approvalSteps.length > 1) {
                 <div class="approval-track" aria-hidden="true">
                   <div class="progress" [style.width]="approvalProgressWidth"></div>
                   <div class="dot"></div>
@@ -293,6 +303,7 @@
                   }
                 </div>
               }
+            </div>
           </section>
         }
       </div>

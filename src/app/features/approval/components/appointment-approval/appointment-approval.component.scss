@@ -227,7 +227,7 @@
 }
 
 .title {
-  margin: 4px 0 42px;
+  margin: 4px 0 20px;
   font-size: 40px;
   line-height: 1.04;
   color: #4a5c79;
@@ -236,7 +236,7 @@
 
 .declarations {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 24px;
   margin-bottom: 34px;
 }
@@ -523,12 +523,30 @@
 }
 
 .approval-label {
-  margin: 0 0 12px;
-  font-size: 18px;
-  letter-spacing: 1.6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 8px 20px 8px 14px;
+  font-size: 13px;
+  letter-spacing: 1.4px;
   text-transform: uppercase;
   color: #2a3950;
   font-weight: 800;
+  background: #e8edf8;
+  border: 1.5px solid #c8d3ea;
+  border-radius: 999px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    stroke: #4f6a9a;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
 }
 
 .approval-card {
@@ -1268,13 +1286,13 @@
 @media (max-width: 1500px) {
   .topbar { padding: 18px 28px; }
   .content { padding: 34px 26px 48px; }
-  .declarations { grid-template-columns: repeat(4, 1fr); }
+  .declarations { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
   .main-panel { grid-template-columns: 30% 70%; }
   .brand-left strong { font-size: 28px; }
   .brand-right strong { font-size: 28px; }
   .brand-right span { font-size: 13px; }
   .btn { font-size: 18px; min-width: 140px; height: 48px; }
-  .pending { font-size: 16px; }
+  .pending { font-size: 20px; }
   .title { font-size: clamp(36px, 4vw, 40px); }
   .decl-title { font-size: 22px; }
   .decl-sub { font-size: 16px; }
@@ -1283,7 +1301,7 @@
   .info-line { font-size: 20px; }
   .host-label { font-size: 13px; }
   .host-name { font-size: 24px; }
-  .host-dept { font-size: 16px; }
+  .host-dept { font-size: 20px; }
   .meta-pill { font-size: 17px; }
   .detail-label { font-size: 13px; }
   .detail-value { font-size: 22px; }
@@ -1303,7 +1321,7 @@
   .brand-left strong, .brand-right strong { font-size: 13px; }
   .brand-left span, .brand-right span { font-size: 8px; letter-spacing: 0.8px; }
   .content { padding: 20px 14px 94px; }
-  .pending { font-size: 13px; gap: 10px; letter-spacing: 2px; }
+  .pending { font-size: 15px; gap: 10px; letter-spacing: 2px; }
   .pending::before { width: 9px; height: 9px; }
   .title { margin-top: 7px; margin-bottom: 16px; font-size: clamp(24px, 5.6vw, 40px); }
   .declarations { grid-template-columns: 1fr; gap: 12px; }
