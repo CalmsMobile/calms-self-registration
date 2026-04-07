@@ -270,15 +270,12 @@
 
         @if (approvalSteps.length > 0) {
           <section class="approval-status" aria-label="Approval Status">
-            <p class="approval-label">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              Approval Status
-            </p>
+            <p class="approval-label">Approval Status</p>
             <div class="approval-card">
+              <div class="steps-col">
               @if (approvalSteps.length > 1) {
                 <div class="approval-track" aria-hidden="true">
                   <div class="progress" [style.width]="approvalProgressWidth"></div>
-                  <div class="dot"></div>
                 </div>
               }
               @for (step of approvalSteps; track $index) {
@@ -303,6 +300,7 @@
                   }
                 </div>
               }
+              </div>
             </div>
           </section>
         }
@@ -443,13 +441,12 @@
           <p style="margin:0;font-size:14px;color:#6b7d9b;">No documents uploaded.</p>
         </div>
       }
-      <div class="modal-divider"></div>
-      <div class="modal-actions">
-        <button class="modal-btn ghost" type="button" (click)="closeModal()">Close</button>
-        @if (docsData.length > 0) {
+      @if (docsData.length > 0) {
+        <div class="modal-divider"></div>
+        <div class="modal-actions">
           <button class="modal-btn dl-all" type="button" (click)="downloadAll()">Download All</button>
-        }
-      </div>
+        </div>
+      }
     </section>
   }
 
@@ -485,10 +482,6 @@
             </article>
           }
         </div>
-        <div class="modal-divider"></div>
-        <div class="modal-actions">
-          <button class="modal-btn ghost" type="button" (click)="closeModal()">Close</button>
-        </div>
       } @else {
         <div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:32px 24px 24px;gap:16px;">
           <div style="width:72px;height:72px;border-radius:50%;background:#fff7e6;display:flex;align-items:center;justify-content:center;">
@@ -498,7 +491,6 @@
           </div>
           <h3 style="margin:0;font-size:18px;font-weight:700;color:#24324a;">No Items Declared</h3>
           <p style="margin:0;font-size:14px;color:#6b7d9b;line-height:1.5;">The visitor has not declared any items for<br>this visit. No further action is required.</p>
-          <button class="modal-btn ghost" type="button" (click)="closeModal()" style="margin-top:8px;min-width:120px;">Close</button>
         </div>
       }
     </section>

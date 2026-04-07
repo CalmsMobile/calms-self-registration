@@ -315,10 +315,13 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
 
   get approvalProgressWidth(): string {
     if (!this.approvalSteps.length) return '0%';
+    const total = this.approvalSteps.length;
     const approvedCount = this.approvalSteps.filter(s => this.getStepStatusKey(s) === 'approved').length;
     const progressCount = this.approvalSteps.filter(s => this.getStepStatusKey(s) === 'progress').length;
     const effectiveDone = approvedCount + (progressCount > 0 ? 0.5 : 0);
-    return Math.round((effectiveDone / (this.approvalSteps.length - 1 || 1)) * 100) + '%';
+    // Track spans (N-1) connections between circles; subtract 1 so all-approved = 100%
+    const pct = Math.min(Math.round(((effectiveDone - 1) / (total - 1 || 1)) * 100), 100);
+    return Math.max(pct, 0) + '%';
   }
 
   @HostListener('document:keydown.escape')

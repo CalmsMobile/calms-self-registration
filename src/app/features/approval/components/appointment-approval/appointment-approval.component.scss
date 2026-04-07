@@ -527,7 +527,7 @@
   align-items: center;
   gap: 8px;
   margin: 0 0 14px;
-  padding: 8px 20px 8px 14px;
+  padding: 7px 18px 7px 14px;
   font-size: 13px;
   letter-spacing: 1.4px;
   text-transform: uppercase;
@@ -536,17 +536,6 @@
   background: #e8edf8;
   border: 1.5px solid #c8d3ea;
   border-radius: 999px;
-
-  svg {
-    width: 16px;
-    height: 16px;
-    stroke: #4f6a9a;
-    stroke-width: 2;
-    fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    flex-shrink: 0;
-  }
 }
 
 .approval-card {
@@ -558,40 +547,32 @@
   position: relative;
   overflow: hidden;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: flex-start;
 }
 
+/* Desktop: transparent wrapper — children act as direct flex children of approval-card */
+.steps-col { display: contents; }
+
 .approval-track {
   position: absolute;
-  left: 15%;
-  right: 15%;
-  top: 52px;
+  left: 118px;
+  right: 117px;
+  top: 55px;
   height: 8px;
   background: #d9dfec;
   border-radius: 999px;
 
   .progress {
-    height: 4px;
+    height: 7px;
     background: #16c78f;
     border-radius: 999px;
-    margin-top: 2px;
     transition: width 0.4s ease;
-  }
-
-  .dot {
-    position: absolute;
-    top: -3px;
-    left: var(--dot-pos, 44%);
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: #ff2f63;
-    box-shadow: 0 0 0 4px #f5f7fb;
   }
 }
 
 .approval-step {
+  width: 19.33%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -599,17 +580,19 @@
   gap: 6px;
   position: relative;
   z-index: 1;
-  min-width: 80px;
 }
 
 .step-circle {
-  width: 52px;
+  width: 62px;
   height: 62px;
-  border-radius: 46%;
+  border-radius: 50%;
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 18px;
+
+  // Suppress the .pending::before green dot that bleeds from the status label
+  &::before { display: none !important; }
 
   &.approved {
     background: #16c78f;
@@ -625,11 +608,11 @@
 }
 
 .step-pill {
-  padding: 4px 12px;
+  padding: 5px 16px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
-  min-width: 86px;
+  min-width: 96px;
   text-align: center;
   font-weight: 600;
 
@@ -648,13 +631,13 @@
 }
 
 .step-title {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 20px;
+  font-weight: 400;
   color: rgba(0, 0, 0, 0.8);
 }
 
 .step-name {
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 700;
   color: #2c3b52;
   display: inline-flex;
@@ -662,8 +645,8 @@
   gap: 6px;
 
   svg {
-    width: 12px;
-    height: 12px;
+    width: 16px;
+    height: 16px;
     stroke: #9aa8c3;
     stroke-width: 1.8;
     fill: none;
@@ -673,13 +656,13 @@
 .step-meta {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 14px;
   color: #7f91ad;
 
   svg {
-    width: 11px;
-    height: 11px;
+    width: 14px;
+    height: 14px;
     stroke: #9aa8c3;
     stroke-width: 1.8;
     fill: none;
@@ -791,7 +774,8 @@
   &.modal-compact { width: min(560px, calc(100vw - 36px)); }
   &.modal-medium  { width: min(620px, calc(100vw - 36px)); }
   &.modal-wide    { width: min(760px, calc(100vw - 36px)); }
-  &.modal-pdf {
+
+ &.modal-pdf {
     width: min(70vw, calc(100vw - 24px));
     height: min(92vh, 920px);
     display: flex;
@@ -805,7 +789,6 @@
     opacity: 1;
     visibility: visible;
     transform: translateY(0) scale(1);
-    width: 70%;
   }
 }
 
@@ -1318,38 +1301,38 @@
   .topbar { padding: 12px 16px; }
   .desktop-actions { display: none; }
   .brand-copy { gap: 10px; }
-  .brand-left strong, .brand-right strong { font-size: 13px; }
-  .brand-left span, .brand-right span { font-size: 8px; letter-spacing: 0.8px; }
-  .content { padding: 20px 14px 94px; }
-  .pending { font-size: 15px; gap: 10px; letter-spacing: 2px; }
+  .brand-left strong, .brand-right strong { font-size: 16px; }
+  .brand-left span, .brand-right span { font-size: 11px; letter-spacing: 0.8px; }
+  .content { padding: 20px 14px 10px; }
+  .pending { font-size: 18px; gap: 10px; letter-spacing: 2px; }
   .pending::before { width: 9px; height: 9px; }
-  .title { margin-top: 7px; margin-bottom: 16px; font-size: clamp(24px, 5.6vw, 40px); }
+  .title { margin-top: 7px; margin-bottom: 16px; font-size: clamp(27px, 5.6vw, 40px); }
   .declarations { grid-template-columns: 1fr; gap: 12px; }
   .declaration-card { min-height: 90px; border-radius: 26px; padding: 12px 14px; }
   .icon-chip { width: 56px; height: 56px; border-radius: 18px; svg { width: 28px; height: 28px; } }
-  .decl-title { font-size: 17px; }
-  .decl-sub { margin-top: 4px; font-size: 14px; }
+  .decl-title { font-size: 20px; }
+  .decl-sub { margin-top: 4px; font-size: 17px; }
   .decl-arrow svg { width: 24px; height: 24px; }
   .main-panel { grid-template-columns: 1fr; border-radius: 20px; }
   .profile-panel { border-right: none; border-bottom: 1px solid #e6e9f2; padding: 16px 14px; gap: 12px; }
   .avatar { width: 124px; height: 124px; border-radius: 40px; }
-  .name { font-size: 22px; }
-  .role-pill { font-size: 13px; padding: 5px 14px; }
+  .name { font-size: 25px; }
+  .role-pill { font-size: 16px; padding: 5px 14px; }
   .quick-info { padding-top: 8px; }
-  .info-line { font-size: 13px; }
+  .info-line { font-size: 16px; }
   .small-icon { width: 28px; height: 28px; svg { width: 14px; height: 14px; } }
   .host-card { border-radius: 20px; padding: 16px; }
-  .host-label { font-size: 12px; }
-  .host-name { font-size: 18px; }
-  .host-dept { font-size: 13px; }
+  .host-label { font-size: 15px; }
+  .host-name { font-size: 21px; }
+  .host-dept { font-size: 16px; }
   .host-meta { margin-top: 12px; gap: 8px; }
-  .meta-pill { font-size: 12px; padding: 6px 10px; svg { width: 14px; height: 14px; } }
+  .meta-pill { font-size: 15px; padding: 6px 10px; svg { width: 14px; height: 14px; } }
   .details-panel { padding: 14px; }
   .details-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .detail-icon { width: 32px; height: 32px; svg { width: 14px; height: 14px; } }
-  .detail-label { font-size: 10px; }
-  .detail-value { margin-top: 3px; font-size: 13px; }
-  .footer { font-size: 12px; padding: 18px 12px 16px; }
+  .detail-label { font-size: 13px; }
+  .detail-value { margin-top: 3px; font-size: 16px; }
+  .footer { font-size: 15px; padding: 18px 12px 16px; }
   .mobile-action-bar {
     display: flex;
     position: fixed;
@@ -1360,22 +1343,22 @@
     background: rgba(249, 250, 254, 0.95);
     backdrop-filter: blur(10px);
     border-top: 1px solid #e0e4ef;
-    .btn { flex: 1; min-width: 0; height: 46px; font-size: 16px; svg { width: 16px; height: 16px; } }
+    .btn { flex: 1; min-width: 0; height: 46px; font-size: 19px; svg { width: 16px; height: 16px; } }
   }
   .modal-overlay { padding: 16px; }
   .modal-card { width: min(640px, calc(100vw - 24px)); border-radius: 22px; padding: 18px 16px 20px; }
-  .modal-title { font-size: 22px; }
-  .modal-copy-title { font-size: 20px; }
-  .modal-copy { font-size: 14px; }
+  .modal-title { font-size: 25px; }
+  .modal-copy-title { font-size: 23px; }
+  .modal-copy { font-size: 17px; }
   .status-badge-circle { width: 72px; height: 72px; margin-bottom: 18px; }
   .modal-actions { margin-top: 18px; gap: 10px; }
-  .modal-btn { height: 48px; border-radius: 14px; font-size: 14px; }
-  .modal-section-label { font-size: 14px; margin-bottom: 8px; }
-  .modal-textarea { min-height: 120px; font-size: 14px; border-radius: 14px; }
-  .row-title { font-size: 16px; }
-  .row-sub { font-size: 12px; }
-  .chip-in { font-size: 12px; }
-  .qa-question { font-size: 14px; }
+  .modal-btn { height: 48px; border-radius: 14px; font-size: 17px; }
+  .modal-section-label { font-size: 17px; margin-bottom: 8px; }
+  .modal-textarea { min-height: 120px; font-size: 17px; border-radius: 14px; }
+  .row-title { font-size: 19px; }
+  .row-sub { font-size: 15px; }
+  .chip-in { font-size: 15px; }
+  .qa-question { font-size: 17px; }
   .qa-answers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
@@ -1390,7 +1373,7 @@
   .modal-copy { font-size: 16px; }
   .modal-btn { height: 52px; font-size: 16px; }
   .modal-textarea { min-height: 180px; font-size: 14px; }
-  .row-card { padding: 19px; width: auto; }
+  .row-card { padding: 14px 16px; width: 100%; box-sizing: border-box; }
   .row-title { font-size: 16px; }
   .row-sub { font-size: 13px; }
   .qa-row { grid-template-columns: 28px 1fr; gap: 8px; }
@@ -1411,4 +1394,71 @@
   .detail-icon { width: 30px; height: 30px; }
   .detail-label { font-size: 14px; }
   .detail-value { font-size: 17px; margin-top: 12px; }
+
+  /* ── Approval status — vertical timeline on mobile ── */
+  .approval-label { font-size: 11px; letter-spacing: 1px; margin-bottom: 16px; padding: 6px 14px 6px 12px; }
+
+  .approval-card {
+    margin: 0 auto;
+    padding: 24px;
+    border-radius: 20px;
+    background: #f3f4f6;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* Override desktop display:contents so wrapper becomes a real block */
+  .steps-col {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    width: fit-content;
+    margin: 0 auto;
+  }
+
+  .approval-track {
+    left: 23px;
+    right: auto;
+    top: 52px;
+    bottom: 52px;
+    width: 2px;
+    height: auto;
+    background: #d1d5db;
+    border-radius: 0;
+
+    .progress { width: 2px; height: 32%; background: #22c55e; }
+  }
+
+  .approval-step {
+    width: 260px;
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    column-gap: 16px;
+    align-items: start;
+    text-align: left;
+    height: 96px;
+
+    & + .approval-step { margin-top: 27px; }
+  }
+
+  .step-circle {
+    grid-row: 1 / span 4;
+    justify-self: center;
+    align-self: start;
+    width: 48px;
+    height: 48px;
+    font-size: 15px;
+  }
+
+  .step-pill,
+  .step-title,
+  .step-name,
+  .step-meta { grid-column: 2; justify-self: start; }
+
+  .step-title { font-size: 16px; color: #1f2937; }
+  .step-name { font-size: 15px; font-weight: 700; color: #111827; }
+  .step-meta { font-size: 13px; }
+  .step-pill { font-size: 13px; min-width: 88px; padding: 5px 12px; }
 }
