@@ -683,11 +683,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       } else {
         this.timeSlotList = [];
         this.setupControl('timeSlot', true, false);
-        const alert = this.getAlert('No Slots Available error');
         this.messageService.add({
           severity: 'warn',
-          summary: alert.summary || 'No Slots Available',
-          detail: alert.detail || 'No Slots Available error',
+          summary: this.labelService.getLabel('no_slots_available_error', 'caption') || 'No Slots Available',
+          detail: this.labelService.getLabel('no_time_slots_available', 'caption') || 'No time slots available for the selected date',
           life: 5000
         });
       }
@@ -2144,11 +2143,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       const dateField = this.enableFBInSelfReg ? 'sharedDate' : 'appointmentDate';
       const hasDate = !!this.generalForm.get(dateField)?.value;
       if (hasDate) {
-        const noSlotAlert = this.getAlert('No Slots Available error');
         this.showMessage({
           severity: 'warn',
-          summary: noSlotAlert.summary || 'No Slots Available',
-          detail: noSlotAlert.detail || 'No Slots Available error'
+          summary: this.labelService.getLabel('no_slots_available_error', 'caption') || 'No Slots Available',
+          detail: this.labelService.getLabel('no_time_slots_available', 'caption') || 'No time slots available for the selected date'
         });
         this.wizardService.setStepValid(false);
         return false;
@@ -3071,11 +3069,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   selectTimeSlot(slot: any): void {
     if (slot.availableCount === 0) {
-      const alert = this.getAlert('slot is fully booked error');
+      const alert = this.getAlert('slot_is_fully_booked_error');
       this.showMessage({
         severity: 'warn',
-        summary: alert.summary || 'Slot Full',
-        detail: alert.detail || 'This appointment slot is fully booked or currently unavailable.',
+        summary: this.labelService.getLabel('slot_full_label', 'caption') || alert.summary || 'Slot Full',
+        detail: alert.detail || this.labelService.getLabel('slot_is_fully_booked_error', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
         life: 5000
       });
       return;
@@ -3092,11 +3090,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
     const slot = this.timeSlotList.find(s => s.Code === code);
     if (slot && slot.availableCount === 0) {
-      const alert = this.getAlert('slot is fully booked error');
+      const alert = this.getAlert('slot_is_fully_booked_error');
       this.showMessage({
         severity: 'warn',
-        summary: alert.summary || 'Slot Full',
-        detail: alert.detail || 'This appointment slot is fully booked or currently unavailable.',
+        summary: this.labelService.getLabel('slot_full_label', 'caption') || alert.summary || 'Slot Full',
+        detail: alert.detail || this.labelService.getLabel('slot_is_fully_booked_error', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
         life: 5000
       });
       setTimeout(() => this.generalForm.get('timeSlot')?.setValue(null));
