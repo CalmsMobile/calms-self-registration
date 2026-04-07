@@ -1645,7 +1645,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     if (this.isVisitorNotWhitelisted) {
-      this.showMessage({ severity: 'error', summary: 'Not Whitelisted', detail: 'Visitor not whitelisted. Please contact admin.', life: 5000 });
+      this.showMessage({ severity: 'error', summary: this.labelService.getLabel('not_whitelisted', 'caption') || 'Not Whitelisted', detail: this.labelService.getLabel('not_whitelisted_detail', 'caption') || 'Visitor not whitelisted. Please contact admin.', life: 5000 });
       return;
     }
 
@@ -2133,7 +2133,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     // Block if visitor failed whitelist validation
     if (this.isVisitorNotWhitelisted) {
-      this.showMessage({ severity: 'error', summary: 'Not Whitelisted', detail: 'Visitor not whitelisted. Please contact admin.', life: 5000 });
+      this.showMessage({ severity: 'error', summary: this.labelService.getLabel('not_whitelisted', 'caption') || 'Not Whitelisted', detail: this.labelService.getLabel('not_whitelisted_detail', 'caption') || 'Visitor not whitelisted. Please contact admin.', life: 5000 });
       this.wizardService.setStepValid(false);
       return false;
     }
@@ -2969,10 +2969,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         } else {
           // Code 20 or unexpected — not whitelisted
           this.isVisitorNotWhitelisted = true;
-          const description = result?.Table?.[0]?.Description || 'Visitor not whitelisted. Please contact admin.';
+          const description = result?.Table?.[0]?.Description
+            || this.labelService.getLabel('not_whitelisted_detail', 'caption')
+            || 'Visitor not whitelisted. Please contact admin.';
           this.showMessage({
             severity: 'error',
-            summary: 'Not Whitelisted',
+            summary: this.labelService.getLabel('not_whitelisted', 'caption') || 'Not Whitelisted',
             detail: description,
             life: 5000
           });
