@@ -53,13 +53,15 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
 
   readonly companyName = 'CALMS Technologies';
 
-  private dynamicAlertMessages = {
-    item1: 'Oops, unable to find your appointment details, please contact your host or proceed to help desk',
-    item2: 'Oops, your appointment expired, please contact your host or proceed to help desk',
-    item3: 'Oops, your appointment has been canceled, please contact your host or proceed to help desk',
-    item4: 'Your appointment request yet to approve, please contact your host or proceed to help desk',
-    item5: 'Oops, your appointment code is invalid, please contact your host or proceed to help desk',
-  };
+  private get dynamicAlertMessages() {
+    return {
+      item1: this.labelService.getLabel('qr_not_found_alert', 'caption') || 'Oops, unable to find your appointment details, please contact your host or proceed to help desk',
+      item2: this.labelService.getLabel('qr_expired_alert', 'caption') || 'Oops, your appointment expired, please contact your host or proceed to help desk',
+      item3: this.labelService.getLabel('qr_cancelled_alert', 'caption') || 'Oops, your appointment has been canceled, please contact your host or proceed to help desk',
+      item4: this.labelService.getLabel('qr_pending_alert', 'caption') || 'Your appointment request yet to approve, please contact your host or proceed to help desk',
+      item5: this.labelService.getLabel('qr_invalid_alert', 'caption') || 'Oops, your appointment code is invalid, please contact your host or proceed to help desk',
+    };
+  }
 
   constructor(
     private labelService: LabelService,
@@ -153,7 +155,7 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
       this.api.GetVisitorDataForQRCodeDynamic(loParam).subscribe({
         next: (poReturn: any) => this.handleQrCodeResponse(poReturn),
         error: () => {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to generate QR code.' });
+          this.messageService.add({ severity: 'error', summary: this.labelService.getLabel('error', 'caption') || 'Error', detail: this.labelService.getLabel('qr_load_error', 'caption') || 'Failed to generate QR code.' });
           this.qrCodeLoading = false;
           this.qrCodeError = true;
         }
@@ -164,7 +166,7 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
       this.api.GetVisitorDataForQRCode(loParam).subscribe({
         next: (poReturn: any) => this.handleQrCodeResponse(poReturn),
         error: () => {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to generate QR code.' });
+          this.messageService.add({ severity: 'error', summary: this.labelService.getLabel('error', 'caption') || 'Error', detail: this.labelService.getLabel('qr_load_error', 'caption') || 'Failed to generate QR code.' });
           this.qrCodeLoading = false;
           this.qrCodeError = true;
         }
@@ -175,8 +177,8 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
   private handleQrCodeResponse(poData: any): void {
     // Check for API error response structure (Status: false means error)
     if (poData && poData.Status === false) {
-      const errorDetail = poData.ErrorLog?.[0]?.Error || 'Failed to generate QR code.';
-      this.messageService.add({ severity: 'error', summary: 'Error', detail: errorDetail });
+      const errorDetail = poData.ErrorLog?.[0]?.Error || this.labelService.getLabel('qr_load_error', 'caption') || 'Failed to generate QR code.';
+      this.messageService.add({ severity: 'error', summary: this.labelService.getLabel('error', 'caption') || 'Error', detail: errorDetail });
       this.qrCodeLoading = false;
       this.qrCodeError = true;
       return;
@@ -192,7 +194,7 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
         H: this.dynamicAlertMessages.item5
       };
       if (msgMap[code]) {
-        this.messageService.add({ severity: 'info', summary: 'Oops...', detail: msgMap[code] });
+        this.messageService.add({ severity: 'info', summary: this.labelService.getLabel('oops_alert', 'caption') || 'Oops...', detail: msgMap[code] });
         this.qrCodeLoading = false;
         this.qrCodeError = true;
         return;
@@ -227,6 +229,51 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
 
   onPrint() { this.printDocument.emit(); }
   onDownloadPdf() { this.printDocument.emit(); }
-  onShareWhatsapp() { /* WhatsApp share — handled by parent or future implementation */ }
+  onShareWhatsapp() {
+    const name = this.registrationData?.visitorName || '';
+    const id = this.registrationData?.registrationId || '';
+    const from = this.registrationData?.visitFrom || '';
+    const to = this.registrationData?.visitTo || '';
+    const host = this.registrationData?.meetingWith || '';
+    const location = this.registrationData?.meetingLocation || '';
+    const purpose = this.registrationData?.visitPurpose || '';
+
+    const lines: string[] = [];
+    lines.push(`*Visitor Access Pass*`);
+    if (name) lines.push(`Name: ${name}`);
+    if (id) lines.push(`Registration ID: ${id}`);
+    if (from) lines.push(`Visit From: ${from}`);
+    if (to) lines.push(`Visit To: ${to}`);
+    if (host) lines.push(`Meeting With: ${host}`);
+    if (location) lines.push(`Location: ${location}`);
+    if (purpose) lines.push(`Purpose: ${purpose}`);
+
+    const text = lines.join('\n');
+
+    // Use Web Share API to share QR image + text if supported
+    if (this.qrCodeBase64 && navigator.canShare) {
+      try {
+        const byteString = atob(this.qrCodeBase64);
+        const bytes = new Uint8Array(byteString.length);
+        for (let i = 0; i < byteString.length; i++) {
+          bytes[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([bytes], { type: 'image/png' });
+        const file = new File([blob], 'visitor-pass-qr.png', { type: 'image/png' });
+
+        if (navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], text }).catch(() => {
+            // fallback if user cancels or share fails
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+          });
+          return;
+        }
+      } catch {
+        // fall through to text-only
+      }
+    }
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  }
   onNewRegistration() { this.newRegistration.emit(); }
 }

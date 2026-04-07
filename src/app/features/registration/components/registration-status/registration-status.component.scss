@@ -125,8 +125,11 @@
 }
 
 .brand-name {
-  margin-bottom: 10px;
+  margin-bottom: 20px;
+      font-weight: 600;
+
 }
+
 
 .brand-sub {
   font-size: 12px;
@@ -487,5 +490,46 @@
     width: 100%;
     max-width: 400px;
     flex-direction: column;
+  }
+}
+
+@media print {
+  :host {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  .page {
+    padding: 4px 8px !important;
+    gap: 4px !important;
+  }
+
+  .status-icon,
+  .title,
+  .subtitle {
+    display: none !important;
+  }
+
+  .action-buttons,
+  .action-btn,
+  .pending-btn,
+  .error-btn {
+    display: none !important;
+  }
+
+  .pass-card {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .card-footer-text {
+    page-break-before: avoid;
+    break-before: avoid;
+    padding: 4px !important;
   }
 }

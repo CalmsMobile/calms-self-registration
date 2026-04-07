@@ -39,7 +39,7 @@
     @if (errorMessage) {
       <p style="color:#ff4d6d;font-size:15px;margin-bottom:12px;">{{ errorMessage }}</p>
     }
-    <p class="pending">{{ appointmentData?.Approval_Status || 'Pending Review' }}</p>
+    <p class="pending" [class.expired]="isExpired">{{ isExpired ? 'Expired' : (appointmentData?.Approval_Status || 'Pending Review') }}</p>
     <h1 class="title">Visit Request #{{ appointmentData?.SEQ_ID || seqId }}</h1>
 
     <section class="declarations" aria-label="Declaration Cards">

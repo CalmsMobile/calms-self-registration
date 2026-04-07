@@ -216,6 +216,14 @@
     background: #12be82;
     display: inline-block;
   }
+
+  &.expired {
+    color: #9aa0a6;
+
+    &::before {
+      background: #9aa0a6;
+    }
+  }
 }
 
 .title {

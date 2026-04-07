@@ -263,3 +263,12 @@ body {
 .page-header .header-title {
   font-size: 26px;
 }
+
+@media print {
+  .action-buttons,
+  .action-btn,
+  .pending-btn,
+  .error-btn {
+    display: none !important;
+  }
+}

@@ -299,11 +299,19 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     return 'Pending';
   }
 
+  get isExpired(): boolean {
+    const endDate = this.appointmentData?.END_DATE || this.appointmentData?.EndDate || this.appointmentData?.START_DATE;
+    if (!endDate) return false;
+    return new Date(endDate) < new Date();
+  }
+
   get showApprove(): boolean {
+    if (this.isExpired) return false;
     return this.appointmentData?.ShowApprove === true || this.appointmentData?.ShowApprove === 1;
   }
 
   get showReject(): boolean {
+    if (this.isExpired) return false;
     return this.appointmentData?.ShowReject === true || this.appointmentData?.ShowReject === 1;
   }
 
