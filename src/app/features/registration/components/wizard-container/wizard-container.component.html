@@ -41,7 +41,18 @@
 }
 @if (isLoading) {
 <div class="loading-indicator">
-  <p-progressbar mode="indeterminate" [style]="{ height: '6px' }" />
+  <div class="loader">
+    <div class="pacman">
+      <div class="top"></div>
+      <div class="bottom"></div>
+    </div>
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
 </div>
 }
 <p-toast position="top-center"></p-toast>

@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnInit, OnDestroy, HostListener, NgZone } from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { WizardService } from '../../../../../core/services/wizard.service';
@@ -50,7 +50,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     private wizardService: WizardService,
     private messageService: MessageService,
     private labelService: LabelService,
-    private sharedService: SharedService
+    private sharedService: SharedService,
+    private ngZone: NgZone
   ) {
     // Subscribe to validation requests from wizard
     this.wizardService.onValidationRequest.pipe(takeUntil(this.destroy$)).subscribe(() => {
@@ -529,8 +530,10 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     const video = this.videoElement?.nativeElement;
     if (video && !video.paused && !this.videoEnded) {
       video.pause();
-      this.isPausedMidVideo = true;
-      this.showPlayButton = true;
+      this.ngZone.run(() => {
+        this.isPausedMidVideo = true;
+        this.showPlayButton = true;
+      });
       // Exit fullscreen so the page is accessible when user returns
       this.exitFullscreen();
     }

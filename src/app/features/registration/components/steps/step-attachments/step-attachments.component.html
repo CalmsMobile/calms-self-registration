@@ -138,7 +138,7 @@
             </button>
           }
         </div>
-        <button class="btn yellow" type="button" (click)="proceedToNext()">
+        <button class="btn yellow" type="button" (click)="proceedToNext()" [disabled]="!allMandatoryUploaded">
           {{ 'button_continue' | translate }} <span class="icon-right">&rarr;</span>
         </button>
       </div>

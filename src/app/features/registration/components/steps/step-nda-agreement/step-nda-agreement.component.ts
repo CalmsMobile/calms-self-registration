@@ -35,6 +35,7 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   showValidationError = false;
   showSignatureModal = false;
   ndaScrolledToBottom = false;
+  isSubmitting = false;
   illustrationUrl = 'assets/sign.png';
   logo = 'assets/logo.png';
   companyTitle = '';
@@ -232,7 +233,8 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
       this.showValidationError = false;
       this.saveFormData();
       this.wizardService.setStepValid(true);
-      this.wizardService.navigateToNextStep();
+      this.isSubmitting = true;
+      setTimeout(() => this.wizardService.navigateToNextStep());
     } else {
       this.showValidationError = true;
     }
@@ -262,7 +264,8 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
       this.showValidationError = false;
       this.saveFormData();
       this.wizardService.setStepValid(true);
-      this.wizardService.navigateToNextStep();
+      this.isSubmitting = true;
+      setTimeout(() => this.wizardService.navigateToNextStep());
     }
   }
 

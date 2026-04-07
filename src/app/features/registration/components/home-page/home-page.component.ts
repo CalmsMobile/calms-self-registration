@@ -87,7 +87,7 @@ export class HomePageComponent implements AfterViewChecked {
   isBaseUrlAccessDisabled = false;
   baseUrlAccessDeniedInstruction = '';
   isAccessDenied = false;
-  
+
   // SRWithoutBC flag control
   srWithoutBC = '1'; // Default: allow access without BC param
   srWithoutBCBlockMessage = 'Access denied. Please use the proper registration link with branch code.';
@@ -99,6 +99,7 @@ export class HomePageComponent implements AfterViewChecked {
   isAppointmentFlow = false;
   encryptedAppointmentCode: string | null = null;
   appointmentData: any = null;
+  initializePageSettings: any;
 
   // Mobile dropdown toggle states
   get isLoading(): boolean {
@@ -115,7 +116,7 @@ export class HomePageComponent implements AfterViewChecked {
     // Better approach: simple split method used in template with a pipe, OR just simple logic here if pageTitle is populated.
     // Let's assume pageTitle is populated or we strictly use what's available.
 
-    const text = this.labelService.getLabel('home_page_page_title', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
+    const text = this.wizardService.pageTitle || 'Visitor Registration';
     const firstSpaceIndex = text.indexOf(' ');
 
     if (firstSpaceIndex === -1) {
@@ -661,8 +662,8 @@ export class HomePageComponent implements AfterViewChecked {
       // Prefer the element that is actually visible/laid out (scrollHeight > 0).
       // The desktop element lives inside display:none on mobile so its scrollHeight is always 0.
       const el = (mobileEl && mobileEl.scrollHeight > 0) ? mobileEl
-               : (desktopEl && desktopEl.scrollHeight > 0) ? desktopEl
-               : null;
+        : (desktopEl && desktopEl.scrollHeight > 0) ? desktopEl
+          : null;
       if (el) {
         this.termsAutoChecked = true;
         if (el.scrollHeight <= el.clientHeight + 2) {
@@ -710,22 +711,27 @@ export class HomePageComponent implements AfterViewChecked {
           // Extract welcome page settings from Table1
           if (data?.Table1?.length) {
             const settings = data.Table1[0];
+            this.initializePageSettings = settings;
             // Logo URL
             const logoUrl = settings.LogoUrl || settings.Logo || settings.ImgPathUrl;
             if (logoUrl) {
               this.logo = environment.proURL + logoUrl;
               this.sharedService.updateHeader(this.title, this.logo);
             }
-            // Welcome text
-            if (settings.WelcomeText || settings.OrgName) {
-              this.welcomeText = (settings.WelcomeText ? settings.WelcomeText : '') + (settings.OrgName ?settings.OrgName : '');
+            if(this.initializePageSettings.OrgLogo){
+              this.logo = this.initializePageSettings.OrgLogo;
+              this.sharedService.updateHeader(this.title, this.logo);
             }
+            // Welcome text
+            /*  if (settings.WelcomeText) {
+               this.welcomeText = settings.WelcomeText ? settings.WelcomeText : '';
+             } */
             // Branch selection caption and placeholder
             this.branchTranslation = {
               caption: settings.BranchCaption || settings.BranchLabel || settings.Caption || 'Branch',
               placeholder: settings.BranchPlaceholder || settings.Placeholder || 'Select Branch'
             };
-            
+
             // SRWelcomeTitle and ShowWelcomeTitle
             if (settings.ShowWelcomeTitle !== undefined) {
               this.showWelcomeTitle = settings.ShowWelcomeTitle === '1' || settings.ShowWelcomeTitle === 1 || settings.ShowWelcomeTitle === true;
@@ -739,7 +745,7 @@ export class HomePageComponent implements AfterViewChecked {
             if (settings.SRWithoutBC !== undefined) {
               this.srWithoutBC = settings.SRWithoutBC;
             }
-            
+
             // Check if access should be blocked when no BC query param
             if (this.srWithoutBC !== '1' && !this.isBranchFromQuery && !this.isAppointmentFlow) {
               this.isAccessDenied = true;
@@ -855,6 +861,27 @@ export class HomePageComponent implements AfterViewChecked {
       // Ensure loading is always turned off
       setTimeout(() => {
         this.isLoading = false;
+        if (this.selectedBranch == null && this.initializePageSettings) {
+          // SRWelcomeTitle and ShowWelcomeTitle
+          if (this.initializePageSettings.ShowWelcomeTitle !== undefined) {
+            this.showWelcomeTitle = this.initializePageSettings.ShowWelcomeTitle === '1' || this.initializePageSettings.ShowWelcomeTitle === 1 || this.initializePageSettings.ShowWelcomeTitle === true;
+          }
+          if (this.initializePageSettings.SRWelcomeTitle) {
+            this.pageTitle = this.initializePageSettings.SRWelcomeTitle;
+            this.wizardService.pageTitle = this.initializePageSettings.SRWelcomeTitle;
+          }
+
+          this.branchTranslation = {
+            caption: this.initializePageSettings.branchSelectionCaption || 'Branch',
+            placeholder: this.initializePageSettings.branchSelectionPlaceHolder || 'Select Branch'
+          };
+
+          if (this.initializePageSettings.OrgLogo) {
+            this.logo = this.initializePageSettings.OrgLogo;
+            this.sharedService.updateHeader(this.title, this.logo);
+          }
+
+        }
       }, 300);
     }
   }
@@ -866,11 +893,17 @@ export class HomePageComponent implements AfterViewChecked {
     this.termsAccepted = false;
     this.termsAutoChecked = false;
 
+    // Don't call GetVisitorDeclarationSettings if category is null or empty
+    if (!newValue) {
+      this.isLoading = false;
+      return;
+    }
+
     this.api.GetVisitorDeclarationSettings(this.selectedBranch, newValue, this.wizardService.refCode || undefined, this.wizardService.refCatCode || undefined)
       .subscribe({
         next: (allSettings: any) => {
           this.wizardService.setSettings(allSettings);
-          
+
           // Check if terms are disabled - if so, auto-proceed to wizard
           // _suppressAutoProceed is set during back-nav category restore to prevent jumping.
           if (!this.shouldShowTerms() && !this._suppressAutoProceed) {

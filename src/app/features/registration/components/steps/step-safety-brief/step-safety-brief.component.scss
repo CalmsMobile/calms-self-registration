@@ -368,23 +368,13 @@
   }
 
   .m-btn-back-top {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: none;
+  }
+
+  .m-header-spacer {
+    flex-shrink: 0;
     width: 40px;
     height: 40px;
-    border-radius: 50%;
-    border: none;
-    background: #f0f0f0;
-    color: #4a4a4a;
-    font-size: 16px;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 0.2s;
-    
-    &:hover {
-      background: #e0e0e0;
-    }
   }
 
   .m-header-center {
@@ -421,7 +411,7 @@
   .play-button { width: 70px; height: 70px; i { font-size: 26px; } }
   .actions { flex-direction: column; gap: 10px; margin-top: 14px; }
   .btn { width: 100%; justify-content: center; height: 46px; padding: 0 20px; font-size: 14px; }
-  .m-action-back { display: none; }
+  .m-action-back { display: flex; }
 }
 
 @media (max-width: 480px) {

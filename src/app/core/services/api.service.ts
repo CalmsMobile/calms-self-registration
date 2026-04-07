@@ -100,8 +100,12 @@ export class ApiService {
   }
 
   // New method for VisitorAckSave API
-  VisitorAckSave(visitorAckData: VisitorAck) {
-    const loParam = { ...this.deviceParams, ...visitorAckData };
+  VisitorAckSave(visitorAckData: VisitorAck, catCodeEnc?: string) {
+    const loParam: any = { ...this.deviceParams, ...visitorAckData };
+    if (catCodeEnc) {
+      delete loParam.CategoryId;
+      loParam.CategoryId_ENC = catCodeEnc;
+    }
     return this.apiBase.post<VisitorAckResponse>(`${this.baseUrl}/VisitorAckSave`, loParam);
   }
 
@@ -164,8 +168,11 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/GetBranchHostDataForSelf`, loParam);
   }
 
-  GetApptTimeSlot(CurrentDate: string, psBranch: string, CategoryId: string) {
-    const loParam = { ...this.deviceParams, "Branch": psBranch, "CurrentDate": CurrentDate, "CategoryId": CategoryId };
+  GetApptTimeSlot(CurrentDate: string, psBranch: string, CategoryId: string, categoryIdEnc?: string) {
+    const categoryParam = categoryIdEnc
+      ? { "CategoryId_ENC": categoryIdEnc }
+      : { "CategoryId": CategoryId };
+    const loParam = { ...this.deviceParams, "Branch": psBranch, "CurrentDate": CurrentDate, ...categoryParam };
     return this.apiBase.post(`${this.baseUrl}/GetApptTimeSlot`, loParam);
   }
 

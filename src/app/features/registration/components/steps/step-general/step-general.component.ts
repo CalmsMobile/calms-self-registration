@@ -676,7 +676,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   private loadTimeSlots(currentDate: string, branchId: string, categoryId: string) {
     this.timeSlotsLoaded = false;
-    this.api.GetApptTimeSlot(currentDate, branchId, categoryId).subscribe((response: any) => {
+    const catCodeEnc = this.wizardService.refCatCode || undefined;
+    this.api.GetApptTimeSlot(currentDate, branchId, categoryId, catCodeEnc).subscribe((response: any) => {
       if (response?.Table?.length) {
         this.timeSlotList = response.Table;
         this.setupControl('timeSlot', true, true);
