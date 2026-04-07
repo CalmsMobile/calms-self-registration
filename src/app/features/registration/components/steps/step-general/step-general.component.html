@@ -1029,54 +1029,56 @@
     <app-language-selector class="m-header-lang"></app-language-selector>
   </header>
 
-  <!-- Top Section: title + action buttons -->
-  <section class="m-top-section">
-    <div class="m-left-title">
-      <h2 class="m-hero-title">
-        <span class="m-accent">{{ formattedPageTitle.first }}</span>
-        <span class="m-normal">{{ formattedPageTitle.rest }}</span>
-      </h2>
-      <p class="m-hero-subtext">{{'registration_page_instruction' | translate}}</p>
-    </div>
-    <div class="m-top-actions">
-      @if (isMultipleVisitorMode && savedVisitors.length > 0) {
-      <button type="button" class="m-btn-saved" (click)="showSavedVisitorsModal = true" [title]="'view_saved_visitors_tooltip' | translate">
-        <i class="pi pi-users"></i>
-        <span class="m-count">{{ savedVisitors.length }}</span>
-      </button>
-      }
-      @if (settings.SearchExistingVisitor) {
-      <button type="button" class="m-returning-btn" (click)="onExistingGuestClick()">
-        <i class="pi pi-search"></i>
-        {{ 'return_visitor?' | translate }}?
-      </button>
-      }
-    </div>
-  </section>
+  <!-- Scrollable shell -->
+  <div class="m-form-shell" [formGroup]="generalForm">
 
-  <!-- Loading state -->
-  @if (isLoading) {
-  <div class="loading-overlay">
-    <div class="loading-content">
-      <div class="loader">
-        <div class="pacman">
-          <div class="top"></div>
-          <div class="bottom"></div>
+    <!-- Top Section: title + action buttons -->
+    <section class="m-top-section">
+      <div class="m-top-title-row">
+        <h2 class="m-hero-title">
+          <span class="m-accent">{{ formattedPageTitle.first }}</span>
+          <span class="m-normal">{{ formattedPageTitle.rest }}</span>
+        </h2>
+        <div class="m-top-actions">
+          @if (isMultipleVisitorMode && savedVisitors.length > 0) {
+          <button type="button" class="m-btn-saved" (click)="showSavedVisitorsModal = true" [title]="'view_saved_visitors_tooltip' | translate">
+            <i class="pi pi-users"></i>
+            <span class="m-count">{{ savedVisitors.length }}</span>
+          </button>
+          }
+          @if (settings.SearchExistingVisitor) {
+          <button type="button" class="m-returning-btn" (click)="onExistingGuestClick()">
+            <i class="pi pi-search"></i>
+            {{ 'return_visitor?' | translate }}?
+          </button>
+          }
         </div>
-        <div class="dots">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
+      </div>
+      <p class="m-hero-subtext">{{'registration_page_instruction' | translate}}</p>
+    </section>
+
+    <!-- Loading state -->
+    @if (isLoading) {
+    <div class="loading-overlay">
+      <div class="loading-content">
+        <div class="loader">
+          <div class="pacman">
+            <div class="top"></div>
+            <div class="bottom"></div>
+          </div>
+          <div class="dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-  }
+    }
 
-  <!-- Form -->
-  @if (!isLoading) {
-  <div class="m-form-shell" [formGroup]="generalForm">
+    <!-- Form -->
+    @if (!isLoading) {
     @if (settings && udfSettings !== null) {
     <div class="m-form-scroll">
 
@@ -1829,25 +1831,26 @@
 
     </div>
     }
-  </div>
-  }
-
-  <!-- Actions -->
-  <div class="m-actions">
-    @if (isMultipleVisitorMode) {
-      @if (editingVisitorIndex >= 0) {
-      <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
-        {{ 'update' | translate }} <i class="pi pi-check"></i>
-      </button>
-      } @else {
-      <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
-        {{ 'save_and_add' | translate }} <i class="pi pi-user-plus"></i>
-      </button>
-      }
     }
-    <button type="button" class="m-btn m-btn-continue" (click)="goNext()" >
-      {{ 'save_and_continue' | translate }} <i class="pi pi-arrow-right"></i>
-    </button>
+
+    <!-- Actions -->
+    <div class="m-actions">
+      @if (isMultipleVisitorMode) {
+        @if (editingVisitorIndex >= 0) {
+        <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
+          {{ 'update' | translate }} <i class="pi pi-check"></i>
+        </button>
+        } @else {
+        <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
+          {{ 'save_and_add' | translate }} <i class="pi pi-user-plus"></i>
+        </button>
+        }
+      }
+      <button type="button" class="m-btn m-btn-continue" (click)="goNext()" >
+        {{ 'save_and_continue' | translate }} <i class="pi pi-arrow-right"></i>
+      </button>
+    </div>
+
   </div>
 
 </div>

@@ -77,6 +77,24 @@
 
 <p-toast></p-toast>
 
+<!-- Submitting loader overlay -->
+@if (isSubmitting) {
+<div class="submitting-overlay">
+  <div class="loader">
+    <div class="pacman">
+      <div class="top"></div>
+      <div class="bottom"></div>
+    </div>
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+</div>
+}
+
 <!-- Mobile Layout -->
 <div class="mobile-page">
   <!-- Header -->

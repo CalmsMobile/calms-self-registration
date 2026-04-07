@@ -247,6 +247,16 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     return this.attachmentUploadEnabled && this.documentTypes.some(d => d.Mandatory);
   }
 
+  get allMandatoryUploaded(): boolean {
+    if (!this.attachmentUploadEnabled) return true;
+    return this.documentTypes
+      .filter(d => d.Mandatory)
+      .every(d => {
+        const att = this.attachments[d.VisitorAttachSeqId];
+        return att?.file !== null && att?.uploaded === true;
+      });
+  }
+
   proceedToNext(): void {
     this.validateStep();
     this.saveFormData();

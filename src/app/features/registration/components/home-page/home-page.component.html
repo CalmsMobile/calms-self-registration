@@ -85,7 +85,7 @@
     <div class="left">
       @if (showWelcomeTitle) {
       <div class="title">
-        <span class="accent">{{ formattedPageTitle.first || 'Visitor' }}</span>
+        <span class="accent">{{ formattedPageTitle.first || 'Visitor' }}</span><br>
         {{ formattedPageTitle.rest || 'Registration' }}
       </div>
       }
@@ -195,8 +195,12 @@
   </div>
   <div class="m-content">
     <img [src]="logo" alt="Company Logo" class="m-logo" />
-    <p class="m-company-name">{{ title }}</p>
-    <h1 class="m-welcome">{{ 'home_page_page_title' | translate }}</h1>
+    @if (showWelcomeTitle) {
+    <h1 class="m-welcome">
+      <span class="m-welcome-accent">{{ formattedPageTitle.first || 'Visitor' }}</span><br>
+      {{ formattedPageTitle.rest || 'Registration' }}
+    </h1>
+    }
     <div class="m-form">
       <div class="m-field-group">
         <div class="m-label" style="text-align: center;">{{ branchTranslation.caption || ('branch' | translate) }}</div>
@@ -217,9 +221,7 @@
 
     <!-- Header: back + logo + company name + language -->
     <header class="m-post-header">
-      <button type="button" class="m-post-back" (click)="goBack()" [title]="'button_back' | translate">
-        <i class="pi pi-arrow-left"></i>
-      </button>
+      <div class="m-header-spacer"></div>
       <div class="m-post-header-center">
         <img [src]="logo" alt="Company Logo" class="m-post-logo" />
         <p class="m-post-company">{{ title }}</p>

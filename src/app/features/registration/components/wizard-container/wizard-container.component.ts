@@ -355,7 +355,8 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
         console.log('========================');
 
         // Call the new VisitorAckSave API
-        this.api.VisitorAckSave(visitorAckData)
+        const catCodeEnc = this.wizardService.refCatCode || undefined;
+        this.api.VisitorAckSave(visitorAckData, catCodeEnc)
           .subscribe({
             next: (response: any) => {
               this.isLoading = false;
