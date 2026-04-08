@@ -3,6 +3,7 @@ import { MenuItem } from 'primeng/api';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SharedService } from '../../shared/shared.service';
+import { LabelService } from './label.service';
 import { Router } from '@angular/router';
 import { VisitorAck, VisitorSelfData } from '../models/visitor-ack.model';
 import { getEnabledSteps, StepConfig } from '../models/step-config.model';
@@ -74,7 +75,7 @@ export class WizardService {
   SafetyBriefing_Date = "2026-03-03T14:02:43.957";
   SafetyBriefVideoViewed = false;
 
-  constructor(private sharedService: SharedService, private router: Router) {
+  constructor(private sharedService: SharedService, private router: Router, private labelService: LabelService) {
     if (!this.currentBranchID) {
       this.currentBranchID = sessionStorage.getItem('currentBranchID') || '';
     }
@@ -158,6 +159,7 @@ export class WizardService {
     this.pagesSetting$.next(null);
     this.selfRegistrationSetting$.next(null);
     this.udfSetting$.next(null);
+    this.labelService.resetCache();
     this.currentStep$.next(0);
     this.stepValidity$.next(false);
     this.enabledSteps = [];

@@ -234,6 +234,25 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Note: isLoading will be set to false in loadUdfSettings after UDF settings are loaded
     });
 
+    // selfRegistrationSettings is loaded asynchronously (label service call) and may arrive
+    // AFTER settings$ has already fired (race condition on back-navigation, because the home
+    // page constructor resets both BehaviorSubjects to null).  Subscribe here so that flags
+    // like SearchExistingVisitor are always applied as soon as the data becomes available.
+    this.wizardService.getSelfRegistrationSettings$().pipe(
+      filter(sr => sr !== null),
+      takeUntil(this.destroy$)
+    ).subscribe((sr: any) => {
+      if (sr.SearchExistingVisitor !== undefined) {
+        this.settings = { ...this.settings, SearchExistingVisitor: sr.SearchExistingVisitor };
+      }
+      if (sr.EnableWhitelistValidation !== undefined) {
+        this.settings = { ...this.settings, EnableWhitelistValidation: sr.EnableWhitelistValidation };
+      }
+      if (sr.AptEndTime !== undefined) {
+        this.settings = { ...this.settings, AptEndTime: sr.AptEndTime };
+      }
+    });
+
     // Load page settings for gbShowMemberId and other configurations
     this.wizardService.getPageSettings$().pipe(
       filter(pageSettings => pageSettings !== null),

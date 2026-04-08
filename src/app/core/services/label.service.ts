@@ -20,6 +20,12 @@ export class LabelService {
 
   constructor(private api: ApiService, private themeService: ThemeService) { }
 
+  /** Reset the branch/language cache so the next loadLabels() call hits the API. */
+  resetCache(): void {
+    this.currentBranch = null;
+    this.currentLanguage = null;
+  }
+
   updateLabels(settings: any[]): void {
     const labelConfig: LabelConfig = {};
 

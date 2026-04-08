@@ -7,6 +7,7 @@
   --theme-primary-text-color: #4d525c;
   --theme-secondary-text-color: #373737;
   --theme-primary-yellow: #f5b942;
+  --theme-primary-yellow-rgb: 245, 185, 66; /* RGB version for rgba() usage */
   --theme-primary-fg-color: #000000; /* Default fg for primary buttons; overridden by ColorFg */
   --theme-primary-green-color: var(--theme-primary-yellow);
   --theme-error-color: #e80505;

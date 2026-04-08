@@ -189,43 +189,54 @@
 .field input,
 .field select {
   width: 100%;
-  height: 56px;
+  height: 52px;
   padding: 0 18px;
-  //border-radius: 22px;
-  border: 1px solid #dfe4ef;
+  border-radius: 0;
+  border: 1px solid #e6e6e6;
   background: #ffffff;
-  box-shadow: 0 0px 10px rgba(0, 0, 0, 0.08);
-  font-size: 16px;
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06);
+  font-size: 15px;
   color: #4a4a4a;
   font-family: var(--font-family);
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
 .field input:focus,
 .field select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(245, 179, 1, 0.15);
+  box-shadow: 0 0 0 1px rgba(var(--theme-primary-yellow-rgb), 0.12);
 }
 
 .field input::placeholder {
   color: #aaa;
 }
 
-/* ===== SELECT WRAP ===== */
-.select-wrap {
-  position: relative;
-}
+/* ===== DIRECTION P-SELECT (desktop) ===== */
+::ng-deep .field p-select .p-select {
+  width: 100% !important;
+  height: 52px !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border: 1px solid #e6e6e6 !important;
+  background: #ffffff !important;
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.06) !important;
+  font-family: var(--font-family) !important;
+  transition: all 0.2s ease;
 
-.select-wrap select {
-  appearance: none;
-  -webkit-appearance: none;
-  background-image:
-    linear-gradient(45deg, transparent 50%, #6f7785 50%),
-    linear-gradient(135deg, #6f7785 50%, transparent 50%);
-  background-position: calc(100% - 26px) calc(50% - 3px), calc(100% - 18px) calc(50% - 3px);
-  background-size: 8px 8px, 8px 8px;
-  background-repeat: no-repeat;
+  .p-select-label {
+    font-size: 15px;
+    color: #4a4a4a;
+    padding: 0 18px;
+    font-family: var(--font-family);
+  }
+
+  &.p-focus,
+  &:focus-within {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 1px rgba(var(--theme-primary-yellow-rgb), 0.12) !important;
+  }
 }
 
 /* ===== ADD BUTTON ===== */
@@ -301,9 +312,9 @@
     box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15);
   }
 
-  .select-wrap select {
-    border-color: #e53e3e;
-    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15);
+  ::ng-deep p-select .p-select {
+    border-color: #e53e3e !important;
+    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15) !important;
   }
 }
 
@@ -437,7 +448,7 @@
 
 .btn.yellow:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(245, 179, 1, 0.4);
+  //box-shadow: 0 6px 20px rgba(245, 179, 1, 0.4);
 }
 
 .btn.yellow:disabled {
@@ -574,7 +585,6 @@
     width: 100%;
     height: 50px;
     padding: 0 18px;
-    //border-radius: 999px;
     border: 1px solid #dfe4ef;
     background: #fff;
     box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
@@ -582,11 +592,11 @@
     color: #4a4a4a;
     font-family: var(--font-family);
     outline: none;
-    transition: border-color 0.2s;
+    transition: all 0.2s ease;
 
     &:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(245, 179, 1, 0.15);
+      box-shadow: 0 0 0 1px rgba(var(--theme-primary-yellow-rgb), 0.12);
     }
 
     &::placeholder {
@@ -594,26 +604,31 @@
     }
   }
 
-  .m-select-wrap {
-    position: relative;
-  }
+  /* Direction p-select mobile */
+  ::ng-deep .m-field p-select .p-select,
+  ::ng-deep .m-field p-select.m-p-select .p-select {
+    width: 100% !important;
+    height: 50px !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    border: 1px solid #dfe4ef !important;
+    background: #fff !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07) !important;
+    font-family: var(--font-family) !important;
+    transition: all 0.2s ease;
 
-  .m-select-wrap select.m-input {
-    appearance: none;
-    -webkit-appearance: none;
-    padding-right: 40px;
-    cursor: pointer;
-  }
+    .p-select-label {
+      font-size: 15px;
+      color: #4a4a4a;
+      padding: 0 18px;
+      font-family: var(--font-family);
+    }
 
-  .m-chev {
-    position: absolute;
-    right: 18px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 20px;
-    color: #888;
-    pointer-events: none;
-    line-height: 1;
+    &.p-focus,
+    &:focus-within {
+      border-color: var(--primary) !important;
+      box-shadow: 0 0 0 1px rgba(var(--theme-primary-yellow-rgb), 0.12) !important;
+    }
   }
 
   .m-add-btn {
@@ -829,7 +844,7 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 
     &:hover {
-      box-shadow: 0 6px 20px rgba(245, 179, 1, 0.4);
+      //box-shadow: 0 6px 20px rgba(245, 179, 1, 0.4);
       transform: translateY(-1px);
     }
 

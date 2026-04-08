@@ -572,7 +572,7 @@
     }
 
     &:hover:not(:disabled) {
-      box-shadow: 0 6px 20px rgba(245, 179, 1, 0.4);
+      //box-shadow: 0 6px 20px rgba(245, 179, 1, 0.4);
       transform: translateY(-1px);
     }
   }
