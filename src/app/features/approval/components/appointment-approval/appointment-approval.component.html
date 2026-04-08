@@ -291,10 +291,10 @@
                   }
                   @if (step.ApprovedOn || step.ApprovedDate || step.ApprovedDateTime) {
                     <div class="step-meta">
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+                    
                       {{ formatDate(step.ApprovedOn || step.ApprovedDate || step.ApprovedDateTime) }}
                       •
-                      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v5l3 2"/></svg>
+                    
                       {{ formatTime(step.ApprovedOn || step.ApprovedDate || step.ApprovedDateTime) }}
                     </div>
                   }
