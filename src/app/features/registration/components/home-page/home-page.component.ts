@@ -13,6 +13,7 @@ import { filter, Subject, takeUntil } from 'rxjs';
 import { SharedService } from '../../../../shared/shared.service';
 import { environment } from '../../../../../environments/environment';
 import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { StepTermsComponent } from '../steps/step-terms/step-terms.component';
 import { RouterLink } from '@angular/router';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -149,7 +150,8 @@ export class HomePageComponent implements AfterViewChecked {
     private sharedService: SharedService,
     private languageService: LanguageService,
     private labelService: LabelService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private messageService: MessageService
   ) {
     this.wizardService.clearSessionStorage();
     this.sharedService.currentTitle.subscribe(title => {
@@ -353,6 +355,21 @@ export class HomePageComponent implements AfterViewChecked {
         // Only update labels if we have a selected branch
         if (this.selectedBranch) {
           await this.getSelfRegistrationSettings();
+
+          // After labels load, re-merge selfRegSettings into the current settings
+          // so step-general picks up SearchExistingVisitor etc. This covers the
+          // back-nav case where onBranchChange ran before language was available,
+          // causing getSelfRegistrationSettings() to bail out silently.
+          const currentSettings = this.wizardService.getSettings();
+          const selfRegSettings = this.wizardService.getSelfRegistrationSettings();
+          if (currentSettings && selfRegSettings) {
+            this.wizardService.setSettings({
+              ...currentSettings,
+              SearchExistingVisitor: selfRegSettings.SearchExistingVisitor ?? currentSettings.SearchExistingVisitor,
+              EnableWhitelistValidation: selfRegSettings.EnableWhitelistValidation ?? currentSettings.EnableWhitelistValidation,
+              AptEndTime: selfRegSettings.AptEndTime ?? currentSettings.AptEndTime ?? ''
+            });
+          }
 
           // For query param flow: language may arrive after onBranchChange already ran,
           // so re-trigger the APIs that depend on language being set
@@ -922,6 +939,39 @@ export class HomePageComponent implements AfterViewChecked {
     this.api.GetVisitorDeclarationSettings(this.selectedBranch, newValue, this.wizardService.refCode || undefined, this.wizardService.refCatCode || undefined)
       .subscribe({
         next: (allSettings: any) => {
+          // Validate that settings have required data (Table = settingDetails, Table2 = configuration details)
+          const hasSettingDetails = allSettings?.Table && Array.isArray(allSettings.Table) && allSettings.Table.length > 0;
+          const hasTable2Data = allSettings?.Table2 && Array.isArray(allSettings.Table2) && allSettings.Table2.length > 0;
+
+          // If either settingDetails or Table2 is empty, show alert and don't proceed
+          if (!hasSettingDetails || !hasTable2Data) {
+            this.isLoading = false;
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Category Not Configured',
+              detail: 'This category is not configured to proceed. Please contact admin.',
+              life: 5000
+            });
+            // Reset selected category and terms state
+            this.selectedCategory = null;
+            this.termsScrolledToBottom = false;
+            this.termsAccepted = false;
+            this.termsAutoChecked = false;
+            return;
+          }
+
+          // Merge selfRegistrationSettings if already available (synchronous check).
+          // If not yet loaded, step-general's getSelfRegistrationSettings$() subscription
+          // will merge SearchExistingVisitor etc. as soon as they arrive.
+          const selfRegSettings = this.wizardService.getSelfRegistrationSettings();
+          if (selfRegSettings) {
+            allSettings = {
+              ...allSettings,
+              SearchExistingVisitor: selfRegSettings.SearchExistingVisitor ?? allSettings.SearchExistingVisitor,
+              EnableWhitelistValidation: selfRegSettings.EnableWhitelistValidation ?? allSettings.EnableWhitelistValidation,
+              AptEndTime: selfRegSettings.AptEndTime ?? allSettings.AptEndTime ?? ''
+            };
+          }
           this.wizardService.setSettings(allSettings);
 
           // Check if terms are disabled - if so, auto-proceed to wizard
@@ -941,6 +991,12 @@ export class HomePageComponent implements AfterViewChecked {
         error: (error) => {
           console.error('Error loading category settings:', error);
           this.isLoading = false;
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to load category settings. Please try again.',
+            life: 5000
+          });
         }
       });
   }

@@ -3,6 +3,8 @@ import { Router } from '@angular/router';
 import { SharedService } from '../../../../shared/shared.service';
 import { environment } from '../../../../../environments/environment';
 import { RegistrationStatusComponent } from './registration-status.component';
+import { WizardService } from '../../../../core/services/wizard.service';
+import { ApiService } from '../../../../core/services/api.service';
 
 /** How the app was originally launched. Persisted through navigation state. */
 type StartMode = 'plain' | 'bc' | 'ac';
@@ -18,7 +20,9 @@ type StartMode = 'plain' | 'bc' | 'ac';
       <app-registration-status
         [registrationData]="registrationData"
         [showNewRegistration]="showNewRegistration"
+        [isRetrying]="isRetrying"
         (newRegistration)="onNewRegistration()"
+        (retrySubmit)="onRetrySubmit()"
         (printDocument)="onPrintDocument()">
       </app-registration-status>
     }
@@ -67,9 +71,13 @@ export class RegistrationStatusPageComponent implements OnInit {
   private refCatCode = '';
   private hcParam    = '';
 
+  isRetrying = false;
+
   constructor(
     private router: Router,
-    private sharedService: SharedService
+    private sharedService: SharedService,
+    private wizardService: WizardService,
+    private api: ApiService
   ) {
     // Get data from navigation state
     const navigation = this.router.currentNavigation();
@@ -117,6 +125,71 @@ export class RegistrationStatusPageComponent implements OnInit {
       // plain URL → just go home
       this.router.navigate(['/']);
     }
+  }
+
+  onRetrySubmit() {
+    if (this.isRetrying) return;
+    this.isRetrying = true;
+
+    const visitorAckData = this.wizardService.getVisitorAckData();
+    const catCodeEnc = this.wizardService.refCatCode || undefined;
+
+    this.api.VisitorAckSave(visitorAckData, catCodeEnc)
+      .subscribe({
+        next: (response: any) => {
+          this.isRetrying = false;
+          const responseData = response?.Table?.[0];
+          const isAutoApproved = responseData?.AutoApprove === 1 || responseData?.AutoApprove === true;
+          const isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1 || responseData?.IsDynamicQR === 'true';
+          const dynamicQrIntervalSec = responseData?.DynamicQrIntervalSec ? Number(responseData.DynamicQrIntervalSec) : 0;
+          const approvalStatus: string = responseData?.Approval_Status || (isAutoApproved ? 'Approved' : 'Pending');
+
+          const summary = this.wizardService.buildRegistrationSummary();
+          const branchName = this.wizardService.currentBranchName;
+          const branchID = this.wizardService.currentBranchID;
+          const startMode = this.wizardService.appointmentCode
+            ? 'ac'
+            : this.wizardService.refCode ? 'bc' : 'plain';
+          const savedRefCode = this.wizardService.refCode;
+          const savedRefCatCode = this.wizardService.refCatCode;
+          const savedHcParam = this.wizardService.hcParam;
+
+          this.wizardService.clearSessionStorage();
+
+          this.router.navigate(['/registration-status'], {
+            state: {
+              registrationData: {
+                status: isAutoApproved ? 'success' : 'pending',
+                isAutoApproved,
+                approvalStatus,
+                visitorId: responseData?.SEQ_ID?.toString() || '',
+                qrCodeData: responseData?.HexCode || '',
+                isDynamicQR,
+                DynamicQrIntervalSec: dynamicQrIntervalSec,
+                registrationId: responseData?.appointment_group_id || responseData?.SEQ_ID?.toString() || '',
+                visitorName: summary.visitorName,
+                email: summary.email,
+                visitFrom: summary.visitFrom,
+                visitTo: summary.visitTo,
+                meetingWith: summary.meetingWith,
+                meetingLocation: summary.meetingLocation,
+                visitType: summary.visitType,
+                visitPurpose: summary.visitPurpose,
+                branch: summary.branch,
+              },
+              branchName,
+              branchID,
+              startMode,
+              refCode: savedRefCode,
+              refCatCode: savedRefCatCode,
+              hcParam: savedHcParam
+            }
+          });
+        },
+        error: () => {
+          this.isRetrying = false;
+        }
+      });
   }
 
   onPrintDocument() {

@@ -84,10 +84,10 @@
     <!-- Left panel: title + illustration -->
     <div class="left">
       @if (showWelcomeTitle) {
-      <div class="title">
-        <span class="accent">{{ formattedPageTitle.first || 'Visitor' }}</span><br>
-        {{ formattedPageTitle.rest || 'Registration' }}
-      </div>
+      <h2>
+        <span class="accent">{{ formattedPageTitle.first }}</span>
+        <span>{{ formattedPageTitle.rest }}</span>
+      </h2>
       }
       <div class="subtitle">{{ 'home_page_instruction' | translate }}</div>
       <img src="assets/visit.png" alt="Visitor illustration" />

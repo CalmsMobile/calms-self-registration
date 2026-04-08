@@ -225,8 +225,8 @@
   }
 
   &.selected {
-    background: #4caf50;
-    color: #ffffff;
+    background: var(--primary);
+    color: var(--theme-primary-fg-color);
   }
 }
 
@@ -584,8 +584,8 @@
     }
 
     &.selected {
-      background: #4caf50;
-      color: #fff;
+      background: var(--primary);
+      color: var(--theme-primary-fg-color);
     }
   }
 
@@ -640,7 +640,7 @@
     }
 
     &:hover:not(:disabled) {
-      box-shadow: 0 6px 20px rgba(245, 179, 1, 0.4);
+      //box-shadow: 0 6px 20px rgba(245, 179, 1, 0.4);
       transform: translateY(-1px);
     }
   }

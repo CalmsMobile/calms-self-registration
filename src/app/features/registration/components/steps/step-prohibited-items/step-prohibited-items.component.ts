@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { SelectModule } from 'primeng/select';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { SharedService } from '../../../../../shared/shared.service';
 import { LabelService } from '../../../../../core/services/label.service';
@@ -17,7 +18,7 @@ interface DeclaredItem {
 @Component({
   selector: 'app-step-prohibited-items',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe, LanguageSelectorComponent],
+  imports: [CommonModule, FormsModule, SelectModule, TranslatePipe, LanguageSelectorComponent],
   templateUrl: './step-prohibited-items.component.html',
   styleUrl: './step-prohibited-items.component.scss'
 })
@@ -25,6 +26,10 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   declaredItems: DeclaredItem[] = [];
   newItem = { description: '', serialNumber: '', direction: '' };
   canAdd = false;
+  directionOptions = [
+    { label: 'IN', value: 'IN' },
+    { label: 'OUT', value: 'OUT' }
+  ];
   showFieldErrors = false;
   duplicateError = '';
 
