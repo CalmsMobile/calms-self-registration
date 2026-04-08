@@ -948,8 +948,8 @@ export class HomePageComponent implements AfterViewChecked {
             this.isLoading = false;
             this.messageService.add({
               severity: 'error',
-              summary: 'Category Not Configured',
-              detail: 'This category is not configured to proceed. Please contact admin.',
+              summary: this.labelService.getLabel('category_config_missing_alert_title') || 'Category Not Configured',
+              detail: this.labelService.getLabel('category_config_missing_alert_description') || 'This category is not configured to proceed. Please contact admin.',
               life: 5000
             });
             // Reset selected category and terms state
@@ -993,8 +993,8 @@ export class HomePageComponent implements AfterViewChecked {
           this.isLoading = false;
           this.messageService.add({
             severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to load category settings. Please try again.',
+            summary: this.labelService.getLabel('error') || 'Error',
+            detail: this.labelService.getLabel('failed_to_load_category_settings') || 'Failed to load category settings. Please try again.',
             life: 5000
           });
         }
