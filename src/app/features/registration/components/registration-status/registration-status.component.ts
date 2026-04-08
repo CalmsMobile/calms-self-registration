@@ -316,16 +316,7 @@ onQrImageLoaded(): void {
 
   async onShareWhatsapp() {
     const d = this.registrationData;
-    const caption = [
-      '🎫 *Visitor Access Pass*',
-      ...(d?.visitorName     ? [`👤 Name: ${d.visitorName}`]         : []),
-      ...(d?.registrationId  ? [`🆔 ID: ${d.registrationId}`]        : []),
-      ...(d?.visitFrom       ? [`📅 From: ${d.visitFrom}`]           : []),
-      ...(d?.visitTo         ? [`📅 To: ${d.visitTo}`]               : []),
-      ...(d?.meetingWith     ? [`🤝 Meeting: ${d.meetingWith}`]       : []),
-      ...(d?.meetingLocation ? [`📍 Location: ${d.meetingLocation}`]  : []),
-      ...(d?.visitPurpose    ? [`📋 Purpose: ${d.visitPurpose}`]     : []),
-    ].join('\n');
+    const caption = `Dear ${d?.visitorName || 'Visitor'},\n\nYour visit has been successfully approved 👍\n\nPlease find your Visitor Access Pass attached, Kindly present the QR code at the entrance for check-in.\n\nThank you and have a pleasant visit.`;
 
     try {
       const canvas = await this.capturePassCard();
