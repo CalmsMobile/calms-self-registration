@@ -686,7 +686,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.setupControl('timeSlot', true, false);
         this.messageService.add({
           severity: 'warn',
-          summary: this.labelService.getLabel('no_slots_available_error', 'caption') || 'No Slots Available',
+          summary: this.labelService.getLabel('no_slots_available_alert', 'caption') || 'No Slots Available',
           detail: this.labelService.getLabel('no_time_slots_available', 'caption') || 'No time slots available for the selected date',
           life: 5000
         });
@@ -1646,7 +1646,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     if (this.isVisitorNotWhitelisted) {
-      this.showMessage({ severity: 'error', summary: this.labelService.getLabel('not_whitelisted', 'caption') || 'Not Whitelisted', detail: this.labelService.getLabel('not_whitelisted_detail', 'caption') || 'Visitor not whitelisted. Please contact admin.', life: 5000 });
+      this.showMessage({ severity: 'error', summary: this.labelService.getLabel('not_whitelisted_alert_title', 'caption') || 'Not Whitelisted', detail: this.labelService.getLabel('not_whitelisted_alert_description', 'caption') || 'Visitor not whitelisted. Please contact admin.', life: 5000 });
       return;
     }
 
@@ -2134,7 +2134,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     // Block if visitor failed whitelist validation
     if (this.isVisitorNotWhitelisted) {
-      this.showMessage({ severity: 'error', summary: this.labelService.getLabel('not_whitelisted', 'caption') || 'Not Whitelisted', detail: this.labelService.getLabel('not_whitelisted_detail', 'caption') || 'Visitor not whitelisted. Please contact admin.', life: 5000 });
+      this.showMessage({ severity: 'error', summary: this.labelService.getLabel('not_whitelisted_alert_title', 'caption') || 'Not Whitelisted', detail: this.labelService.getLabel('not_whitelisted_alert_description', 'caption') || 'Visitor not whitelisted. Please contact admin.', life: 5000 });
       this.wizardService.setStepValid(false);
       return false;
     }
@@ -2146,7 +2146,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (hasDate) {
         this.showMessage({
           severity: 'warn',
-          summary: this.labelService.getLabel('no_slots_available_error', 'caption') || 'No Slots Available',
+          summary: this.labelService.getLabel('no_slots_available_alert', 'caption') || 'No Slots Available',
           detail: this.labelService.getLabel('no_time_slots_available', 'caption') || 'No time slots available for the selected date'
         });
         this.wizardService.setStepValid(false);
@@ -2970,12 +2970,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         } else {
           // Code 20 or unexpected — not whitelisted
           this.isVisitorNotWhitelisted = true;
-          const description = result?.Table?.[0]?.Description
-            || this.labelService.getLabel('not_whitelisted_detail', 'caption')
+          const description = this.labelService.getLabel('not_whitelisted_alert_description', 'caption')
+            || result?.Table?.[0]?.Description
             || 'Visitor not whitelisted. Please contact admin.';
           this.showMessage({
             severity: 'error',
-            summary: this.labelService.getLabel('not_whitelisted', 'caption') || 'Not Whitelisted',
+            summary: this.labelService.getLabel('not_whitelisted_alert_title', 'caption') || 'Not Whitelisted',
             detail: description,
             life: 5000
           });
@@ -3076,7 +3076,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.showMessage({
         severity: 'warn',
         summary: this.labelService.getLabel('slot_full_label', 'caption') || alert.summary || 'Slot Full',
-        detail: alert.detail || this.labelService.getLabel('slot_is_fully_booked_error', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
+        detail: alert.detail || this.labelService.getLabel('slot_fully_booked_alert', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
         life: 5000
       });
       return;
@@ -3097,7 +3097,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.showMessage({
         severity: 'warn',
         summary: this.labelService.getLabel('slot_full_label', 'caption') || alert.summary || 'Slot Full',
-        detail: alert.detail || this.labelService.getLabel('slot_is_fully_booked_error', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
+        detail: alert.detail || this.labelService.getLabel('slot_fully_booked_alert', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
         life: 5000
       });
       setTimeout(() => this.generalForm.get('timeSlot')?.setValue(null));

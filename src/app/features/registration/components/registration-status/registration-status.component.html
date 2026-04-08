@@ -148,7 +148,7 @@
           </div>
           <div class="qr-caption">{{ 'scan_qr_code' | translate }}</div>
           @if ((registrationData.isDynamicQR || registrationData.IsDynamicQR) && registrationData.DynamicQrIntervalSec) {
-            <div class="qr-countdown">{{ 'refresh_in' | translate }}: <span class="countdown-timer">{{ qrCountdown }}s</span></div>
+            <div class="qr-countdown">{{ 'refresh_note' | translate }}: <span class="countdown-timer">{{ qrCountdown }}s</span></div>
           }
         </div>
       }

@@ -10,6 +10,7 @@ import { HomePageComponent } from './features/registration/components/home-page/
 import { WizardContainerComponent } from './features/registration/components/wizard-container/wizard-container.component';
 import { RegistrationStatusPageComponent } from './features/registration/components/registration-status/registration-status-page.component';
 import { AppointmentApprovalComponent } from './features/approval/components/appointment-approval/appointment-approval.component';
+import { AppointmentQrComponent } from './features/approval/components/appointment-qr/appointment-qr.component';
 import { getSortedSteps } from './core/models/step-config.model';
 
 /**
@@ -54,6 +55,10 @@ export const routes: Routes = [
   {
     path: 'appointment-approval',
     component: AppointmentApprovalComponent
+  },
+  {
+    path: 'appointment-qr',
+    component: AppointmentQrComponent
   },
   { path: '**', redirectTo: '' }
 ];
