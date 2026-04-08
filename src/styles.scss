@@ -272,3 +272,59 @@ body {
     display: none !important;
   }
 }
+
+// ─── Dynamic Font Faces ───────────────────────────────────────────────────────
+
+@font-face { font-family: "Acme-Regular"; src: url("assets/fonts/Acme/Acme-Regular.ttf"); }
+@font-face { font-family: "Alegreya_Sans-Regular"; src: url("assets/fonts/Alegreya_Sans/AlegreyaSans-Regular.ttf"); }
+@font-face { font-family: "AnekDevanagari-Regular"; src: url("assets/fonts/Anek_Devanagari/static/AnekDevanagari-Regular.ttf"); }
+@font-face { font-family: "Archivo-Regular"; src: url("assets/fonts/Archivo/static/Archivo-Regular.ttf"); }
+@font-face { font-family: "Anta-Regular"; src: url("assets/fonts/Anta/Anta-Regular.ttf"); }
+@font-face { font-family: "BeVietnamPro-Regular"; src: url("assets/fonts/Be_Vietnam_Pro/BeVietnamPro-Regular.ttf"); }
+@font-face { font-family: "BreeSerif-Regular"; src: url("assets/fonts/Bree_Serif/BreeSerif-Regular.ttf"); }
+@font-face { font-family: "Cantarell-Regular"; src: url("assets/fonts/Cantarell/Cantarell-Regular.ttf"); }
+@font-face { font-family: "Catamaran-Regular"; src: url("assets/fonts/Catamaran/static/Catamaran-Regular.ttf"); }
+@font-face { font-family: "Comfortaa-Regular"; src: url("assets/fonts/Comfortaa/static/Comfortaa-Regular.ttf"); }
+@font-face { font-family: "ConcertOne-Regular"; src: url("assets/fonts/Concert_One/ConcertOne-Regular.ttf"); }
+@font-face { font-family: "DidactGothic-Regular"; src: url("assets/fonts/Didact_Gothic/DidactGothic-Regular.ttf"); }
+@font-face { font-family: "DMSans-Regular"; src: url("assets/fonts/DM_Sans/static/DMSans-Regular.ttf"); }
+@font-face { font-family: "Domine-Regular"; src: url("assets/fonts/Domine/static/Domine-Regular.ttf"); }
+@font-face { font-family: "Dosis-Regular"; src: url("assets/fonts/Dosis/static/Dosis-Regular.ttf"); }
+@font-face { font-family: "GothamBook-Regular"; src: url("assets/fonts/Gotham/GothamBook.ttf"); }
+@font-face { font-family: "HindMadurai-Regular"; src: url("assets/fonts/Hind_Madurai/HindMadurai-Regular.ttf"); }
+@font-face { font-family: "JosefinSans-Regular"; src: url("assets/fonts/Josefin_Sans/static/JosefinSans-Regular.ttf"); }
+@font-face { font-family: "Jost-Regular"; src: url("assets/fonts/Jost/static/Jost-Regular.ttf"); }
+@font-face { font-family: "Karla-Regular"; src: url("assets/fonts/Karla/static/Karla-Regular.ttf"); }
+@font-face { font-family: "Lato-Regular"; src: url("assets/fonts/Lato/Lato-Regular.ttf"); }
+@font-face { font-family: "Lexend-Regular"; src: url("assets/fonts/Lexend/static/Lexend-Regular.ttf"); }
+@font-face { font-family: "LexendDeca-Regular"; src: url("assets/fonts/Lexend_Deca/static/LexendDeca-Regular.ttf"); }
+@font-face { font-family: "Lora-Regular"; src: url("assets/fonts/Lora/static/Lora-Regular.ttf"); }
+@font-face { font-family: "Manrope-Regular"; src: url("assets/fonts/Manrope/Manrope-Regular.ttf"); }
+@font-face { font-family: "Montserrat-Regular"; src: url("assets/fonts/Montserrat/static/Montserrat-Regular.ttf"); }
+@font-face { font-family: "Mulish-Regular"; src: url("assets/fonts/Mulish/static/Mulish-Regular.ttf"); }
+@font-face { font-family: "NanumGothic-Regular"; src: url("assets/fonts/Nanum_Gothic/NanumGothic-Regular.ttf"); }
+@font-face { font-family: "NunitoSans_10pt_Condensed-Regular"; src: url("assets/fonts/Nunito_Sans/static/NunitoSans_10pt_Condensed-Regular.ttf"); }
+@font-face { font-family: "OpenSans-Regular"; src: url("assets/fonts/Open_Sans/static/OpenSans-Regular.ttf"); }
+@font-face { font-family: "Poppins-Regular"; src: url("assets/fonts/Poppins/Poppins-Regular.ttf"); }
+@font-face { font-family: "PTSans-Regular"; src: url("assets/fonts/PT_Sans/PTSans-Regular.ttf"); }
+@font-face { font-family: "PTSansCaption-Regular"; src: url("assets/fonts/PT_Sans_Caption/PTSansCaption-Regular.ttf"); }
+@font-face { font-family: "Quicksand-Regular"; src: url("assets/fonts/Quicksand/static/Quicksand-Regular.ttf"); }
+@font-face { font-family: "Raleway-Regular"; src: url("assets/fonts/Raleway/static/Raleway-Regular.ttf"); }
+@font-face { font-family: "RobotoCondensed-Regular"; src: url("assets/fonts/Roboto_Condensed/static/RobotoCondensed-Regular.ttf"); }
+@font-face { font-family: "Rubik-Regular"; src: url("assets/fonts/Rubik/static/Rubik-Regular.ttf"); }
+@font-face { font-family: "SF-Pro-Display-Regular"; src: url("assets/fonts/San-Francisco/SF-Pro-Display-Regular.otf"); }
+@font-face { font-family: "Signika-Regular"; src: url("assets/fonts/Signika/static/Signika-Regular.ttf"); }
+@font-face { font-family: "SourceSerif4-Regular"; src: url("assets/fonts/Source_Serif_4/static/SourceSerif4-Regular.ttf"); }
+@font-face { font-family: "Spectral-Regular"; src: url("assets/fonts/Spectral/Spectral-Regular.ttf"); }
+@font-face { font-family: "TitilliumWeb-Regular"; src: url("assets/fonts/Titillium_Web/TitilliumWeb-Regular.ttf"); }
+@font-face { font-family: "Ubuntu-Regular"; src: url("assets/fonts/Ubuntu/Ubuntu-Regular.ttf"); }
+@font-face { font-family: "Vollkorn-Regular"; src: url("assets/fonts/Vollkorn/static/Vollkorn-Regular.ttf"); }
+
+// Weight variants
+@font-face { font-family: "Poppins-Light"; src: url("assets/fonts/Poppins/Poppins-Light.ttf"); }
+@font-face { font-family: "Poppins-ExtraLight"; src: url("assets/fonts/Poppins/Poppins-ExtraLight.ttf"); }
+@font-face { font-family: "Poppins-Medium"; src: url("assets/fonts/Poppins/Poppins-Medium.ttf"); }
+@font-face { font-family: "Manrope-Light"; src: url("assets/fonts/Manrope/Manrope-Light.ttf"); }
+@font-face { font-family: "Manrope-ExtraLight"; src: url("assets/fonts/Manrope/Manrope-ExtraLight.ttf"); }
+@font-face { font-family: "Manrope-Medium"; src: url("assets/fonts/Manrope/Manrope-Medium.ttf"); }
+@font-face { font-family: "GothamBook"; font-style: normal; font-weight: normal; src: url("assets/fonts/Gotham/GothamBook.woff2"); }

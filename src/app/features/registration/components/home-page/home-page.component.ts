@@ -92,6 +92,10 @@ export class HomePageComponent implements AfterViewChecked {
   srWithoutBC = '1'; // Default: allow access without BC param
   srWithoutBCBlockMessage = 'Access denied. Please use the proper registration link with branch code.';
 
+  // AllowOnlywithVC flag control
+  allowOnlyWithVC = true; // Default: allow access without VC param
+  allowOnlyWithVCBlockMessage = 'Access denied. Please use the proper registration link with visitor category code.';
+
   // ShowWelcomeTitle flag
   showWelcomeTitle = true;
 
@@ -586,6 +590,20 @@ export class HomePageComponent implements AfterViewChecked {
             EnableWhitelistValidation: tcSettings.EnableWhitelistValidation ?? false,
             AptEndTime: tcSettings.AptEndTime || ''
           });
+         
+          // Check AllowOnlywithVC flag
+          if (tcSettings.AllowOnlywithVC !== undefined) {
+            this.allowOnlyWithVC = tcSettings.AllowOnlywithVC === '1' || tcSettings.AllowOnlywithVC === 1 || tcSettings.AllowOnlywithVC === true;
+          }
+
+          // Block access if vc param is required but not present
+          if (this.allowOnlyWithVC && !this.wizardService.refCatCode && !this.isAppointmentFlow) {
+            this.isAccessDenied = true;
+            this.hasInvalidUrl = true;
+            this.errorMessage = this.allowOnlyWithVCBlockMessage;
+            this.isLoading = false;
+            this.sharedService.setAccessDenied(true);
+          }
         }
 
       } catch (error) {
@@ -755,6 +773,8 @@ export class HomePageComponent implements AfterViewChecked {
               this.sharedService.setAccessDenied(true);
               return;
             }
+
+
           }
 
           // Only set loading to false if not from query (query flow handles it separately)
