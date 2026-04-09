@@ -433,8 +433,8 @@ export class HomePageComponent implements AfterViewChecked {
           this.hasInvalidUrl = true;
           this.errorMessage = message;
           this.isLoading = false;
-          alert(message);
-          window.close();
+          //(message);
+          //window.close();
           return;
         }
 
