@@ -56,7 +56,9 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
   private qrRefreshInterval: any = null;
   private qrCountdownInterval: any = null;
 
-  readonly companyName = 'CALMS Technologies';
+  get companyName(): string {
+    return this.registrationData?.branch || 'CALMS Technologies';
+  }
 
   private get dynamicAlertMessages() {
     return {
