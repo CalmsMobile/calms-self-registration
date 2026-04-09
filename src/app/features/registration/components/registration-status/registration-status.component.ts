@@ -316,7 +316,7 @@ onQrImageLoaded(): void {
 
   async onShareWhatsapp() {
     const d = this.registrationData;
-    const caption = `Dear ${d?.visitorName || 'Visitor'},\n\nYour visit has been successfully approved 👍\n\nPlease find your Visitor Access Pass attached, Kindly present the QR code at the entrance for check-in.\n\nThank you and have a pleasant visit.`;
+    const caption = `Dear ${d?.visitorName || 'Visitor'},\nYour visit to ${d.branch} has been successfully approved 👍\nPlease find your Visitor Access Pass attached. Kindly present the QR code at the entrance for check-in.\nThank you and have a pleasant visit.`;
 
     try {
       const canvas = await this.capturePassCard();
