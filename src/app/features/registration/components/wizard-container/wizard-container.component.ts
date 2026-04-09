@@ -235,6 +235,28 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Check if questionnaire step should be auto-skipped (no questions configured)
+    if (this.wizardService.shouldSkipQuestionnaire(stepRoute)) {
+      console.log('Auto-skipping questionnaire step (no questions)');
+      const isGoingBackward = stepIndex < currentStep;
+      if (isGoingBackward) {
+        const prevStepIndex = stepIndex - 1;
+        if (prevStepIndex >= 0) {
+          this.navigateToStep(prevStepIndex, true);
+        }
+      } else {
+        this.wizardService.setStepValid(true);
+        this.completedSteps[stepIndex] = true;
+        const nextStepIndex = stepIndex + 1;
+        if (nextStepIndex < this.items.length) {
+          this.navigateToStep(nextStepIndex, true);
+        } else {
+          this.submitRegistration();
+        }
+      }
+      return;
+    }
+
     // For forward navigation (next step), allow if it's just one step ahead
     const isForwardToNextStep = stepIndex === currentStep + 1 && !skipValidation;
 

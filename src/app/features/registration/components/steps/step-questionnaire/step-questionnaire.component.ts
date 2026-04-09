@@ -93,7 +93,9 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     // Load questions first
     this.questions = this.wizardService.getQuestionnaireSettings();
     if (!this.questions || this.questions.length === 0) {
-      this.wizardService.gotoHomePage();
+      // No questions — wizard-container handles direction-aware auto-skip,
+      // but as a safety fallback skip forward if we somehow land here.
+      this.wizardService.navigateToNextStep();
       return;
     }
     this.buildFormControls();

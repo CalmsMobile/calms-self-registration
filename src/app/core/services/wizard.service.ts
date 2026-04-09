@@ -330,6 +330,12 @@ export class WizardService {
     return this.questionsSetting$.value;
   }
 
+  shouldSkipQuestionnaire(stepRoute: string): boolean {
+    if (stepRoute !== 'questionnaire') return false;
+    const questions = this.questionsSetting$.value;
+    return !questions || questions.length === 0;
+  }
+
   setPageSettings(pageSettings: any) {
     this.pagesSetting$.next(pageSettings);
   }
