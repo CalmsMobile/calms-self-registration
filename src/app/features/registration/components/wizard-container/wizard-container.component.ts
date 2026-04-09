@@ -449,6 +449,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
 
               const branchName = this.wizardService.currentBranchName;
               const branchID = this.wizardService.currentBranchID;
+              const summary = this.wizardService.buildRegistrationSummary();
               const errStartMode = this.wizardService.appointmentCode
                 ? 'ac'
                 : this.wizardService.refCode ? 'bc' : 'plain';
@@ -460,8 +461,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                 state: {
                   registrationData: {
                     status: 'error',
-                    visitorName: visitorAckData.FullName,
-                    branch: branchName
+                    ...summary
                   },
                   branchName: branchName,
                   branchID: branchID,
