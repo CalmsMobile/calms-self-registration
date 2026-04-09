@@ -53,6 +53,7 @@ export class WizardService {
 
   currentBranchID = '';
   selectedVisitCategory = '';
+  selectedVisitCategoryName = '';
   private masterData: any | null = null;
   private visitorAckData: any | null = null;
   private branchHostData: any | null = null;
@@ -218,6 +219,10 @@ export class WizardService {
     // that reference Table2/Table3/Table5/Table7/Table12 still work correctly.
     this.masterData = {
       ...data,
+      // Categories (original Table2)
+      Categories: data.Table2 || [],
+      // Purposes (original Table10)
+      Purposes: data.Table10 || [],
       // meetingFloorList ← Table8 (floors)
       Table2: data.Table8 || data.Table2 || [],
       // purposeList ← Table10 (purposes with details)
@@ -731,10 +736,16 @@ export class WizardService {
   }
 
   private getCategoryDescription(categoryId: any): string {
+    if (this.selectedVisitCategoryName) return this.selectedVisitCategoryName;
+    
     const masterData = this.getmasterData();
-    if (masterData?.Table4?.length) {
-      const category = masterData.Table4.find((cat: any) => cat.VCategorySeqId === categoryId);
-      return category?.Name || '';
+    // Categories are in the original Table2 (aliased to 'Categories' in setmasterData)
+    const categoryTable = masterData?.Categories || masterData?.Table2;
+    if (categoryTable?.length) {
+      const category = categoryTable.find((cat: any) => 
+        (cat.visitor_ctg_id || cat.VCategorySeqId)?.toString() === categoryId?.toString()
+      );
+      return category?.Name || category?.visitor_ctg_desc || '';
     }
     return '';
   }
@@ -796,18 +807,18 @@ export class WizardService {
     const meetingWith = hostRow?.HOSTNAME || hostRow?.Name || general.hostName || '';
 
     // Meeting room / location
-    const roomId = general.meeting_location?.toString() || general.room?.toString() || '';
+    const roomId = (general.meeting_location || general.room)?.toString() || '';
     const roomRow = master?.Table1?.find((r: any) =>
       (r.MeetingRoomSeqId || r.SeqId)?.toString() === roomId
     );
     const meetingLocation = roomRow?.MeetingRoomDesc || roomRow?.Name || general.roomDesc || '';
 
     // Category name (visit type)
-    const catDesc = this.getCategoryDescription(this.selectedVisitCategory);
+    const catDesc = general.visitType || this.getCategoryDescription(this.selectedVisitCategory);
 
     // Purpose name
     const purposeId = general.purpose?.toString() || '';
-    const purposeRow = master?.Table3?.find((p: any) =>
+    const purposeRow = (master?.Purposes || master?.Table3)?.find((p: any) =>
       (p.visitpurpose_id || p.SeqId)?.toString() === purposeId
     );
     const visitPurpose = purposeRow?.visitpurpose_desc || purposeRow?.Name || general.purposeDesc || '';

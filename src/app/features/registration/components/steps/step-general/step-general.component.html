@@ -705,6 +705,7 @@
           <span class="field-icon"><i class="pi pi-map-marker"></i></span>
           <p-select id="meeting_location" [options]="meetingLocList" formControlName="meeting_location"
             [placeholder]="'meeting_location' | translate:'placeholder'" optionLabel="MeetingRoomDesc" optionValue="MeetingRoomSeqId"
+            (onChange)="onRoomChange($event)"
             [class]="{'ng-invalid': isFieldInvalidRequired('meeting_location')}" [showClear]="true" appendTo="body">
           </p-select>
         </div>

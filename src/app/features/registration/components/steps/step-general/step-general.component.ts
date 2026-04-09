@@ -1438,7 +1438,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       facilitySelection: [savedData.facilitySelection || null],
       sharedDate: [savedData.sharedDate || null],
       purpose: [savedData.purpose || null],
-      purposeDesc: [savedData.purposeDesc || '']
+      purposeDesc: [savedData.purposeDesc || ''],
+      hostName: [savedData.hostName || ''],
+      roomDesc: [savedData.roomDesc || ''],
+      visitType: [savedData.visitType || '']
     };
 
     // Add UDF controls to main form (now applies to both single and multiple visitor modes)
@@ -2827,6 +2830,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     );
 
     if (selectedHost) {
+      // Save host name for summary
+      this.generalForm.get('hostName')?.setValue(selectedHost.HOSTNAME || selectedHost.Name || '', { emitEvent: false });
+
       // Get department value from various possible fields
       const hostDepartment = selectedHost.Department ||
         selectedHost.DName ||
@@ -2852,6 +2858,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const selectedId = event.value;
     const selected = this.purposeList.find((p: any) => p.visitpurpose_id === selectedId);
     this.generalForm.get('purposeDesc')?.setValue(selected?.visitpurpose_desc || '', { emitEvent: false });
+    this.saveFormDataToWizard();
+  }
+
+  onRoomChange(event: any): void {
+    const selectedId = event.value;
+    const selected = this.meetingLocList.find((r: any) => r.MeetingRoomSeqId === selectedId);
+    this.generalForm.get('roomDesc')?.setValue(selected?.MeetingRoomDesc || selected?.Name || '', { emitEvent: false });
     this.saveFormDataToWizard();
   }
 

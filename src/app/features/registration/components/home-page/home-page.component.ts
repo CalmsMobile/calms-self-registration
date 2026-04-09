@@ -1098,6 +1098,7 @@ export class HomePageComponent implements AfterViewChecked {
       }
       this.wizardService.currentBranchID = this.selectedBranch;
       this.wizardService.selectedVisitCategory = this.selectedCategory;
+      this.wizardService.selectedVisitCategoryName = this.getCategoryName(this.selectedCategory);
       this.wizardService.isNavigatedFromHome = true;
       this.wizardService.setDataToSessionStorage();
 
