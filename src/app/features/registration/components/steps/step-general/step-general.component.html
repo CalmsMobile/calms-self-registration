@@ -495,7 +495,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_field' | translate:'placeholder'" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -513,7 +513,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_field' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -573,17 +573,17 @@
       @if ((enableVimsApptTimeSlot && enableFBInSelfReg) || (enableFBInSelfReg && generalForm.get('facilityBooking')?.value)) {
       <div class="form-field">
         <label class="field-label" for="sharedDate">
-          {{'date_placeholder' | translate}} <span class="required-star">*</span>
+          {{'date_field' | translate}} <span class="required-star">*</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker id="sharedDate" formControlName="sharedDate"
-            [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate" [placeholder]="'date_placeholder' | translate:'placeholder'"
+            [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate" [placeholder]="'date_field' | translate:'placeholder'"
             [showTime]="false" (onSelect)="onSharedDateSelect($event)" [showClear]="true" appendTo="body" dateFormat="dd/mm/yy">
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('sharedDate')) {
-        <small class="error-message">{{ getRequiredError('date_placeholder') }}</small>
+        <small class="error-message">{{ getRequiredError('date_field') }}</small>
         }
       </div>
       }
@@ -945,7 +945,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_field' | translate:'placeholder'" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -963,7 +963,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_field' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1453,7 +1453,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_field' | translate:'placeholder'" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1468,7 +1468,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_field' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1519,17 +1519,17 @@
       <!-- 17. Meeting Location (Facility) -->
       @if ((enableVimsApptTimeSlot && enableFBInSelfReg) || (enableFBInSelfReg && generalForm.get('facilityBooking')?.value)) {
       <div class="m-form-field">
-        <label class="m-field-label">{{'date_placeholder' | translate}} <span class="m-req">*</span></label>
+        <label class="m-field-label">{{'date_field' | translate}} <span class="m-req">*</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker formControlName="sharedDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate"
-            [placeholder]="'date_placeholder' | translate:'placeholder'" [showTime]="false" (onSelect)="onSharedDateSelect($event)"
+            [placeholder]="'date_field' | translate:'placeholder'" [showTime]="false" (onSelect)="onSharedDateSelect($event)"
             appendTo="body" dateFormat="dd/mm/yy" [showClear]="true">
           </p-datepicker>
         </div>
         @if (isFieldInvalidRequired('sharedDate')) {
-        <small class="m-error">{{ getRequiredError('date_placeholder') }}</small>
+        <small class="m-error">{{ getRequiredError('date_field') }}</small>
         }
       </div>
       }
@@ -1803,7 +1803,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_field' | translate:'placeholder'" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1818,7 +1818,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'date_placeholder' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="'date_field' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>

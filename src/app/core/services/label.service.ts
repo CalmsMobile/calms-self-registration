@@ -30,7 +30,6 @@ export class LabelService {
     const labelConfig: LabelConfig = {};
 
     settings.forEach(item => {
-      //if (item.SettingType === "CP" && item.Caption) {
       if (item.SettingType === "CP" || item.SettingType === "SW" || item.SettingType === "TC") {
         const titleKey = this.getLabelKey(item);
         const value = {
@@ -39,24 +38,26 @@ export class LabelService {
           title: item.Title,
           settingType: item.SettingType
         };
+
+        // Store plain key (e.g. 'branch') — last item wins on collision
         labelConfig[titleKey] = value;
 
-        // Also store with screen-prefixed key to avoid conflicts across screens
+        // Store screen-prefixed key (e.g. 'home_page_branch') — resolves collisions
         if (item.ScreenName) {
           const screenPrefix = item.ScreenName.toLowerCase().replace(/\s+/g, '_');
           labelConfig[`${screenPrefix}_${titleKey}`] = value;
         }
       }
-    });    this.labels$.next(labelConfig);
+    });
+
+    this.labels$.next(labelConfig);
   }
 
   private getLabelKey(item: any): string {
-    // Convert title to lowercase and replace spaces with underscores
     return item.Title.toLowerCase().replace(/\s+/g, '_');
   }
 
   getLabel(key: string, type: 'caption' | 'placeholder' | 'title' = 'caption'): string {
-    //console.log(this.labels$.value);
     return this.labels$.value[key]?.[type] || '';
   }
 
