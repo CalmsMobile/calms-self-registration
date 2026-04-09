@@ -68,6 +68,15 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     });
   }
 
+  get hasAllAnswered(): boolean {
+    return this.questions.every(q => {
+      if (this.isMultipleAnswerQuestion(q)) {
+        return this.getQuestionArray(q.QuestionariesSeqId).length > 0;
+      }
+      return this.getQuestionControl(q.QuestionariesSeqId).value !== null;
+    });
+  }
+
   constructor(
     private fb: FormBuilder,
     private wizardService: WizardService,

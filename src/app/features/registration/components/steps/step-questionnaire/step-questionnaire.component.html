@@ -59,13 +59,8 @@
               <button class="btn grey" type="button" (click)="goBack()">
                 <span class="icon-left">&larr;</span> {{ 'button_back' | translate }}
               </button>
-              @if (hasSkippableQuestions) {
-                <button class="btn grey" type="button" (click)="skipStep()">
-                  {{ 'button_skip' | translate }} <span class="icon-right">&rarr;</span>
-                </button>
-              }
             </div>
-            <button class="btn yellow" type="button" [disabled]="!hasAnyAnswer" (click)="mobileNext()">
+            <button class="btn yellow" type="button" [disabled]="!hasAllAnswered" (click)="mobileNext()">
               {{ 'button_continue' | translate }} <span class="icon-right">&rarr;</span>
             </button>
           </div>
@@ -133,13 +128,8 @@
         <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
           <span>&#8592;</span> {{ 'button_back' | translate }}
         </button>
-        @if (hasSkippableQuestions) {
-          <button class="m-btn m-btn-grey" type="button" (click)="skipStep()">
-            {{ 'button_skip' | translate }} <span>&#8594;</span>
-          </button>
-        }
       </div>
-      <button class="m-btn m-btn-yellow" type="button" [disabled]="!hasAnyAnswer" (click)="mobileNext()">
+      <button class="m-btn m-btn-yellow" type="button" [disabled]="!hasAllAnswered" (click)="mobileNext()">
         {{ 'button_continue' | translate }} <span>&#8594;</span>
       </button>
     </div>
@@ -177,7 +167,6 @@
     <p class="modal-text compact">{{ alertMessage }}</p>
     <div class="modal-actions compact">
       <button class="modal-btn danger" type="button" (click)="reviewAnswers()">{{ 'review_my_answer' | translate }}</button>
-      <button class="modal-link" type="button" (click)="closeModal()">{{ 'keep_answering' | translate }}</button>
     </div>
   </div>
 </div>
