@@ -495,7 +495,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'registration_page_date_field' | translate:'placeholder'" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -513,7 +513,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'registration_page_date_field' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -924,7 +924,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'registration_page_date_field' | translate:'placeholder'" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -942,7 +942,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'registration_page_date_field' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1432,7 +1432,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'registration_page_date_field' | translate:'placeholder'" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1447,7 +1447,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'registration_page_date_field' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1765,7 +1765,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'registration_page_date_field' | translate:'placeholder'" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1780,7 +1780,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="'registration_page_date_field' | translate:'placeholder'" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
