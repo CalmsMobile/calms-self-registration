@@ -378,7 +378,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
 
     // Safety brief wrong answer → show incorrect modal with rewatch button
     if (hasSafetyBriefError && firstSafetyQuestion) {
-      this.alertMessage = this.labelService.getLabel('incorrect_safety_briefing_answer', 'caption');
+      this.alertMessage = this.labelService.getLabel('questionnaires_safety_briefing_qn_wrong_answer_alert', 'caption');
       this.modalType = 'incorrect';
       this.wizardService.setStepValid(false);
       return;
@@ -389,10 +389,10 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     if (isValid) {
       this.saveFormData();
     } else if (hasUnanswered) {
-      this.alertMessage = this.labelService.getLabel('please_answer_this_question', 'caption');
+      this.alertMessage = this.labelService.getLabel('questionnaires_wrong_answer_alert', 'caption');
       this.modalType = 'required';
     } else if (hasWrongAnswer) {
-      this.alertMessage = this.labelService.getLabel('this_question_requires_the_correct_answer_to_proceed', 'caption');
+      this.alertMessage = this.labelService.getLabel('questionnaires_wrong_answer_alert', 'caption');
       this.modalType = 'required';
     }
   }

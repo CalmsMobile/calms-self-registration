@@ -25,21 +25,21 @@
     <div class="right">
       <div class="card">
         <div class="terms">
-          <div class="terms-title">{{ 'terms_and_conditions' | translate }}</div>
+          <div class="terms-title">{{ 'nda_agreement_nda_content_title' | translate }}</div>
           <div #termsBox class="terms-box" [innerHTML]="getNdaHtml()" (scroll)="onTermsScroll($event)"></div>
         </div>
       </div>
 
       @if (showValidationError) {
-        <span class="error-message">{{ 'draw_signature_below' | translate }}</span>
+        <span class="error-message">{{ 'nda_agreement_sign_pad_note' | translate }}</span>
       }
 
       <div class="actions">
         <button class="btn grey" type="button" (click)="goBack()">
-          <span class="icon-left">&#8592;</span> {{ 'button_back' | translate }}
+          <span class="icon-left">&#8592;</span> {{ 'nda_agreement_button_back' | translate }}
         </button>
         <button class="btn yellow" type="button" (click)="openSignature()" [disabled]="!ndaScrolledToBottom">
-          {{ 'signature' | translate }} <span class="icon-right">&#9998;</span>
+          {{ 'nda_agreement_button_sign' | translate }} <span class="icon-right">&#9998;</span>
         </button>
       </div>
     </div>
@@ -51,7 +51,7 @@
   <div class="modal-overlay" (click)="closeSignature()"></div>
   <div class="modal-card" role="dialog" aria-modal="true">
     <div class="modal-header">
-      <div class="modal-title">{{ 'signature' | translate }}</div>
+      <div class="modal-title">{{ 'nda_agreement_sign_pad_title' | translate }}</div>
       <button class="modal-close" type="button" (click)="closeSignature()">&#215;</button>
     </div>
     <div class="signature-box">
@@ -67,10 +67,10 @@
         (touchend)="onTouchEnd($event)"
       ></canvas>
     </div>
-    <div class="signature-label">{{ 'draw_signature_below' | translate }}</div>
+    <div class="signature-label">{{ 'nda_agreement_sign_pad_note' | translate }}</div>
     <div class="modal-actions">
-      <button class="btn grey" type="button" (click)="clearSignature()">{{ 'button_clear' | translate }}</button>
-      <button class="btn yellow" type="button" (click)="submitSignature()" [disabled]="!hasSigned">{{ 'button_submit' | translate }}</button>
+      <button class="btn grey" type="button" (click)="clearSignature()">{{ 'nda_agreement_button_clear' | translate }}</button>
+      <button class="btn yellow" type="button" (click)="submitSignature()" [disabled]="!hasSigned">{{ 'nda_agreement_button_submit' | translate }}</button>
     </div>
   </div>
 </div>
@@ -118,26 +118,24 @@
 
   <!-- Terms Card -->
   <div class="m-card">
-    <div class="m-terms-title">{{ 'terms_and_conditions' | translate }}</div>
+    <div class="m-terms-title">{{ 'nda_agreement_nda_content_title' | translate }}</div>
     <div class="m-terms-box" [innerHTML]="getNdaHtml()" (scroll)="onTermsScroll($event)"></div>
   </div>
 
   @if (showValidationError) {
-  <p class="m-error">{{ 'draw_signature_below' | translate }}</p>
+  <p class="m-error">{{ 'nda_agreement_sign_pad_note' | translate }}</p>
   }
 
   <!-- Actions -->
   <div class="m-actions">
     <div class="m-actions-row">
       <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
-        <span>&#8592;</span> {{ 'button_back' | translate }}
+        <span>&#8592;</span> {{ 'nda_agreement_button_back' | translate }}
       </button>
       <button class="m-btn m-btn-yellow" type="button" (click)="openSignature()" [disabled]="!ndaScrolledToBottom">
-        {{ 'signature' | translate }} <span>&#9998;</span>
+        {{ 'nda_agreement_button_sign' | translate }} <span>&#9998;</span>
       </button>
     </div>
-    <button class="m-btn m-btn-yellow" type="button" [disabled]="!hasSigned" (click)="mobileNext()">
-      {{ 'button_continue' | translate }} <span>&#8594;</span>
-    </button>
+   
   </div>
 </div>

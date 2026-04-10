@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
+﻿import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
@@ -705,8 +705,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.setupControl('timeSlot', true, false);
         this.messageService.add({
           severity: 'warn',
-          summary: this.labelService.getLabel('no_slots_available_alert', 'caption') || 'No Slots Available',
-          detail: this.labelService.getLabel('no_time_slots_available', 'caption') || 'No time slots available for the selected date',
+          summary: this.labelService.getLabel('registration_page_no_slots_available_alert', 'caption') || 'No Slots Available',
+          detail: this.labelService.getLabel('registration_page_no_time_slots_available', 'caption') || 'No time slots available for the selected date',
           life: 5000
         });
       }
@@ -723,7 +723,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         ...udf,
         Enabled: !!this.settings?.[udf.udfPrefix === 'v' ? udf.formControlName + 'Enabled' : udf.UDFName + 'Enabled'],
         Required: !!this.settings?.[udf.udfPrefix === 'v' ? udf.formControlName + 'Required' : udf.UDFName + 'Required'],
-        translateKey: (udf.udfPrefix || 'a') + udf.UDFName.toLowerCase()
+        translateKey: 'registration_page_' + (udf.udfPrefix || 'a') + udf.UDFName.toLowerCase()
       }));
       this.udfOptions = udfSettings.Table1;
       // If the form was already shown to the user, save their input so it survives reinit
@@ -1663,12 +1663,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     if (this.isVisitorBlacklisted) {
-      this.showMessage({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
+      this.showMessage({ severity: 'error', ...this.getAlert('registration_page_blacklisted_alert'), life: 5000 });
       return;
     }
 
     if (this.isVisitorNotWhitelisted) {
-      this.showMessage({ severity: 'error', summary: this.labelService.getLabel('not_whitelisted_alert_title', 'caption') || 'Not Whitelisted', detail: this.labelService.getLabel('not_whitelisted_alert_description', 'caption') || 'Visitor not whitelisted. Please contact admin.', life: 5000 });
+      this.showMessage({ severity: 'error', summary: this.labelService.getLabel('registration_page_not_whitelisted_alert_title', 'caption') || 'Not Whitelisted', detail: this.labelService.getLabel('registration_page_not_whitelisted_alert_description', 'caption') || 'Visitor not whitelisted. Please contact admin.', life: 5000 });
       return;
     }
 
@@ -1690,7 +1690,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         currentForm.get(field)?.markAsTouched();
       });
       this.scrollToFirstError();
-      this.showMessage({ severity: 'error', ...this.getAlert('all_visitor_fields_required') });
+      this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_visitor_fields_required') });
     }
   }
 
@@ -1725,7 +1725,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.savedVisitors[this.editingVisitorIndex] = visitorData;
       this.editingVisitorIndex = -1; // Reset editing index
 
-      this.showMessage({ severity: 'success', ...this.getAlert('visitor_update_message') });
+      this.showMessage({ severity: 'success', ...this.getAlert('registration_page_visitor_update_message') });
     } else {
       // Check for duplicate visitor by visitor_id or fullName
       const isDuplicate = this.savedVisitors.some(v =>
@@ -1734,14 +1734,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       );
 
       if (isDuplicate) {
-        this.showMessage({ severity: 'warn', ...this.getAlert('duplicate_visitor_alert') });
+        this.showMessage({ severity: 'warn', ...this.getAlert('registration_page_duplicate_visitor_alert') });
         return;
       }
 
       // Add new visitor
       this.savedVisitors.push(visitorData);
 
-      this.showMessage({ severity: 'success', ...this.getAlert('visitor_save_message') });
+      this.showMessage({ severity: 'success', ...this.getAlert('registration_page_visitor_save_message') });
     }
 
     // Save form data immediately after visitor modification
@@ -1901,7 +1901,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Store the index for updating later
       this.editingVisitorIndex = index;
 
-      this.showMessage({ severity: 'info', ...this.getAlert('edit_mode_message') });
+      this.showMessage({ severity: 'info', ...this.getAlert('registration_page_edit_mode_message') });
     }
   }
 
@@ -1928,7 +1928,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Save form data immediately after visitor deletion
       this.saveFormDataToWizard();
 
-      this.showMessage({ severity: 'success', ...this.getAlert('visitor_delete_message') });
+      this.showMessage({ severity: 'success', ...this.getAlert('registration_page_visitor_delete_message') });
     }
   }
 
@@ -1940,7 +1940,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       currentForm.reset();
       this.profileImage = ''; // Clear photo preview when cancelling edit
 
-      this.showMessage({ severity: 'info', ...this.getAlert('cancellation_message') });
+      this.showMessage({ severity: 'info', ...this.getAlert('registration_page_cancellation_message') });
     }
   }
 
@@ -2149,14 +2149,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // ───────────────────────────────────────────────────────────────────────
 
     if (this.isVisitorBlacklisted) {
-      this.showMessage({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
+      this.showMessage({ severity: 'error', ...this.getAlert('registration_page_blacklisted_alert'), life: 5000 });
       this.wizardService.setStepValid(false);
       return false;
     }
 
     // Block if visitor failed whitelist validation
     if (this.isVisitorNotWhitelisted) {
-      this.showMessage({ severity: 'error', summary: this.labelService.getLabel('not_whitelisted_alert_title', 'caption') || 'Not Whitelisted', detail: this.labelService.getLabel('not_whitelisted_alert_description', 'caption') || 'Visitor not whitelisted. Please contact admin.', life: 5000 });
+      this.showMessage({ severity: 'error', summary: this.labelService.getLabel('registration_page_not_whitelisted_alert_title', 'caption') || 'Not Whitelisted', detail: this.labelService.getLabel('registration_page_not_whitelisted_alert_description', 'caption') || 'Visitor not whitelisted. Please contact admin.', life: 5000 });
       this.wizardService.setStepValid(false);
       return false;
     }
@@ -2168,8 +2168,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (hasDate) {
         this.showMessage({
           severity: 'warn',
-          summary: this.labelService.getLabel('no_slots_available_alert', 'caption') || 'No Slots Available',
-          detail: this.labelService.getLabel('no_time_slots_available', 'caption') || 'No time slots available for the selected date'
+          summary: this.labelService.getLabel('registration_page_no_slots_available_alert', 'caption') || 'No Slots Available',
+          detail: this.labelService.getLabel('registration_page_no_time_slots_available', 'caption') || 'No time slots available for the selected date'
         });
         this.wizardService.setStepValid(false);
         return false;
@@ -2179,7 +2179,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Validate end datetime is after start datetime
     this.checkEndBeforeStart();
     if (this.endBeforeStartError) {
-      this.showMessage({ severity: 'error', ...this.getAlert('end_date_validation') });
+      this.showMessage({ severity: 'error', ...this.getAlert('registration_page_end_date_validation') });
       this.wizardService.setStepValid(false);
       return false;
     }
@@ -2203,7 +2203,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (this.savedVisitors.length === 0) {
         if (!isValid) {
           this.scrollToFirstError();
-          this.showMessage({ severity: 'error', ...this.getAlert('all_fields_required') });
+          this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_fields_required') });
           this.wizardService.setStepValid(false);
           return false;
         }
@@ -2234,7 +2234,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (this.editingVisitorIndex >= 0) {
         if (!isValid) {
           this.scrollToFirstError();
-          this.showMessage({ severity: 'error', ...this.getAlert('all_fields_required') });
+          this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_fields_required') });
           this.wizardService.setStepValid(false);
           return false;
         }
@@ -2265,7 +2265,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Current form has partial/complete data — require it to be fully valid before proceeding
       if (!isValid) {
         this.scrollToFirstError();
-        this.showMessage({ severity: 'error', ...this.getAlert('all_fields_required') });
+        this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_fields_required') });
         this.wizardService.setStepValid(false);
         return false;
       }
@@ -2302,7 +2302,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     if (!isValid) {
       this.scrollToFirstError();
-      this.showMessage({ severity: 'error', ...this.getAlert('all_fields_required') });
+      this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_fields_required') });
     }
 
     return isValid;
@@ -2394,13 +2394,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         const visitor = response?.Table1?.[0];
         if (!visitor) {
           this.visitorNotFound = true;
-          this.showMessage({ severity: 'warn', ...this.getAlert('no_visitor_found_alert') });
+          this.showMessage({ severity: 'warn', ...this.getAlert('registration_page_no_visitor_found_alert') });
           return;
         }
 
         this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
         if (this.isVisitorBlacklisted) {
-          this.showMessage({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
+          this.showMessage({ severity: 'error', ...this.getAlert('registration_page_blacklisted_alert'), life: 5000 });
           return;
         }
 
@@ -2423,7 +2423,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.visitorNotFound = true;
-        this.showMessage({ severity: 'error', ...this.getAlert('search_failed_message') });
+        this.showMessage({ severity: 'error', ...this.getAlert('registration_page_search_failed_message') });
       }
     });
   }
@@ -2499,25 +2499,25 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   getRequiredError(fieldKey: string): string {
     const key = fieldKey?.trim()?.toLowerCase().replace(/\s+/g, '_') || '';
-    const template = this.labelService.getLabel('error_required', 'caption') || '{Field} is required';
+    const template = this.labelService.getLabel('registration_page_error_required', 'caption') || '{Field} is required';
     const fieldLabel = this.labelService.getLabel(key, 'caption') || fieldKey;
     return template.replace('{Field}', fieldLabel);
   }
 
   getUdfRequiredError(udf: any): string {
-    const template = this.labelService.getLabel('error_required', 'caption') || '{Field} is required';
+    const template = this.labelService.getLabel('registration_page_error_required', 'caption') || '{Field} is required';
     const key = udf.translateKey?.trim()?.toLowerCase().replace(/\s+/g, '_') || '';
     const label = this.labelService.getLabel(key, 'caption') || udf.Caption || udf.UDFName || '';
     return template.replace('{Field}', label);
   }
 
   getMinLengthError(min: number): string {
-    const template = this.labelService.getLabel('error_min_length', 'caption') || 'Minimum {udf.MinLength} characters required';
+    const template = this.labelService.getLabel('registration_page_error_min_length', 'caption') || 'Minimum {udf.MinLength} characters required';
     return template.replace('{udf.MinLength}', String(min));
   }
 
   getMaxLengthError(max: number): string {
-    const template = this.labelService.getLabel('error_max_length', 'caption') || 'Maximum {udf.MaxLength} characters required';
+    const template = this.labelService.getLabel('registration_page_error_max_length', 'caption') || 'Maximum {udf.MaxLength} characters required';
     return template.replace('{udf.MaxLength}', String(max));
   }
 
@@ -2728,7 +2728,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.showMessage({
         severity: 'warn',
         summary: '',
-        detail: this.labelService.getLabel('photo_required', 'caption') || 'A photo is required. Please capture or upload one.'
+        detail: this.labelService.getLabel('registration_page_photo_required', 'caption') || 'A photo is required. Please capture or upload one.'
       });
       return;
     }
@@ -2949,7 +2949,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
         this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
         if (this.isVisitorBlacklisted) {
-          this.showMessage({ severity: 'error', ...this.getAlert('blacklisted_alert'), life: 5000 });
+          this.showMessage({ severity: 'error', ...this.getAlert('registration_page_blacklisted_alert'), life: 5000 });
           return;
         }
 
@@ -3002,12 +3002,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         } else {
           // Code 20 or unexpected — not whitelisted
           this.isVisitorNotWhitelisted = true;
-          const description = this.labelService.getLabel('not_whitelisted_alert_description', 'caption')
+          const description = this.labelService.getLabel('registration_page_not_whitelisted_alert_description', 'caption')
             || result?.Table?.[0]?.Description
             || 'Visitor not whitelisted. Please contact admin.';
           this.showMessage({
             severity: 'error',
-            summary: this.labelService.getLabel('not_whitelisted_alert_title', 'caption') || 'Not Whitelisted',
+            summary: this.labelService.getLabel('registration_page_not_whitelisted_alert_title', 'caption') || 'Not Whitelisted',
             detail: description,
             life: 5000
           });
@@ -3104,11 +3104,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   selectTimeSlot(slot: any): void {
     if (slot.availableCount === 0) {
-      const alert = this.getAlert('slot_is_fully_booked_error');
+      const alert = this.getAlert('registration_page_slot_fully_booked');
       this.showMessage({
         severity: 'warn',
-        summary: this.labelService.getLabel('slot_full_label', 'caption') || alert.summary || 'Slot Full',
-        detail: alert.detail || this.labelService.getLabel('slot_fully_booked_alert', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
+        summary: this.labelService.getLabel('registration_page_slot_full_label', 'caption') || alert.summary || 'Slot Full',
+        detail: alert.detail || this.labelService.getLabel('registration_page_slot_fully_booked_alert', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
         life: 5000
       });
       return;
@@ -3125,11 +3125,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
     const slot = this.timeSlotList.find(s => s.Code === code);
     if (slot && slot.availableCount === 0) {
-      const alert = this.getAlert('slot_is_fully_booked_error');
+      const alert = this.getAlert('registration_page_slot_fully_booked');
       this.showMessage({
         severity: 'warn',
-        summary: this.labelService.getLabel('slot_full_label', 'caption') || alert.summary || 'Slot Full',
-        detail: alert.detail || this.labelService.getLabel('slot_fully_booked_alert', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
+        summary: this.labelService.getLabel('registration_page_slot_full_label', 'caption') || alert.summary || 'Slot Full',
+        detail: alert.detail || this.labelService.getLabel('registration_page_slot_fully_booked_alert', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
         life: 5000
       });
       setTimeout(() => this.generalForm.get('timeSlot')?.setValue(null));

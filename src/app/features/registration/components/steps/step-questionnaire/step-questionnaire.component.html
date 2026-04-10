@@ -57,11 +57,11 @@
           <div class="actions">
             <div class="actions-left">
               <button class="btn grey" type="button" (click)="goBack()">
-                <span class="icon-left">&larr;</span> {{ 'button_back' | translate }}
+                <span class="icon-left">&larr;</span> {{ 'questionnaires_button_back' | translate }}
               </button>
             </div>
             <button class="btn yellow" type="button" [disabled]="!hasAllAnswered" (click)="mobileNext()">
-              {{ 'button_continue' | translate }} <span class="icon-right">&rarr;</span>
+              {{ 'questionnaires_button_continue' | translate }} <span class="icon-right">&rarr;</span>
             </button>
           </div>
         </div>
@@ -126,11 +126,11 @@
     <div class="m-actions">
       <div class="m-actions-row">
         <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
-          <span>&#8592;</span> {{ 'button_back' | translate }}
+          <span>&#8592;</span> {{ 'questionnaires_button_back' | translate }}
         </button>
       </div>
       <button class="m-btn m-btn-yellow" type="button" [disabled]="!hasAllAnswered" (click)="mobileNext()">
-        {{ 'button_continue' | translate }} <span>&#8594;</span>
+        {{ 'questionnaires_button_continue' | translate }} <span>&#8594;</span>
       </button>
     </div>
   </div>
@@ -149,8 +149,8 @@
     </div>
     <p class="modal-text compact">{{ alertMessage }}</p>
     <div class="modal-actions compact">
-      <button class="modal-btn danger" type="button" (click)="rewatchSafetyBrief()">{{ 'rewatch_safety_brief' | translate }}</button>
-      <button class="modal-link" type="button" (click)="reviewAnswers()">{{ 'review_my_answer' | translate }}</button>
+      <button class="modal-btn danger" type="button" (click)="rewatchSafetyBrief()">{{ 'questionnaires_rewatch_safety_brief' | translate }}</button>
+      <button class="modal-link" type="button" (click)="reviewAnswers()">{{ 'questionnaires_review_my_answer' | translate }}</button>
     </div>
   </div>
 </div>
@@ -166,7 +166,7 @@
     </div>
     <p class="modal-text compact">{{ alertMessage }}</p>
     <div class="modal-actions compact">
-      <button class="modal-btn danger" type="button" (click)="reviewAnswers()">{{ 'review_my_answer' | translate }}</button>
+      <button class="modal-btn danger" type="button" (click)="reviewAnswers()">{{ 'questionnaires_review_my_answer' | translate }}</button>
     </div>
   </div>
 </div>

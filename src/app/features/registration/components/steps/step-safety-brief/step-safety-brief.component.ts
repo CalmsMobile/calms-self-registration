@@ -69,8 +69,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
       //this.wizardService.gotoHomePage();
       this.showMessage({
         severity: 'warn',
-        summary: 'Warning',
-        detail: 'Safety briefing video is not available.'
+        summary: this.labelService.getLabel('safety_briefing_video_not_available_title', 'caption') || 'Warning',
+        detail: this.labelService.getLabel('safety_briefing_video_not_available_message', 'caption') || 'Safety briefing video is not available.'
       });
     }
 
@@ -179,8 +179,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
       this.showPlayButton = true;
       this.showMessage({
         severity: 'error',
-        summary: 'Playback Error',
-        detail: 'Please click play to start the video'
+        summary: this.labelService.getLabel('safety_briefing_video_play_error_title', 'caption') || 'Playback Error',
+        detail: this.labelService.getLabel('safety_briefing_video_play_error_message', 'caption') || 'Please click play to start the video'
       });
     }
   }
@@ -237,7 +237,7 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     if (!isValid) {
       this.showMessage({
         severity: 'error',
-        summary: this.labelService.getLabel('safety_briefing_required', 'caption'),
+        summary: this.labelService.getLabel('safety_briefing_video_required', 'caption'),
         detail: this.labelService.getLabel('safety_briefing_video_instruction', 'caption'),
         life: 5000
       });
@@ -399,8 +399,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
       keyboardEvent.stopPropagation();
       this.showMessage({
         severity: 'warn',
-        summary: 'Attention',
-        detail: 'Please watch the complete safety video',
+        summary: this.labelService.getLabel('safety_briefing_video_escape_warning_title', 'caption') || 'Attention',
+        detail: this.labelService.getLabel('safety_briefing_video_escape_warning_message', 'caption') || 'Please watch the complete safety video',
         life: 3000
       });
     }
@@ -462,7 +462,7 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     } else {
       this.showMessage({
         severity: 'error',
-        summary: this.labelService.getLabel('safety_briefing_required', 'caption'),
+        summary: this.labelService.getLabel('safety_briefing_video_required', 'caption'),
         detail: this.labelService.getLabel('safety_briefing_video_instruction', 'caption'),
         life: 5000
       });

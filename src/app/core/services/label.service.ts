@@ -39,17 +39,14 @@ export class LabelService {
           settingType: item.SettingType
         };
 
-        // Store plain key (e.g. 'branch') — last item wins on collision
-        labelConfig[titleKey] = value;
-
         // Store screen-prefixed key (e.g. 'home_page_branch') — resolves collisions
-        if (item.ScreenName) {
-          const screenPrefix = item.ScreenName.toLowerCase().replace(/\s+/g, '_');
-          labelConfig[`${screenPrefix}_${titleKey}`] = value;
-        }
+
+        const screenPrefix = item.ScreenName.toLowerCase().replace(/\s+/g, '_');
+        labelConfig[`${screenPrefix}_${titleKey}`] = value;
+
       }
     });
-
+    debugger
     this.labels$.next(labelConfig);
   }
 

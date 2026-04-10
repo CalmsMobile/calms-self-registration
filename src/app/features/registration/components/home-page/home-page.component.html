@@ -5,18 +5,15 @@
   <div class="error-overlay">
     <div class="error-card">
       @if (isAccessDenied) {
-      <h1>{{ 'access_restricted' | translate }}</h1>
+      <h1>{{ 'home_page_access_restricted' | translate }}</h1>
       <div class="error-content">
         <i class="pi pi-ban error-icon"></i>
         <p class="error-message">{{ baseUrlAccessDeniedInstruction }}</p>
-        <!-- <p class="error-subtitle">{{ 'invalid_url_alert' | translate }}</p> -->
       </div>
       } @else {
-      <!-- <h1>{{ 'invalid_url_alert' | translate }}</h1> -->
       <div class="error-content">
         <i class="pi pi-exclamation-triangle error-icon"></i>
         <p class="error-message">{{ errorMessage }}</p>
-        <!-- <p class="error-subtitle">{{ 'invalid_url_alert' | translate }}</p> -->
       </div>
       }
     </div>
@@ -52,9 +49,9 @@
           @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
           <div class="pre-form">
             <div class="pre-field">
-              <div class="pre-label">{{ branchTranslation.caption || ('branch' | translate) }}</div>
+              <div class="pre-label">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
               <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
-                [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
+                [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
                 optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
                 [autofocus]="false" appendTo="body" styleClass="home-select"
                 [class.select-empty]="!selectedBranch">
@@ -100,9 +97,9 @@
       <!-- Branch Selection (shown if multiple branches) -->
       @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
       <div class="field">
-        <div class="label">{{ branchTranslation.caption || ('branch' | translate) }}</div>
+        <div class="label">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
         <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
-          [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
+          [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
           optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
           [autofocus]="false" appendTo="body" styleClass="home-select"
           [class.select-empty]="!selectedBranch">
@@ -113,9 +110,9 @@
       <!-- Category Selection -->
       @if (selectedBranch && categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
       <div class="field field-visit">
-        <div class="label">{{ categoryTranslation.caption || ('category' | translate) }}</div>
+        <div class="label">{{ categoryTranslation.caption || ('home_page_category' | translate) }}</div>
         <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
-          [placeholder]="categoryTranslation.placeholder || ('category' | translate:'placeholder')" optionLabel="visitor_ctg_desc"
+          [placeholder]="categoryTranslation.placeholder || ('home_page_category' | translate:'placeholder')" optionLabel="visitor_ctg_desc"
           optionValue="visitor_ctg_id" [showClear]="true"
           [autofocus]="false" appendTo="body" styleClass="home-select"
           [class.select-empty]="!selectedCategory">
@@ -126,7 +123,7 @@
       <!-- Terms and Conditions -->
       @if (selectedBranch && selectedCategory && shouldShowTerms()) {
       <div class="terms">
-        <h4>{{ 'terms_and_conditions' | translate }}</h4>
+        <h4>{{ 'home_page_terms_and_conditions_title' | translate }}</h4>
         <div class="terms-body"
              (scroll)="onTermsScroll($event)"
              #termsBodyRef
@@ -138,7 +135,7 @@
 
         <!-- Checkbox at bottom right -->
         <div class="terms-checkbox-wrapper" [class.disabled]="!termsScrolledToBottom">
-          <span class="terms-agree-label">{{ 'i_agree_to_the_terms_and_conditions' | translate }}</span>
+          <span class="terms-agree-label">{{ 'home_page_i_agree_to_the_terms_and_conditions' | translate }}</span>
           <div class="checkbox-container">
             <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsScrolledToBottom && (termsAccepted = !termsAccepted)">
               @if (termsAccepted) {
@@ -156,7 +153,7 @@
         <button class="btn" type="button"
           [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
           (click)="proceedToWizard()">
-          <span>{{ 'agree_and_procced' | translate }}</span>
+          <span>{{ 'home_page_button_agree_and_proceed' | translate }}</span>
           <i class="pi pi-arrow-right btn-icon"></i>
         </button>
       </div>
@@ -181,7 +178,6 @@
       <i class="pi pi-exclamation-triangle m-error-icon"></i>
       <p class="m-error-message">{{ errorMessage }}</p>
       }
-      <!-- <p class="m-error-subtitle">{{ 'invalid_url_alert' | translate }}</p> -->
     </div>
   </div>
   }
@@ -203,9 +199,9 @@
     }
     <div class="m-form">
       <div class="m-field-group">
-        <div class="m-label" style="text-align: center;">{{ branchTranslation.caption || ('branch' | translate) }}</div>
+        <div class="m-label" style="text-align: center;">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
         <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
-          [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
+          [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
           optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
           [autofocus]="false" appendTo="body" styleClass="home-select"
           [class.select-empty]="!selectedBranch">
@@ -243,9 +239,9 @@
       <!-- Branch Selection -->
       @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
       <div class="m-field-group">
-        <div class="m-label">{{ branchTranslation.caption || ('branch' | translate) }}</div>
+        <div class="m-label">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
         <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
-          [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
+          [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
           optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
           [autofocus]="false" appendTo="body" styleClass="home-select"
           [class.select-empty]="!selectedBranch">
@@ -256,9 +252,9 @@
       <!-- Category Selection -->
       @if (categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
       <div class="m-field-group">
-        <div class="m-label">{{ categoryTranslation.caption || ('category' | translate) }}</div>
+        <div class="m-label">{{ categoryTranslation.caption || ('home_page_category' | translate) }}</div>
         <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
-          [placeholder]="categoryTranslation.placeholder || ('category' | translate:'placeholder')" optionLabel="visitor_ctg_desc"
+          [placeholder]="categoryTranslation.placeholder || ('home_page_category' | translate:'placeholder')" optionLabel="visitor_ctg_desc"
           optionValue="visitor_ctg_id" [showClear]="true"
           [autofocus]="false" appendTo="body" styleClass="home-select"
           [class.select-empty]="!selectedCategory">
@@ -270,7 +266,7 @@
       @if (selectedBranch && selectedCategory && shouldShowTerms()) {
       <div class="m-terms-card">
         <div class="m-terms-head">
-          <h3>{{ 'terms_and_conditions' | translate }}</h3>
+          <h3>{{ 'home_page_terms_and_conditions_title' | translate }}</h3>
         </div>
         <div class="m-terms-body"
              #mTermsBodyRef
@@ -280,7 +276,7 @@
 
         <!-- Checkbox at bottom right -->
         <div class="terms-checkbox-wrapper" [class.disabled]="!termsScrolledToBottom">
-          <span class="terms-agree-label">{{ 'i_agree_to_the_terms_and_conditions' | translate }}</span>
+          <span class="terms-agree-label">{{ 'home_page_i_agree_to_the_terms_and_conditions' | translate }}</span>
           <div class="checkbox-container">
             <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsScrolledToBottom && (termsAccepted = !termsAccepted)">
               @if (termsAccepted) {
@@ -297,7 +293,7 @@
       <button class="m-continue" type="button"
         [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
         (click)="proceedToWizard()">
-        <span>{{ 'agree_and_procced' | translate }}</span>
+        <span>{{ 'home_page_button_agree_and_proceed' | translate }}</span>
         <i class="pi pi-arrow-right"></i>
       </button>
       }

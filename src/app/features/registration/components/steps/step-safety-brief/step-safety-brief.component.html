@@ -1,4 +1,4 @@
-﻿<main class="page">
+<main class="page">
   <!-- Header Desktop -->
   <header class="page-header flex-header">
     <div class="header-center">
@@ -25,14 +25,6 @@
       <span>{{ formattedPageTitle.rest }}</span>
     </h2>
     <p>{{ 'safety_briefing_video_instruction' | translate }}</p>
-    @if (isFullscreen && !videoEnded) {
-    <p class="fullscreen-msg">
-      {{ 'full_screen_exit_note' | translate }}
-    </p>
-    }
-    @if (isReplaying && !videoEnded && !isFullscreen) {
-    <p class="replay-msg">{{ 'button_replaying_video' | translate }}</p>
-    }
   </section>
 
   <!-- Video Card -->
@@ -41,7 +33,6 @@
       <video #safetyVideo class="safety-video" [hidden]="videoEnded && showReplay" disablePictureInPicture
         controlsList="nodownload nofullscreen noremoteplayback">
         <source [src]="videoSource" type="video/mp4">
-        {{ 'your_browser_does_not_support_html5_video.' | translate }}
       </video>
 
       @if (!showPlayButton && !videoEnded && videoDuration > 0) {
@@ -62,10 +53,10 @@
       @if (videoEnded && showReplay && !isFullscreen) {
       <div class="video-complete">
         <div class="completion-message">
-          <h3>{{ 'safety_briefing_complete' | translate }}</h3>
-          <p>{{ 'proceed_next_step_or_replay' | translate }}</p>
+          <h3>{{ 'safety_briefing_video_safety_briefing_complete' | translate }}</h3>
+          <p>{{ 'safety_briefing_video_proceed_next_step_or_replay' | translate }}</p>
           <button class="replay-btn" (click)="onReplay()">
-            <i class="pi pi-replay"></i> {{ 'replay_video' | translate }}
+            <i class="pi pi-replay"></i> {{ 'safety_briefing_video_button_replay_video' | translate }}
           </button>
         </div>
       </div>
@@ -76,10 +67,10 @@
   <!-- Actions -->
   <section class="actions">
     <button class="btn grey m-action-back" type="button" (click)="goBack()">
-      <span class="icon-left">&larr;</span> {{ 'previous_step' | translate }}
+      <span class="icon-left">&larr;</span> {{ 'safety_briefing_video_button_back' | translate }}
     </button>
     <button class="btn yellow" type="button" (click)="onNext()" [disabled]="!videoEnded">
-      {{ 'next_step' | translate }} <span class="icon-right">&rarr;</span>
+      {{ 'safety_briefing_video_button_continue' | translate }} <span class="icon-right">&rarr;</span>
     </button>
   </section>
 </main>

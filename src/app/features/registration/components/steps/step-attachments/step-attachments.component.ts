@@ -159,7 +159,10 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     if (!file) return;
 
     if (file.size > this.maxSize) {
-      this.messageService.add({ severity: 'warn', summary: 'File Too Large', detail: `Maximum file size is ${this.maxSize / 1000000}MB. Please select a smaller file.`, life: 4000 });
+      const alertTitle = this.labelService.getLabel('documents_upload_max_size_alert_title', 'caption') || 'File Too Large';
+      const alertTemplate = this.labelService.getLabel('documents_upload_max_size_alert_message', 'caption') || `Maximum file size is {{maxSize}}MB. Please select a smaller file.`;
+      const alertDetail = alertTemplate.replace('{{maxSize}}', (this.maxSize / 1000000).toString());
+      this.messageService.add({ severity: 'warn', summary: alertTitle, detail: alertDetail, life: 4000 });
       input.value = '';
       return;
     }
@@ -225,7 +228,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
   }
 
   getMaxSizeLabel(): string {
-    const template = this.labelService.getLabel('max_size_label', 'caption');
+    const template = this.labelService.getLabel('documents_upload_max_size_label', 'caption');
     if (template) {
       return template.replace('{{maxSize}}', (this.maxSize / 1000000).toString());
     }

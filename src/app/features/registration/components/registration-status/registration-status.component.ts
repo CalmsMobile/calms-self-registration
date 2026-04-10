@@ -62,11 +62,11 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
 
   private get dynamicAlertMessages() {
     return {
-      item1: this.labelService.getLabel('qr_not_found_alert', 'caption') || 'Oops, unable to find your appointment details, please contact your host or proceed to help desk',
-      item2: this.labelService.getLabel('qr_expired_alert', 'caption') || 'Oops, your appointment expired, please contact your host or proceed to help desk',
-      item3: this.labelService.getLabel('qr_cancelled_alert', 'caption') || 'Oops, your appointment has been canceled, please contact your host or proceed to help desk',
-      item4: this.labelService.getLabel('qr_pending_alert', 'caption') || 'Your appointment request yet to approve, please contact your host or proceed to help desk',
-      item5: this.labelService.getLabel('qr_invalid_alert', 'caption') || 'Oops, your appointment code is invalid, please contact your host or proceed to help desk',
+      item1: this.labelService.getLabel('thankyou_page_qr_not_found_alert', 'caption') || 'Oops, unable to find your appointment details, please contact your host or proceed to help desk',
+      item2: this.labelService.getLabel('thankyou_page_qr_expired_alert', 'caption') || 'Oops, your appointment expired, please contact your host or proceed to help desk',
+      item3: this.labelService.getLabel('thankyou_page_qr_cancelled_alert', 'caption') || 'Oops, your appointment has been canceled, please contact your host or proceed to help desk',
+      item4: this.labelService.getLabel('thankyou_page_qr_pending_alert', 'caption') || 'Your appointment request yet to approve, please contact your host or proceed to help desk',
+      item5: this.labelService.getLabel('thankyou_page_qr_invalid_alert', 'caption') || 'Oops, your appointment code is invalid, please contact your host or proceed to help desk',
     };
   }
 
@@ -125,15 +125,9 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
   get branch(): string            { return this.registrationData?.branch || ''; }
 
   get badgeText(): string {
-    if (this.status === 'success') return (this.labelService.getLabel('approved', 'caption') || 'Approved').toUpperCase();
-    if (this.status === 'pending') return (this.labelService.getLabel('pending', 'caption') || 'WAITING').toUpperCase();
-    return (this.labelService.getLabel('error', 'caption') || 'ERROR').toUpperCase();
-  }
-
-  get statusText(): string {
-    if (this.registrationData?.approvalStatus) return this.registrationData.approvalStatus;
-    if (this.status === 'success') return this.labelService.getLabel('approved', 'caption') || 'Approved';
-    return this.status === 'pending' ? 'Pending' : 'Error';
+    if (this.status === 'success') return (this.labelService.getLabel('thankyou_page_status_approved', 'caption') || 'Approved').toUpperCase();
+    if (this.status === 'pending') return (this.labelService.getLabel('thankyou_page_status_pending', 'caption') || 'WAITING').toUpperCase();
+    return (this.labelService.getLabel('thankyou_page_status_error', 'caption') || 'ERROR').toUpperCase();
   }
 
   private get qrCodeValue(): string {
@@ -162,7 +156,7 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
       this.api.GetVisitorDataForQRCodeDynamic(loParam).subscribe({
         next: (poReturn: any) => this.handleQrCodeResponse(poReturn),
         error: () => {
-          this.messageService.add({ severity: 'error', summary: this.labelService.getLabel('error', 'caption') || 'Error', detail: this.labelService.getLabel('qr_load_error', 'caption') || 'Failed to generate QR code.' });
+          this.messageService.add({ severity: 'error', summary: this.labelService.getLabel('thankyou_page_error', 'caption') || 'Error', detail: this.labelService.getLabel('thankyou_page_qr_load_error', 'caption') || 'Failed to generate QR code.' });
           this.qrCodeLoading = false;
           this.qrCodeError = true;
         }
@@ -173,7 +167,7 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
       this.api.GetVisitorDataForQRCode(loParam).subscribe({
         next: (poReturn: any) => this.handleQrCodeResponse(poReturn),
         error: () => {
-          this.messageService.add({ severity: 'error', summary: this.labelService.getLabel('error', 'caption') || 'Error', detail: this.labelService.getLabel('qr_load_error', 'caption') || 'Failed to generate QR code.' });
+          this.messageService.add({ severity: 'error', summary: this.labelService.getLabel('thankyou_page_error', 'caption') || 'Error', detail: this.labelService.getLabel('thankyou_page_qr_load_error', 'caption') || 'Failed to generate QR code.' });
           this.qrCodeLoading = false;
           this.qrCodeError = true;
         }
@@ -184,8 +178,8 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
   private handleQrCodeResponse(poData: any): void {
     // Check for API error response structure (Status: false means error)
     if (poData && poData.Status === false) {
-      const errorDetail = poData.ErrorLog?.[0]?.Error || this.labelService.getLabel('qr_load_error', 'caption') || 'Failed to generate QR code.';
-      this.messageService.add({ severity: 'error', summary: this.labelService.getLabel('error', 'caption') || 'Error', detail: errorDetail });
+      const errorDetail = poData.ErrorLog?.[0]?.Error || this.labelService.getLabel('thankyou_page_qr_load_error', 'caption') || 'Failed to generate QR code.';
+      this.messageService.add({ severity: 'error', summary: this.labelService.getLabel('thankyou_page_error', 'caption') || 'Error', detail: errorDetail });
       this.qrCodeLoading = false;
       this.qrCodeError = true;
       return;
@@ -201,7 +195,7 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
         H: this.dynamicAlertMessages.item5
       };
       if (msgMap[code]) {
-        this.messageService.add({ severity: 'info', summary: this.labelService.getLabel('oops_alert', 'caption') || 'Oops...', detail: msgMap[code] });
+        this.messageService.add({ severity: 'info', summary: this.labelService.getLabel('thankyou_page_oops_alert', 'caption') || 'Oops...', detail: msgMap[code] });
         this.qrCodeLoading = false;
         this.qrCodeError = true;
         return;
