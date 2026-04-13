@@ -23,12 +23,12 @@
     <div class="wizard-navigation">
       <div class="navigation-button">
         @if (activeIndex > 0) {
-        <p-button styleClass="back-btn" [label]="'previous_step' | translate" icon="pi pi-arrow-left"
+        <p-button styleClass="back-btn" [label]="'registration_page_previous_step' | translate" icon="pi pi-arrow-left"
           (onClick)="onPrevious()">
         </p-button>
         }
         <p-button styleClass="next-btn"
-          [label]="activeIndex === items.length - 1 ? ('button_submit' | translate) : ('next_step' | translate)"
+          [label]="activeIndex === items.length - 1 ? ('nda_agreement_button_submit' | translate) : ('registration_page_next_step' | translate)"
           [icon]="activeIndex === items.length - 1 ? 'pi pi-check' : 'pi pi-arrow-right'" iconPos="right"
           (click)="onNext()">
         </p-button>

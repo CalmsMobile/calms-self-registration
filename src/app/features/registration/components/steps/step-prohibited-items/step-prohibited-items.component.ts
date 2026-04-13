@@ -88,8 +88,8 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
            && item.direction === this.newItem.direction
     );
     if (isDuplicate) {
-      const template = this.labelService.getLabel('equipment_movement_duplicate_error', 'caption') || `Serial number "{{serialNumber}}" already exists.`;
-      this.duplicateError = template.replace('{{serialNumber}}', this.newItem.serialNumber);
+      const template = this.labelService.getLabel('equipment_movement_duplicate_error', 'caption') || `Serial number "{serialNumber}" already exists.`;
+      this.duplicateError = template.replace('{serialNumber}', this.newItem.serialNumber);
       return;
     }
     this.duplicateError = '';

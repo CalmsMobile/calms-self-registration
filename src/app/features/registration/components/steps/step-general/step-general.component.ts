@@ -2500,25 +2500,80 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   getRequiredError(fieldKey: string): string {
     const key = fieldKey?.trim()?.toLowerCase().replace(/\s+/g, '_') || '';
     const template = this.labelService.getLabel('registration_page_error_required', 'caption') || '{Field} is required';
-    const fieldLabel = this.labelService.getLabel(key, 'caption') || fieldKey;
+    // Try with registration_page_ prefix first (matches label translation keys), then fall back to the key as-is
+    const fieldLabel = this.labelService.getLabel('registration_page_' + key, 'caption')
+      || this.labelService.getLabel(key, 'caption')
+      || fieldKey;
     return template.replace('{Field}', fieldLabel);
   }
 
   getUdfRequiredError(udf: any): string {
     const template = this.labelService.getLabel('registration_page_error_required', 'caption') || '{Field} is required';
-    const key = udf.translateKey?.trim()?.toLowerCase().replace(/\s+/g, '_') || '';
-    const label = this.labelService.getLabel(key, 'caption') || udf.Caption || udf.UDFName || '';
+    const key = udf.translateKey?.trim()?.toLowerCase() || '';
+    // Use same fallback logic: if translation matches formatted key, use udf.Caption instead
+    const translation = this.labelService.getLabel(key, 'caption');
+    const label = (translation && translation !== this.formatKeyAsReadable(key))
+      ? translation
+      : (udf.Caption || udf.UDFName || '');
     return template.replace('{Field}', label);
   }
 
   getMinLengthError(min: number): string {
     const template = this.labelService.getLabel('registration_page_error_min_length', 'caption') || 'Minimum {udf.MinLength} characters required';
-    return template.replace('{udf.MinLength}', String(min));
+    return template.replace('{MinLength}', String(min));
   }
 
   getMaxLengthError(max: number): string {
     const template = this.labelService.getLabel('registration_page_error_max_length', 'caption') || 'Maximum {udf.MaxLength} characters required';
-    return template.replace('{udf.MaxLength}', String(max));
+    return template.replace('{MaxLength}', String(max));
+  }
+
+  /**
+   * Get translated label with fallback to caption
+   * If translation doesn't exist, returns the caption instead of formatted key
+   */
+  getTranslatedLabelWithFallback(translateKey: string | undefined, fallback: string): string {
+    if (!translateKey || !fallback) {
+      return fallback;
+    }
+    
+    const translation = this.labelService.getLabel(translateKey.toLowerCase().trim(), 'caption');
+    // If translation exists (not the formatted-key fallback), return it
+    if (translation && translation !== this.formatKeyAsReadable(translateKey)) {
+      return translation;
+    }
+    
+    // Otherwise, return the fallback
+    return fallback;
+  }
+
+  /**
+   * Get translated placeholder with fallback to placeholder text
+   * If translation doesn't exist, returns the placeholder instead of formatted key
+   */
+  getTranslatedPlaceholderWithFallback(translateKey: string | undefined, fallback: string): string {
+    if (!translateKey || !fallback) {
+      return fallback;
+    }
+    
+    const translation = this.labelService.getLabel(translateKey.toLowerCase().trim(), 'placeholder');
+    // If translation exists (not the formatted-key fallback), return it
+    if (translation && translation !== this.formatKeyAsReadable(translateKey)) {
+      return translation;
+    }
+    
+    // Otherwise, return the fallback
+    return fallback;
+  }
+
+  /**
+   * Format a translation key to readable text (same logic as TranslatePipe)
+   */
+  private formatKeyAsReadable(text: string): string {
+    const parts = text?.split(/[\s._-]+/) || [];
+    return parts
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
   }
 
   handleFileUpload(event: any, visitorIndex?: number, closeDialog = false): void {
@@ -3107,7 +3162,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       const alert = this.getAlert('registration_page_slot_fully_booked');
       this.showMessage({
         severity: 'warn',
-        summary: this.labelService.getLabel('registration_page_slot_full_label', 'caption') || alert.summary || 'Slot Full',
         detail: alert.detail || this.labelService.getLabel('registration_page_slot_fully_booked_alert', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
         life: 5000
       });
@@ -3128,7 +3182,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       const alert = this.getAlert('registration_page_slot_fully_booked');
       this.showMessage({
         severity: 'warn',
-        summary: this.labelService.getLabel('registration_page_slot_full_label', 'caption') || alert.summary || 'Slot Full',
         detail: alert.detail || this.labelService.getLabel('registration_page_slot_fully_booked_alert', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
         life: 5000
       });

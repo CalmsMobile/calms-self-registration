@@ -456,7 +456,6 @@ export class WizardService {
     loFinalData.EndDateTime = formData.general?.endDateTime || this.getDefaultDateTime(1); // +1 hour
     loFinalData.StartDate = formData.general?.startDate || this.getDefaultDate();
     loFinalData.EndDate = formData.general?.endDate || this.getDefaultDate();
-
     loFinalData.NoApptSave = false;
     loFinalData.allowEmail = true;
 
@@ -743,12 +742,12 @@ export class WizardService {
 
   private getCategoryDescription(categoryId: any): string {
     if (this.selectedVisitCategoryName) return this.selectedVisitCategoryName;
-    
+
     const masterData = this.getmasterData();
     // Categories are in the original Table2 (aliased to 'Categories' in setmasterData)
     const categoryTable = masterData?.Categories || masterData?.Table2;
     if (categoryTable?.length) {
-      const category = categoryTable.find((cat: any) => 
+      const category = categoryTable.find((cat: any) =>
         (cat.visitor_ctg_id || cat.VCategorySeqId)?.toString() === categoryId?.toString()
       );
       return category?.Name || category?.visitor_ctg_desc || '';
@@ -793,10 +792,9 @@ export class WizardService {
     visitType: string; visitPurpose: string;
     branch: string;
   } {
-    const formData  = this.formDataStore.value;
-    const general   = formData.general || {};
-    const master    = this.getmasterData();
-
+    const formData = this.formDataStore.value;
+    const general = formData.general || {};
+    const master = this.getmasterData();
     const fmt = (date: any): string => {
       if (!date) return '';
       const d = new Date(date);
@@ -832,12 +830,40 @@ export class WizardService {
     // Primary visitor name + email
     const visitorName = this.getPrimaryVisitorFullName(formData);
     const email = general.email || '';
+    // Format dates to match API expectation: "MM-dd-yyyy HH:mm"
+    const formatDateForAPI = (date: any): string => {
+      if (!date) return this.getDefaultDateTimeForAPI();
 
+      const d = new Date(date);
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+
+      return `${month}-${day}-${year} ${hours}:${minutes}`;
+    };
+    // Combine an appointment date with a slot time string "HH:mm"
+    const formatSlotDateTime = (date: any, timeStr: string | null): string => {
+      if (!date || !timeStr) return formatDateForAPI(date);
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return this.getDefaultDateTimeForAPI();
+      const [h, m] = timeStr.split(':').map(Number);
+      d.setHours(h, m, 0, 0);
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${month}-${day}-${year} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    };
     return {
       visitorName,
       email,
-      visitFrom: fmt(general.startDate),
-      visitTo:   fmt(general.endDate),
+      visitFrom: general.enableVimsApptTimeSlot
+        ? formatSlotDateTime(general.appointmentDate, general.timeSlotStartTime)
+        : fmt(general.startDate),
+      visitTo: general.enableVimsApptTimeSlot
+        ? formatSlotDateTime(general.appointmentDate, general.timeSlotEndTime)
+        : fmt(general.endDate),
       meetingWith,
       meetingLocation,
       visitType: catDesc,

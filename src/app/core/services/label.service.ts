@@ -46,7 +46,6 @@ export class LabelService {
 
       }
     });
-    debugger
     this.labels$.next(labelConfig);
   }
 

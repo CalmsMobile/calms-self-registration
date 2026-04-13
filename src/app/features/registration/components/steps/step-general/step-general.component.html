@@ -1,4 +1,4 @@
-﻿<main class="page">
+<main class="page">
   <!-- Page Header -->
   <header class="page-header flex-header">
     <div class="header-center">
@@ -143,7 +143,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('visitor_id')) {
-        <small class="error-message">{{ getRequiredError('nric') }}</small>
+        <small class="error-message">{{ getRequiredError('identity_no') }}</small>
         }
       </div>
       }
@@ -281,7 +281,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('visitor_company')) {
-        <small class="error-message">{{ getRequiredError('my_company') }}</small>
+        <small class="error-message">{{ getRequiredError('company_name') }}</small>
         }
       </div>
       }
@@ -423,13 +423,13 @@
       @if (udf.UDFCtrlType === 10) {
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
-          {{(udf.translateKey | translate) || udf.Caption}}
+          {{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}}
           <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-align-left"></i></span>
           <input pInputText [id]="udf.formControlName"
-            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)"
             [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           @if (generalForm.get(udf.formControlName)?.value && !generalForm.get(udf.formControlName)?.disabled) {
@@ -450,14 +450,14 @@
       @if (udf.UDFCtrlType === 20) {
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
-          {{(udf.translateKey | translate) || udf.Caption}}
+          {{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}}
           <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-list"></i></span>
           <p-select [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
             [formControlName]="udf.formControlName"
-            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
+            [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)" optionLabel="label"
             optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}"
             [showClear]="true" appendTo="body">
           </p-select>
@@ -470,14 +470,14 @@
       @if (udf.UDFCtrlType === 30) {
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
-          {{(udf.translateKey | translate) || udf.Caption}}
+          {{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}}
           <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-list"></i></span>
           <p-multiSelect [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
             [formControlName]="udf.formControlName"
-            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
+            [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)" optionLabel="label"
             optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
           </p-multiSelect>
         </div>
@@ -489,13 +489,13 @@
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
-          {{(udf.translateKey | translate) || udf.Caption}}
+          {{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}}
           <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -507,13 +507,13 @@
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
-          {{(udf.translateKey | translate) || udf.Caption}}
+          {{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}}
           <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -566,131 +566,6 @@
         @if (isFieldInvalidRequired('department')) {
         <small class="error-message">{{ getRequiredError('department') }}</small>
         }
-      </div>
-      }
-
-      <!-- 17. Meeting Location (Facility) -->
-      @if ((enableVimsApptTimeSlot && enableFBInSelfReg) || (enableFBInSelfReg && generalForm.get('facilityBooking')?.value)) {
-      <div class="form-field">
-        <label class="field-label" for="sharedDate">
-          {{'registration_page_date_field' | translate}} <span class="required-star">*</span>
-        </label>
-        <div class="input-wrap">
-          <span class="field-icon"><i class="pi pi-calendar"></i></span>
-          <p-datepicker id="sharedDate" formControlName="sharedDate"
-            [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate" [placeholder]="'registration_page_date_field' | translate:'placeholder'"
-            [showTime]="false" (onSelect)="onSharedDateSelect($event)" [showClear]="true" appendTo="body" dateFormat="dd/mm/yy">
-          </p-datepicker>
-        </div>
-        @if (isFieldInvalidRequired('sharedDate')) {
-        <small class="error-message">{{ getRequiredError('date_field') }}</small>
-        }
-      </div>
-      }
-
-      @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value) {
-      <div class="form-field">
-        <label class="field-label" for="facilityPurpose">
-          {{'registration_page_purpose_of_visit' | translate}} <span class="required-star">*</span>
-        </label>
-        <div class="input-wrap">
-          <span class="field-icon"><i class="pi pi-question-circle"></i></span>
-          <p-select id="facilityPurpose" [options]="facilityPurposeList" formControlName="facilityPurpose"
-            [placeholder]="'registration_page_select_facility_placeholder' | translate" optionLabel="PurposeName" optionValue="PurposeCode"
-            [class]="{'ng-invalid': isFieldInvalidRequired('facilityPurpose')}" [showClear]="true" appendTo="body">
-          </p-select>
-        </div>
-        @if (isFieldInvalidRequired('facilityPurpose')) {
-        <small class="error-message">{{ getRequiredError('registration_page_purpose_of_visit') }}</small>
-        }
-      </div>
-      }
-
-      @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value) {
-      <div class="form-field">
-        <label class="field-label" for="facilitySelection">
-          {{'registration_page_select_facility_placeholder' | translate}} <span class="required-star">*</span>
-        </label>
-        <div class="input-wrap">
-          <span class="field-icon"><i class="pi pi-building"></i></span>
-          <p-select id="facilitySelection" [options]="facilityMasterList" formControlName="facilitySelection"
-            [placeholder]="'registration_page_select_facility_placeholder' | translate" optionLabel="FacilityName" optionValue="FacilityCode"
-            (onChange)="onFacilitySelectionChange($event.value)"
-            [class]="{'ng-invalid': isFieldInvalidRequired('facilitySelection')}"
-            [showClear]="true" (onClear)="onFacilitySelectionChange('')" appendTo="body">
-          </p-select>
-        </div>
-        @if (isFieldInvalidRequired('facilitySelection')) {
-        <small class="error-message">{{ getRequiredError('select_facility_placeholder') }}</small>
-        }
-      </div>
-      }
-
-      @if (enableVimsApptTimeSlot && enableFBInSelfReg && !generalForm.get('facilityBooking')?.value && timeSlotsLoaded) {
-      @if (timeSlotList.length > 0) {
-      <div class="form-field">
-        <label class="field-label">
-          {{'registration_page_time_slot' | translate}} <span class="required-star">*</span>
-        </label>
-        <div class="input-wrap">
-          <span class="field-icon"><i class="pi pi-clock"></i></span>
-          <p-select [options]="timeSlotList" formControlName="timeSlot"
-            [placeholder]="'registration_page_time_slot' | translate:'placeholder'"
-            optionLabel="Name" optionValue="Code"
-            (onChange)="onTimeSlotDropdownChange($event.value)"
-            [class]="{'ng-invalid': isFieldInvalidRequired('timeSlot')}"
-            [showClear]="true" appendTo="body">
-          </p-select>
-        </div>
-        @if (isFieldInvalidRequired('timeSlot')) {
-        <small class="error-message">{{ getRequiredError('time_slot') }}</small>
-        }
-      </div>
-      }
-      }
-
-      @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value && facilityBookingSlots.length > 0) {
-      <div class="form-field full-width">
-        <label class="field-label">{{'registration_page_available_booking_slots' | translate}}</label>
-        <div class="booking-legend">
-          <div class="legend-item">
-            <div class="legend-color available"></div>
-            <span class="legend-text">{{ 'registration_page_slot_available_label' | translate }}</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color booked"></div>
-            <span class="legend-text">{{ 'registration_page_slot_booked_label' | translate }}</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color expired"></div>
-            <span class="legend-text">{{ 'registration_page_slot_expired_label' | translate }}</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-color selected"></div>
-            <span class="legend-text">{{ 'registration_page_slot_selected_label' | translate }}</span>
-          </div>
-        </div>
-        <div class="booking-slots-container" id="showbookings">
-          <div class="slots-grid">
-            @for (timeGroup of facilityBookingSlots; track timeGroup) {
-            <div class="slot-row">
-              <div class="slot-items">
-                @for (slot of timeGroup.slots; track slot) {
-                <div class="booking-slot" [class]="getSlotCssClass(slot)" [title]="slot.StaffID"
-                  [attr.data-ref]="slot.StartTime + ',' + slot.EndTime" (click)="bookingSlotClick($event, slot)">
-                  <div class="slot-content">
-                    <div class="slot-time">{{getSlotTimeDisplay(slot.StartTime, slot.EndTime)}}</div>
-                    @if (slot.BookingID) {
-                    <div class="slot-status">{{ 'registration_page_slot_booked_label' | translate }}</div>
-                    }
-                  </div>
-                </div>
-                }
-              </div>
-            </div>
-            }
-          </div>
-        </div>
       </div>
       }
 
@@ -752,7 +627,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('purpose')) {
-        <small class="error-message">{{ getRequiredError('registration_page_purpose_of_visit') }}</small>
+        <small class="error-message">{{ getRequiredError('purpose_of_visit') }}</small>
         }
       </div>
       }
@@ -775,7 +650,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('remarks')) {
-        <small class="error-message">{{ getRequiredError('registration_page_comments') }}</small>
+        <small class="error-message">{{ getRequiredError('comments') }}</small>
         }
       </div>
       }
@@ -796,15 +671,15 @@
           <i class="pi pi-chevron-down"></i>
         </div>
         @if (endBeforeStartError) {
-        <small class="error-message">{{ 'registration_page_end_date_error_message' | translate }}</small>
+        <small class="error-message">{{ getRequiredError('date_and_time') }}</small>
         } @else if (isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate')) {
-        <small class="error-message">{{ 'registration_page_error_appt_required' | translate }}</small>
+        <small class="error-message">{{ getRequiredError('date_and_time') }}</small>
         }
       </div>
       }
 
       <!-- Slot Date -->
-      @if (enableVimsApptTimeSlot && !enableFBInSelfReg) {
+      @if (enableVimsApptTimeSlot) {
       <div class="form-field">
         <label class="field-label" for="appointmentDate">
           {{'registration_page_appointment_date' | translate}} <span class="required-star">*</span>
@@ -823,7 +698,7 @@
       </div>
       }
 
-      @if (enableVimsApptTimeSlot && !enableFBInSelfReg && timeSlotsLoaded) {
+      @if (enableVimsApptTimeSlot && timeSlotsLoaded) {
       @if (timeSlotList.length > 0) {
       <div class="form-field">
         <label class="field-label">
@@ -852,13 +727,13 @@
       @if (udf.UDFCtrlType === 10) {
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
-          {{(udf.translateKey | translate) || udf.Caption}}
+          {{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}}
           <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-align-left"></i></span>
           <input pInputText [id]="udf.formControlName"
-            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)"
             [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           @if (generalForm.get(udf.formControlName)?.value && !generalForm.get(udf.formControlName)?.disabled) {
@@ -879,14 +754,14 @@
       @if (udf.UDFCtrlType === 20) {
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
-          {{(udf.translateKey | translate) || udf.Caption}}
+          {{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}}
           <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-list"></i></span>
           <p-select [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
             [formControlName]="udf.formControlName"
-            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
+            [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)" optionLabel="label"
             optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}"
             [showClear]="true" appendTo="body">
           </p-select>
@@ -899,14 +774,14 @@
       @if (udf.UDFCtrlType === 30) {
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
-          {{(udf.translateKey | translate) || udf.Caption}}
+          {{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}}
           <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-list"></i></span>
           <p-multiSelect [id]="udf.formControlName" [options]="getUdfOptions(udf.apptUDFSetSeqId)"
             [formControlName]="udf.formControlName"
-            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" optionLabel="label"
+            [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)" optionLabel="label"
             optionValue="value" [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
           </p-multiSelect>
         </div>
@@ -918,13 +793,13 @@
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
-          {{(udf.translateKey | translate) || udf.Caption}}
+          {{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}}
           <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -936,13 +811,13 @@
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
-          {{(udf.translateKey | translate) || udf.Caption}}
+          {{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}}
           <span class="required-star">{{udf.Required ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [id]="udf.formControlName" [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1131,7 +1006,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('visitor_id')) {
-        <small class="m-error">{{ getRequiredError('nric') }}</small>
+        <small class="m-error">{{ getRequiredError('identity_no') }}</small>
         }
       </div>
       }
@@ -1249,7 +1124,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('visitor_company')) {
-        <small class="m-error">{{ getRequiredError('my_company') }}</small>
+        <small class="m-error">{{ getRequiredError('company_name') }}</small>
         }
       </div>
       }
@@ -1372,10 +1247,10 @@
       @if (udf.Enabled && udf.udfPrefix === 'v') {
       @if (udf.UDFCtrlType === 10) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-align-left"></i></span>
-          <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+          <input pInputText [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)"
             [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           @if (generalForm.get(udf.formControlName)?.value && !generalForm.get(udf.formControlName)?.disabled) {
@@ -1395,11 +1270,11 @@
       }
       @if (udf.UDFCtrlType === 20) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-list"></i></span>
           <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
-            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)"
             optionLabel="label" optionValue="value"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}"
             [showClear]="true" appendTo="body">
@@ -1412,11 +1287,11 @@
       }
       @if (udf.UDFCtrlType === 30) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-list"></i></span>
           <p-multiSelect [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
-            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)"
             optionLabel="label" optionValue="value"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
           </p-multiSelect>
@@ -1428,11 +1303,11 @@
       }
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1443,11 +1318,11 @@
       }
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1493,79 +1368,6 @@
         <small class="m-error">{{ getRequiredError('department') }}</small>
         }
       </div>
-      }
-
-      <!-- 17. Meeting Location (Facility) -->
-      @if ((enableVimsApptTimeSlot && enableFBInSelfReg) || (enableFBInSelfReg && generalForm.get('facilityBooking')?.value)) {
-      <div class="m-form-field">
-        <label class="m-field-label">{{'registration_page_date_field' | translate}} <span class="m-req">*</span></label>
-        <div class="m-input-wrap">
-          <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
-          <p-datepicker formControlName="sharedDate"
-            [class]="{'ng-invalid': isFieldInvalidRequired('sharedDate')}" [minDate]="minDate"
-            [placeholder]="'registration_page_date_field' | translate:'placeholder'" [showTime]="false" (onSelect)="onSharedDateSelect($event)"
-            appendTo="body" dateFormat="dd/mm/yy" [showClear]="true">
-          </p-datepicker>
-        </div>
-        @if (isFieldInvalidRequired('sharedDate')) {
-        <small class="m-error">{{ getRequiredError('date_field') }}</small>
-        }
-      </div>
-      }
-
-      @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value) {
-      <div class="m-form-field">
-        <label class="m-field-label">{{'registration_page_purpose_of_visit' | translate}} <span class="m-req">*</span></label>
-        <div class="m-input-wrap">
-          <span class="m-field-icon"><i class="pi pi-question-circle"></i></span>
-          <p-select [options]="facilityPurposeList" formControlName="facilityPurpose"
-            [placeholder]="'registration_page_select_facility_placeholder' | translate" optionLabel="PurposeName" optionValue="PurposeCode"
-            [class]="{'ng-invalid': isFieldInvalidRequired('facilityPurpose')}" [showClear]="true" appendTo="body">
-          </p-select>
-        </div>
-        @if (isFieldInvalidRequired('facilityPurpose')) {
-        <small class="m-error">{{ getRequiredError('registration_page_purpose_of_visit') }}</small>
-        }
-      </div>
-      }
-
-      @if (enableFBInSelfReg && generalForm.get('facilityBooking')?.value) {
-      <div class="m-form-field">
-        <label class="m-field-label">{{'registration_page_select_facility_placeholder' | translate}} <span class="m-req">*</span></label>
-        <div class="m-input-wrap">
-          <span class="m-field-icon"><i class="pi pi-building"></i></span>
-          <p-select [options]="facilityMasterList" formControlName="facilitySelection"
-            [placeholder]="'registration_page_select_facility_placeholder' | translate" optionLabel="FacilityName" optionValue="FacilityCode"
-            (onChange)="onFacilitySelectionChange($event.value)"
-            [class]="{'ng-invalid': isFieldInvalidRequired('facilitySelection')}"
-            [showClear]="true" (onClear)="onFacilitySelectionChange('')" appendTo="body">
-          </p-select>
-        </div>
-        @if (isFieldInvalidRequired('facilitySelection')) {
-        <small class="m-error">{{ getRequiredError('select_facility_placeholder') }}</small>
-        }
-      </div>
-      }
-
-      @if (enableVimsApptTimeSlot && enableFBInSelfReg && !generalForm.get('facilityBooking')?.value && timeSlotsLoaded) {
-      @if (timeSlotList.length > 0) {
-      <div class="m-form-field">
-        <label class="m-field-label">{{'registration_page_time_slot' | translate}} <span class="m-req">*</span></label>
-        <div class="m-input-wrap">
-          <span class="m-field-icon"><i class="pi pi-clock"></i></span>
-          <p-select [options]="timeSlotList" formControlName="timeSlot"
-            [placeholder]="'registration_page_time_slot' | translate:'placeholder'"
-            optionLabel="Name" optionValue="Code"
-            (onChange)="onTimeSlotDropdownChange($event.value)"
-            [class]="{'ng-invalid': isFieldInvalidRequired('timeSlot')}"
-            [showClear]="true" appendTo="body">
-          </p-select>
-        </div>
-        @if (isFieldInvalidRequired('timeSlot')) {
-        <small class="m-error">{{ getRequiredError('time_slot') }}</small>
-        }
-      </div>
-      }
       }
 
       <!-- Meeting Location (Room) -->
@@ -1615,7 +1417,7 @@
           </p-select>
         </div>
         @if (isFieldInvalidRequired('purpose')) {
-        <small class="m-error">{{ getRequiredError('registration_page_purpose_of_visit') }}</small>
+        <small class="m-error">{{ getRequiredError('purpose_of_visit') }}</small>
         }
       </div>
       }
@@ -1635,7 +1437,7 @@
           }
         </div>
         @if (isFieldInvalidRequired('remarks')) {
-        <small class="m-error">{{ getRequiredError('registration_page_comments') }}</small>
+        <small class="m-error">{{ getRequiredError('comments') }}</small>
         }
       </div>
       }
@@ -1654,15 +1456,15 @@
           <i class="pi pi-chevron-down"></i>
         </div>
         @if (endBeforeStartError) {
-        <small class="m-error">{{ 'registration_page_end_date_error_message' | translate }}</small>
+        <small class="m-error">{{ getRequiredError('date_and_time') }}</small>
         } @else if (isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate')) {
-        <small class="m-error">{{ 'registration_page_error_appt_required' | translate }}</small>
+        <small class="m-error">{{ getRequiredError('date_and_time') }}</small>
         }
       </div>
       }
 
       <!-- Slot Date -->
-      @if (enableVimsApptTimeSlot && !enableFBInSelfReg) {
+      @if (enableVimsApptTimeSlot) {
       <div class="m-form-field">
         <label class="m-field-label">{{'registration_page_appointment_date' | translate}} <span class="m-req">*</span></label>
         <div class="m-input-wrap">
@@ -1679,7 +1481,7 @@
       </div>
       }
 
-      @if (enableVimsApptTimeSlot && !enableFBInSelfReg && timeSlotsLoaded) {
+      @if (enableVimsApptTimeSlot && timeSlotsLoaded) {
       @if (timeSlotList.length > 0) {
       <div class="m-form-field">
         <label class="m-field-label">{{'registration_page_time_slot' | translate}} <span class="m-req">*</span></label>
@@ -1705,10 +1507,10 @@
       @if (udf.Enabled && udf.udfPrefix === 'a') {
       @if (udf.UDFCtrlType === 10) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-align-left"></i></span>
-          <input pInputText [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+          <input pInputText [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)"
             [formControlName]="udf.formControlName" [maxlength]="udf.MaxLength"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           @if (generalForm.get(udf.formControlName)?.value && !generalForm.get(udf.formControlName)?.disabled) {
@@ -1728,11 +1530,11 @@
       }
       @if (udf.UDFCtrlType === 20) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-list"></i></span>
           <p-select [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
-            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)"
             optionLabel="label" optionValue="value"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}"
             [showClear]="true" appendTo="body">
@@ -1745,11 +1547,11 @@
       }
       @if (udf.UDFCtrlType === 30) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-list"></i></span>
           <p-multiSelect [options]="getUdfOptions(udf.apptUDFSetSeqId)" [formControlName]="udf.formControlName"
-            [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder"
+            [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)"
             optionLabel="label" optionValue="value"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}" appendTo="body">
           </p-multiSelect>
@@ -1761,11 +1563,11 @@
       }
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 10) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)" appendTo="body" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -1776,11 +1578,11 @@
       }
       @if (udf.UDFCtrlType === 40 && udf.IsAnyDateRange === 20) {
       <div class="m-form-field">
-        <label class="m-field-label">{{(udf.translateKey | translate) || udf.Caption}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-calendar"></i></span>
           <p-datepicker [formControlName]="udf.formControlName"
-            dateFormat="dd/mm/yy" [placeholder]="(udf.translateKey | translate:'placeholder') || udf.Placeholder" appendTo="body" [minDate]="minDate" [showClear]="true"
+            dateFormat="dd/mm/yy" [placeholder]="getTranslatedPlaceholderWithFallback(udf.translateKey, udf.Placeholder)" appendTo="body" [minDate]="minDate" [showClear]="true"
             [class]="{'ng-invalid': isFieldInvalidRequired(udf.formControlName)}">
           </p-datepicker>
         </div>
@@ -2162,3 +1964,4 @@
     </div>
   </ng-template>
 </p-dialog>
+

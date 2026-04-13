@@ -57,7 +57,7 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
   private qrCountdownInterval: any = null;
 
   get companyName(): string {
-    return this.registrationData?.branch || 'CALMS Technologies';
+    return this.registrationData?.branch || '';
   }
 
   private get dynamicAlertMessages() {
