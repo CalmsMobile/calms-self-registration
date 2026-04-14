@@ -368,7 +368,9 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
 
         // Get form data in VisitorAck format from wizard service
         const visitorAckData = this.wizardService.getVisitorAckData();
-
+        const startDate = visitorAckData.StartDateTime;
+        const endDate = visitorAckData.EndDateTime;
+        
         console.log('=== SUBMISSION DEBUG ===');
         console.log('Submitting visitor registration:', visitorAckData);
         console.log('VisitorsList length:', visitorAckData.VisitorsList?.length);
@@ -418,15 +420,15 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                     isDynamicQR: isDynamicQR,
                     DynamicQrIntervalSec: dynamicQrIntervalSec,
                     registrationId: responseData?.appointment_group_id || responseData?.SEQ_ID?.toString() || '',
-                    visitorName:     summary.visitorName,
-                    email:           summary.email,
-                    visitFrom:       summary.visitFrom,
-                    visitTo:         summary.visitTo,
-                    meetingWith:     summary.meetingWith,
+                    visitorName: summary.visitorName,
+                    email: summary.email,
+                    visitFrom: startDate,
+                    visitTo: endDate,
+                    meetingWith: summary.meetingWith,
                     meetingLocation: summary.meetingLocation,
-                    visitType:       summary.visitType,
-                    visitPurpose:    summary.visitPurpose,
-                    branch:          summary.branch,
+                    visitType: summary.visitType,
+                    visitPurpose: summary.visitPurpose,
+                    branch: summary.branch,
                   },
                   branchName: branchName,
                   branchID: branchID,
@@ -453,9 +455,9 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               const errStartMode = this.wizardService.appointmentCode
                 ? 'ac'
                 : this.wizardService.refCode ? 'bc' : 'plain';
-              const errRefCode    = this.wizardService.refCode;
+              const errRefCode = this.wizardService.refCode;
               const errRefCatCode = this.wizardService.refCatCode;
-              const errHcParam    = this.wizardService.hcParam;
+              const errHcParam = this.wizardService.hcParam;
 
               this.router.navigate(['/registration-status'], {
                 state: {

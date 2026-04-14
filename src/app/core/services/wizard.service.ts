@@ -575,10 +575,45 @@ export class WizardService {
       NDASignature: stripBase64Prefix(formData['nda-agreement']?.ndaSignature || ''),
       NDAAccepted: formData['nda-agreement']?.ndaAccepted || false
     };
-
+    if (visitorAck.StartDateTime == visitorAck.EndDateTime) {
+      const now = new Date();
+      const aptEndTime = this.getSelfRegistrationSettings().AptEndTime || 'DefaultEOD';
+      let endDate: Date | null = null;
+      if (aptEndTime === 'DefaultEOD') {
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      } else if (aptEndTime === 'Category') {
+        const timePermit: string = this.getSelfRegistrationSettings().CategoryTimePermit || '';
+        endDate = this.parseTimePermit(timePermit, now);
+      }
+      visitorAck.EndDateTime = endDate ? formatDateForAPI(endDate) : formatDateForAPI(now);
+    }
     return visitorAck;
   }
+  /**
+     * Parse a time_permit string like "18 Hours", "2 Days", "1 Month", "3 Months" and
+     * return a Date offset from the given base date.
+     */
+  private parseTimePermit(timePermit: string, base: Date): Date | null {
+    if (!timePermit) return null;
+    const match = timePermit.trim().match(/^(\d+)\s*(hour|hours|day|days|week|weeks|month|months)$/i);
+    if (!match) return null;
 
+    const amount = parseInt(match[1], 10);
+    const unit = match[2].toLowerCase();
+    const result = new Date(base);
+
+    if (unit.startsWith('hour')) {
+      result.setHours(result.getHours() + amount);
+    } else if (unit.startsWith('day')) {
+      result.setDate(result.getDate() + amount);
+    } else if (unit.startsWith('week')) {
+      result.setDate(result.getDate() + amount * 7);
+    } else if (unit.startsWith('month')) {
+      result.setMonth(result.getMonth() + amount);
+    }
+
+    return result;
+  }
   private getDefaultDateTimeForAPI(): string {
     const now = new Date();
     const month = String(now.getMonth() + 1).padStart(2, '0');
