@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormArray, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MessageService } from 'primeng/api';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { LabelService } from '../../../../../core/services/label.service';
+import { MessageHelperService } from '../../../../../core/services/message-helper.service';
 import { SharedService } from '../../../../../shared/shared.service';
 import { ToastModule } from 'primeng/toast';
-
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { Subject, takeUntil } from 'rxjs';
@@ -80,7 +79,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private wizardService: WizardService,
-    private messageService: MessageService,
+    private messageHelper: MessageHelperService,
     private labelService: LabelService,
     private sharedService: SharedService
   ) {
@@ -195,11 +194,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
       this.questionnaireForm = this.fb.group(formGroupConfig);
     } catch (error) {
       console.error('Form build error:', error);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Form Error',
-        detail: 'Failed to initialize questions'
-      });
+      this.messageHelper.error('Failed to initialize questions');
     }
   }
 
@@ -457,12 +452,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     if (safetyBriefStepIndex >= 0) {
       this.wizardService.requestStepChange(safetyBriefStepIndex);
     } else {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Warning',
-        detail: 'Safety brief step not found',
-        life: 3000
-      });
+      this.messageHelper.warn('Safety brief step not found', 3000);
     }
   }
 

@@ -3,9 +3,8 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { LabelService } from '../../../../../core/services/label.service';
+import { MessageHelperService } from '../../../../../core/services/message-helper.service';
 import { SharedService } from '../../../../../shared/shared.service';
-
-import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
@@ -48,7 +47,7 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
 
   constructor(
     private wizardService: WizardService,
-    private messageService: MessageService,
+    private messageHelper: MessageHelperService,
     private labelService: LabelService,
     private sharedService: SharedService,
     private ngZone: NgZone
@@ -475,7 +474,12 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     this._activeMessageKeys.add(key);
     const life = msg.life ?? 3000;
     setTimeout(() => this._activeMessageKeys.delete(key), life);
-    this.messageService.add(msg);
+    
+    if (msg.summary) {
+      this.messageHelper.showWithTitle(msg.severity as any, msg.summary, msg.detail || '', life);
+    } else {
+      this.messageHelper.show(msg.severity as any, msg.detail || '', life);
+    }
   }
 
   ngOnDestroy(): void {

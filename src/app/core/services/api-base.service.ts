@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { MessageService } from 'primeng/api';
+import { MessageHelperService } from './message-helper.service';
 
 interface ApiResponse {
   Status: boolean;
@@ -14,7 +14,7 @@ interface ApiResponse {
   providedIn: 'root',
 })
 export class ApiBaseService {
-  constructor(private http: HttpClient, private messageService: MessageService) {}
+  constructor(private http: HttpClient, private messageHelper: MessageHelperService) {}
 
   post<T>(url: string, body: any): Observable<T> {
     return this.http.post<T>(url, body).pipe(
@@ -30,12 +30,7 @@ export class ApiBaseService {
           if (Array.isArray(errorLog) && errorLog.length > 0 && errorLog[0].Error) {
             errorMessage = errorLog[0].Error;
           }
-          this.messageService.add({
-            severity: 'error',
-            summary: 'API Error',
-            detail: errorMessage,
-            life: 5000,
-          });
+          this.messageHelper.error(errorMessage, 5000);
           throw new Error(errorMessage);
         }
         return response[0].Data;
@@ -57,12 +52,7 @@ export class ApiBaseService {
           if (Array.isArray(errorLog) && errorLog.length > 0 && errorLog[0].Error) {
             errorMessage = errorLog[0].Error;
           }
-          this.messageService.add({
-            severity: 'error',
-            summary: 'API Error',
-            detail: errorMessage,
-            life: 5000,
-          });
+          this.messageHelper.error(errorMessage, 5000);
           throw new Error(errorMessage);
         }
         return JSON.parse(response[0].Data);
@@ -79,11 +69,6 @@ export class ApiBaseService {
       errorMessage = `Server error (${error.status}): ${error.message}`;
     }
 
-    this.messageService.add({
-      severity: 'error',
-      summary: 'API Error',
-      detail: errorMessage,
-      life: 5000,
-    });
+    this.messageHelper.error(errorMessage, 5000);
   }
 }

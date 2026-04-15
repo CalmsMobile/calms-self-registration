@@ -4,12 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { SharedService } from '../../../../../shared/shared.service';
 import { LabelService } from '../../../../../core/services/label.service';
+import { MessageHelperService } from '../../../../../core/services/message-helper.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { Subject, takeUntil } from 'rxjs';
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import { environment } from '../../../../../../environments/environment';
-import { MessageService } from 'primeng/api';
 
 interface DocumentType {
   VisitorAttachSeqId: string;
@@ -59,7 +59,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     private wizardService: WizardService,
     private http: HttpClient,
     private sharedService: SharedService,
-    private messageService: MessageService,
+    private messageHelper: MessageHelperService,
     private labelService: LabelService
   ) {
     this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
@@ -159,10 +159,9 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     if (!file) return;
 
     if (file.size > this.maxSize) {
-      const alertTitle = this.labelService.getLabel('documents_upload_max_size_alert_title', 'caption') || 'File Too Large';
       const alertTemplate = this.labelService.getLabel('documents_upload_max_size_alert_message', 'caption') || `Maximum file size is {maxSize}MB. Please select a smaller file.`;
       const alertDetail = alertTemplate.replace('{maxSize}', (this.maxSize / 1000000).toString());
-      this.messageService.add({ severity: 'warn', summary: alertTitle, detail: alertDetail, life: 4000 });
+      this.messageHelper.warn(alertDetail, 4000);
       input.value = '';
       return;
     }

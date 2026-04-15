@@ -205,16 +205,37 @@ body {
 .p-toast-message-content {
   padding: 0.6rem 0.75rem !important;
   gap: 0.5rem !important;
+  align-items: center !important;
 }
 
 .p-toast-summary {
   font-size: 0.875rem !important;
   font-weight: 600 !important;
+  margin: 0 !important;
 }
 
 .p-toast-detail {
   font-size: 0.8rem !important;
   margin-top: 0.15rem !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+/* Style for messages without summary (title) - for better alignment and spacing */
+.p-toast-message:has(:not(.p-toast-summary)) .p-toast-detail,
+.app-toast-dense .p-toast-detail {
+  font-size: 0.85rem !important;
+  margin: 0 !important;
+  padding: 0.2rem 0 !important;
+  line-height: 1.5 !important;
+}
+
+/* Ensure proper vertical centering when only detail is present */
+.p-toast-message:has(:not(.p-toast-summary)) .p-toast-message-content {
+  padding: 0.5rem 0.75rem !important;
+  min-height: 2rem !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 @media (max-width: 960px) {
@@ -242,6 +263,7 @@ body {
 
   .p-toast-message-content {
     padding: 0.5rem 0.6rem !important;
+    min-height: 2rem !important;
   }
 
   .p-toast-summary {
@@ -250,6 +272,11 @@ body {
 
   .p-toast-detail {
     font-size: 0.75rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .app-toast-dense .p-toast-detail {
+    font-size: 0.8rem !important;
   }
 
   .p-toast-icon-close {

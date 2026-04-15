@@ -2,8 +2,8 @@ import { Component, Input, OnInit, OnDestroy, Output, EventEmitter, ViewChild, E
 import { CommonModule } from '@angular/common';
 import { LabelService } from '../../../../core/services/label.service';
 import { ApiService } from '../../../../core/services/api.service';
+import { MessageHelperService } from '../../../../core/services/message-helper.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
-import { MessageService } from 'primeng/api';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -73,7 +73,7 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
   constructor(
     private labelService: LabelService,
     private api: ApiService,
-    private messageService: MessageService
+    private messageHelper: MessageHelperService
   ) {}
 
   ngOnInit() {
@@ -156,7 +156,9 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
       this.api.GetVisitorDataForQRCodeDynamic(loParam).subscribe({
         next: (poReturn: any) => this.handleQrCodeResponse(poReturn),
         error: () => {
-          this.messageService.add({ severity: 'error', summary: this.labelService.getLabel('thankyou_page_error', 'caption') || 'Error', detail: this.labelService.getLabel('thankyou_page_qr_load_error', 'caption') || 'Failed to generate QR code.' });
+          this.messageHelper.error(
+            this.labelService.getLabel('thankyou_page_qr_load_error', 'caption') || 'Failed to generate QR code.'
+          );
           this.qrCodeLoading = false;
           this.qrCodeError = true;
         }
@@ -167,7 +169,9 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
       this.api.GetVisitorDataForQRCode(loParam).subscribe({
         next: (poReturn: any) => this.handleQrCodeResponse(poReturn),
         error: () => {
-          this.messageService.add({ severity: 'error', summary: this.labelService.getLabel('thankyou_page_error', 'caption') || 'Error', detail: this.labelService.getLabel('thankyou_page_qr_load_error', 'caption') || 'Failed to generate QR code.' });
+          this.messageHelper.error(
+            this.labelService.getLabel('thankyou_page_qr_load_error', 'caption') || 'Failed to generate QR code.'
+          );
           this.qrCodeLoading = false;
           this.qrCodeError = true;
         }
@@ -179,7 +183,7 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
     // Check for API error response structure (Status: false means error)
     if (poData && poData.Status === false) {
       const errorDetail = poData.ErrorLog?.[0]?.Error || this.labelService.getLabel('thankyou_page_qr_load_error', 'caption') || 'Failed to generate QR code.';
-      this.messageService.add({ severity: 'error', summary: this.labelService.getLabel('thankyou_page_error', 'caption') || 'Error', detail: errorDetail });
+      this.messageHelper.error(errorDetail);
       this.qrCodeLoading = false;
       this.qrCodeError = true;
       return;
@@ -195,7 +199,7 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
         H: this.dynamicAlertMessages.item5
       };
       if (msgMap[code]) {
-        this.messageService.add({ severity: 'info', summary: this.labelService.getLabel('thankyou_page_oops_alert', 'caption') || 'Oops...', detail: msgMap[code] });
+        this.messageHelper.info(msgMap[code]);
         this.qrCodeLoading = false;
         this.qrCodeError = true;
         return;

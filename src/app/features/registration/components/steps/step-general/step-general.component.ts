@@ -1,9 +1,9 @@
 ﻿import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
-import { MessageService } from 'primeng/api';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { WizardService } from '../../../../../core/services/wizard.service';
+import { MessageHelperService } from '../../../../../core/services/message-helper.service';
 import { InputTextModule } from 'primeng/inputtext';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -173,7 +173,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this._activeMessageKeys.has(key)) return;
     this._activeMessageKeys.add(key);
     const life = msg.life ?? 3000;
-    this.messageService.add({ ...msg, life });
+    
+    if (msg.summary) {
+      this.messageHelper.showWithTitle(msg.severity as any, msg.summary, msg.detail || '', life);
+    } else {
+      this.messageHelper.show(msg.severity as any, msg.detail || '', life);
+    }
+    
     setTimeout(() => this._activeMessageKeys.delete(key), life + 200);
   }
 
@@ -186,7 +192,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private wizardService: WizardService,
-    private messageService: MessageService,
+    private messageHelper: MessageHelperService,
     private sanitizer: DomSanitizer,
     private api: ApiService,
     private labelService: LabelService,
@@ -703,12 +709,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       } else {
         this.timeSlotList = [];
         this.setupControl('timeSlot', true, false);
-        this.messageService.add({
-          severity: 'warn',
-          summary: this.labelService.getLabel('registration_page_no_slots_available_alert', 'caption') || 'No Slots Available',
-          detail: this.labelService.getLabel('registration_page_no_time_slots_available', 'caption') || 'No time slots available for the selected date',
-          life: 5000
-        });
+        this.messageHelper.warn(
+          this.labelService.getLabel('registration_page_no_time_slots_available', 'caption') || 'No time slots available for the selected date',
+          5000
+        );
       }
       this.timeSlotsLoaded = true;
     });

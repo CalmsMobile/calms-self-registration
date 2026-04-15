@@ -9,11 +9,11 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject, takeUntil } from 'rxjs';
-import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { SharedService } from '../../../../../shared/shared.service';
 import { LabelService } from '../../../../../core/services/label.service';
+import { MessageHelperService } from '../../../../../core/services/message-helper.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 
@@ -52,7 +52,7 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   constructor(
     private wizardService: WizardService,
     private sanitizer: DomSanitizer,
-    private messageService: MessageService,
+    private messageHelper: MessageHelperService,
     private sharedService: SharedService,
     private labelService: LabelService
   ) {
@@ -293,12 +293,7 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
     } else {
       this.showValidationError = true;
       this.wizardService.setStepValid(false);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Signature Required',
-        detail: 'Please draw your signature before proceeding.',
-        life: 5000
-      });
+      this.messageHelper.error('Please draw your signature before proceeding.', 5000);
     }
   }
 

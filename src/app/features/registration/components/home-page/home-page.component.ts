@@ -4,6 +4,7 @@ import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { ButtonModule } from 'primeng/button';
 import { LanguageService } from '../../../../core/services/language.service';
 import { LabelService } from '../../../../core/services/label.service';
+import { MessageHelperService } from '../../../../core/services/message-helper.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
@@ -13,7 +14,6 @@ import { filter, Subject, takeUntil } from 'rxjs';
 import { SharedService } from '../../../../shared/shared.service';
 import { environment } from '../../../../../environments/environment';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
 import { StepTermsComponent } from '../steps/step-terms/step-terms.component';
 import { RouterLink } from '@angular/router';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -142,6 +142,7 @@ export class HomePageComponent implements AfterViewChecked {
   private destroy$ = new Subject<void>();
   title = 'Company Title';
   logo = 'assets/logo.png';
+  
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -151,15 +152,9 @@ export class HomePageComponent implements AfterViewChecked {
     private languageService: LanguageService,
     private labelService: LabelService,
     private sanitizer: DomSanitizer,
-    private messageService: MessageService
+    private messageHelper: MessageHelperService
   ) {
     this.wizardService.clearSessionStorage();
-    this.sharedService.currentTitle.subscribe(title => {
-      this.title = title;
-    });
-    this.sharedService.currentLogo.subscribe(logo => {
-      this.logo = logo;
-    });
   }
 
   ngOnInit() {
@@ -946,12 +941,10 @@ export class HomePageComponent implements AfterViewChecked {
           // If either settingDetails or Table2 is empty, show alert and don't proceed
           if (!hasSettingDetails || !hasTable2Data) {
             this.isLoading = false;
-            this.messageService.add({
-              severity: 'error',
-              summary: this.labelService.getLabel('home_page_category_config_missing_alert_title') || 'Category Not Configured',
-              detail: this.labelService.getLabel('home_page_category_config_missing_alert_description') || 'This category is not configured to proceed. Please contact admin.',
-              life: 5000
-            });
+            this.messageHelper.error(
+              this.labelService.getLabel('home_page_category_config_missing_alert_description') || 'This category is not configured to proceed. Please contact admin.',
+              5000
+            );
             // Reset selected category and terms state
             this.selectedCategory = null;
             this.termsScrolledToBottom = false;
@@ -991,12 +984,10 @@ export class HomePageComponent implements AfterViewChecked {
         error: (error) => {
           console.error('Error loading category settings:', error);
           this.isLoading = false;
-          this.messageService.add({
-            severity: 'error',
-            summary: this.labelService.getLabel('home_page_category_config_missing_alert_title') || 'Category Not Configured',
-              detail: this.labelService.getLabel('home_page_category_config_missing_alert_description') || 'This category is not configured to proceed. Please contact admin.',
-            life: 5000
-          });
+          this.messageHelper.error(
+            this.labelService.getLabel('home_page_category_config_missing_alert_description') || 'This category is not configured to proceed. Please contact admin.',
+            5000
+          );
         }
       });
   }

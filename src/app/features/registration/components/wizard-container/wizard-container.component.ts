@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 
-import { MenuItem, MessageService } from 'primeng/api';
+import { MenuItem} from 'primeng/api';
 
 // PrimeNG Component Imports
 import { CardModule } from 'primeng/card';
