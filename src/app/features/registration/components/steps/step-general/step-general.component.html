@@ -101,6 +101,9 @@
         @if (isFieldInvalidRequired('fullName')) {
         <small class="error-message">{{ getRequiredError('full_name') }}</small>
         }
+        @if (isFieldMinLengthError('fullName')) {
+        <small class="error-message">{{ getMinLengthError(settings?.NameMinLength) }}</small>
+        }
       </div>
       }
 
@@ -211,6 +214,9 @@
         @if (isFieldInvalidRequired('phone')) {
         <small class="error-message">{{ getRequiredError('contact_number') }}</small>
         }
+        @if (isFieldMinLengthError('phone')) {
+        <small class="error-message">{{ getMinLengthError(settings?.ContactNumberMinLength) }}</small>
+        }
       </div>
       }
 
@@ -256,6 +262,9 @@
         @if (isFieldInvalidRequired('vehicle_number')) {
         <small class="error-message">{{ getRequiredError('vehicle_number') }}</small>
         }
+        @if (isFieldMinLengthError('vehicle_number')) {
+        <small class="error-message">{{ getMinLengthError(settings?.VehicleNumberMinLength) }}</small>
+        }
       </div>
       }
 
@@ -283,6 +292,9 @@
         </div>
         @if (isFieldInvalidRequired('visitor_company')) {
         <small class="error-message">{{ getRequiredError('company_name') }}</small>
+        }
+        @if (isFieldMinLengthError('visitor_company')) {
+        <small class="error-message">{{ getMinLengthError(settings?.CompanyMinLength) }}</small>
         }
       </div>
       }
@@ -972,6 +984,9 @@
         @if (isFieldInvalidRequired('fullName')) {
         <small class="m-error">{{ getRequiredError('full_name') }}</small>
         }
+        @if (isFieldMinLengthError('fullName')) {
+        <small class="m-error">{{ getMinLengthError(settings?.NameMinLength) }}</small>
+        }
       </div>
       }
 
@@ -1065,6 +1080,9 @@
         @if (isFieldInvalidRequired('phone')) {
         <small class="m-error">{{ getRequiredError('contact_number') }}</small>
         }
+        @if (isFieldMinLengthError('phone')) {
+        <small class="m-error">{{ getMinLengthError(settings?.ContactNumberMinLength) }}</small>
+        }
       </div>
       }
 
@@ -1104,6 +1122,9 @@
         @if (isFieldInvalidRequired('vehicle_number')) {
         <small class="m-error">{{ getRequiredError('vehicle_number') }}</small>
         }
+        @if (isFieldMinLengthError('vehicle_number')) {
+        <small class="m-error">{{ getMinLengthError(settings?.VehicleNumberMinLength) }}</small>
+        }
       </div>
       }
 
@@ -1128,6 +1149,9 @@
         </div>
         @if (isFieldInvalidRequired('visitor_company')) {
         <small class="m-error">{{ getRequiredError('company_name') }}</small>
+        }
+        @if (isFieldMinLengthError('visitor_company')) {
+        <small class="m-error">{{ getMinLengthError(settings?.CompanyMinLength) }}</small>
         }
       </div>
       }

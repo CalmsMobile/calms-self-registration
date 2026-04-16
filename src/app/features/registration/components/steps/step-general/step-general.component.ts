@@ -2021,7 +2021,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.generalForm.get('email')?.addValidators(Validators.email);
       this.generalForm.get('email')?.updateValueAndValidity();
     }
-    this.setupControl('phone', this.settings.ContactNumberEnabled, this.settings.ContactNumberRequired);
+    this.setupControl('phone', this.settings.ContactNumberEnabled, this.settings.ContactNumberRequired, this.settings.ContactNumberMinLength);
 
     // Setup visitor_id with PDPA max length restriction if enabled
     const visitorIdMaxLength = this.isSingaporePDPARequired ? 4 : undefined;
@@ -2032,8 +2032,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('department', this.settings.HostDepartmentEnabled, this.settings.HostDepartmentRequired);
     this.setupControl('floor', this.settings.FloorEnabled, this.settings.FloorRequired);
     this.setupControl('purpose', this.settings.PurposeEnabled, this.settings.PurposeRequired);
-    this.setupControl('visitor_company', this.settings.CompanyEnabled, this.settings.CompanyRequired);
-    this.setupControl('vehicle_number', this.settings.VehicleNumberEnabled, this.settings.VehicleNumberRequired);
+    this.setupControl('visitor_company', this.settings.CompanyEnabled, this.settings.CompanyRequired, this.settings.CompanyMinLength);
+    this.setupControl('vehicle_number', this.settings.VehicleNumberEnabled, this.settings.VehicleNumberRequired, this.settings.VehicleNumberMinLength);
     this.setupControl('vehicle_brand', this.settings.VehicleBrandModelEnabled, this.settings.VehicleBrandModelRequired);
     this.setupControl('vehicle_model', this.settings.VehicleBrandModelEnabled, this.settings.VehicleBrandModelRequired);
     this.setupControl('vehicle_color', this.settings.VehicleColorEnabled, this.settings.VehicleColorRequired);
@@ -2125,7 +2125,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       });
 
       const conditionallyLockedFields = [
-        'fullName', 'email', 'phone',
+        'title', 'fullName', 'email', 'phone',
         'visitor_id_type', 'visitor_id', 'id_expired_date',
         'gender', 'visitor_company',
         'vehicle_number', 'vehicle_brand', 'vehicle_model', 'vehicle_color',
@@ -2579,6 +2579,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   isFieldMinLengthError(field: string): boolean {
     const control = this.generalForm.get(field);
     if (!control || !control.enabled) return false;
+    if (control.hasError('required')) return false; // required error takes priority
     return control.hasError('minlength') && (control.dirty || control.touched);
   }
 
