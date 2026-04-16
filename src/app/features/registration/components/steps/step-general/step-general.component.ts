@@ -2070,10 +2070,22 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.setupControl('timeSlot', true, this.timeSlotList.length > 0);
     }
 
-    // In appointment flow, lock fields set by the admin/host during appointment creation.
-    // startDate/endDate are always locked; other fields locked only when they carry a value
-    // (empty fields may still need to be filled in by the visitor).
-    // Host is intentionally NOT locked — visitor should be able to change it.
+    // Restore ID type UI state first (showIdExpiryField, selectedIdTypeData, id_expired_date
+    // validators) — must run before locking so onIdTypeChange doesn't re-enable id_expired_date
+    // after we lock it.
+    const preFilledIdType = this.generalForm.get('visitor_id_type')?.value;
+    if (preFilledIdType) {
+      const savedExpiryDate = this.generalForm.get('id_expired_date')?.value;
+      this.onIdTypeChange({ value: preFilledIdType });
+      if (savedExpiryDate && this.showIdExpiryField) {
+        this.generalForm.get('id_expired_date')?.setValue(savedExpiryDate, { emitEvent: false });
+      }
+    }
+
+    // In appointment flow, lock all fields pre-filled by the admin/host.
+    // startDate/endDate are always locked; all other pre-filled fields are locked only when they
+    // carry a value (empty fields can still be filled in by the visitor).
+    // host is intentionally NOT locked — visitor should be able to change it.
     if (this.isAppointmentFlow) {
       this.lockedFieldsInAppointmentFlow.forEach(controlName => {
         const control = this.generalForm.get(controlName);
@@ -2082,29 +2094,20 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         }
       });
 
-      const conditionallyLockedFields = ['department', 'meeting_location', 'floor', 'purpose'];
+      const conditionallyLockedFields = [
+        'fullName', 'email', 'phone',
+        'visitor_id_type', 'visitor_id', 'id_expired_date',
+        'gender', 'visitor_company',
+        'vehicle_number', 'vehicle_brand', 'vehicle_model', 'vehicle_color',
+        'visitor_address', 'country', 'remarks',
+        'department', 'meeting_location', 'floor', 'purpose'
+      ];
       conditionallyLockedFields.forEach(controlName => {
         const control = this.generalForm.get(controlName);
         if (control && control.value) {
           control.disable({ emitEvent: false });
         }
       });
-    }
-
-    // Restore ID type UI state (showIdExpiryField, selectedIdTypeData, id_expired_date validators)
-    // when the form already has a visitor_id_type value — covers both appointment pre-fill and
-    // back-navigation. onIdTypeChange is normally only fired by user interaction, so without this
-    // the expiry date field stays hidden even when its value was pre-populated.
-    const preFilledIdType = this.generalForm.get('visitor_id_type')?.value;
-    if (preFilledIdType) {
-      const savedExpiryDate = this.generalForm.get('id_expired_date')?.value;
-      this.onIdTypeChange({ value: preFilledIdType });
-      // onIdTypeChange clears id_expired_date when ID_EXPIRED_DATE===false (e.g. NRIC), which is
-      // correct. For types with ID_EXPIRED_DATE===true (e.g. Passport) it does NOT clear it, but
-      // we restore here just to be safe in case future logic changes.
-      if (savedExpiryDate && this.showIdExpiryField) {
-        this.generalForm.get('id_expired_date')?.setValue(savedExpiryDate, { emitEvent: false });
-      }
     }
   }
 
