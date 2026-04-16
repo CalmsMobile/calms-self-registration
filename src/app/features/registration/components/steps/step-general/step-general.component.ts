@@ -1305,6 +1305,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return this.isAppointmentFlow && this.hiddenFieldsInAppointmentFlow.includes(fieldName);
   }
 
+  onNumericInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const cleaned = input.value.replace(/[^0-9]/g, '');
+    if (input.value !== cleaned) {
+      input.value = cleaned;
+      this.generalForm.get('phone')?.setValue(cleaned, { emitEvent: false });
+    }
+  }
+
   clearField(controlName: string): void {
     const control = this.generalForm.get(controlName);
     if (control) {
@@ -3425,17 +3434,28 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   goNext(): void {
+    // Capture whether the current form has an active visitor BEFORE validateForm() auto-saves
+    // and resets it. Used below to decide if a photo dialog is needed for a new visitor.
+    const formHadActiveVisitor = this.isMultipleVisitorMode ? this.hasFormData() : false;
+
     // validateForm() handles markAllAsTouched, setStepValid, and toast errors internally
     const isValid = this.validateForm();
     if (!isValid) return;
 
     // If image upload is enabled, show the photo capture dialog before proceeding.
-    // The dialog handles both new capture and existing photo preview.
     if (this.settings?.ImageUploadEnabled) {
+      // In multi-visitor mode where all visitors were already saved (and photographed) via
+      // "Save and Add", the current form is blank — no new visitor to photograph. Skip the
+      // dialog and navigate directly.
+      if (this.isMultipleVisitorMode && this.savedVisitors.length > 0 && !formHadActiveVisitor) {
+        this.wizardService.navigateToNextStep();
+        return;
+      }
+
       this.pendingAction = 'goNext';
-      // In multi-visitor mode, validateForm() auto-saves the visitor and clears profilePreview
-      // from the form before this runs. Restore the photo from savedVisitors so the dialog
-      // detects it and shows 'preview' mode instead of opening the camera again.
+      // validateForm() auto-saves the visitor and clears profilePreview from the form before
+      // this runs. Restore the photo from savedVisitors so the dialog shows 'preview' mode
+      // instead of opening the camera again.
       if (this.isMultipleVisitorMode && !this.generalForm.get('profilePreview')?.value && this.savedVisitors.length > 0) {
         const lastVisitor = this.savedVisitors[this.savedVisitors.length - 1];
         if (lastVisitor?.profilePreview) {

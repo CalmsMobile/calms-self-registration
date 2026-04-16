@@ -695,7 +695,7 @@ export class WizardService {
         Photo: stripPhotoPrefix(rawPhoto),
         TitleId: data.title || '',
         TitleDesc: data.title || '',
-        FullName: data.fullName || '',
+        FullName: this.buildFullName(data.title, data.fullName),
         IdentityNo: data.visitor_id || '',
         Visitor_IC: data.visitor_id || '',
         GenderId: genderId,
@@ -759,7 +759,7 @@ export class WizardService {
   private loadVisitorInfo(finalData: any, formData: any): void {
     const visitorData = formData.general || {};
 
-    finalData.VisitorFullName = visitorData.fullName || '';
+    finalData.VisitorFullName = this.buildFullName(visitorData.title, visitorData.fullName);
     finalData.VisitorEmail = visitorData.email || '';
     finalData.VisitorContact = visitorData.phone || '';
     finalData.VisitorCompany = visitorData.company || '';
@@ -1045,15 +1045,24 @@ export class WizardService {
     return JSON.stringify([]);
   }
 
+  private buildFullName(title: string | null | undefined, fullName: string | null | undefined): string {
+    const settings = this.getSettings();
+    const titleEnabled = settings?.TitleEnabled;
+    const name = fullName || '';
+    if (!titleEnabled) return name;
+    const t = title?.trim().replace(/\.+$/, '');
+    return t ? `${t}.${name}` : name;
+  }
+
   private getPrimaryVisitorFullName(formData: any): string {
     const settings = this.getSettings();
     const generalData = formData.general || {};
     const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
     if (isMultipleVisitor) {
       const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-      if (savedVisitors.length > 0) return savedVisitors[0].fullName || '';
+      if (savedVisitors.length > 0) return this.buildFullName(savedVisitors[0].title, savedVisitors[0].fullName);
     }
-    return generalData.fullName || '';
+    return this.buildFullName(generalData.title, generalData.fullName);
   }
 
   private getPrimaryVisitorIdentityNo(formData: any): string {
