@@ -60,8 +60,20 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const saved = this.wizardService.getFormData('prohibitedItems');
-    if (saved) {
-      this.declaredItems = saved.declaredItems || [];
+    if (saved?.declaredItems?.length) {
+      // Restore from session (back-navigation)
+      this.declaredItems = saved.declaredItems;
+    } else {
+      // Pre-fill from appointment data when visitor clicks the acknowledgement email link
+      const ackData = this.wizardService.getIncomingVisitorAckData();
+      if (ackData?.isAppointmentFlow && ackData?.itemDeclarationData?.length) {
+        this.declaredItems = ackData.itemDeclarationData.map((item: any) => ({
+          description: item.MaterialDesc || item.description || '',
+          serialNumber: item.SerialNo || item.serialNumber || '',
+          direction: (item.MovementType || item.direction || '').toUpperCase()
+        }));
+        this.saveFormData();
+      }
     }
   }
 

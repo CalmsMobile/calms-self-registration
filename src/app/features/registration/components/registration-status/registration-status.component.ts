@@ -116,8 +116,25 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
   
   get visitorName(): string       { return this.registrationData?.visitorName || '—'; }
   get email(): string             { return this.registrationData?.email || ''; }
-  get visitFrom(): string         { return this.registrationData?.visitFrom || ''; }
-  get visitTo(): string           { return this.registrationData?.visitTo || ''; }
+  get visitFrom(): string         { return this.formatApiDateTime(this.registrationData?.visitFrom); }
+  get visitTo(): string           { return this.formatApiDateTime(this.registrationData?.visitTo); }
+
+  private formatApiDateTime(value?: string): string {
+    if (!value) return '';
+    // Input: "MM-DD-YYYY HH:mm"  e.g. "04-16-2026 14:30"
+    const parts = value.split(' ');
+    if (parts.length !== 2) return value;
+    const [datePart, timePart] = parts;
+    const [mm, dd, yyyy] = datePart.split('-').map(Number);
+    const [hh, min] = timePart.split(':').map(Number);
+    if ([mm, dd, yyyy, hh, min].some(isNaN)) return value;
+    const d = new Date(yyyy, mm - 1, dd);
+    const dateStr = d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const period = hh >= 12 ? 'PM' : 'AM';
+    const hour12 = hh % 12 || 12;
+    const timeStr = `${hour12}:${min.toString().padStart(2, '0')} ${period}`;
+    return `${dateStr} ${timeStr}`;
+  }
   get meetingWith(): string       { return this.registrationData?.meetingWith || ''; }
   get meetingLocation(): string   { return this.registrationData?.meetingLocation || ''; }
   get visitType(): string         { return this.registrationData?.visitType || ''; }

@@ -1120,6 +1120,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Auto-select the host in the form
       this.generalForm.get('host')?.setValue(matchingHost.HOSTIC || matchingHost.HostIC || matchingHost.SeqId);
 
+      // Persist immediately so future initializeForm() re-runs (race condition with udfSettings$)
+      // always restore the correct host value from savedData.host instead of resetting to null.
+      this.saveFormDataToWizard();
+
       // Disable the host control since it should be fixed for appointment flow (don't hide it)
       this.shouldFilterHostByQueryParam = true;
 
@@ -1282,7 +1286,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return false; // In normal flow, no fields are disabled
     }
 
-    // In appointment flow, lock only the structural appointment fields
+    // Reflect the Angular form control's disabled state (set by setupConditionalControls)
+    // so PrimeNG [disabled] binding stays in sync for conditionally locked fields.
+    const control = this.generalForm?.get(fieldName);
+    if (control?.disabled) {
+      return true;
+    }
+
     return this.lockedFieldsInAppointmentFlow.includes(fieldName);
   }
 
@@ -1406,6 +1416,23 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const visitorData = this.visitorAckData?.visitorData;
     const isPreFilledData = this.isAppointmentFlow && visitorData;
 
+    // Resolve the ID type code for the dropdown (optionValue="ID_TYPECODE").
+    // The API may return ID_TYPE as a description string (e.g. "Passport") rather than the
+    // internal code — look up the matching entry in idTypeList and use its ID_TYPECODE instead.
+    let resolvedIdType: string | null = isPreFilledData
+      ? (visitorData.idType || savedData.visitor_id_type || null)
+      : (savedData.visitor_id_type || null);
+    if (isPreFilledData && resolvedIdType && this.idTypeList.length > 0) {
+      const codeMatch = this.idTypeList.find((t: any) => t.ID_TYPECODE === resolvedIdType);
+      if (!codeMatch) {
+        const descMatch = this.idTypeList.find((t: any) =>
+          t.IDTYPEDESCRIPTION?.toLowerCase() === resolvedIdType!.toLowerCase() ||
+          t.IDTYPEDESCRIPTION?.toLowerCase().includes(resolvedIdType!.toLowerCase())
+        );
+        if (descMatch) resolvedIdType = descMatch.ID_TYPECODE;
+      }
+    }
+
     const formControls: any = {
       profile: [savedData.profile || null],
       profilePreview: [savedData.profilePreview || ''],
@@ -1413,7 +1440,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       fullName: [isPreFilledData ? (visitorData.fullName || savedData.fullName || '') : (savedData.fullName || '')],
       email: [isPreFilledData ? (visitorData.email || savedData.email || '') : (savedData.email || '')],
       phone: [isPreFilledData ? (visitorData.phone || savedData.phone || '') : (savedData.phone || '')],
-      visitor_id_type: [isPreFilledData ? (visitorData.idType || savedData.visitor_id_type || null) : (savedData.visitor_id_type || null)],
+      visitor_id_type: [resolvedIdType],
       visitor_id: [isPreFilledData ? (visitorData.identityNo || savedData.visitor_id || '') : (savedData.visitor_id || '')],
       id_expired_date: [isPreFilledData ? (visitorData.expiredDate ? new Date(visitorData.expiredDate) : (savedData.id_expired_date || null)) : (savedData.id_expired_date || null)],
       gender: [isPreFilledData ? (visitorData.genderId || savedData.gender || null) : (savedData.gender || null)],
@@ -1431,7 +1458,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       work_permit_ref: [savedData.work_permit_ref || ''],
       event_name: [savedData.event_name || ''],
       remarks: [isPreFilledData ? (visitorData.remarks || savedData.remarks || '') : (savedData.remarks || '')],
-      host: [savedData.host || (this.shouldHideHostControl ? this.defaultHostId : null) || (this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery ? this.wizardService.hostCodeFromQuery : null)],
+      host: [savedData.host || (isPreFilledData ? (visitorData.hostId || null) : null) || (this.shouldHideHostControl ? this.defaultHostId : null) || (this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery ? this.wizardService.hostCodeFromQuery : null)],
       startDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.startDate || '')],
       endDate: [isPreFilledData ? (this.parseDate(visitorData.endTime) || '') : (savedData.endDate || '')],
       department: [savedData.department || null],
@@ -2043,7 +2070,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.setupControl('timeSlot', true, this.timeSlotList.length > 0);
     }
 
-    // In appointment flow, lock only the appointment-structural fields (startDate, endDate)
+    // In appointment flow, lock fields set by the admin/host during appointment creation.
+    // startDate/endDate are always locked; other fields locked only when they carry a value
+    // (empty fields may still need to be filled in by the visitor).
+    // Host is intentionally NOT locked — visitor should be able to change it.
     if (this.isAppointmentFlow) {
       this.lockedFieldsInAppointmentFlow.forEach(controlName => {
         const control = this.generalForm.get(controlName);
@@ -2051,6 +2081,30 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           control.disable({ emitEvent: false });
         }
       });
+
+      const conditionallyLockedFields = ['department', 'meeting_location', 'floor', 'purpose'];
+      conditionallyLockedFields.forEach(controlName => {
+        const control = this.generalForm.get(controlName);
+        if (control && control.value) {
+          control.disable({ emitEvent: false });
+        }
+      });
+    }
+
+    // Restore ID type UI state (showIdExpiryField, selectedIdTypeData, id_expired_date validators)
+    // when the form already has a visitor_id_type value — covers both appointment pre-fill and
+    // back-navigation. onIdTypeChange is normally only fired by user interaction, so without this
+    // the expiry date field stays hidden even when its value was pre-populated.
+    const preFilledIdType = this.generalForm.get('visitor_id_type')?.value;
+    if (preFilledIdType) {
+      const savedExpiryDate = this.generalForm.get('id_expired_date')?.value;
+      this.onIdTypeChange({ value: preFilledIdType });
+      // onIdTypeChange clears id_expired_date when ID_EXPIRED_DATE===false (e.g. NRIC), which is
+      // correct. For types with ID_EXPIRED_DATE===true (e.g. Passport) it does NOT clear it, but
+      // we restore here just to be safe in case future logic changes.
+      if (savedExpiryDate && this.showIdExpiryField) {
+        this.generalForm.get('id_expired_date')?.setValue(savedExpiryDate, { emitEvent: false });
+      }
     }
   }
 

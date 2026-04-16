@@ -473,7 +473,7 @@ export class HomePageComponent implements AfterViewChecked {
             refWardRoomSeqId: visitorData.RefWardRoomSeqId,
             idType: visitorData.ID_TYPE,
             idTypeDescription: visitorData.IDTYPEDESCRIPTION,
-            expiredDate: visitorData.ID_EXPIRED_DATE,
+            expiredDate: visitorData.EXPIRED_DATE || visitorData.ID_EXPIRED_DATE,
             // Map UDF fields with AUDF prefix to match form control names (e.g. 'AUDF1')
             AUDF1: visitorData.UDF1,
             AUDF2: visitorData.UDF2,
@@ -883,10 +883,10 @@ export class HomePageComponent implements AfterViewChecked {
       // Await settings to ensure labels are ready for UI
       await settingsPromise;
 
-      this.sharedService.updateHeader(
-        lsBranchName,
-        environment.proURL + "Handler/PortalImageHandler.ashx?ScreenType=20&RefSlno=" + newValue
-      );
+      const branchLogoUrl = environment.proURL + "Handler/PortalImageHandler.ashx?ScreenType=20&RefSlno=" + newValue;
+      this.logo = branchLogoUrl;
+      this.title = lsBranchName;
+      this.sharedService.updateHeader(lsBranchName, branchLogoUrl);
     } catch (error) {
       console.error('Error in branch change:', error);
     } finally {
@@ -1003,10 +1003,10 @@ export class HomePageComponent implements AfterViewChecked {
             this.wizardService.currentBranchID = this.selectedBranch;
           }
 
-          this.sharedService.updateHeader(
-            pageSettings.Table[0].SchoolName,
-            environment.proURL + "Handler/PortalImageHandler.ashx?ScreenType=20&RefSlno=" + this.selectedBranch
-          );
+          const pageLogoUrl = environment.proURL + "Handler/PortalImageHandler.ashx?ScreenType=20&RefSlno=" + this.selectedBranch;
+          this.logo = pageLogoUrl;
+          this.title = pageSettings.Table[0].SchoolName || this.title;
+          this.sharedService.updateHeader(this.title, pageLogoUrl);
 
           this.bgImageUrl = environment.proURL + "FS/" + pageSettings.Table[0].ImgPathUrl;
 

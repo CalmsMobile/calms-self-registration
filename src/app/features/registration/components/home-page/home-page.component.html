@@ -69,7 +69,12 @@
   @if (selectedBranch) {
   <!-- Header with logo -->
   <div class="header">
-    <img [src]="logo" alt="Company Logo" />
+    <div class="header-brand">
+      <img [src]="logo" alt="Company Logo" />
+      @if (title) {
+      <span class="header-company-name">{{ title }}</span>
+      }
+    </div>
     <app-language-selector class="header-lang"></app-language-selector>
   </div>
 

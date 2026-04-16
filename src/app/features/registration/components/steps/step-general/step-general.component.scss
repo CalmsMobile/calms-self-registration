@@ -1993,6 +1993,7 @@ textarea {
 
   &:hover { border-color: var(--primary); }
   &.ng-invalid { box-shadow: 0 0 0 1px rgba(255,59,59,0.12) !important; }
+  &.field-disabled { opacity: 0.6; cursor: not-allowed; pointer-events: none;  }
 }
 
 .m-schedule-trigger {

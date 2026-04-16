@@ -162,10 +162,28 @@
   align-items: center;
   gap: 12px;
 
+  .header-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
   img {
     width: 230px;
     height: 64px;
     object-fit: contain;
+  }
+
+  .header-company-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #3b3b3b;
+    text-align: center;
+    max-width: 260px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .header-lang {
