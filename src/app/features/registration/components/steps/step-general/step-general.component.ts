@@ -1442,11 +1442,32 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
     }
 
+    // If the appointment fullName contains a title prefix (e.g. "Mr.Aravind"), extract and
+    // resolve it against titleList so the title dropdown gets pre-selected correctly.
+    let resolvedTitle: string | null = savedData.title || null;
+    let resolvedFullName: string = isPreFilledData ? (visitorData.fullName || savedData.fullName || '') : (savedData.fullName || '');
+    if (isPreFilledData && visitorData.fullName && this.titleList.length > 0) {
+      const dotIndex = visitorData.fullName.indexOf('.');
+      if (dotIndex > 0) {
+        const prefix = visitorData.fullName.substring(0, dotIndex).trim();   // e.g. "Mr"
+        const nameAfter = visitorData.fullName.substring(dotIndex + 1).trim(); // e.g. "Aravind"
+        // Match against titleList — try exact (with or without trailing dot)
+        const match = this.titleList.find((t: any) => {
+          const tVal: string = (t.Title || '').replace(/\.+$/, '').trim();
+          return tVal.toLowerCase() === prefix.toLowerCase();
+        });
+        if (match) {
+          resolvedTitle = match.Title;   // use the exact value from titleList (e.g. "Mr.")
+          resolvedFullName = nameAfter;
+        }
+      }
+    }
+
     const formControls: any = {
       profile: [savedData.profile || null],
       profilePreview: [savedData.profilePreview || ''],
-      title: [savedData.title || null],
-      fullName: [isPreFilledData ? (visitorData.fullName || savedData.fullName || '') : (savedData.fullName || '')],
+      title: [resolvedTitle],
+      fullName: [resolvedFullName],
       email: [isPreFilledData ? (visitorData.email || savedData.email || '') : (savedData.email || '')],
       phone: [isPreFilledData ? (visitorData.phone || savedData.phone || '') : (savedData.phone || '')],
       visitor_id_type: [resolvedIdType],
