@@ -369,6 +369,10 @@
       linear-gradient(180deg, rgba(255, 236, 214, 0.82) 19%, transparent 20%);
     opacity: 0.72;
   }
+
+  &.has-photo::before {
+    display: none;
+  }
 }
 
 .name {
@@ -515,6 +519,20 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 34px 30px;
   align-content: start;
+}
+
+// UDF sections
+.udf-section {
+  margin-top: 32px;
+}
+
+.udf-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #6b7d9b;
+  margin: 0 0 14px;
 }
 
 // Approval Status section

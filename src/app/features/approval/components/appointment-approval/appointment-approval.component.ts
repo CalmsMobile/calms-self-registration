@@ -27,7 +27,6 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   companyLogo: string = '';
   companyName: string = '';
   visitorImg: string = '';
-  declarationData: any[] = [];
   questionnaireData: any[] = [];
   docsData: any[] = [];
   itemsData: any[] = [];
@@ -97,11 +96,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
         this.createdBy = this.appointmentData?.CreatedBy ?? null;
         this.refApptApprovalLevelSeqId = this.appointmentData?.RefApptApprovalLevelSeqId ?? null;
 
-        const branch     = this.appointmentData?.Branch           || this.clientConfig?.Branch || '';
-        const visitorCtg = this.appointmentData?.Visitor_category || '';
-
         return forkJoin({
-          decl:  this.apiService.GetVisitorDeclarationSettings(branch, visitorCtg).pipe(catchError(() => of(null))),
           docs:  this.apiService.GetVisitorDocsBySeqId(this.seqId).pipe(catchError(() => of(null))),
           items: this.apiService.GetVisitorItemChecklistBySeqId(this.seqId).pipe(catchError(() => of(null))),
           qna:   this.apiService.GetVisitorQuestionariesByAppointmentId(this.seqId).pipe(catchError(() => of(null))),
@@ -110,10 +105,9 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
       })
     ).subscribe({
       next: (res: any) => {
-        this.declarationData   = res.decl?.Table1  || res.decl?.Table  || [];
         this.questionnaireData = res.qna?.Table  || [];
         this.docsData        = res.docs?.Table1 || res.docs?.Table  || [];
-        this.itemsData       = res.items?.Table || res.decl?.Table || [];
+        this.itemsData       = res.items?.Table || [];
         this.ndaDoc = res.nda?.Table?.[0]?.NDADocument || '';
         if (this.ndaDoc) {
           const base = environment.apiURL.replace(/\/api\/vims$/i, '');
@@ -129,7 +123,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
             }
           });
         }
-        const settingRaw = res.decl?.Table1?.[0]?.SettingDetail || res.items?.Table1?.[0]?.SettingDetail;
+        const settingRaw = res.items?.Table1?.[0]?.SettingDetail;
         if (settingRaw) {
           try {
             const s = JSON.parse(settingRaw);
@@ -311,6 +305,60 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   get showReject(): boolean {
     if (this.isExpired) return false;
     return this.appointmentData?.ShowReject === true || this.appointmentData?.ShowReject === 1;
+  }
+
+  private formatUDFDisplayValue(val: any): string {
+    if (val === null || val === undefined) return '';
+    const s = String(val);
+    // ISO date: 2026-04-29T18:30:00.000Z or 2026-04-29
+    if (/^\d{4}-\d{2}-\d{2}(T.*)?$/.test(s)) {
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        return String(d.getUTCDate()).padStart(2,'0') + '/' +
+               String(d.getUTCMonth()+1).padStart(2,'0') + '/' +
+               d.getUTCFullYear();
+      }
+    }
+    // JS date string: Mon Apr 20 2026 ...
+    if (/^[A-Z][a-z]{2}\s[A-Z][a-z]{2}\s\d{1,2}\s\d{4}/.test(s)) {
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) {
+        return String(d.getDate()).padStart(2,'0') + '/' +
+               String(d.getMonth()+1).padStart(2,'0') + '/' +
+               d.getFullYear();
+      }
+    }
+    return s;
+  }
+
+  get visitorUdfFields(): { label: string; value: string }[] {
+    if (!this.appointmentData) return [];
+    const fields: { label: string; value: string }[] = [];
+    for (let i = 1; i <= 10; i++) {
+      const val = this.appointmentData['VUDF' + i];
+      if (val !== null && val !== undefined && val !== '') {
+        const label = this.appointmentData['VUDF' + i + 'Caption'] ||
+                      this.appointmentData['VUDF' + i + '_Caption'] ||
+                      `Visitor UDF ${i}`;
+        fields.push({ label, value: this.formatUDFDisplayValue(val) });
+      }
+    }
+    return fields;
+  }
+
+  get appointmentUdfFields(): { label: string; value: string }[] {
+    if (!this.appointmentData) return [];
+    const fields: { label: string; value: string }[] = [];
+    for (let i = 1; i <= 10; i++) {
+      const val = this.appointmentData['UDF' + i];
+      if (val !== null && val !== undefined && val !== '') {
+        const label = this.appointmentData['UDF' + i + 'Caption'] ||
+                      this.appointmentData['UDF' + i + '_Caption'] ||
+                      `Appointment UDF ${i}`;
+        fields.push({ label, value: this.formatUDFDisplayValue(val) });
+      }
+    }
+    return fields;
   }
 
   get approvalProgressWidth(): string {

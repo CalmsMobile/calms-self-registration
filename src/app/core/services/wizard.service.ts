@@ -575,6 +575,7 @@ export class WizardService {
       NDASignature: stripBase64Prefix(formData['nda-agreement']?.ndaSignature || ''),
       NDAAccepted: formData['nda-agreement']?.ndaAccepted || false
     };
+    console.log('[getVisitorAckData] payload before submit:', JSON.parse(JSON.stringify(visitorAck)));
     if (visitorAck.StartDateTime == visitorAck.EndDateTime) {
       const now = new Date();
       const aptEndTime = this.getSelfRegistrationSettings().AptEndTime || 'DefaultEOD';
@@ -587,6 +588,7 @@ export class WizardService {
       }
       visitorAck.EndDateTime = endDate ? formatDateForAPI(endDate) : formatDateForAPI(now);
     }
+    console.log('[getVisitorAckData] final payload:', JSON.parse(JSON.stringify(visitorAck)));
     return visitorAck;
   }
   /**
@@ -686,6 +688,7 @@ export class WizardService {
       const companyDesc = (typeof data.visitor_company === 'object' && data.visitor_company !== null)
         ? (data.visitor_company.visitor_comp_name || '') : '';
       const countryId = extractId(data.country, 'CountrySeqId', 'id');
+      const countryName = this.getCountryName(countryId) || '';
       const genderId = extractId(data.gender, 'Value', 'id');
       const genderDesc = (typeof data.gender === 'object' && data.gender !== null)
         ? (data.gender.Name || '') : (data.gender || '');
@@ -710,29 +713,29 @@ export class WizardService {
         VehicleBrand: data.vehicle_brand || '',
         VehicleModel: data.vehicle_model || '',
         VehicleColor: data.vehicle_color || '',
-        CountryId: countryId,
-        CountryDesc: this.getCountryName(countryId) || '',
+        CountryId: countryName,
+        CountryDesc: countryName,
         Address: data.visitor_address || '',
-        VUDF1: data.VUDF1 || '',
-        VUDF2: data.VUDF2 || '',
-        VUDF3: data.VUDF3 || '',
-        VUDF4: data.VUDF4 || '',
-        VUDF5: data.VUDF5 || '',
-        VUDF6: data.VUDF6 || '',
-        VUDF7: data.VUDF7 || '',
-        VUDF8: data.VUDF8 || '',
-        VUDF9: data.VUDF9 || '',
-        VUDF10: data.VUDF10 || '',
-        AUDF1: data.AUDF1 || '',
-        AUDF2: data.AUDF2 || '',
-        AUDF3: data.AUDF3 || '',
-        AUDF4: data.AUDF4 || '',
-        AUDF5: data.AUDF5 || '',
-        AUDF6: data.AUDF6 || '',
-        AUDF7: data.AUDF7 || '',
-        AUDF8: data.AUDF8 || '',
-        AUDF9: data.AUDF9 || '',
-        AUDF10: data.AUDF10 || '',
+        VUDF1: this.normalizeUDFValue(data.VUDF1),
+        VUDF2: this.normalizeUDFValue(data.VUDF2),
+        VUDF3: this.normalizeUDFValue(data.VUDF3),
+        VUDF4: this.normalizeUDFValue(data.VUDF4),
+        VUDF5: this.normalizeUDFValue(data.VUDF5),
+        VUDF6: this.normalizeUDFValue(data.VUDF6),
+        VUDF7: this.normalizeUDFValue(data.VUDF7),
+        VUDF8: this.normalizeUDFValue(data.VUDF8),
+        VUDF9: this.normalizeUDFValue(data.VUDF9),
+        VUDF10: this.normalizeUDFValue(data.VUDF10),
+        AUDF1: this.normalizeUDFValue(data.AUDF1),
+        AUDF2: this.normalizeUDFValue(data.AUDF2),
+        AUDF3: this.normalizeUDFValue(data.AUDF3),
+        AUDF4: this.normalizeUDFValue(data.AUDF4),
+        AUDF5: this.normalizeUDFValue(data.AUDF5),
+        AUDF6: this.normalizeUDFValue(data.AUDF6),
+        AUDF7: this.normalizeUDFValue(data.AUDF7),
+        AUDF8: this.normalizeUDFValue(data.AUDF8),
+        AUDF9: this.normalizeUDFValue(data.AUDF9),
+        AUDF10: this.normalizeUDFValue(data.AUDF10),
         uid: generateUID()
       };
     };
@@ -1043,6 +1046,28 @@ export class WizardService {
 
     // Default: empty array
     return JSON.stringify([]);
+  }
+
+  private normalizeUDFValue(value: any): string {
+    if (value === null || value === undefined) return '';
+    if (Array.isArray(value)) return value.join(',');
+    if (value instanceof Date) {
+      const dd = String(value.getDate()).padStart(2, '0');
+      const mm = String(value.getMonth() + 1).padStart(2, '0');
+      const yyyy = value.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    }
+    // String that looks like a JS Date (e.g. from toString() or Date constructor)
+    if (typeof value === 'string' && /^[A-Z][a-z]{2}\s[A-Z][a-z]{2}\s\d{2}\s\d{4}/.test(value)) {
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+      }
+    }
+    return String(value);
   }
 
   private buildFullName(title: string | null | undefined, fullName: string | null | undefined): string {

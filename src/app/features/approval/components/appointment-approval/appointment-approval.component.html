@@ -131,6 +131,7 @@
     <section class="main-panel" aria-label="Visitor Details">
       <aside class="profile-panel">
         <div class="avatar" role="img" aria-label="Visitor photo"
+          [class.has-photo]="!!visitorImg"
           [style.background-image]="visitorImg ? 'url(' + visitorImg + ')' : null"
           [style.background-size]="visitorImg ? 'cover' : null"
           [style.background-position]="visitorImg ? 'center' : null"></div>
@@ -167,10 +168,12 @@
         <section class="host-card" aria-label="Host Information">
           <p class="host-label">Host</p>
           <p class="host-name">{{ appointmentData?.HOSTNAME }}</p>
+          @if (appointmentData?.DeptName || appointmentData?.HostDept || appointmentData?.DepartmentName || appointmentData?.Department || appointmentData?.HostFloor) {
           <p class="host-dept">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-7h6v7"/></svg>
-            {{ appointmentData?.Room_Name || appointmentData?.HostFloor }}
+            {{ appointmentData?.DeptName || appointmentData?.HostDept || appointmentData?.DepartmentName || appointmentData?.Department || appointmentData?.HostFloor }}
           </p>
+          }
           <div class="host-meta">
             <div class="meta-pill">
               <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
@@ -224,28 +227,22 @@
               <div><p class="detail-label">Purpose</p><p class="detail-value">{{ appointmentData?.Purpose_Visit || appointmentData?.REASON }}</p></div>
             </article>
           }
+          @if (appointmentData?.DeptName || appointmentData?.DepartmentName || appointmentData?.Department) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-7h6v7"/></svg></div>
+              <div><p class="detail-label">Department</p><p class="detail-value">{{ appointmentData?.DeptName || appointmentData?.DepartmentName || appointmentData?.Department }}</p></div>
+            </article>
+          }
           @if (appointmentData?.Address || appointmentData?.Country) {
             <article class="detail-item">
               <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>
-              <div><p class="detail-label">Address</p><p class="detail-value">{{ appointmentData?.Address }}{{ appointmentData?.Country ? ', ' + appointmentData.Country : '' }}</p></div>
+              <div><p class="detail-label">Address</p><p class="detail-value">{{ appointmentData?.Address }}{{ appointmentData?.Address && appointmentData?.Country ? ', ' : '' }}{{ appointmentData?.Country }}</p></div>
             </article>
           }
-          @if (appointmentData?.START_DATE) {
-            <article class="detail-item">
-              <div class="detail-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></div>
-              <div><p class="detail-label">Visit Date</p><p class="detail-value">{{ formatDate(appointmentData.START_DATE) }}</p></div>
-            </article>
-          }
-          @if (appointmentData?.START_TIME || appointmentData?.END_TIME) {
-            <article class="detail-item">
-              <div class="detail-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-              <div><p class="detail-label">Time Slot</p><p class="detail-value">{{ formatTime(appointmentData?.START_TIME) }} – {{ formatTime(appointmentData?.END_TIME) }}</p></div>
-            </article>
-          }
-          @if (appointmentData?.Room_Name || appointmentData?.Room) {
+          @if (appointmentData?.Room_Name) {
             <article class="detail-item">
               <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-7h6v7"/></svg></div>
-              <div><p class="detail-label">Room</p><p class="detail-value">{{ appointmentData?.Room_Name }}{{ appointmentData?.Room ? ' · ' + appointmentData.Room : '' }}</p></div>
+              <div><p class="detail-label">Room</p><p class="detail-value">{{ appointmentData.Room_Name }}</p></div>
             </article>
           }
           @if (appointmentData?.SEQ_ID || seqId) {
@@ -267,6 +264,34 @@
             </article>
           }
         </div>
+
+        @if (visitorUdfFields.length > 0) {
+          <section class="udf-section" aria-label="Visitor UDF">
+            <p class="udf-section-label">Visitor Information</p>
+            <div class="details-grid">
+              @for (udf of visitorUdfFields; track $index) {
+                <article class="detail-item">
+                  <div class="detail-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h10M7 14h6"/></svg></div>
+                  <div><p class="detail-label">{{ udf.label }}</p><p class="detail-value">{{ udf.value }}</p></div>
+                </article>
+              }
+            </div>
+          </section>
+        }
+
+        @if (appointmentUdfFields.length > 0) {
+          <section class="udf-section" aria-label="Appointment UDF">
+            <p class="udf-section-label">Appointment Information</p>
+            <div class="details-grid">
+              @for (udf of appointmentUdfFields; track $index) {
+                <article class="detail-item">
+                  <div class="detail-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h10M7 14h6"/></svg></div>
+                  <div><p class="detail-label">{{ udf.label }}</p><p class="detail-value">{{ udf.value }}</p></div>
+                </article>
+              }
+            </div>
+          </section>
+        }
 
         @if (approvalSteps.length > 0) {
           <section class="approval-status" aria-label="Approval Status">

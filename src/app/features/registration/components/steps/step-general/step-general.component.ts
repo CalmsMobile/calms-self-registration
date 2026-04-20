@@ -2965,7 +2965,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const selectedHostId = event.value;
     console.log('Host changed to:', selectedHostId);
 
-    if (!selectedHostId || !this.originalHostData || this.originalHostData.length === 0) {
+    if (!selectedHostId) {
+      // Host was cleared — restore full host list
+      if (this.originalHostData && this.originalHostData.length > 0) {
+        this.hosts = [...this.originalHostData];
+        this.hostNameList = [...this.originalHostData];
+      }
+      this.generalForm.get('hostName')?.setValue('', { emitEvent: false });
+      return;
+    }
+
+    if (!this.originalHostData || this.originalHostData.length === 0) {
       return;
     }
 
