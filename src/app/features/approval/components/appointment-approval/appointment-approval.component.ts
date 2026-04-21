@@ -307,6 +307,11 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     return this.appointmentData?.ShowReject === true || this.appointmentData?.ShowReject === 1;
   }
 
+  get showResubmit(): boolean {
+    if (this.isExpired) return false;
+    return this.appointmentData?.ShowResubmit === true || this.appointmentData?.ShowResubmit === 1;
+  }
+
   private formatUDFDisplayValue(val: any): string {
     if (val === null || val === undefined) return '';
     const s = String(val);

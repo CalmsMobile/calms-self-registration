@@ -576,6 +576,7 @@ export class WizardService {
       NDAAccepted: formData['nda-agreement']?.ndaAccepted || false
     };
     console.log('[getVisitorAckData] payload before submit:', JSON.parse(JSON.stringify(visitorAck)));
+  
     if (visitorAck.StartDateTime == visitorAck.EndDateTime) {
       const now = new Date();
       const aptEndTime = this.getSelfRegistrationSettings().AptEndTime || 'DefaultEOD';

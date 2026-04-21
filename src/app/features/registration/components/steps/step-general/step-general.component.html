@@ -538,7 +538,29 @@
       }
       }
 
-      <!-- 15. Host Name -->
+         <!-- 15. Host Department -->
+      @if (settings?.HostDepartmentEnabled) {
+      <div class="form-field">
+        <label class="field-label" for="department">
+          {{'registration_page_department' | translate}}
+          <span class="required-star">{{settings?.HostDepartmentRequired ? '*' : ''}}</span>
+        </label>
+        <div class="input-wrap">
+          <span class="field-icon"><i class="pi pi-building"></i></span>
+          <p-select id="department" [options]="departmentList" formControlName="department"
+            [placeholder]="'registration_page_department' | translate:'placeholder'" optionLabel="DName" optionValue="DepartmentSeqId"
+            [class]="{'ng-invalid': isFieldInvalidRequired('department')}" [disabled]="isFieldDisabled('department')"
+            (onChange)="onDepartmentChange($event)" [showClear]="true" (onClear)="onDepartmentChange({value: null})"
+            appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('department')) {
+        <small class="error-message">{{ getRequiredError('department') }}</small>
+        }
+      </div>
+      }
+
+      <!-- 16. Host Name -->
       @if (settings?.HostNameEnabled && !shouldHideHostControl && !isFieldHiddenInAppointmentFlow('host')) {
       <div class="form-field">
         <label class="field-label" for="host">
@@ -560,27 +582,7 @@
       </div>
       }
 
-      <!-- 16. Host Department -->
-      @if (settings?.HostDepartmentEnabled) {
-      <div class="form-field">
-        <label class="field-label" for="department">
-          {{'registration_page_department' | translate}}
-          <span class="required-star">{{settings?.HostDepartmentRequired ? '*' : ''}}</span>
-        </label>
-        <div class="input-wrap">
-          <span class="field-icon"><i class="pi pi-building"></i></span>
-          <p-select id="department" [options]="departmentList" formControlName="department"
-            [placeholder]="'registration_page_department' | translate:'placeholder'" optionLabel="DName" optionValue="DepartmentSeqId"
-            [class]="{'ng-invalid': isFieldInvalidRequired('department')}" [disabled]="isFieldDisabled('department')"
-            (onChange)="onDepartmentChange($event)" [showClear]="true" (onClear)="onDepartmentChange({value: null})"
-            appendTo="body">
-          </p-select>
-        </div>
-        @if (isFieldInvalidRequired('department')) {
-        <small class="error-message">{{ getRequiredError('department') }}</small>
-        }
-      </div>
-      }
+   
 
       <!-- Meeting Location (Room) -->
       @if (settings?.RoomEnabled) {
@@ -1361,25 +1363,7 @@
       }
       }
 
-      <!-- 15. Host Name -->
-      @if (settings?.HostNameEnabled && !shouldHideHostControl && !isFieldHiddenInAppointmentFlow('host')) {
-      <div class="m-form-field">
-        <label class="m-field-label">{{'registration_page_whom_you_would_like_to_visit' | translate}} <span class="m-req">{{settings?.HostNameRequired && !isAppointmentFlow ? '*' : ''}}</span></label>
-        <div class="m-input-wrap">
-          <span class="m-field-icon"><i class="pi pi-users"></i></span>
-          <p-select [options]="hosts" formControlName="host"
-            [placeholder]="'registration_page_whom_you_would_like_to_visit' | translate:'placeholder'" (onChange)="onHostChange($event)"
-            optionLabel="HOSTNAME" optionValue="HOSTIC" [class]="{'ng-invalid': isFieldInvalidRequired('host')}"
-            [disabled]="isFieldDisabled('host')" [showClear]="true" (onClear)="onHostChange({value: null})" appendTo="body">
-          </p-select>
-        </div>
-        @if (isFieldInvalidRequired('host')) {
-        <small class="m-error">{{ getRequiredError('whom_you_would_like_to_visit') }}</small>
-        }
-      </div>
-      }
-
-      <!-- 16. Host Department -->
+      <!-- 15. Host Department -->
       @if (settings?.HostDepartmentEnabled) {
       <div class="m-form-field">
         <label class="m-field-label">{{'registration_page_department' | translate}} <span class="m-req">{{settings?.HostDepartmentRequired ? '*' : ''}}</span></label>
@@ -1393,6 +1377,24 @@
         </div>
         @if (isFieldInvalidRequired('department')) {
         <small class="m-error">{{ getRequiredError('department') }}</small>
+        }
+      </div>
+      }
+
+      <!-- 16. Host Name -->
+      @if (settings?.HostNameEnabled && !shouldHideHostControl && !isFieldHiddenInAppointmentFlow('host')) {
+      <div class="m-form-field">
+        <label class="m-field-label">{{'registration_page_whom_you_would_like_to_visit' | translate}} <span class="m-req">{{settings?.HostNameRequired && !isAppointmentFlow ? '*' : ''}}</span></label>
+        <div class="m-input-wrap">
+          <span class="m-field-icon"><i class="pi pi-users"></i></span>
+          <p-select [options]="hosts" formControlName="host"
+            [placeholder]="'registration_page_whom_you_would_like_to_visit' | translate:'placeholder'" (onChange)="onHostChange($event)"
+            optionLabel="HOSTNAME" optionValue="HOSTIC" [class]="{'ng-invalid': isFieldInvalidRequired('host')}"
+            [disabled]="isFieldDisabled('host')" [showClear]="true" (onClear)="onHostChange({value: null})" appendTo="body">
+          </p-select>
+        </div>
+        @if (isFieldInvalidRequired('host')) {
+        <small class="m-error">{{ getRequiredError('whom_you_would_like_to_visit') }}</small>
         }
       </div>
       }

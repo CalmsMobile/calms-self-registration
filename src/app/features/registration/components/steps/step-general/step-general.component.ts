@@ -1327,6 +1327,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       case 'visitor_id_type': this.onIdTypeChange({ value: null }); break;
       case 'purpose': this.onPurposeChange({ value: null }); break;
       case 'facilitySelection': this.onFacilitySelectionChange(''); break;
+      case 'visitor_id': this.isVisitorBlacklisted = false; this.isVisitorNotWhitelisted = false; break;
     }
   }
 
@@ -2611,13 +2612,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   getMinLengthError(min: number): string {
-    const template = this.labelService.getLabel('registration_page_error_min_length', 'caption') || 'Minimum {udf.MinLength} characters required';
-    return template.replace('{MinLength}', String(min));
+    const template = this.labelService.getLabel('registration_page_error_min_length', 'caption') || 'Minimum {MinLength} characters required';
+    return template.replace('{udf.MinLength}', String(min)).replace('{MinLength}', String(min));
   }
 
   getMaxLengthError(max: number): string {
-    const template = this.labelService.getLabel('registration_page_error_max_length', 'caption') || 'Maximum {udf.MaxLength} characters required';
-    return template.replace('{MaxLength}', String(max));
+    const template = this.labelService.getLabel('registration_page_error_max_length', 'caption') || 'Maximum {MaxLength} characters allowed';
+    return template.replace('{udf.MaxLength}', String(max)).replace('{MaxLength}', String(max));
   }
 
   /**
