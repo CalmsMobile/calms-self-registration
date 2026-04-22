@@ -584,7 +584,7 @@ export class WizardService {
       if (aptEndTime === 'DefaultEOD') {
         endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
       } else if (aptEndTime === 'Category') {
-        const timePermit: string = this.getSelfRegistrationSettings().CategoryTimePermit || '';
+       const timePermit: string = this.getSettings().CategoryTimePermit || '';
         endDate = this.parseTimePermit(timePermit, now);
       }
       visitorAck.EndDateTime = endDate ? formatDateForAPI(endDate) : formatDateForAPI(now);
