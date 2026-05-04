@@ -1722,12 +1722,23 @@ textarea {
   gap: 12px;
   min-width: 0;
   background: #f6f6f6;
+  position: relative;
 }
 
 .actions-right {
   display: flex;
   gap: 14px;
   margin-left: auto;
+}
+
+.step-copyright {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #9ca3af;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .btn {
@@ -3310,10 +3321,23 @@ textarea {
   .m-actions {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 14px 22px 15px;
+    gap: 6px;
+    padding: 14px 22px 8px;
     border-top: 1px solid #e5e7ef;
     flex-shrink: 0;
+  }
+
+  .m-actions-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .m-actions .step-copyright {
+    text-align: center;
+    font-size: 11px;
+    color: #9ca3af;
+    padding: 4px 0 2px;
+    pointer-events: none;
   }
 
   .m-actions-right {

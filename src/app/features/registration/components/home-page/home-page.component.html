@@ -30,6 +30,7 @@
 
     <!-- Right panel — content -->
     <div class="pre-right">
+      <footer class="app-footer">&copy; {{ currentYear }} All rights reserved. v{{ appVersion }}</footer>
       <div class="pre-right-scroll">
         <div class="pre-center">
           <!-- Logo -->
@@ -59,6 +60,7 @@
             </div>
           </div>
           }
+
         </div>
       </div>
     </div>
@@ -95,71 +97,74 @@
     <div class="divider"></div>
 
     <!-- Right panel: form -->
-    <div class="right">
-      <!-- Branch Selection (shown if multiple branches) -->
-      @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
-      <div class="field">
-        <div class="label">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
-        <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
-          [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
-          optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
-          [autofocus]="false" appendTo="body" styleClass="home-select"
-          [class.select-empty]="!selectedBranch">
-        </p-select>
-      </div>
-      }
-
-      <!-- Category Selection -->
-      @if (selectedBranch && categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
-      <div class="field field-visit">
-        <div class="label">{{ categoryTranslation.caption || ('home_page_category' | translate) }}</div>
-        <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
-          [placeholder]="categoryTranslation.placeholder || ('home_page_category' | translate:'placeholder')" optionLabel="visitor_ctg_desc"
-          optionValue="visitor_ctg_id" [showClear]="true"
-          [autofocus]="false" appendTo="body" styleClass="home-select"
-          [class.select-empty]="!selectedCategory">
-        </p-select>
-      </div>
-      }
-
-      <!-- Terms and Conditions -->
-      @if (selectedBranch && selectedCategory && shouldShowTerms()) {
-      <div class="terms">
-        <h4>{{ 'home_page_terms_and_conditions_title' | translate }}</h4>
-        <div class="terms-body"
-             (scroll)="onTermsScroll($event)"
-             #termsBodyRef
-             [innerHTML]="getTermsHtml()">
+    <div class="right-col">
+      <div class="right">
+        <!-- Branch Selection (shown if multiple branches) -->
+        @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
+        <div class="field">
+          <div class="label">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
+          <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
+            [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
+            optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
+            [autofocus]="false" appendTo="body" styleClass="home-select"
+            [class.select-empty]="!selectedBranch">
+          </p-select>
         </div>
-        <div style="display: none;">
-          <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
-        </div>
+        }
 
-        <!-- Checkbox at bottom right -->
-        <div class="terms-checkbox-wrapper" [class.disabled]="!termsScrolledToBottom">
-          <span class="terms-agree-label">{{ 'home_page_i_agree_to_the_terms_and_conditions' | translate }}</span>
-          <div class="checkbox-container">
-            <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsScrolledToBottom && (termsAccepted = !termsAccepted)">
-              @if (termsAccepted) {
-              <i class="pi pi-check"></i>
-              }
+        <!-- Category Selection -->
+        @if (selectedBranch && categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
+        <div class="field field-visit">
+          <div class="label">{{ categoryTranslation.caption || ('home_page_category' | translate) }}</div>
+          <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
+            [placeholder]="categoryTranslation.placeholder || ('home_page_category' | translate:'placeholder')" optionLabel="visitor_ctg_desc"
+            optionValue="visitor_ctg_id" [showClear]="true"
+            [autofocus]="false" appendTo="body" styleClass="home-select"
+            [class.select-empty]="!selectedCategory">
+          </p-select>
+        </div>
+        }
+
+        <!-- Terms and Conditions -->
+        @if (selectedBranch && selectedCategory && shouldShowTerms()) {
+        <div class="terms">
+          <h4>{{ 'home_page_terms_and_conditions_title' | translate }}</h4>
+          <div class="terms-body"
+               (scroll)="onTermsScroll($event)"
+               #termsBodyRef
+               [innerHTML]="getTermsHtml()">
+          </div>
+          <div style="display: none;">
+            <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
+          </div>
+
+          <!-- Checkbox at bottom right -->
+          <div class="terms-checkbox-wrapper" [class.disabled]="!termsScrolledToBottom">
+            <span class="terms-agree-label">{{ 'home_page_i_agree_to_the_terms_and_conditions' | translate }}</span>
+            <div class="checkbox-container">
+              <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsScrolledToBottom && (termsAccepted = !termsAccepted)">
+                @if (termsAccepted) {
+                <i class="pi pi-check"></i>
+                }
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      }
+        }
 
-      <!-- Continue Button -->
-      @if (selectedBranch && selectedCategory) {
-      <div class="actions">
-        <button class="btn" type="button"
-          [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
-          (click)="proceedToWizard()">
-          <span>{{ 'home_page_button_agree_and_proceed' | translate }}</span>
-          <i class="pi pi-arrow-right btn-icon"></i>
-        </button>
+        <!-- Continue Button -->
+        @if (selectedBranch && selectedCategory) {
+        <div class="actions">
+          <button class="btn" type="button"
+            [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
+            (click)="proceedToWizard()">
+            <span>{{ 'home_page_button_agree_and_proceed' | translate }}</span>
+            <i class="pi pi-arrow-right btn-icon"></i>
+          </button>
+        </div>
+        }
       </div>
-      }
+      <footer class="app-footer">&copy; {{ currentYear }} All rights reserved. v{{ appVersion }}</footer>
     </div>
   </div>
   }
@@ -305,6 +310,8 @@
   }
 
   }
+
+  <footer class="m-fixed-footer">&copy; {{ currentYear }} All rights reserved. v{{ appVersion }}</footer>
 
 </div>
 }

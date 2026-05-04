@@ -188,6 +188,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSubmitting = false;
         this.actionResult = 'approved';
+        setTimeout(() => window.location.reload(), 1500);
       },
       error: () => {
         this.isSubmitting = false;
@@ -205,6 +206,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSubmitting = false;
         this.actionResult = 'rejected';
+        setTimeout(() => window.location.reload(), 1500);
       },
       error: () => {
         this.isSubmitting = false;
@@ -309,7 +311,13 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
 
   get showResubmit(): boolean {
     if (this.isExpired) return false;
-    return this.appointmentData?.ShowResubmit === true || this.appointmentData?.ShowResubmit === 1;
+    return this.appointmentData?.ShowResubmitbtn === true || this.appointmentData?.ShowResubmitbtn === 1;
+  }
+
+  getImageUrl(path: string): string {
+    if (!path) return '';
+    const base = environment.apiURL.replace(/(?:\/app)?\/api\/vims$/i, '');
+    return base + '/fs/' + path.replace(/\\/g, '/');
   }
 
   private formatUDFDisplayValue(val: any): string {

@@ -862,6 +862,7 @@
       {{ 'registration_page_button_back' | translate }}
     </button>
     }
+    <span class="step-copyright">&copy; {{ currentYear }} All rights reserved. v{{ appVersion }}</span>
     <div class="actions-right">
       @if (isMultipleVisitorMode) {
         @if (editingVisitorIndex >= 0) {
@@ -1630,20 +1631,23 @@
 
     <!-- Actions -->
     <div class="m-actions">
-      @if (isMultipleVisitorMode) {
-        @if (editingVisitorIndex >= 0) {
-        <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
-          {{ 'registration_page_button_update' | translate }} <i class="pi pi-check"></i>
-        </button>
-        } @else {
-        <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
-          {{ 'registration_page_button_save_and_add' | translate }} <i class="pi pi-user-plus"></i>
-        </button>
+      <div class="m-actions-row">
+        @if (isMultipleVisitorMode) {
+          @if (editingVisitorIndex >= 0) {
+          <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
+            {{ 'registration_page_button_update' | translate }} <i class="pi pi-check"></i>
+          </button>
+          } @else {
+          <button type="button" class="m-btn m-btn-save-add" (click)="addVisitorToTable()" >
+            {{ 'registration_page_button_save_and_add' | translate }} <i class="pi pi-user-plus"></i>
+          </button>
+          }
         }
-      }
-      <button type="button" class="m-btn m-btn-continue" (click)="goNext()" >
-        {{ 'registration_page_button_save_and_continue' | translate }} <i class="pi pi-arrow-right"></i>
-      </button>
+        <button type="button" class="m-btn m-btn-continue" (click)="goNext()" >
+          {{ 'registration_page_button_save_and_continue' | translate }} <i class="pi pi-arrow-right"></i>
+        </button>
+      </div>
+      <p class="step-copyright">&copy; {{ currentYear }} All rights reserved. v{{ appVersion }}</p>
     </div>
 
   </div>

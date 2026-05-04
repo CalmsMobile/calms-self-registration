@@ -312,7 +312,13 @@
               }
               @for (step of approvalSteps; track $index) {
                 <div class="approval-step">
-                  <div [class]="getStepClass(step)">{{ getInitials(step.ApprovedBy || step.ApproverName || step.HostName) }}</div>
+                  <div [class]="getStepClass(step)">
+                    @if (step.UserImg) {
+                      <img class="step-avatar-img" [src]="getImageUrl(step.UserImg)" alt="Approver photo">
+                    } @else {
+                      {{ getInitials(step.ApprovedBy || step.ApproverName || step.HostName) }}
+                    }
+                  </div>
                   <div [class]="getStepPillClass(step)">{{ getStepStatusLabel(step) }}</div>
                   <div class="step-title">{{ step.Title || step.ApproverRole || step.Role || 'Approver' }}</div>
                   @if (step.ApprovedBy || step.ApproverName || step.HostName) {

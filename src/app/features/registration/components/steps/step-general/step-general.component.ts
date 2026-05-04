@@ -36,6 +36,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   @ViewChild('captureCanvas') captureCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
 
+  readonly currentYear = new Date().getFullYear();
+  readonly appVersion = '1.0.0';
+
   generalForm: FormGroup = new FormGroup({});
   profileImage: SafeUrl | string = "";
   logo = 'assets/logo.png';
