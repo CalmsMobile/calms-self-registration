@@ -2987,12 +2987,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     console.log('Host changed to:', selectedHostId);
 
     if (!selectedHostId) {
-      // Host was cleared — restore full host list
-      if (this.originalHostData && this.originalHostData.length > 0) {
-        this.hosts = [...this.originalHostData];
-        this.hostNameList = [...this.originalHostData];
-      }
       this.generalForm.get('hostName')?.setValue('', { emitEvent: false });
+      // Re-apply the current department filter instead of showing all hosts
+      const currentDept = this.generalForm.get('department')?.value;
+      this.onDepartmentChange({ value: currentDept || null }, true);
       return;
     }
 
@@ -3011,23 +3009,37 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Save host name for summary
       this.generalForm.get('hostName')?.setValue(selectedHost.HOSTNAME || selectedHost.Name || '', { emitEvent: false });
 
-      // Get department value from various possible fields
-      const hostDepartment = selectedHost.Department ||
+      // Get department value from various possible fields on the host object
+      const hostDepartmentRaw = selectedHost.Department ||
         selectedHost.DName ||
         selectedHost.DEPARTMENT_REFID ||
         selectedHost.DepartmentSeqId;
 
-      if (hostDepartment) {
+      if (hostDepartmentRaw) {
+        // Look up the DepartmentSeqId that the department dropdown actually uses as its value.
+        // The host object carries raw department strings (e.g. "Admin") while the dropdown
+        // option value is DepartmentSeqId (which may be a numeric ID from Table5).
+        const matchingDept = this.departmentList.find((d: any) =>
+          String(d.DepartmentSeqId).toLowerCase() === String(hostDepartmentRaw).toLowerCase() ||
+          (d.DName || '').toLowerCase() === String(hostDepartmentRaw).toLowerCase() ||
+          (d.Department || '').toLowerCase() === String(hostDepartmentRaw).toLowerCase()
+        );
+        const deptValue = matchingDept?.DepartmentSeqId ?? hostDepartmentRaw;
+
         const currentDepartment = this.generalForm.get('department')?.value;
 
-        // Update department if it's different (bidirectional filtering)
-        if (currentDepartment !== hostDepartment) {
-          console.log('Updating department to match host:', hostDepartment);
-          this.generalForm.get('department')?.setValue(hostDepartment);
-
-          // Filter hosts by the host's department
-          this.onDepartmentChange({ value: hostDepartment });
+        // Only update department if it is currently empty — don't override a department
+        // the user already selected, and avoid resetting it when the host's department
+        // string doesn't round-trip cleanly through the dropdown's option values.
+        if (!currentDepartment) {
+          console.log('Setting department from host:', deptValue);
+          this.generalForm.get('department')?.setValue(deptValue, { emitEvent: false });
         }
+
+        // Always filter the host list to the host's department so the dropdown narrows
+        // correctly, but pass a flag so onDepartmentChange doesn't clear the host we
+        // just set.
+        this.onDepartmentChange({ value: deptValue }, true);
       }
     }
   }
@@ -3046,7 +3058,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.saveFormDataToWizard();
   }
 
-  onDepartmentChange(event: any): void {
+  onDepartmentChange(event: any, skipHostClear = false): void {
     const selectedDepartment = event.value;
     console.log('Department changed to:', selectedDepartment);
 
@@ -3101,16 +3113,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return formattedHost;
     });
 
-    // Clear current host selection if it's not in the filtered list
-    const currentHostId = this.generalForm.get('host')?.value;
-    if (currentHostId) {
-      const hostStillAvailable = this.hosts.find(h =>
-        h.HOSTIC === currentHostId || h.HostIC === currentHostId || h.SeqId === currentHostId
-      );
+    // Clear current host selection if it's not in the filtered list.
+    // Skip when called from onHostChange — the host was just set and must not be cleared.
+    if (!skipHostClear) {
+      const currentHostId = this.generalForm.get('host')?.value;
+      if (currentHostId) {
+        const hostStillAvailable = this.hosts.find(h =>
+          h.HOSTIC === currentHostId || h.HostIC === currentHostId || h.SeqId === currentHostId
+        );
 
-      if (!hostStillAvailable) {
-        console.log('Current host not in filtered department, clearing selection');
-        this.generalForm.get('host')?.setValue(null);
+        if (!hostStillAvailable) {
+          console.log('Current host not in filtered department, clearing selection');
+          this.generalForm.get('host')?.setValue(null);
+        }
       }
     }
   }
