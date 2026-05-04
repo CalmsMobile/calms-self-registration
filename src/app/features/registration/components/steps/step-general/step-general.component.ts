@@ -50,6 +50,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
   }
 
+  get isImageCaptureEnabled(): boolean {
+    return !!(this.settings?.ImageUploadEnabled || this.settings?.ImageUploadRequired);
+  }
+
   // Photo capture dialog
   showPhotoCaptureDialog = false;
   isCameraOn = false;
@@ -1742,7 +1746,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this.isCurrentVisitorFormValid()) {
       // If image upload is enabled, show the photo dialog before saving.
       // After the user captures/uploads/skips, performAddVisitor() will be called.
-      if (this.settings?.ImageUploadEnabled) {
+      if (this.isImageCaptureEnabled) {
         this.pendingAction = 'addVisitor';
         this.openPhotoCaptureDialog();
         return;
@@ -1887,7 +1891,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (this.settings.CountryEnabled && this.settings.CountryRequired) requiredFields.push('country');
       if (this.settings.RoomEnabled && this.settings.RoomRequired) requiredFields.push('meeting_location');
       if (this.settings.HostNameEnabled && this.settings.HostNameRequired) requiredFields.push('host');
-      if (this.settings.ImageUploadEnabled && this.settings.ImageUploadRequired) requiredFields.push('profile');
+      if (this.isImageCaptureEnabled && this.settings.ImageUploadRequired) requiredFields.push('profile');
 
       // Add UDF required fields
       if (this.udfSettings) {
@@ -2056,7 +2060,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('endDate', showStartEnd, true);
 
     // profile is handled by the photo-capture dialog — never mark it required here
-    this.setupControl('profile', this.settings.ImageUploadEnabled, false);
+    this.setupControl('profile', this.isImageCaptureEnabled, false);
 
     this.udfSettings.forEach((udf: any) => {
       if (udf.Enabled) {
@@ -2773,7 +2777,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const action = this.pendingAction;
     this.pendingAction = null;
     if (action === 'goNext') {
-      this.wizardService.navigateToNextStep();
+      // Run full validation and save before navigating.
+      // When image is required, goNext() deferred validateForm() to here so the dialog
+      // could open without being blocked by non-visitor controls (e.g. startDate/endDate).
+      const isValid = this.validateForm();
+      if (isValid) this.wizardService.navigateToNextStep();
     } else if (action === 'addVisitor') {
       this.performAddVisitor();
     }
@@ -2797,9 +2805,18 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         videoEl.play();
       }
       this.isCameraOn = true;
-    } catch {
+    } catch (err: any) {
       this.isCameraOn = false;
-      this.showError('Could not access camera. Please use "Upload from Device".');
+      const isPermissionDenied = err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError';
+      const key = isPermissionDenied ? 'registration_page_camera_permission_denied' : 'registration_page_camera_error';
+      const alert = this.getAlert(key);
+      this.showMessage({
+        severity: 'error',
+        summary: alert.summary || (isPermissionDenied ? 'Camera Access Denied' : 'Camera Error'),
+        detail: alert.detail || (isPermissionDenied
+          ? 'Camera permission was denied. Please allow camera access or use "Upload from Device".'
+          : 'Could not access camera. Please use "Upload from Device".'),
+      });
     }
   }
 
@@ -3470,28 +3487,38 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   goNext(): void {
-    // Capture whether the current form has an active visitor BEFORE validateForm() auto-saves
-    // and resets it. Used below to decide if a photo dialog is needed for a new visitor.
-    const formHadActiveVisitor = this.isMultipleVisitorMode ? this.hasFormData() : false;
+    // When image capture is required, open the photo dialog first using the same lightweight
+    // check as "Save and Add" (isCurrentVisitorFormValid). Full validateForm() runs after the
+    // dialog in executePendingAction, so non-visitor controls (startDate, endDate, etc.) cannot
+    // block the dialog from appearing.
+    if (this.isImageCaptureEnabled && this.settings?.ImageUploadRequired) {
+      if (this.isCurrentVisitorFormValid()) {
+        this.pendingAction = 'goNext';
+        this.openPhotoCaptureDialog();
+      } else {
+        const requiredFields = this.getRequiredVisitorFields().filter(f => f !== 'profile');
+        requiredFields.forEach(f => {
+          this.generalForm.get(f)?.markAsTouched();
+          this.generalForm.get(f)?.markAsDirty();
+        });
+        this.scrollToFirstError();
+        this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_visitor_fields_required') });
+      }
+      return;
+    }
 
-    // validateForm() handles markAllAsTouched, setStepValid, and toast errors internally
+    // Standard flow: full validation first, then open dialog (optional photo) or navigate.
+    const formHadActiveVisitor = this.isMultipleVisitorMode ? this.hasFormData() : false;
     const isValid = this.validateForm();
     if (!isValid) return;
 
-    // If image upload is enabled, show the photo capture dialog before proceeding.
-    if (this.settings?.ImageUploadEnabled) {
-      // In multi-visitor mode where all visitors were already saved (and photographed) via
-      // "Save and Add", the current form is blank — no new visitor to photograph. Skip the
-      // dialog and navigate directly.
+    if (this.isImageCaptureEnabled) {
+      // Image enabled but not required — skip dialog when all visitors already saved.
       if (this.isMultipleVisitorMode && this.savedVisitors.length > 0 && !formHadActiveVisitor) {
         this.wizardService.navigateToNextStep();
         return;
       }
-
       this.pendingAction = 'goNext';
-      // validateForm() auto-saves the visitor and clears profilePreview from the form before
-      // this runs. Restore the photo from savedVisitors so the dialog shows 'preview' mode
-      // instead of opening the camera again.
       if (this.isMultipleVisitorMode && !this.generalForm.get('profilePreview')?.value && this.savedVisitors.length > 0) {
         const lastVisitor = this.savedVisitors[this.savedVisitors.length - 1];
         if (lastVisitor?.profilePreview) {
