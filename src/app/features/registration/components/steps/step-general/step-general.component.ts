@@ -2681,11 +2681,21 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (file) {
       // Validate file
       if (!file.type.match('image.*')) {
-        this.showError('Only image files are allowed');
+        const alert = this.getAlert('registration_page_image_type_invalid');
+        this.showMessage({
+          severity: 'error',
+          summary: alert.summary || 'Invalid File',
+          detail: alert.detail || 'Only image files are allowed.',
+        });
         return;
       }
       if (file.size > 2 * 1024 * 1024) {
-        this.showError('Maximum file size is 2MB');
+        const alert = this.getAlert('registration_page_image_size_invalid');
+        this.showMessage({
+          severity: 'error',
+          summary: alert.summary || 'File Too Large',
+          detail: alert.detail || 'Maximum file size is 2MB.',
+        });
         return;
       }
 

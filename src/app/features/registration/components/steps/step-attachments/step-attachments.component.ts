@@ -162,7 +162,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
     const ext = '.' + file.name.split('.').pop()?.toLowerCase();
     if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(ext)) {
-      const typeMsg = this.labelService.getLabel('file_invalid_alert', 'caption') || 'Only PDF, JPG, JPEG, and PNG files are allowed.';
+      const typeMsg = this.labelService.getLabel('documents_upload_file_invalid_alert', 'caption') || 'Only PDF, JPG, JPEG, and PNG files are allowed.';
       this.messageHelper.warn(typeMsg, 4000);
       input.value = '';
       return;
@@ -170,14 +170,14 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
 
     const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
     if (nameWithoutExt.length > 50) {
-      const nameMsg = this.labelService.getLabel('file_name_invalid_alert', 'caption') || 'File name must not exceed 50 characters.';
+      const nameMsg = this.labelService.getLabel('documents_upload_file_name_invalid_alert', 'caption') || 'File name must not exceed 50 characters.';
       this.messageHelper.warn(nameMsg, 4000);
       input.value = '';
       return;
     }
 
     if (file.size > this.maxSize) {
-      const alertTemplate = this.labelService.getLabel('documents_upload_max_size_alert_message', 'caption') || `Maximum file size is {maxSize}MB. Please select a smaller file.`;
+      const alertTemplate = this.labelService.getLabel('documents_upload_max_size_alert_title', 'caption') || `Maximum file size is {maxSize}MB. Please select a smaller file.`;
       const alertDetail = alertTemplate.replace('{maxSize}', (this.maxSize / 1000000).toString());
       this.messageHelper.warn(alertDetail, 4000);
       input.value = '';
