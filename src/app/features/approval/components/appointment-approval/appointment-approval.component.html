@@ -264,10 +264,10 @@
               <div><p class="detail-label">Remarks</p><p class="detail-value">{{ appointmentData.Remarks }}</p></div>
             </article>
           }
-          @if (appointmentData?.STAFF_NAME || appointmentData?.Booked_By) {
+          @if (appointmentData?.Booked_By) {
             <article class="detail-item">
               <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M8 3h7l5 5v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M15 3v6h6"/><path d="M10 13h6M10 17h6"/></svg></div>
-              <div><p class="detail-label">Booked By</p><p class="detail-value">{{ appointmentData?.STAFF_NAME || appointmentData?.Booked_By }}</p></div>
+              <div><p class="detail-label">Booked By</p><p class="detail-value">{{ appointmentData.Booked_By }}</p></div>
             </article>
           }
         </div>

@@ -118,7 +118,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   isVisitorNotWhitelisted = false;
   shouldFilterHostByQueryParam = false; // Flag to indicate if host should be filtered for query param flow
   // Fields that are LOCKED (non-editable) in appointment flow — everything else remains editable
-  lockedFieldsInAppointmentFlow = ['startDate', 'endDate'];
+  lockedFieldsInAppointmentFlow: string[] = [];
   // Keep allowedEditableFields for backward compat with isFieldDisabled() references
   get allowedEditableFields(): string[] { return []; }
 
@@ -786,6 +786,22 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.initializeForm();
           this.setupConditionalControls();
           this.applyDefaultDateTimes();
+
+          // In appointment flow with time slots enabled, the appointmentDate is pre-filled
+          // programmatically so the date picker's ngModelChange never fires. Trigger slot
+          // loading manually here so the time slot dropdown becomes visible.
+          if (this.enableVimsApptTimeSlot && this.isAppointmentFlow) {
+            const prefilledDate = this.generalForm.get('appointmentDate')?.value;
+            // Preserve the pre-filled slot ID before onAppointmentDateSelect clears it
+            const prefilledSlotId = this.visitorAckData?.visitorData?.appTimeSlotSeqID || null;
+            if (prefilledDate) {
+              this.onAppointmentDateSelect(prefilledDate instanceof Date ? prefilledDate : new Date(prefilledDate));
+              // Restore the slot ID after slots load (onAppointmentDateSelect clears timeSlot)
+              if (prefilledSlotId) {
+                this.generalForm.get('timeSlot')?.setValue(prefilledSlotId);
+              }
+            }
+          }
         } else {
           console.log('No local settings found, loading branch data anyway');
           // Load branch data even if no local settings
@@ -1499,9 +1515,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       host: [savedData.host || (isPreFilledData ? (visitorData.hostId || null) : null) || (this.shouldHideHostControl ? this.defaultHostId : null) || (this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery ? this.wizardService.hostCodeFromQuery : null)],
       startDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.startDate || '')],
       endDate: [isPreFilledData ? (this.parseDate(visitorData.endTime) || '') : (savedData.endDate || '')],
-      department: [savedData.department || null],
-      appointmentDate: [savedData.appointmentDate || null],
-      timeSlot: [savedData.timeSlot || null],
+      department: [savedData.department || (isPreFilledData ? (visitorData.departmentId || null) : null)],
+      appointmentDate: [savedData.appointmentDate || (isPreFilledData ? (this.parseDate(visitorData.startTime) || null) : null)],
+      timeSlot: [savedData.timeSlot || (isPreFilledData ? (visitorData.appTimeSlotSeqID || null) : null)],
       facilityBooking: [savedData.facilityBooking || false],
       facilityPurpose: [savedData.facilityPurpose || null],
       facilitySelection: [savedData.facilitySelection || null],
@@ -2040,7 +2056,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('department', this.settings.HostDepartmentEnabled, this.settings.HostDepartmentRequired);
     this.setupControl('floor', this.settings.FloorEnabled, this.settings.FloorRequired);
     this.setupControl('purpose', this.settings.PurposeEnabled, this.settings.PurposeRequired);
-    this.setupControl('visitor_company', this.settings.CompanyEnabled, this.settings.CompanyRequired, this.settings.CompanyMinLength);
+    this.setupControl('visitor_company', this.settings.CompanyEnabled, this.settings.CompanyRequired);
+    if (this.settings.CompanyEnabled && this.settings.CompanyMinLength > 0) {
+      const companyCtrl = this.generalForm.get('visitor_company');
+      companyCtrl?.addValidators(this.companyMinLengthValidator(this.settings.CompanyMinLength));
+      companyCtrl?.updateValueAndValidity();
+    }
     this.setupControl('vehicle_number', this.settings.VehicleNumberEnabled, this.settings.VehicleNumberRequired, this.settings.VehicleNumberMinLength);
     this.setupControl('vehicle_brand', this.settings.VehicleBrandModelEnabled, this.settings.VehicleBrandModelRequired);
     this.setupControl('vehicle_model', this.settings.VehicleBrandModelEnabled, this.settings.VehicleBrandModelRequired);
@@ -2120,33 +2141,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
     }
 
-    // In appointment flow, lock all fields pre-filled by the admin/host.
-    // startDate/endDate are always locked; all other pre-filled fields are locked only when they
-    // carry a value (empty fields can still be filled in by the visitor).
-    // host is intentionally NOT locked — visitor should be able to change it.
-    if (this.isAppointmentFlow) {
-      this.lockedFieldsInAppointmentFlow.forEach(controlName => {
-        const control = this.generalForm.get(controlName);
-        if (control) {
-          control.disable({ emitEvent: false });
-        }
-      });
-
-      const conditionallyLockedFields = [
-        'title', 'fullName', 'email', 'phone',
-        'visitor_id_type', 'visitor_id', 'id_expired_date',
-        'gender', 'visitor_company',
-        'vehicle_number', 'vehicle_brand', 'vehicle_model', 'vehicle_color',
-        'visitor_address', 'country', 'remarks',
-        'department', 'meeting_location', 'floor', 'purpose'
-      ];
-      conditionallyLockedFields.forEach(controlName => {
-        const control = this.generalForm.get(controlName);
-        if (control && control.value) {
-          control.disable({ emitEvent: false });
-        }
-      });
-    }
   }
 
   getUdfOptions(apptUDFSetSeqId: number): any[] {
@@ -2160,6 +2154,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   getUDFOptions(udfId: number): any[] {
     return this.getUdfOptions(udfId);
+  }
+
+  private companyMinLengthValidator(minLength: number): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const val = control.value;
+      if (!val) return null;
+      const name = typeof val === 'object' ? (val.visitor_comp_name || '') : String(val);
+      return name.length >= minLength ? null : { minlength: { requiredLength: minLength, actualLength: name.length } };
+    };
   }
 
   private setupControl(
@@ -3164,10 +3167,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.wizardService.SafetyBriefVideoViewed = visitor.SafetyBriefVideoViewed;
         }
 
-        console.log('Safety briefing data from visitor:', {
-          SafetyBriefing_Date: visitor.SafetyBriefing_Date,
-          SafetyBriefVideoViewed: visitor.SafetyBriefVideoViewed
-        });
+        // Auto-fill all visitor fields from the returning visitor record
+        this.applyVisitorToForm(visitor);
       },
       error: () => { }
     });

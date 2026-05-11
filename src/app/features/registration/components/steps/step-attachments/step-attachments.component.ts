@@ -158,11 +158,10 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     const file = input.files?.[0];
     if (!file) return;
 
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
+    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'];
     const ext = '.' + file.name.split('.').pop()?.toLowerCase();
-    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(ext)) {
-      const typeMsg = this.labelService.getLabel('documents_upload_file_invalid_alert', 'caption') || 'Only PDF, JPG, JPEG, and PNG files are allowed.';
+    if (!allowedExtensions.includes(ext)) {
+      const typeMsg = this.labelService.getLabel('documents_upload_file_invalid_alert', 'caption') || 'Only PDF, JPG, JPEG, PNG, DOC, and DOCX files are allowed.';
       this.messageHelper.warn(typeMsg, 4000);
       input.value = '';
       return;

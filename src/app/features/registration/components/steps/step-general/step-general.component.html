@@ -98,7 +98,7 @@
           <button type="button" class="field-clear-btn" (click)="clearField('fullName')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
         </div>
-        @if (isFieldInvalidRequired('fullName')) {
+        @if (isFieldRequired('fullName')) {
         <small class="error-message">{{ getRequiredError('full_name') }}</small>
         }
         @if (isFieldMinLengthError('fullName')) {
@@ -211,7 +211,7 @@
           <button type="button" class="field-clear-btn" (click)="clearField('phone')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
         </div>
-        @if (isFieldInvalidRequired('phone')) {
+        @if (isFieldRequired('phone')) {
         <small class="error-message">{{ getRequiredError('contact_number') }}</small>
         }
         @if (isFieldMinLengthError('phone')) {
@@ -259,7 +259,7 @@
           <button type="button" class="field-clear-btn" (click)="clearField('vehicle_number')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
         </div>
-        @if (isFieldInvalidRequired('vehicle_number')) {
+        @if (isFieldRequired('vehicle_number')) {
         <small class="error-message">{{ getRequiredError('vehicle_number') }}</small>
         }
         @if (isFieldMinLengthError('vehicle_number')) {
@@ -290,7 +290,7 @@
           <button type="button" class="field-clear-btn ac-clear-btn" (click)="clearField('visitor_company')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
         </div>
-        @if (isFieldInvalidRequired('visitor_company')) {
+        @if (isFieldRequired('visitor_company')) {
         <small class="error-message">{{ getRequiredError('company_name') }}</small>
         }
         @if (isFieldMinLengthError('visitor_company')) {
@@ -984,7 +984,7 @@
           <button type="button" class="field-clear-btn" (click)="clearField('fullName')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
         </div>
-        @if (isFieldInvalidRequired('fullName')) {
+        @if (isFieldRequired('fullName')) {
         <small class="m-error">{{ getRequiredError('full_name') }}</small>
         }
         @if (isFieldMinLengthError('fullName')) {
@@ -1080,7 +1080,7 @@
           <button type="button" class="field-clear-btn" (click)="clearField('phone')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
         </div>
-        @if (isFieldInvalidRequired('phone')) {
+        @if (isFieldRequired('phone')) {
         <small class="m-error">{{ getRequiredError('contact_number') }}</small>
         }
         @if (isFieldMinLengthError('phone')) {
@@ -1122,7 +1122,7 @@
           <button type="button" class="field-clear-btn" (click)="clearField('vehicle_number')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
         </div>
-        @if (isFieldInvalidRequired('vehicle_number')) {
+        @if (isFieldRequired('vehicle_number')) {
         <small class="m-error">{{ getRequiredError('vehicle_number') }}</small>
         }
         @if (isFieldMinLengthError('vehicle_number')) {
@@ -1150,7 +1150,7 @@
           <button type="button" class="field-clear-btn ac-clear-btn" (click)="clearField('visitor_company')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
         </div>
-        @if (isFieldInvalidRequired('visitor_company')) {
+        @if (isFieldRequired('visitor_company')) {
         <small class="m-error">{{ getRequiredError('company_name') }}</small>
         }
         @if (isFieldMinLengthError('visitor_company')) {
