@@ -1,4 +1,4 @@
-﻿import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -2623,12 +2623,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   getMinLengthError(min: number): string {
     const template = this.labelService.getLabel('registration_page_error_min_length', 'caption') || 'Minimum {MinLength} characters required';
-    return template.replace('{MinLength}',String(min));
+    return template.replace(/\{udf\.MinLength\}|\{MinLength\}/gi, String(min));
   }
 
   getMaxLengthError(max: number): string {
     const template = this.labelService.getLabel('registration_page_error_max_length', 'caption') || 'Maximum {MaxLength} characters allowed';
-    return template.replace('{MaxLength}', String(max));
+    return template.replace(/\{udf\.MaxLength\}|\{MaxLength\}/gi, String(max));
   }
 
   /**
