@@ -48,7 +48,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
   companyTitle = '';
 
   get formattedPageTitle(): { first: string; rest: string } {
-    const text = this.labelService.getLabel('documents_upload_title', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
+    const text = this.labelService.getLabel('documents_upload_page_title', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
     const i = text.indexOf(' ');
     return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
   }
@@ -177,7 +177,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     }
 
     if (file.size > this.maxSize) {
-      const alertTemplate = this.labelService.getLabel('documents_upload_max_size_alert_title', 'caption') || `Maximum file size is {maxSize}MB. Please select a smaller file.`;
+      const alertTemplate = this.labelService.getLabel('documents_upload_max_size_alert_message', 'caption') || `Maximum file size is {maxSize} MB. Please select a smaller file.`;
       const alertDetail = alertTemplate.replace('{maxSize}', (this.maxSize / 1000000).toString());
       this.messageHelper.warn(alertDetail, 4000);
       input.value = '';

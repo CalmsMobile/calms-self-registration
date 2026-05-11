@@ -1759,7 +1759,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         currentForm.get(field)?.markAsTouched();
       });
       this.scrollToFirstError();
-      this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_visitor_fields_required') });
+      this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_fields_required') });
     }
   }
 
@@ -2261,7 +2261,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     // Block if time slot is enabled but no slots available for selected date
-    if (this.enableVimsApptTimeSlot && this.timeSlotsLoaded && this.timeSlotList.length === 0) {
+   /*  if (this.enableVimsApptTimeSlot && this.timeSlotsLoaded && this.timeSlotList.length === 0) {
       const dateField = this.enableFBInSelfReg ? 'sharedDate' : 'appointmentDate';
       const hasDate = !!this.generalForm.get(dateField)?.value;
       if (hasDate) {
@@ -2273,7 +2273,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.wizardService.setStepValid(false);
         return false;
       }
-    }
+    } */
 
     // Validate end datetime is after start datetime
     this.checkEndBeforeStart();
@@ -2620,12 +2620,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   getMinLengthError(min: number): string {
     const template = this.labelService.getLabel('registration_page_error_min_length', 'caption') || 'Minimum {MinLength} characters required';
-    return template.replace('{udf.MinLength}', String(min)).replace('{MinLength}', String(min));
+    return template.replace('{MinLength}',String(min));
   }
 
   getMaxLengthError(max: number): string {
     const template = this.labelService.getLabel('registration_page_error_max_length', 'caption') || 'Maximum {MaxLength} characters allowed';
-    return template.replace('{udf.MaxLength}', String(max)).replace('{MaxLength}', String(max));
+    return template.replace('{MaxLength}', String(max));
   }
 
   /**
@@ -2684,7 +2684,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         const alert = this.getAlert('registration_page_image_type_invalid');
         this.showMessage({
           severity: 'error',
-          summary: alert.summary || 'Invalid File',
           detail: alert.detail || 'Only image files are allowed.',
         });
         return;
@@ -2693,7 +2692,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         const alert = this.getAlert('registration_page_image_size_invalid');
         this.showMessage({
           severity: 'error',
-          summary: alert.summary || 'File Too Large',
           detail: alert.detail || 'Maximum file size is 2MB.',
         });
         return;
@@ -3307,10 +3305,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   selectTimeSlot(slot: any): void {
     if (slot.availableCount === 0) {
-      const alert = this.getAlert('registration_page_slot_fully_booked');
       this.showMessage({
         severity: 'warn',
-        detail: alert.detail || this.labelService.getLabel('registration_page_slot_fully_booked_alert', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
+        detail: this.labelService.getLabel('registration_page_slot_fully_booked_alert', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
         life: 5000
       });
       return;
@@ -3327,10 +3324,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
     const slot = this.timeSlotList.find(s => s.Code === code);
     if (slot && slot.availableCount === 0) {
-      const alert = this.getAlert('registration_page_slot_fully_booked');
       this.showMessage({
         severity: 'warn',
-        detail: alert.detail || this.labelService.getLabel('registration_page_slot_fully_booked_alert', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
+        detail: this.labelService.getLabel('registration_page_slot_fully_booked_alert', 'caption') || 'This appointment slot is fully booked or currently unavailable.',
         life: 5000
       });
       setTimeout(() => this.generalForm.get('timeSlot')?.setValue(null));
@@ -3527,7 +3523,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.generalForm.get(f)?.markAsDirty();
         });
         this.scrollToFirstError();
-        this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_visitor_fields_required') });
+        this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_fields_required') });
       }
       return;
     }

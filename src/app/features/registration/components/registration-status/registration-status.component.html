@@ -155,7 +155,7 @@
           </div>
           <div class="qr-caption">{{ 'thankyou_page_scan_qr_code' | translate }}</div>
           @if ((registrationData.isDynamicQR || registrationData.IsDynamicQR) && registrationData.DynamicQrIntervalSec) {
-            <div class="qr-countdown">{{ 'thankyou_page_refresh_note' | translate }}: <span class="countdown-timer">{{ qrCountdown }}s</span></div>
+            <div class="qr-countdown">{{ 'thankyou_page_qr_refresh_note' | translate }}: <span class="countdown-timer">{{ qrCountdown }}s</span></div>
           }
         </div>
       }
@@ -220,7 +220,7 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.3 4h2.2A5 5 0 1 0 12 7V4l4 3-4 3V7Z"/></svg>
         }
       </span>
-      {{ 'thankyou_page_submit_again' | translate }}
+      {{ 'thankyou_page_button_submit_again' | translate }}
     </button>
   }
 </div>

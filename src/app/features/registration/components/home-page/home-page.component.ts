@@ -944,7 +944,7 @@ export class HomePageComponent implements AfterViewChecked {
           if (!hasSettingDetails || !hasTable2Data) {
             this.isLoading = false;
             this.messageHelper.error(
-              this.labelService.getLabel('home_page_category_config_missing_alert_description') || 'This category is not configured to proceed. Please contact admin.',
+              this.labelService.getLabel('home_page_category_config_missing_alert') || 'This category is not configured to proceed. Please contact admin.',
               5000
             );
             // Reset selected category and terms state
@@ -987,7 +987,7 @@ export class HomePageComponent implements AfterViewChecked {
           console.error('Error loading category settings:', error);
           this.isLoading = false;
           this.messageHelper.error(
-            this.labelService.getLabel('home_page_category_config_missing_alert_description') || 'This category is not configured to proceed. Please contact admin.',
+            this.labelService.getLabel('home_page_category_config_missing_alert') || 'This category is not configured to proceed. Please contact admin.',
             5000
           );
         }

@@ -1874,7 +1874,6 @@
         <span class="sd-icon"><i class="pi pi-clock"></i></span>
         <div>
           <h3 class="sd-title">{{ 'registration_page_schedule_dialog_title' | translate }}</h3>
-          <p class="sd-subtitle">{{ 'registration_page_schedule_dialog_subtitle' | translate }}</p>
         </div>
       </div>
       <button type="button" class="sd-close" (click)="closeScheduleDialog()">
@@ -1985,10 +1984,7 @@
 
   <ng-template pTemplate="footer">
     <div class="sd-footer">
-      <span class="sd-summary">
-        {{ 'registration_page_schedule_event' | translate }}: {{ formatScheduleDate(scheduleStartDate) }} – {{ formatScheduleDate(scheduleEndDate) }},
-        {{ 'registration_page_schedule_from' | translate }} {{ formatTime12(scheduleStartTime) }} – {{ formatTime12(scheduleEndTime) }}
-      </span>
+    
       <div class="sd-footer-btns">
         <button type="button" class="sd-btn-cancel" (click)="closeScheduleDialog()">{{ 'registration_page_button_cancel' | translate }}</button>
         <button type="button" class="sd-btn-schedule"
