@@ -39,8 +39,7 @@ export class LabelService {
           settingType: item.SettingType
         };
 
-        // Store screen-prefixed key (e.g. 'home_page_branch') — resolves collisions
-
+        
         const screenPrefix = item.ScreenName.toLowerCase().replace(/\s+/g, '_');
         labelConfig[`${screenPrefix}_${titleKey}`] = value;
 
