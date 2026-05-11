@@ -1443,7 +1443,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const savedData = this.wizardService.getFormData('general') || {};
 
     // Check if multiple visitor mode is enabled (check both flat and nested path)
-    this.isMultipleVisitorMode = this.settings?.MultipleVisitorEnabled || this.settings?.Visitor?.[0]?.MultipleVisitorEnabled || false;
+    this.isMultipleVisitorMode = this.settings?.MultipleVisitorEnabled ?? this.settings?.Visitor?.[0]?.MultipleVisitorEnabled ?? false;
 
     // Get visitor acknowledgment data if available
     const visitorData = this.visitorAckData?.visitorData;

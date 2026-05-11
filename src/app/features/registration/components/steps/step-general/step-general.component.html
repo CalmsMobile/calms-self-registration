@@ -876,11 +876,16 @@
           <i class="pi pi-user-plus"></i>
         </button>
         }
+        <button type="button" class="btn btn-continue" (click)="goNext()" >
+          {{ 'registration_page_button_save_and_continue' | translate }}
+          <i class="pi pi-arrow-right"></i>
+        </button>
+      } @else {
+        <button type="button" class="btn btn-continue" (click)="goNext()" >
+          {{ 'registration_page_button_save_and_continue' | translate }}
+          <i class="pi pi-arrow-right"></i>
+        </button>
       }
-      <button type="button" class="btn btn-continue" (click)="goNext()" >
-        {{ 'registration_page_button_save_and_continue' | translate }}
-        <i class="pi pi-arrow-right"></i>
-      </button>
     </div>
   </section>
 
@@ -1642,10 +1647,14 @@
             {{ 'registration_page_button_save_and_add' | translate }} <i class="pi pi-user-plus"></i>
           </button>
           }
+          <button type="button" class="m-btn m-btn-continue" (click)="goNext()" >
+            {{ 'registration_page_button_save_and_continue' | translate }} <i class="pi pi-arrow-right"></i>
+          </button>
+        } @else {
+          <button type="button" class="m-btn m-btn-continue" (click)="goNext()" >
+            {{ 'registration_page_button_save_and_continue' | translate }} <i class="pi pi-arrow-right"></i>
+          </button>
         }
-        <button type="button" class="m-btn m-btn-continue" (click)="goNext()" >
-          {{ 'registration_page_button_save_and_continue' | translate }} <i class="pi pi-arrow-right"></i>
-        </button>
       </div>
       <p class="step-copyright">&copy; {{ currentYear }} All rights reserved. v{{ appVersion }}</p>
     </div>

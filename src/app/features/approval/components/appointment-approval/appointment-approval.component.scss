@@ -224,6 +224,14 @@
       background: #9aa0a6;
     }
   }
+
+  &.cancelled {
+    color: #ff2f63;
+
+    &::before {
+      background: #ff2f63;
+    }
+  }
 }
 
 .title {
@@ -624,6 +632,11 @@
     color: #ff2f63;
     border: 3px solid #ff2f63;
   }
+
+  &.rejected {
+    background: #ff2f63;
+    color: #fff;
+  }
 }
 
 .step-avatar-img {
@@ -653,6 +666,12 @@
     background: #ffe5ea;
     color: #ff2f63;
     border: 1px solid #ffc0d0;
+  }
+
+  &.pill-rejected {
+    background: #fde0e6;
+    color: #cc0033;
+    border: 1px solid #f5b3c1;
   }
 }
 

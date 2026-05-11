@@ -268,7 +268,8 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     return name.trim().split(/\s+/).map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
   }
 
-  getStepStatusKey(step: any): 'approved' | 'progress' | 'pending' {
+  getStepStatusKey(step: any): 'approved' | 'progress' | 'pending' | 'rejected' {
+    if (this.isCancelled) return 'rejected';
     // Table5 fields: ApprovedBy (name), ApprovedOn (date)
     if (step.ApprovedBy && step.ApprovedOn) return 'approved';
     if (step.ApprovedBy && !step.ApprovedOn) return 'progress';
@@ -276,6 +277,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     const s = (step.ApprovalStatus || step.Status || step.Approval_Status || '').toLowerCase();
     if (s === 'approved' || s === 'a') return 'approved';
     if (s === 'in progress' || s === 'inprogress' || s === 'i') return 'progress';
+    if (s === 'cancelled' || s === 'rejected') return 'rejected';
     return 'pending';
   }
 
@@ -292,11 +294,16 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     const key = this.getStepStatusKey(step);
     if (key === 'approved') return 'Approved';
     if (key === 'progress') return 'In Progress';
+    if (key === 'rejected') return 'Rejected';
     return 'Pending';
   }
 
   get isExpired(): boolean {
     return this.appointmentData?.IsExpired === 1 || this.appointmentData?.IsExpired === true;
+  }
+
+  get isCancelled(): boolean {
+    return (this.appointmentData?.Approval_Status || '').toLowerCase() === 'cancelled';
   }
 
   get showApprove(): boolean {
