@@ -315,4 +315,14 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/GetVisitorNDABySeqId`, { "SEQ_ID": seqId });
   }
 
+  GetHostMultipleAptAtSameTime(startDateTime: string, endDateTime: string, refBranchSeqId: string, hostId: any) {
+    const loParam = {
+      "START_DATE": startDateTime,
+      "END_DATE": endDateTime,
+      "RefBranchSeqId": refBranchSeqId,
+      "hostID": hostId
+    };
+    return this.apiBase.post(`${this.baseUrl}/GetHostMultipleAptAtSameTime`, loParam);
+  }
+
 }
