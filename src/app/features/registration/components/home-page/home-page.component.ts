@@ -602,7 +602,8 @@ export class HomePageComponent implements AfterViewChecked {
             TermsnCondTemplate: tcSettings.TermsnCond || '',
             SearchExistingVisitor: tcSettings.SearchExistingVisitor ?? false,
             EnableWhitelistValidation: tcSettings.EnableWhitelistValidation ?? false,
-            AptEndTime: tcSettings.AptEndTime || ''
+            AptEndTime: tcSettings.AptEndTime || '',
+            AllowMultipleBooking: tcSettings.AllowMultipleBooking ?? false
           });
          
           // Check AllowOnlywithVC flag

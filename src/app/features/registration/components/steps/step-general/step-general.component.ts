@@ -171,6 +171,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Pending action after photo capture dialog resolves
   pendingAction: 'goNext' | 'addVisitor' | null = null;
 
+  // Multiple booking check
+  multipleBookingConflict = false;
+  isCheckingMultipleBooking = false;
+
   private destroy$ = new Subject<void>();
   private _activeMessageKeys = new Set<string>();
 
@@ -180,13 +184,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this._activeMessageKeys.has(key)) return;
     this._activeMessageKeys.add(key);
     const life = msg.life ?? 3000;
-    
+
     if (msg.summary) {
       this.messageHelper.showWithTitle(msg.severity as any, msg.summary, msg.detail || '', life);
     } else {
       this.messageHelper.show(msg.severity as any, msg.detail || '', life);
     }
-    
+
     setTimeout(() => this._activeMessageKeys.delete(key), life + 200);
   }
 
@@ -240,6 +244,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.settings.SearchExistingVisitor = selfRegSettings.SearchExistingVisitor ?? this.settings.SearchExistingVisitor;
         this.settings.EnableWhitelistValidation = selfRegSettings.EnableWhitelistValidation ?? this.settings.EnableWhitelistValidation;
         this.settings.AptEndTime = selfRegSettings.AptEndTime ?? this.settings.AptEndTime ?? '';
+        this.settings.AllowMultipleBooking = selfRegSettings.AllowMultipleBooking ?? this.settings.AllowMultipleBooking;
       }
       this.isSingaporePDPARequired = settings?.IsSingaporePDPARequired === true;
       this.loadUdfSettings();
@@ -263,6 +268,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
       if (sr.AptEndTime !== undefined) {
         this.settings = { ...this.settings, AptEndTime: sr.AptEndTime };
+      }
+      if (sr.AllowMultipleBooking !== undefined) {
+        this.settings = { ...this.settings, AllowMultipleBooking: sr.AllowMultipleBooking };
       }
     });
 
@@ -513,6 +521,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.timeSlotList = [];
     this.timeSlotStartTime = null;
     this.timeSlotEndTime = null;
+    this.multipleBookingConflict = false;
     this.generalForm.patchValue({ timeSlot: '' });
   }
 
@@ -1760,14 +1769,16 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const currentForm = this.getCurrentVisitorForm();
 
     if (this.isCurrentVisitorFormValid()) {
-      // If image upload is enabled, show the photo dialog before saving.
-      // After the user captures/uploads/skips, performAddVisitor() will be called.
-      if (this.isImageCaptureEnabled) {
-        this.pendingAction = 'addVisitor';
-        this.openPhotoCaptureDialog();
-        return;
-      }
-      this.performAddVisitor();
+      this.checkAndNavigate(() => {
+        // If image upload is enabled, show the photo dialog before saving.
+        // After the user captures/uploads/skips, performAddVisitor() will be called.
+        if (this.isImageCaptureEnabled) {
+          this.pendingAction = 'addVisitor';
+          this.openPhotoCaptureDialog();
+          return;
+        }
+        this.performAddVisitor();
+      });
     } else {
       // Mark only visitor-related required fields as touched to show validation errors
       const requiredFields = this.getRequiredVisitorFields();
@@ -2264,19 +2275,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     // Block if time slot is enabled but no slots available for selected date
-   /*  if (this.enableVimsApptTimeSlot && this.timeSlotsLoaded && this.timeSlotList.length === 0) {
-      const dateField = this.enableFBInSelfReg ? 'sharedDate' : 'appointmentDate';
-      const hasDate = !!this.generalForm.get(dateField)?.value;
-      if (hasDate) {
-        this.showMessage({
-          severity: 'warn',
-          summary: this.labelService.getLabel('registration_page_no_slots_available_alert', 'caption') || 'No Slots Available',
-          detail: this.labelService.getLabel('registration_page_no_time_slots_available', 'caption') || 'No time slots available for the selected date'
-        });
-        this.wizardService.setStepValid(false);
-        return false;
-      }
-    } */
+    /*  if (this.enableVimsApptTimeSlot && this.timeSlotsLoaded && this.timeSlotList.length === 0) {
+       const dateField = this.enableFBInSelfReg ? 'sharedDate' : 'appointmentDate';
+       const hasDate = !!this.generalForm.get(dateField)?.value;
+       if (hasDate) {
+         this.showMessage({
+           severity: 'warn',
+           summary: this.labelService.getLabel('registration_page_no_slots_available_alert', 'caption') || 'No Slots Available',
+           detail: this.labelService.getLabel('registration_page_no_time_slots_available', 'caption') || 'No time slots available for the selected date'
+         });
+         this.wizardService.setStepValid(false);
+         return false;
+       }
+     } */
 
     // Validate end datetime is after start datetime
     this.checkEndBeforeStart();
@@ -2639,13 +2650,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!translateKey || !fallback) {
       return fallback;
     }
-    
+
     const translation = this.labelService.getLabel(translateKey.toLowerCase().trim(), 'caption');
     // If translation exists (not the formatted-key fallback), return it
     if (translation && translation !== this.formatKeyAsReadable(translateKey)) {
       return translation;
     }
-    
+
     // Otherwise, return the fallback
     return fallback;
   }
@@ -2658,13 +2669,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!translateKey || !fallback) {
       return fallback;
     }
-    
+
     const translation = this.labelService.getLabel(translateKey.toLowerCase().trim(), 'placeholder');
     // If translation exists (not the formatted-key fallback), return it
     if (translation && translation !== this.formatKeyAsReadable(translateKey)) {
       return translation;
     }
-    
+
     // Otherwise, return the fallback
     return fallback;
   }
@@ -2792,7 +2803,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // When image is required, goNext() deferred validateForm() to here so the dialog
       // could open without being blocked by non-visitor controls (e.g. startDate/endDate).
       const isValid = this.validateForm();
-      if (isValid) this.wizardService.navigateToNextStep();
+      if (isValid) this.checkAndNavigate(() => this.wizardService.navigateToNextStep());
     } else if (action === 'addVisitor') {
       this.performAddVisitor();
     }
@@ -3342,6 +3353,92 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
   }
 
+  private getBookingDateTimes(): { start: Date | null; end: Date | null } {
+    // VIMS time-slot flow: appointmentDate + slot start/end times
+    const apptDate: Date | null = this.generalForm.get('appointmentDate')?.value ?? null;
+    if (apptDate) {
+      let start: Date | null = null;
+      let end: Date | null = null;
+      if (this.timeSlotStartTime) {
+        const [h, m] = this.timeSlotStartTime.split(':').map(Number);
+        start = new Date(apptDate);
+        start.setHours(h, m, 0, 0);
+      }
+      if (this.timeSlotEndTime) {
+        const [h, m] = this.timeSlotEndTime.split(':').map(Number);
+        end = new Date(apptDate);
+        end.setHours(h, m, 0, 0);
+      }
+      if (start) return { start, end };
+    }
+    // Schedule dialog flow: startDate + endDate
+    const startDate: Date | null = this.generalForm.get('startDate')?.value ?? null;
+    const endDate: Date | null = this.generalForm.get('endDate')?.value ?? null;
+    return {
+      start: startDate ? new Date(startDate) : null,
+      end: endDate ? new Date(endDate) : null
+    };
+  }
+
+  private checkAndNavigate(onSuccess: () => void): void {
+    const { start, end } = this.getBookingDateTimes();
+    if (!start) {
+      console.log('No start time, skipping multiple booking check');
+      onSuccess();
+      return;
+    }
+
+    const branchId = this.wizardService.currentBranchID;
+    const hostId = this.generalForm.get('host')?.value;
+    if (!branchId) {
+      console.log('No branchId, skipping multiple booking check');
+      onSuccess();
+      return;
+    }
+
+    const fmt = (d: Date) => {
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+    };
+
+    console.log(`Checking multiple bookings for host ${hostId} at branch ${branchId} from ${fmt(start)} to ${end ? fmt(end) : fmt(start)}`);
+
+    this.isCheckingMultipleBooking = true;
+    this.multipleBookingConflict = false;
+    this.api.GetHostMultipleAptAtSameTime(fmt(start), end ? fmt(end) : fmt(start), branchId, hostId).subscribe({
+      next: (res: any) => {
+        this.isCheckingMultipleBooking = false;
+        const resObj = Array.isArray(res) ? res[0] : res;
+        console.log('Multiple booking API response:', resObj);
+        
+        // The API might return { Table: [...] } directly or { Data: { Table: [...] } }
+        const rawCode = resObj?.Table?.[0]?.Code ?? resObj?.Data?.Table?.[0]?.Code;
+        const code = Number(rawCode);
+        
+        if (code === 20) {
+          this.multipleBookingConflict = true;
+          this.showMessage({
+            severity: 'error',
+            detail: this.labelService.getLabel('registration_page_appointment_already_exist_alert', 'caption') || 'A booking already exists for the selected date and time.',
+            life: 5000
+          });
+        } else if (code === 10) {
+          this.multipleBookingConflict = false;
+          onSuccess();
+        } else {
+          console.warn('Unknown code from GetHostMultipleAptAtSameTime:', rawCode);
+          this.multipleBookingConflict = false;
+          onSuccess();
+        }
+      },
+      error: (err) => {
+        console.error('Error checking multiple booking:', err);
+        this.isCheckingMultipleBooking = false;
+        onSuccess();
+      }
+    });
+  }
+
   validateVisitorIdAndExpiry(): { isValid: boolean; errorMessage?: string } {
     const visitorId = this.generalForm.get('visitor_id')?.value?.trim() || '';
     const idTypeCode = this.generalForm.get('visitor_id_type')?.value;
@@ -3515,8 +3612,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // block the dialog from appearing.
     if (this.isImageCaptureEnabled && this.settings?.ImageUploadRequired) {
       if (this.isCurrentVisitorFormValid()) {
-        this.pendingAction = 'goNext';
-        this.openPhotoCaptureDialog();
+        // Run booking check BEFORE opening the photo dialog
+        this.checkAndNavigate(() => {
+          this.pendingAction = 'goNext';
+          this.openPhotoCaptureDialog();
+        });
       } else {
         const requiredFields = this.getRequiredVisitorFields().filter(f => f !== 'profile');
         requiredFields.forEach(f => {
@@ -3537,7 +3637,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this.isImageCaptureEnabled) {
       // Image enabled but not required — skip dialog when all visitors already saved.
       if (this.isMultipleVisitorMode && this.savedVisitors.length > 0 && !formHadActiveVisitor) {
-        this.wizardService.navigateToNextStep();
+        this.checkAndNavigate(() => this.wizardService.navigateToNextStep());
         return;
       }
       this.pendingAction = 'goNext';
@@ -3552,7 +3652,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.wizardService.navigateToNextStep();
+    this.checkAndNavigate(() => this.wizardService.navigateToNextStep());
   }
 
 }

@@ -508,9 +508,9 @@
                 </div>
               </div>
               @if (doc.FilePath || doc.FileUrl || doc.DocPath) {
-                <a class="row-dl-btn" [href]="doc.FilePath || doc.FileUrl || doc.DocPath" target="_blank" download aria-label="Download file">
+                <button type="button" class="row-dl-btn" (click)="downloadDoc(doc)" aria-label="Download file">
                   <svg viewBox="0 0 24 24"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg>
-                </a>
+                </button>
               }
             </article>
           }
