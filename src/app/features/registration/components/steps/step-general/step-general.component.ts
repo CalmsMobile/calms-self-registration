@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
+﻿import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -94,6 +94,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   scheduleEndTime = '10:00';
   scheduleActiveField: 'start' | 'end' = 'start';
   selectedIdTypeData: any = null;
+  visitorIdDynamicMaxLength: number | null = null;
   gbShowMemberId = false;
   showTime = true;
   masterData: any = {};
@@ -1261,11 +1262,127 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   get isVisitorIdMaxLengthRestricted(): boolean {
-    return this.isSingaporePDPARequired;
+    return this.visitorIdMaxLength < 50;
   }
 
   get visitorIdMaxLength(): number {
-    return this.isSingaporePDPARequired ? 4 : 50; // Default max length when not restricted
+    if (this.isSingaporePDPARequired) {
+      return 4;
+    }
+    return this.visitorIdDynamicMaxLength || 50;
+  }
+
+  isVisitorIdMandatory(): boolean {
+    const selectedIdType = this.generalForm?.get('visitor_id_type')?.value;
+    const hasSelectedIdType = selectedIdType !== null && selectedIdType !== undefined && String(selectedIdType).trim() !== '';
+    return !!(this.settings?.IdProofEnabled && (this.settings?.IdProofRequired || hasSelectedIdType));
+  }
+
+  private toPositiveInt(value: any): number | null {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return null;
+    }
+    return Math.trunc(parsed);
+  }
+
+  private getIdTypeByCode(idTypeCode: any): any | null {
+    if (idTypeCode === null || idTypeCode === undefined || idTypeCode === '') {
+      return null;
+    }
+
+    const normalizedCode = String(idTypeCode).trim();
+    return this.idTypeList.find((item: any) =>
+      String(item.ID_TYPECODE ?? item.SEQ_ID ?? '').trim() === normalizedCode
+    ) || null;
+  }
+
+  private isIdTypeMarkedAsDefault(idType: any): boolean {
+    const isDefault = idType?.IS_DEFAULT;
+    const isDefaultType = idType?.IS_DEFAULT_TYPE;
+    return isDefault === true || isDefault === 1 || String(isDefault).toLowerCase() === 'true' ||
+      isDefaultType === true || isDefaultType === 1 || String(isDefaultType).toLowerCase() === 'true';
+  }
+
+  private getDefaultIdTypeCode(): string | null {
+    const defaultType = this.idTypeList.find((idType: any) => this.isIdTypeMarkedAsDefault(idType));
+    if (!defaultType) {
+      return null;
+    }
+    const code = defaultType.ID_TYPECODE ?? defaultType.SEQ_ID;
+    return code !== undefined && code !== null && String(code).trim() !== '' ? String(code) : null;
+  }
+
+  private getIdTypeInputLabel(inputType: string | undefined): string {
+    return String(inputType || '').toUpperCase() === 'N' ? 'numeric' : 'alphanumeric';
+  }
+
+  private buildVisitorIdTypeValidator(idTypeData: any): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const rawValue = control.value;
+      const value = rawValue == null ? '' : String(rawValue).trim();
+      if (!value) {
+        return null;
+      }
+
+      const inputType = String(idTypeData?.INPUT_TYPE || '').toUpperCase();
+      const minLength = this.toPositiveInt(idTypeData?.INPUT_MIN_LENGTH) || 0;
+      const typeLabel = this.getIdTypeInputLabel(inputType);
+
+      if (inputType === 'N' && !/^\d+$/.test(value)) {
+        return { idTypeInvalid: { type: typeLabel, minLength } };
+      }
+
+      if (inputType === 'AN' && !/^[A-Za-z0-9]+$/.test(value)) {
+        return { idTypeInvalid: { type: typeLabel, minLength } };
+      }
+
+      if (minLength > 0 && value.length < minLength) {
+        return { idTypeInvalid: { type: typeLabel, minLength } };
+      }
+
+      return null;
+    };
+  }
+
+  private applyVisitorIdValidationRules(idTypeData: any | null = null): void {
+    const visitorIdControl = this.generalForm.get('visitor_id');
+    if (!visitorIdControl) {
+      return;
+    }
+
+    const validators: ValidatorFn[] = [];
+
+    const hasSelectedIdType = !!(this.settings?.IdTypeEnabled && idTypeData);
+    if (this.settings?.IdProofEnabled && (this.settings?.IdProofRequired || hasSelectedIdType)) {
+      validators.push(Validators.required);
+    }
+
+    let maxLength: number | null = this.isSingaporePDPARequired ? 4 : null;
+
+    if (!this.isSingaporePDPARequired && idTypeData) {
+      const configuredMax = this.toPositiveInt(idTypeData.INPUT_MAX_LENGTH);
+      if (configuredMax) {
+        maxLength = configuredMax;
+      }
+    }
+
+    if (maxLength) {
+      validators.push(Validators.maxLength(maxLength));
+    }
+
+    if (!this.isSingaporePDPARequired && this.settings?.IdTypeEnabled && idTypeData) {
+      validators.push(this.buildVisitorIdTypeValidator(idTypeData));
+    } else if (!this.isSingaporePDPARequired) {
+      const fallbackMinLength = this.toPositiveInt(this.settings?.IdProofMinLength);
+      if (fallbackMinLength) {
+        validators.push(Validators.minLength(fallbackMinLength));
+      }
+    }
+
+    this.visitorIdDynamicMaxLength = maxLength;
+    visitorIdControl.setValidators(validators);
+    visitorIdControl.updateValueAndValidity();
   }
 
   private processPageSettings(pageSettings: any[]): void {
@@ -1455,7 +1572,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     let resolvedIdType: string | null = isPreFilledData
       ? (visitorData.idType || savedData.visitor_id_type || null)
       : (savedData.visitor_id_type || null);
-    if (isPreFilledData && resolvedIdType && this.idTypeList.length > 0) {
+    if (!resolvedIdType && this.settings?.IdTypeEnabled) {
+      resolvedIdType = this.getDefaultIdTypeCode();
+    }
+    if (resolvedIdType && this.idTypeList.length > 0) {
       const codeMatch = this.idTypeList.find((t: any) => t.ID_TYPECODE === resolvedIdType);
       if (!codeMatch) {
         const descMatch = this.idTypeList.find((t: any) =>
@@ -1894,12 +2014,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Helper method to get required visitor fields based on settings
   private getRequiredVisitorFields(): string[] {
     const requiredFields = [];
+    const selectedIdType = this.getCurrentVisitorForm()?.get('visitor_id_type')?.value;
+    const hasSelectedIdType = selectedIdType !== null && selectedIdType !== undefined && String(selectedIdType).trim() !== '';
 
     if (this.settings) {
       if (this.settings.NameEnabled && this.settings.NameRequired) requiredFields.push('fullName');
       if (this.settings.EmailEnabled && this.settings.EmailRequired) requiredFields.push('email');
       if (this.settings.ContactNumberEnabled && this.settings.ContactNumberRequired) requiredFields.push('phone');
-      if (this.settings.IdProofEnabled && this.settings.IdProofRequired) requiredFields.push('visitor_id');
+      if (this.settings.IdProofEnabled && (this.settings.IdProofRequired || hasSelectedIdType)) requiredFields.push('visitor_id');
       if (this.settings.GenderEnabled && this.settings.GenderRequired) requiredFields.push('gender');
       if (this.settings.CompanyEnabled && this.settings.CompanyRequired) requiredFields.push('visitor_company');
       if (this.settings.VehicleNumberEnabled && this.settings.VehicleNumberRequired) requiredFields.push('vehicle_number');
@@ -2047,9 +2169,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
     this.setupControl('phone', this.settings.ContactNumberEnabled, this.settings.ContactNumberRequired, this.settings.ContactNumberMinLength);
 
-    // Setup visitor_id with PDPA max length restriction if enabled
-    const visitorIdMaxLength = this.isSingaporePDPARequired ? 4 : undefined;
-    this.setupControl('visitor_id', this.settings.IdProofEnabled, this.settings.IdProofRequired, undefined, visitorIdMaxLength);
+    // Setup visitor_id rules from selected ID type (min/type/max) or fallback settings.
+    this.setupControl('visitor_id', this.settings.IdProofEnabled, this.settings.IdProofRequired);
     this.setupControl('visitor_id_type', this.settings.IdTypeEnabled, this.settings.IdTypeRequired);
 
     this.setupControl('gender', this.settings.GenderEnabled, this.settings.GenderRequired);
@@ -2139,6 +2260,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (savedExpiryDate && this.showIdExpiryField) {
         this.generalForm.get('id_expired_date')?.setValue(savedExpiryDate, { emitEvent: false });
       }
+    } else {
+      this.selectedIdTypeData = null;
+      this.applyVisitorIdValidationRules(null);
     }
 
   }
@@ -2598,6 +2722,28 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const control = this.generalForm.get(field);
     if (!control || !control.enabled) return false;
     return control.hasError('maxlength') && (control.dirty || control.touched);
+  }
+
+  isVisitorIdTypeValidationError(): boolean {
+    const control = this.generalForm.get('visitor_id');
+    if (!control || !control.enabled) {
+      return false;
+    }
+    const hasBeenInteracted = control.dirty || control.touched;
+    return control.hasError('idTypeInvalid') && hasBeenInteracted;
+  }
+
+  getVisitorIdTypeValidationError(): string {
+    const template = this.labelService.getLabel('registration_page_id_validation_error', 'caption') ||
+      'Identity number must be {type} and at least {MinLength} characters';
+    const error = this.generalForm.get('visitor_id')?.getError('idTypeInvalid') || {};
+    const inputType = this.selectedIdTypeData?.INPUT_TYPE;
+    const typeText = error.type || this.getIdTypeInputLabel(inputType);
+    const minLength = error.minLength ?? this.toPositiveInt(this.selectedIdTypeData?.INPUT_MIN_LENGTH) ?? 0;
+
+    return template
+      .replace(/\{type\}/gi, String(typeText))
+      .replace(/\{MinLength\}/gi, String(minLength));
   }
 
   getRequiredError(fieldKey: string): string {
@@ -3242,41 +3388,33 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   onIdTypeChange(event: any, visitorIndex?: number): void {
-    const idTypeCode = event.value;
+    const idTypeCode = event?.value;
     console.log('ID Type changed:', idTypeCode);
 
+    const selectedIdType = this.getIdTypeByCode(idTypeCode);
+    this.selectedIdTypeData = selectedIdType;
+    this.applyVisitorIdValidationRules(selectedIdType);
+
     if (this.settings?.IdExpiredEnabled) {
-      if (idTypeCode) {
-        const selectedIdType = this.idTypeList.find(item => item.ID_TYPECODE === idTypeCode);
-        if (selectedIdType) {
-          this.selectedIdTypeData = selectedIdType;
+      if (selectedIdType?.ID_EXPIRED_DATE === true) {
+        // Show ID expired date field
+        this.showIdExpiryField = true;
 
-          if (selectedIdType.ID_EXPIRED_DATE === true) {
-            // Show ID expired date field
-            this.showIdExpiryField = true;
-
-            // Set validation for expiry date if required
-            if (this.settings?.IdExpiredRequired) {
-              this.generalForm.get('id_expired_date')?.setValidators([Validators.required]);
-            }
-          } else {
-            // Hide ID expired date field and clear value
-            this.showIdExpiryField = false;
-            this.generalForm.get('id_expired_date')?.setValue(null);
-            this.generalForm.get('id_expired_date')?.clearValidators();
-          }
-
-          // Update validators
-          this.generalForm.get('id_expired_date')?.updateValueAndValidity();
+        // Set validation for expiry date if required
+        if (this.settings?.IdExpiredRequired) {
+          this.generalForm.get('id_expired_date')?.setValidators([Validators.required]);
+        } else {
+          this.generalForm.get('id_expired_date')?.clearValidators();
         }
       } else {
         // No ID type selected, hide expiry field
         this.showIdExpiryField = false;
-        this.selectedIdTypeData = null;
         this.generalForm.get('id_expired_date')?.setValue(null);
         this.generalForm.get('id_expired_date')?.clearValidators();
-        this.generalForm.get('id_expired_date')?.updateValueAndValidity();
       }
+
+      // Update validators
+      this.generalForm.get('id_expired_date')?.updateValueAndValidity();
     }
   }
 
@@ -3347,6 +3485,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const idTypeCode = this.generalForm.get('visitor_id_type')?.value;
     const expiryDate = this.generalForm.get('id_expired_date')?.value;
     const endDate = this.generalForm.get('endDate')?.value;
+    const visitorIdCtrl = this.generalForm.get('visitor_id');
 
     // ID Proof validation
     if (this.settings?.IdProofEnabled) {
@@ -3376,35 +3515,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           return { isValid: false, errorMessage: 'Invalid Singapore PDPA format' };
         }
       } else {
-        // ID Type specific validation
-        if (visitorId !== '' && this.settings?.IdTypeEnabled && idTypeCode && this.selectedIdTypeData) {
-          const idTypeData = this.selectedIdTypeData;
+        if (visitorIdCtrl?.hasError('idTypeInvalid')) {
+          return { isValid: false, errorMessage: this.getVisitorIdTypeValidationError() };
+        }
 
-          // Check input type (Numeric or Alphanumeric)
-          if (idTypeData.INPUT_TYPE === 'N') {
-            if (isNaN(Number(visitorId))) {
-              return { isValid: false, errorMessage: 'Visitor NRIC/Passport should be number only' };
-            }
-          }
+        if (visitorIdCtrl?.hasError('maxlength')) {
+          return {
+            isValid: false,
+            errorMessage: this.getMaxLengthError(this.visitorIdMaxLength)
+          };
+        }
 
-          // Check maximum length
-          if (visitorId.length > idTypeData.INPUT_MAX_LENGTH) {
-            const typeText = idTypeData.INPUT_TYPE === 'N' ? 'digits' : 'characters';
-            return {
-              isValid: false,
-              errorMessage: `Visitor NRIC/Passport cannot contain more than ${idTypeData.INPUT_MAX_LENGTH} ${typeText}`
-            };
-          }
-
-          // Check minimum length
-          if (visitorId.length < idTypeData.INPUT_MIN_LENGTH) {
-            const typeText = idTypeData.INPUT_TYPE === 'N' ? 'digits' : 'characters';
-            return {
-              isValid: false,
-              errorMessage: `Visitor NRIC/Passport should contain atleast ${idTypeData.INPUT_MIN_LENGTH} ${typeText}`
-            };
-          }
-        } else {
+        // Generic minimum length validation when no ID type is selected
+        if (visitorId !== '' && (!this.settings?.IdTypeEnabled || !idTypeCode || !this.selectedIdTypeData)) {
           // Generic minimum length validation when no ID type is selected
           if (visitorId && this.settings?.IdProofMinLength &&
             parseInt(this.settings.IdProofMinLength) > 0 &&
