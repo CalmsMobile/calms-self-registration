@@ -1,44 +1,172 @@
 @if (!isLoading) {
-  <div class="step-container">
-    <h2>{{ 'questionnaire' | translate }}</h2>
-    <div class="step-content">
-      <form [formGroup]="questionnaireForm" class="questionnaire-form">
-        @for (question of questions; track question) {
-          <div class="question-item">
-            <div class="question-header">
+  <main class="page" [formGroup]="questionnaireForm">
+    <header class="page-header flex-header">
+      <div class="header-center">
+        <img [src]="logo" alt="Logo" class="logo" />
+        <h1>{{ companyTitle }}</h1>
+      </div>
+      <app-language-selector class="step-lang"></app-language-selector>
+    </header>
+
+    <section class="content">
+      <div class="left">
+        <h2>
+          <span class="accent">{{ formattedPageTitle.first }}</span>
+          <span>{{ formattedPageTitle.rest }}</span>
+        </h2>
+        <p>{{ 'questionnaires_instruction' | translate }}</p>
+        <div class="illustration">
+          <img [src]="illustrationUrl" alt="Questionnaire illustration" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="right">
+        <div class="questions" #questionsScroll>
+          @for (question of questions; track question.QuestionariesSeqId; let i = $index) {
+            <div class="question-card">
               @if (question.ShortName) {
-                <h3>{{ question.ShortName }}</h3>
+                <p class="question-label">{{ question.ShortName }}</p>
               }
               <p class="question-text">{{ question.Description }}</p>
-            </div>
-            <div class="answer-options">
-              <div class="p-field-radiobutton">
-                @if (getQuestionControl(question.QuestionariesSeqId)) {
-                  <p-radioButton
-                    name="q{{question.QuestionariesSeqId}}" value="1"
-                    [formControl]="getQuestionControl(question.QuestionariesSeqId)" label="Yes"
-                    [inputId]="'yes_' + question.QuestionariesSeqId" />
+              <div class="options">
+                @if (isMultipleAnswerQuestion(question)) {
+                  @for (option of getQuestionOptions(question); track option.value) {
+                    <button
+                      type="button"
+                      class="option"
+                      [class.selected]="isCheckboxSelected(question.QuestionariesSeqId, option.value)"
+                      (click)="toggleCheckbox(question.QuestionariesSeqId, option.value)"
+                    >{{ option.label }}</button>
+                  }
+                } @else {
+                  @for (option of getQuestionOptions(question); track option.value) {
+                    <button
+                      type="button"
+                      class="option"
+                      [class.selected]="getQuestionControl(question.QuestionariesSeqId).value === option.value"
+                      (click)="selectRadioOption(question.QuestionariesSeqId, option.value)"
+                    >{{ option.label }}</button>
+                  }
                 }
-                <label [for]="'yes_' + question.QuestionariesSeqId" class="ml-2">Yes</label>
               </div>
-              <div class="p-field-radiobutton">
-                @if (getQuestionControl(question.QuestionariesSeqId)) {
-                  <p-radioButton
-                    name="q{{question.QuestionariesSeqId}}" value="0"
-                    [formControl]="getQuestionControl(question.QuestionariesSeqId)" label="No"
-                    [inputId]="'no_' + question.QuestionariesSeqId" />
-                }
-                <label [for]="'no_' + question.QuestionariesSeqId" class="ml-2">No</label>
-              </div>
-              @if (getQuestionError(question.QuestionariesSeqId)) {
-                <small class="p-error">
-                  Your answer doesn't match the required response
-                </small>
-              }
             </div>
+          }
+
+          <div class="actions">
+            <div class="actions-left">
+              <button class="btn grey" type="button" (click)="goBack()">
+                <span class="icon-left">&larr;</span> {{ 'questionnaires_button_back' | translate }}
+              </button>
+            </div>
+            <button class="btn yellow" type="button" [disabled]="!hasAllAnswered" (click)="mobileNext()">
+              {{ 'questionnaires_button_continue' | translate }} <span class="icon-right">&rarr;</span>
+            </button>
           </div>
+        </div>
+      </div>
+    </section>
+  </main>
+}
+
+<!-- Mobile Layout -->
+@if (!isLoading) {
+<div class="mobile-page">
+  <!-- Header -->
+  <header class="m-header">
+    <div class="m-header-spacer"></div>
+    <div class="m-header-center">
+      <img [src]="logo" alt="Logo" class="m-logo" />
+      <span class="m-company">{{ companyTitle }}</span>
+    </div>
+    <app-language-selector class="m-header-lang"></app-language-selector>
+  </header>
+
+  <!-- Title -->
+  <div class="m-title-wrap">
+    <h1 class="m-title">
+      <span class="m-accent">{{ formattedPageTitle.first }}</span>
+      <span>{{ formattedPageTitle.rest }}</span>
+    </h1>
+    <p class="m-subtitle">{{ 'questionnaires_instruction' | translate }}</p>
+  </div>
+
+  <!-- Questions -->
+  <div class="m-questions" [formGroup]="questionnaireForm">
+    @for (question of questions; track question.QuestionariesSeqId; let i = $index) {
+    <div class="m-question-card">
+      @if (question.ShortName) {
+      <p class="m-question-label">{{ question.ShortName }}</p>
+      }
+      <p class="m-question-text">{{ question.Description }}</p>
+      <div class="m-options">
+        @if (isMultipleAnswerQuestion(question)) {
+          @for (option of getQuestionOptions(question); track option.value) {
+          <button type="button" class="m-option"
+            [class.selected]="isCheckboxSelected(question.QuestionariesSeqId, option.value)"
+            (click)="toggleCheckbox(question.QuestionariesSeqId, option.value)">
+            {{ option.label }}
+          </button>
+          }
+        } @else {
+          @for (option of getQuestionOptions(question); track option.value) {
+          <button type="button" class="m-option"
+            [class.selected]="getQuestionControl(question.QuestionariesSeqId).value === option.value"
+            (click)="selectRadioOption(question.QuestionariesSeqId, option.value)">
+            {{ option.label }}
+          </button>
+          }
         }
-      </form>
+      </div>
+    </div>
+    }
+
+    <!-- Actions -->
+    <div class="m-actions">
+      <div class="m-actions-row">
+        <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
+          <span>&#8592;</span> {{ 'questionnaires_button_back' | translate }}
+        </button>
+      </div>
+      <button class="m-btn m-btn-yellow" type="button" [disabled]="!hasAllAnswered" (click)="mobileNext()">
+        {{ 'questionnaires_button_continue' | translate }} <span>&#8594;</span>
+      </button>
     </div>
   </div>
+</div>
 }
+
+<!-- Incorrect answer modal -->
+<div class="modal" [class.active]="modalType === 'incorrect'">
+  <div class="modal-overlay" (click)="closeModal()"></div>
+  <div class="modal-card compact" role="dialog" aria-modal="true">
+    <div class="modal-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="bi bi-person-video2" viewBox="0 0 16 16">
+        <path d="M10 9.05a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
+        <path d="M2 1a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2zM1 3a1 1 0 0 1 1-1h2v2H1zm4 10V2h9a1 1 0 0 1 1 1v9c0 .285-.12.543-.31.725C14.15 11.494 12.822 10 10 10c-3.037 0-4.345 1.73-4.798 3zm-4-2h3v2H2a1 1 0 0 1-1-1zm3-1H1V8h3zm0-3H1V5h3z"/>
+      </svg>
+    </div>
+    <p class="modal-text compact">{{ alertMessage }}</p>
+    <div class="modal-actions compact">
+      <button class="modal-btn danger" type="button" (click)="rewatchSafetyBrief()">{{ 'questionnaires_rewatch_safety_brief' | translate }}</button>
+      <button class="modal-link" type="button" (click)="reviewAnswers()">{{ 'questionnaires_review_my_answer' | translate }}</button>
+    </div>
+  </div>
+</div>
+
+<!-- Required answers modal -->
+<div class="modal" [class.active]="modalType === 'required'">
+  <div class="modal-overlay" (click)="closeModal()"></div>
+  <div class="modal-card compact" role="dialog" aria-modal="true">
+    <div class="modal-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" class="bi bi-toggle-on" viewBox="0 0 16 16">
+        <path d="M5 3a5 5 0 0 0 0 10h6a5 5 0 0 0 0-10zm6 9a4 4 0 1 1 0-8 4 4 0 0 1 0 8"/>
+      </svg>
+    </div>
+    <p class="modal-text compact">{{ alertMessage }}</p>
+    <div class="modal-actions compact">
+      <button class="modal-btn danger" type="button" (click)="reviewAnswers()">{{ 'questionnaires_review_my_answer' | translate }}</button>
+    </div>
+  </div>
+</div>

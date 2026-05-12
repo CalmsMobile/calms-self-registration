@@ -2,8 +2,13 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
-import { Subject } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { SharedService } from '../../../../../shared/shared.service';
+import { LabelService } from '../../../../../core/services/label.service';
+import { MessageHelperService } from '../../../../../core/services/message-helper.service';
+import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
+import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
+import { Subject, takeUntil } from 'rxjs';
+import { HttpClient, HttpEventType } from '@angular/common/http';
 import { environment } from '../../../../../../environments/environment';
 
 interface DocumentType {
@@ -11,6 +16,8 @@ interface DocumentType {
   Caption: string;
   Mandatory: boolean;
   RefAddVisitorSeqId: number;
+  FileBase64?: string;
+  FileName?: string;
 }
 
 interface Attachment {
@@ -18,12 +25,13 @@ interface Attachment {
   caption: string;
   trackerId?: string;
   uploaded?: boolean;
+  uploadProgress?: number;
 }
 
 @Component({
   selector: 'app-step-attachments',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe, LanguageSelectorComponent],
   templateUrl: './step-attachments.component.html',
   styleUrl: './step-attachments.component.scss'
 })
@@ -33,22 +41,37 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
 
   attachments: { [key: string]: Attachment } = {};
   maxSize = 2000000;
-  acceptedTypes = '.pdf,image/*';
+  acceptedTypes = '.pdf,.jpg,.jpeg,.png';
 
   attachmentUploadEnabled = false;
+  logo = 'assets/logo.png';
+  companyTitle = '';
+
+  get formattedPageTitle(): { first: string; rest: string } {
+    const text = this.labelService.getLabel('documents_upload_page_title', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
+    const i = text.indexOf(' ');
+    return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
+  }
 
   private destroy$ = new Subject<void>();
 
   constructor(
     private wizardService: WizardService,
-    private http: HttpClient
+    private http: HttpClient,
+    private sharedService: SharedService,
+    private messageHelper: MessageHelperService,
+    private labelService: LabelService
   ) {
-    this.wizardService.onValidationRequest.subscribe(() => {
-      this.validateStep();
-    });
+    this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
+    this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
   }
 
   ngOnInit(): void {
+    // Subscribe here (not constructor) so takeUntil properly cleans it up on destroy
+    this.wizardService.onValidationRequest
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.validateStep());
+
     const mainSettings = this.wizardService.getSettings();
     this.attachmentUploadEnabled = mainSettings?.AttachmentUploadEnabled ?? false;
 
@@ -65,7 +88,12 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.saveFormData();
+    // Only save if the wizard session is still active.
+    // clearSessionStorage() sets currentBranchID to '' — if empty, submission already
+    // cleared everything and we must NOT write stale data back into formDataStore.
+    if (this.wizardService.currentBranchID) {
+      this.saveFormData();
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -130,8 +158,28 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     const file = input.files?.[0];
     if (!file) return;
 
+    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'];
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!allowedExtensions.includes(ext)) {
+      const typeMsg = this.labelService.getLabel('documents_upload_file_invalid_alert', 'caption') || 'Only PDF, JPG, JPEG, PNG, DOC, and DOCX files are allowed.';
+      this.messageHelper.warn(typeMsg, 4000);
+      input.value = '';
+      return;
+    }
+
+    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+    if (nameWithoutExt.length > 50) {
+      const nameMsg = this.labelService.getLabel('documents_upload_file_name_invalid_alert', 'caption') || 'File name must not exceed 50 characters.';
+      this.messageHelper.warn(nameMsg, 4000);
+      input.value = '';
+      return;
+    }
+
     if (file.size > this.maxSize) {
-      console.error('File size exceeds limit');
+      const alertTemplate = this.labelService.getLabel('documents_upload_max_size_alert_message', 'caption') || `Maximum file size is {maxSize} MB. Please select a smaller file.`;
+      const alertDetail = alertTemplate.replace('{maxSize}', (this.maxSize / 1000000).toString());
+      this.messageHelper.warn(alertDetail, 4000);
+      input.value = '';
       return;
     }
 
@@ -161,13 +209,21 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
 
     const uploadUrl = `${environment.proURL}Handler/ImageChunkHandler.ashx?op=profile&ac=upload&nologin=1&isResize=1`;
 
-    this.http.post(uploadUrl, formData).subscribe({
-      next: () => {
-        this.attachments[docId].uploaded = true;
-        this.saveFormData();
+    this.attachments[docId].uploadProgress = 0;
+
+    this.http.post(uploadUrl, formData, { reportProgress: true, observe: 'events' }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (event: any) => {
+        if (event.type === HttpEventType.UploadProgress && event.total) {
+          this.attachments[docId].uploadProgress = Math.round(100 * event.loaded / event.total);
+        } else if (event.type === HttpEventType.Response) {
+          this.attachments[docId].uploadProgress = 100;
+          this.attachments[docId].uploaded = true;
+          this.saveFormData();
+        }
       },
       error: () => {
         this.attachments[docId].uploaded = false;
+        this.attachments[docId].uploadProgress = undefined;
       }
     });
   }
@@ -187,6 +243,14 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     if (isValid) this.saveFormData();
   }
 
+  getMaxSizeLabel(): string {
+    const template = this.labelService.getLabel('documents_upload_max_size_label', 'caption');
+    if (template) {
+      return template.replace('{maxSize}', (this.maxSize / 1000000).toString());
+    }
+    return `Max size: ${this.maxSize / 1000000}MB (.pdf, images)`;
+  }
+
   goBack(): void {
     this.saveFormData();
     const prev = this.wizardService.getCurrentStepIndex() - 1;
@@ -195,12 +259,30 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
 
   skipStep(): void {
     this.saveFormData();
-    this.wizardService.navigateToNextStep();
+    this.wizardService.skipToNextStep();
+  }
+
+  get hasMandatoryDocuments(): boolean {
+    return this.attachmentUploadEnabled && this.documentTypes.some(d => d.Mandatory);
+  }
+
+  get allMandatoryUploaded(): boolean {
+    if (!this.attachmentUploadEnabled) return true;
+    return this.documentTypes
+      .filter(d => d.Mandatory)
+      .every(d => {
+        const att = this.attachments[d.VisitorAttachSeqId];
+        return att?.file !== null && att?.uploaded === true;
+      });
   }
 
   proceedToNext(): void {
     this.validateStep();
     this.saveFormData();
     this.wizardService.navigateToNextStep();
+  }
+
+  getDownloadUrl(filePath: string): string {
+    return `${environment.proURL}${filePath.replace(/\\/g, '/')}`;
   }
 }

@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 
-import { MenuItem, MessageService } from 'primeng/api';
+import { MenuItem} from 'primeng/api';
 
 // PrimeNG Component Imports
 import { CardModule } from 'primeng/card';
@@ -18,6 +18,8 @@ import { LabelService } from '../../../../core/services/label.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { SharedService } from '../../../../shared/shared.service';
+import { getSortedSteps } from '../../../../core/models/step-config.model';
+import { LanguageSelectorComponent } from '../../../../shared/components/language-selector/language-selector.component';
 
 @Component({
   selector: 'app-wizard-container',
@@ -30,7 +32,8 @@ import { SharedService } from '../../../../shared/shared.service';
     RouterOutlet,
     RouterLink,
     ProgressBarModule,
-    TranslatePipe
+    TranslatePipe,
+    LanguageSelectorComponent
   ],
   templateUrl: './wizard-container.component.html',
   styleUrls: ['./wizard-container.component.scss']
@@ -47,11 +50,13 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
   showWizardNav = true;
 
   /** Routes that manage their own header + navigation */
-  private readonly ownLayoutRoutes = ['attachments', 'prohibited-items'];
+  private readonly ownLayoutRoutes = ['attachments', 'prohibited-items', 'general-info', 'questionnaire', 'nda-agreement', 'safety-brief'];
   /** Routes that manage their own nav only (keep shared header) */
-  private readonly ownNavRoutes = ['general-info'];
+  private readonly ownNavRoutes: string[] = [];
 
   private destroy$ = new Subject<void>();
+  /** True when the wizard was reached via a page refresh — triggers home redirect in ngOnInit. */
+  private isRefreshRedirect = false;
 
   constructor(
     private wizardService: WizardService,
@@ -61,6 +66,14 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     private languageService: LanguageService,
     private sharedService: SharedService
   ) {
+    // Detect browser refresh or direct URL access: isNavigatedFromHome is an in-memory
+    // flag that is never persisted to sessionStorage, so it is always false after a reload.
+    // We cannot navigate inside the constructor — defer to ngOnInit.
+    if (!this.wizardService.isNavigatedFromHome) {
+      this.isRefreshRedirect = true;
+      return;
+    }
+
     this.sharedService.currentTitle.subscribe(t => { this.title = t; });
     this.sharedService.currentLogo.subscribe(l => { this.logo = l; });
     this.showSharedLayout = !this.ownLayoutRoutes.some(r => this.router.url.includes(r));
@@ -92,6 +105,13 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // If this is a refresh/direct-URL load, redirect to home page and stop.
+    if (this.isRefreshRedirect) {
+      const qs = this.wizardService.originalQueryString || sessionStorage.getItem('originalQueryString') || '';
+      this.router.navigateByUrl('/' + qs);
+      return;
+    }
+
     // Subscribe to step change requests from child step components
     this.wizardService.onStepChangeRequest
       .pipe(takeUntil(this.destroy$))
@@ -99,11 +119,30 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
         this.navigateToStep(step, step < this.wizardService.getCurrentStepIndex());
       });
 
-    // Subscribe to language changes
+    // Subscribe to skip requests (bypasses validation)
+    this.wizardService.onSkipRequest
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(step => {
+        this.navigateToStep(step, true);
+      });
+
+    // Subscribe to submission requests from child components
+    this.wizardService.onSubmitRequest
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.submitRegistration();
+      });
+
+    // Subscribe to language changes — reload page settings and update step labels
     this.languageService.currentLanguage$
       .pipe(takeUntil(this.destroy$))
       .subscribe(language => {
         if (language) {
+          this.labelService.loadLabels(
+            this.wizardService.currentBranchID,
+            language.LanguageId,
+            this.wizardService.refCode || undefined
+          );
           this.updateStepLabels();
         }
       });
@@ -125,15 +164,29 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
       this.wizardService.setPageSettings(pageSettings);
     });*/
 
-    this.api.GetEnabledAppointmentUDFCtrlData(this.wizardService.currentBranchID)
-      .subscribe({
-        next: (udfSettings: any) => {
-          this.wizardService.setUdfSettings(udfSettings);
-        },
-        error: (error) => {
-          console.error('Error loading UDF settings:', error);
-        }
-      });
+    // forkJoin({
+    //   existing: this.api.GetEnabledAppointmentUDFCtrlData(this.wizardService.currentBranchID),
+    //   mock: this.api.GetUDFDetails(this.wizardService.currentBranchID)
+    // }).subscribe({
+    //   next: ({ existing, mock }: any) => {
+    //     const merged = {
+    //       Table: [...(existing?.Table || []), ...(mock?.Table || [])],
+    //       Table1: [...(existing?.Table1 || []), ...(mock?.Table1 || [])]
+    //     };
+    //     this.wizardService.setUdfSettings(merged);
+    //   },
+    //   error: (error) => {
+    //     console.error('Error loading UDF settings:', error);
+    //   }
+    // });
+    this.api.GetUDFDetails(this.wizardService.currentBranchID).subscribe({
+      next: (data: any) => {
+        this.wizardService.setUdfSettings(data);
+      },
+      error: (error) => {
+        console.error('Error loading UDF settings:', error);
+      }
+    });
   }
 
   onStepChange(event: any): void {
@@ -156,6 +209,53 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     console.log('navigateToStep called with:', stepIndex, 'skipValidation:', skipValidation);
     const currentStep = this.wizardService.getCurrentStepIndex();
     console.log('Current wizard step:', currentStep);
+
+    // Check if this step should be auto-skipped (e.g., safety brief)
+    const stepRoute = this.getStepRoute(stepIndex);
+    if (this.wizardService.shouldSkipSafetyBrief(stepRoute)) {
+      console.log('Auto-skipping step:', stepRoute);
+      const isGoingBackward = stepIndex < currentStep;
+      if (isGoingBackward) {
+        // When going backward past safety brief, go to the step before it
+        const prevStepIndex = stepIndex - 1;
+        if (prevStepIndex >= 0) {
+          this.navigateToStep(prevStepIndex, true);
+        }
+      } else {
+        // Going forward: mark step as valid and skip ahead
+        this.wizardService.setStepValid(true);
+        this.completedSteps[stepIndex] = true;
+        const nextStepIndex = stepIndex + 1;
+        if (nextStepIndex < this.items.length) {
+          this.navigateToStep(nextStepIndex, true);
+        } else {
+          this.submitRegistration();
+        }
+      }
+      return;
+    }
+
+    // Check if questionnaire step should be auto-skipped (no questions configured)
+    if (this.wizardService.shouldSkipQuestionnaire(stepRoute)) {
+      console.log('Auto-skipping questionnaire step (no questions)');
+      const isGoingBackward = stepIndex < currentStep;
+      if (isGoingBackward) {
+        const prevStepIndex = stepIndex - 1;
+        if (prevStepIndex >= 0) {
+          this.navigateToStep(prevStepIndex, true);
+        }
+      } else {
+        this.wizardService.setStepValid(true);
+        this.completedSteps[stepIndex] = true;
+        const nextStepIndex = stepIndex + 1;
+        if (nextStepIndex < this.items.length) {
+          this.navigateToStep(nextStepIndex, true);
+        } else {
+          this.submitRegistration();
+        }
+      }
+      return;
+    }
 
     // For forward navigation (next step), allow if it's just one step ahead
     const isForwardToNextStep = stepIndex === currentStep + 1 && !skipValidation;
@@ -268,7 +368,9 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
 
         // Get form data in VisitorAck format from wizard service
         const visitorAckData = this.wizardService.getVisitorAckData();
-
+        const startDate = visitorAckData.StartDateTime;
+        const endDate = visitorAckData.EndDateTime;
+        
         console.log('=== SUBMISSION DEBUG ===');
         console.log('Submitting visitor registration:', visitorAckData);
         console.log('VisitorsList length:', visitorAckData.VisitorsList?.length);
@@ -277,21 +379,31 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
         console.log('========================');
 
         // Call the new VisitorAckSave API
-        this.api.VisitorAckSave(visitorAckData)
+        const catCodeEnc = this.wizardService.refCatCode || undefined;
+        this.api.VisitorAckSave(visitorAckData, catCodeEnc)
           .subscribe({
             next: (response: any) => {
               this.isLoading = false;
 
               console.log('Registration successful:', response);
 
-              // Extract data from Table array (api service returns unwrapped data)
+              // api-base.service unwraps response[0].Data, so response = { Table: [...] }
               const responseData = response?.Table?.[0];
               const isAutoApproved = responseData?.AutoApprove === 1 || responseData?.AutoApprove === true;
-              const isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1;
+              const isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1 || responseData?.IsDynamicQR === 'true';
+              const dynamicQrIntervalSec = responseData?.DynamicQrIntervalSec ? Number(responseData.DynamicQrIntervalSec) : 0;
+              const approvalStatus: string = responseData?.Approval_Status || (isAutoApproved ? 'Approved' : 'Pending');
 
-              // Get branch info before clearing session storage
+              // Get branch info and start-mode BEFORE clearing session storage
               const branchName = this.wizardService.currentBranchName;
               const branchID = this.wizardService.currentBranchID;
+              const summary = this.wizardService.buildRegistrationSummary();
+              const startMode = this.wizardService.appointmentCode
+                ? 'ac'
+                : this.wizardService.refCode ? 'bc' : 'plain';
+              const savedRefCode = this.wizardService.refCode;
+              const savedRefCatCode = this.wizardService.refCatCode;
+              const savedHcParam = this.wizardService.hcParam;
 
               // Clear session storage after successful submission
               this.wizardService.clearSessionStorage();
@@ -300,15 +412,30 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               this.router.navigate(['/registration-status'], {
                 state: {
                   registrationData: {
+                    status: isAutoApproved ? 'success' : 'pending',
                     isAutoApproved: isAutoApproved,
-                    visitorId: responseData?.SEQ_ID || response?.VisitorId || response?.ID,
-                    qrCodeData: responseData?.HexCode || response?.QRCodeData,
-                    visitorName: visitorAckData.FullName,
-                    registrationNumber: responseData?.appointment_group_id || response?.RegistrationNumber || response?.RefNo,
-                    isDynamicQR: isDynamicQR
+                    approvalStatus: approvalStatus,
+                    visitorId: responseData?.SEQ_ID?.toString() || '',
+                    qrCodeData: responseData?.HexCode || '',
+                    isDynamicQR: isDynamicQR,
+                    DynamicQrIntervalSec: dynamicQrIntervalSec,
+                    registrationId: responseData?.appointment_group_id || responseData?.SEQ_ID?.toString() || '',
+                    visitorName: summary.visitorName,
+                    email: summary.email,
+                    visitFrom: startDate,
+                    visitTo: endDate,
+                    meetingWith: summary.meetingWith,
+                    meetingLocation: summary.meetingLocation,
+                    visitType: summary.visitType,
+                    visitPurpose: summary.visitPurpose,
+                    branch: summary.branch,
                   },
                   branchName: branchName,
-                  branchID: branchID
+                  branchID: branchID,
+                  startMode: startMode,
+                  refCode: savedRefCode,
+                  refCatCode: savedRefCatCode,
+                  hcParam: savedHcParam
                 }
               });
             },
@@ -322,10 +449,30 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               console.error('Form data at error:', this.wizardService.getFormData());
               console.error('======================');
 
-              // Important: Don't clear questionnaire state on error
-              // The wizard service should preserve form data for retry
+              const branchName = this.wizardService.currentBranchName;
+              const branchID = this.wizardService.currentBranchID;
+              const summary = this.wizardService.buildRegistrationSummary();
+              const errStartMode = this.wizardService.appointmentCode
+                ? 'ac'
+                : this.wizardService.refCode ? 'bc' : 'plain';
+              const errRefCode = this.wizardService.refCode;
+              const errRefCatCode = this.wizardService.refCatCode;
+              const errHcParam = this.wizardService.hcParam;
 
-              // You might want to show an error message here
+              this.router.navigate(['/registration-status'], {
+                state: {
+                  registrationData: {
+                    status: 'error',
+                    ...summary
+                  },
+                  branchName: branchName,
+                  branchID: branchID,
+                  startMode: errStartMode,
+                  refCode: errRefCode,
+                  refCatCode: errRefCatCode,
+                  hcParam: errHcParam
+                }
+              });
             }
           });
       } else {
@@ -349,29 +496,20 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
   }
 
   private initializeSteps(): void {
-    this.items = [
-      { label: 'General Info', command: (event) => this.navigateToStep(0) },
-      { label: 'Attachments', command: (event) => this.navigateToStep(1) },
-      { label: 'Prohibited Items', command: (event) => this.navigateToStep(2) },
-      { label: 'Safety Brief', command: (event) => this.navigateToStep(3) },
-      { label: 'Questionnaire', command: (event) => this.navigateToStep(4) }
-    ];
+    this.items = getSortedSteps().map((step, index) => ({
+      label: step.defaultLabel,
+      command: () => this.navigateToStep(index)
+    }));
   }
 
   private updateStepLabels(): void {
     if (!this.items?.length) return;
-    this.items.forEach(item => {
-      switch ((item as any).routerLink) {
-        case 'general-info':
-          item.label = this.labelService.getLabel('general_information', 'caption') || 'General Info'; break;
-        case 'attachments':
-          item.label = this.labelService.getLabel('additional_documents', 'caption') || 'Attachments'; break;
-        case 'prohibited-items':
-          item.label = this.labelService.getLabel('prohibited_items', 'caption') || 'Prohibited Items'; break;
-        case 'safety-brief':
-          item.label = this.labelService.getLabel('safety_briefing', 'caption') || 'Safety Brief'; break;
-        case 'questionnaire':
-          item.label = this.labelService.getLabel('questionnaire', 'caption') || 'Questionnaire'; break;
+    const enabledSteps = this.wizardService.getEnabledSteps();
+    enabledSteps.forEach((menuItem, index) => {
+      const stepConfig = getSortedSteps().find(s => s.routerLink === (menuItem as any).routerLink);
+      if (stepConfig && this.items[index]) {
+        const translated = this.labelService.getLabel(stepConfig.translationKey, 'caption');
+        this.items[index].label = translated || stepConfig.defaultLabel;
       }
     });
   }

@@ -1,13 +1,9 @@
-<div class="app-container">
-  
+<div class="app-container" [class.on-home]="isHomePage">
+  <!-- Global dynamic background image overlay (controlled by ThemeService via CSS vars) -->
+  <div class="app-bg-overlay"></div>
+
   @if (showHeader) {
   <app-header></app-header>
-  }
-
-  <!-- Global Language Icon -->
-  @if (showLanguageSelector) {
-  <app-language-selector class="global-language-icon" (languageChange)="onLanguageChange($event)">
-  </app-language-selector>
   }
 
   <main class="app-content">

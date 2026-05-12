@@ -1,199 +1,543 @@
-.registration-status-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 60vh;
-  padding: 2rem;
-}
+:host {
+  display: block;
+  height: 100vh;
+  overflow-y: auto;
+  font-family: "Poppins", sans-serif;
+  background: #f4f4f4;
+  position: relative;
+  z-index: 0;
 
-.status-card {
-  background: var(--theme-glossy-white);
-  border-radius: var(--theme-border-radius);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  padding: 2rem;
-  max-width: 600px;
-  width: 100%;
-  text-align: center;
-}
-
-.status-header {
-  margin-bottom: 2rem;
-  
-  h2 {
-    color: var(--theme-primary-color);
-    font-size: 1.8rem;
-    font-weight: 600;
-    margin: 0;
-  }
-}
-
-.status-content {
-  margin-bottom: 2rem;
-}
-
-.success-icon-section {
-  margin-bottom: 2rem;
-  text-align: center;
-  
-  .success-icon {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 1rem;
-    
-    i {
-      font-size: 4rem;
-      color: #28a745; // Green color for success
-      animation: successPulse 1.5s ease-in-out;
-    }
-  }
-  
-  .success-text {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #28a745;
-    margin-bottom: 1rem;
-  }
-}
-
-@keyframes successPulse {
-  0% {
-    transform: scale(0.8);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(1);
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--app-bg-image);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     opacity: 1;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, var(--app-bg-opacity));
+    pointer-events: none;
+    z-index: -1;
   }
 }
 
-.message-section {
-  margin-bottom: 2rem;
-  
-  .message-line {
-    font-size: 1.1rem;
-    line-height: 1.6;
-    margin-bottom: 0.8rem;
-    color: var(--theme-text-color);
-    
-    &:empty {
-      display: none;
-    }
-  }
+:host,
+:host * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-.qr-code-section {
-  margin: 2rem 0;
-  
-  .qr-code-container {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 1rem;
-    
-    .qr-code-image {
-      width: 200px;
-      height: 200px;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      background: white;
-      padding: 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-  }
-  
-  .qr-code-label {
-    font-size: 0.9rem;
-    color: var(--theme-secondary-text);
-    font-style: italic;
-  }
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 0.5rem 1.5rem;
-  border-radius: 25px;
-  font-weight: 600;
-  font-size: 1rem;
-  margin: 1rem 0;
-  
-  &.approved {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-  }
-  
-  &.pending {
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeaa7;
-  }
-}
-
-.action-buttons {
+.page {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 34px 20px 40px;
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-family: "Poppins", sans-serif;
+  color: #4a4a4a;
+}
+
+/* ── Status icon ── */
+.status-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+
+  svg {
+    width: 28px;
+    height: 28px;
+    fill: #ffffff;
+  }
+}
+
+.success-icon-bg {
+  background: transparent;
+  svg { fill: #35c96a; width: 60px; height: 60px; }
+}
+
+.pending-icon-bg { background: #f2b82f; }
+.error-icon-bg { background: #e53b3f; }
+
+.title {
+  font-size: 22px;
+  font-weight: 600;
+  color: #4a4a4a;
+  margin-top: 4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #000000;
+  margin-bottom: 8px;
+  text-align: center;
+  max-width: 380px;
+}
+
+/* ── Pass card ── */
+.pass-card {
+  width: 440px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.pass-header {
+  position: relative;
+  padding: 16px 16px 26px;
+  color: #ffffff;
+}
+
+.page-success .pass-header {
+  background: linear-gradient(90deg, #b6fbd2 0%, #2ec96c 100%);
+  color: #3c3c3c;
+}
+
+.page-pending .pass-header {
+  background: linear-gradient(90deg, #f6ce55 0%, #f0b642 100%);
+  color: #3b3b3b;
+}
+
+.page-error .pass-header {
+  background: linear-gradient(90deg, #ff5257 0%, #5b1010 100%);
+  color: #ffffff;
+}
+
+.pass-brand {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.brand-name {
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+
+.brand-sub {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.page-success .badge { color: #2ec96c; }
+.page-pending .badge { color: #9c7a10; }
+.page-error   .badge { color: #d64545; }
+
+.reg-block {
+  margin-top: 10px;
+  border-radius: 10px;
+  padding: 8px 10px;
+  color: #4a4a4a;
+}
+
+.page-success .reg-block { background: #eafff2; color: #2b2b2b; }
+.page-pending .reg-block { background: #f8e7c2; }
+.page-error   .reg-block { background: #ead2cf; }
+
+.reg-label {
+  font-size: 11px;
+  color: #8a7c5b;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.reg-value {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.wave {
+  position: absolute;
+  left: 0;
+  bottom: -9px;
+  width: 100%;
+  height: 18px;
+  display: block;
+  overflow: hidden;
+}
+
+/* ── Inner banner (below wave, above body) ── */
+.pass-inner-banner {
+  padding: 10px 16px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.page-success .pass-inner-banner {
+  background: #eafff2;
+  color: #2b9b55;
+}
+
+.page-pending .pass-inner-banner {
+  background: #f8e7c2;
+  color: #9c7a10;
+}
+
+.page-error .pass-inner-banner {
+  background: #ead2cf;
+  color: #8b2020;
+}
+
+/* ── Card footer text (thank you / error message) ── */
+.card-footer-text {
+  text-align: center;
+  font-size: 13px;
+  color: #000000;
+  line-height: 1.6;
+  padding: 8px 4px 4px;
+
+  p + p { margin-top: 2px; }
+}
+
+.pass-body {
+  padding: 18px 16px 16px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: #7c7c7c;
+}
+
+.info-icon {
+  width: 20px;
+  height: 20px;
+  color: #7c7c7c;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  
-  .btn {
-    padding: 0.75rem 2rem;
-    border: none;
-    border-radius: var(--theme-border-radius);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 1rem;
-    
-    &.btn-primary {
-      background-color: var(--theme-primary-color);
-      color: white;
-      
-      &:hover {
-        background-color: var(--theme-primary-dark);
-        transform: translateY(-1px);
-      }
-    }
-    
-    &.btn-secondary {
-      background-color: var(--theme-secondary-color);
-      color: var(--theme-text-color);
-      border: 1px solid var(--theme-border-color);
-      
-      &:hover {
-        background-color: var(--theme-secondary-hover);
-        transform: translateY(-1px);
-      }
+  flex-shrink: 0;
+
+  svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+}
+
+.info-label {
+  font-size: 11px;
+  color: #9aa0a6;
+}
+
+.info-value {
+  font-size: 14px;
+  color: #3e3e3e;
+  font-weight: 600;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #ffffff;
+  border-radius: 999px;
+  font-size: 11px;
+  margin-top: 2px;
+  border: 1px dashed;
+}
+
+.page-success .status-pill { color: #2ec96c; border-color: #2ec96c; }
+.page-pending .status-pill { color: #f0b642; border-color: #f0b642; }
+.page-error   .status-pill { color: #ff5257; border-color: #ff5257; }
+
+.divider {
+  border-top: 1px dashed #e3d2aa;
+  margin: 10px 0 12px;
+}
+
+/* ── QR Section ── */
+.qr-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.qr-box {
+  width: 150px;
+  height: 150px;
+  background: #ffffff;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #efefef;
+  position: relative;
+
+  img {
+    width: 130px;
+    height: 130px;
+    object-fit: contain;
+  }
+}
+
+.qr-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 8px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f0f0f0;
+  border-top-color: var(--theme-primary-yellow);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.qr-error-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  z-index: 5;
+}
+
+.error-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  text-align: center;
+
+  i {
+    font-size: 32px;
+    color: #ff3b3b;
+  }
+
+  p {
+    font-size: 11px;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.3;
+  }
+}
+
+.qr-retry-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--theme-primary-yellow);
+  border: none;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--theme-primary-fg-color);
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: all 0.2s;
+
+  i {
+    font-size: 11px;
+    color: var(--theme-primary-fg-color);
+  }
+
+  &:hover {
+    background: var(--p-primary-hover-color);
+    transform: translateY(-1px);
+  }
+}
+
+.qr-caption {
+  font-size: 13px;
+  color: #9aa0a6;
+  text-align: center;
+}
+
+.qr-countdown {
+  font-size: 12px;
+  color: #8b8b8b;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.countdown-timer {
+  font-weight: 700;
+  color: var(--theme-primary-yellow);
+  min-width: 20px;
+  display: inline-block;
+}
+
+/* ── Pending note ── */
+.pending-note {
+  font-size: 13px;
+  color: #8a8a8a;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ── Action buttons ── */
+.action-buttons {
+  width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.action-btn {
+  width: 440px;
+  border: none;
+  border-radius: 999px;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: "Poppins", sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #ffffff;
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.15);
+  margin-top: 12px;
+}
+
+.action-btn.grey    { background: #7f7f7f; }
+.action-btn.green   { background: #2CD26E; }
+.action-btn.pending-btn { background: #f2b82f; color: #3b3b3b; }
+.action-btn.error-btn   { background: #e64545; }
+
+.btn-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+
+    &.spin {
+      animation: spin 0.8s linear infinite;
     }
   }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 // Responsive design
 @media (max-width: 768px) {
-  .registration-status-container {
-    padding: 1rem;
+  .page {
+    padding: 24px 16px 40px;
+    gap: 10px;
   }
-  
-  .status-card {
-    padding: 1.5rem;
+
+  .pass-card {
+    width: 100%;
+    max-width: 400px;
   }
-  
-  .status-header h2 {
-    font-size: 1.5rem;
+
+  .action-btn {
+    width: 100%;
+    max-width: 400px;
   }
-  
-  .message-section .message-line {
-    font-size: 1rem;
-  }
-  
+
   .action-buttons {
+    width: 100%;
+    max-width: 400px;
     flex-direction: column;
-    
-    .btn {
-      width: 100%;
-    }
+  }
+}
+
+@media print {
+  :host {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+
+  .page {
+    padding: 4px 8px !important;
+    gap: 4px !important;
+  }
+
+  .status-icon,
+  .title,
+  .subtitle {
+    display: none !important;
+  }
+
+  .action-buttons,
+  .action-btn,
+  .pending-btn,
+  .error-btn {
+    display: none !important;
+  }
+
+  .pass-card {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .card-footer-text {
+    page-break-before: avoid;
+    break-before: avoid;
+    padding: 4px !important;
   }
 }

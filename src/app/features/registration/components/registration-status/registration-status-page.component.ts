@@ -3,7 +3,11 @@ import { Router } from '@angular/router';
 import { SharedService } from '../../../../shared/shared.service';
 import { environment } from '../../../../../environments/environment';
 import { RegistrationStatusComponent } from './registration-status.component';
+import { WizardService } from '../../../../core/services/wizard.service';
+import { ApiService } from '../../../../core/services/api.service';
 
+/** How the app was originally launched. Persisted through navigation state. */
+type StartMode = 'plain' | 'bc' | 'ac';
 
 @Component({
   selector: 'app-registration-status-page',
@@ -15,7 +19,10 @@ import { RegistrationStatusComponent } from './registration-status.component';
     @if (registrationData) {
       <app-registration-status
         [registrationData]="registrationData"
+        [showNewRegistration]="showNewRegistration"
+        [isRetrying]="isRetrying"
         (newRegistration)="onNewRegistration()"
+        (retrySubmit)="onRetrySubmit()"
         (printDocument)="onPrintDocument()">
       </app-registration-status>
     }
@@ -57,26 +64,36 @@ export class RegistrationStatusPageComponent implements OnInit {
   private branchName: string = '';
   private branchID: string = '';
 
+  /** How the registration flow was originally started. */
+  private startMode: StartMode = 'plain';
+  /** Preserved bc/vc/hc params so we can navigate back to home with same params. */
+  private refCode    = '';
+  private refCatCode = '';
+  private hcParam    = '';
+
+  isRetrying = false;
+
   constructor(
     private router: Router,
-    private sharedService: SharedService
+    private sharedService: SharedService,
+    private wizardService: WizardService,
+    private api: ApiService
   ) {
     // Get data from navigation state
     const navigation = this.router.currentNavigation();
     if (navigation?.extras?.state) {
-      this.registrationData = navigation.extras.state['registrationData'];
-      this.branchName = navigation.extras.state['branchName'];
-      this.branchID = navigation.extras.state['branchID'];
+      const s = navigation.extras.state;
+      this.registrationData = s['registrationData'];
+      this.branchName       = s['branchName']  || '';
+      this.branchID         = s['branchID']    || '';
+      this.startMode        = (s['startMode'] as StartMode) || 'plain';
+      this.refCode          = s['refCode']     || '';
+      this.refCatCode       = s['refCatCode']  || '';
+      this.hcParam          = s['hcParam']     || '';
     }
   }
 
   ngOnInit() {
-    // If no data in navigation state, check for stored data
-    if (!this.registrationData) {
-      // You might want to check sessionStorage or localStorage
-      // for registration data if navigation state is lost
-    }
-    
     // Update header with branch information if available
     if (this.branchName && this.branchID) {
       this.sharedService.updateHeader(
@@ -86,8 +103,93 @@ export class RegistrationStatusPageComponent implements OnInit {
     }
   }
 
+  /**
+   * Show the "New Registration" button only when the app was NOT started
+   * via an appointment code (ac). For ac flows the link is single-use.
+   */
+  get showNewRegistration(): boolean {
+    return this.startMode !== 'ac';
+  }
+
   onNewRegistration() {
-    this.router.navigate(['/']);
+    // Navigate back to home page with the same query params used at startup.
+    // home-page constructor calls clearSessionStorage(), so all form data,
+    // uploaded docs, signatures, questionnaire answers, etc. are wiped clean.
+    if (this.startMode === 'bc') {
+      const queryParams: Record<string, string> = {};
+      if (this.refCode)    queryParams['bc'] = this.refCode;
+      if (this.refCatCode) queryParams['vc'] = this.refCatCode;
+      if (this.hcParam)    queryParams['hc'] = this.hcParam;
+      this.router.navigate(['/'], { queryParams });
+    } else {
+      // plain URL → just go home
+      this.router.navigate(['/']);
+    }
+  }
+
+  onRetrySubmit() {
+    if (this.isRetrying) return;
+    this.isRetrying = true;
+
+    const visitorAckData = this.wizardService.getVisitorAckData();
+    const catCodeEnc = this.wizardService.refCatCode || undefined;
+
+    this.api.VisitorAckSave(visitorAckData, catCodeEnc)
+      .subscribe({
+        next: (response: any) => {
+          this.isRetrying = false;
+          const responseData = response?.Table?.[0];
+          const isAutoApproved = responseData?.AutoApprove === 1 || responseData?.AutoApprove === true;
+          const isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1 || responseData?.IsDynamicQR === 'true';
+          const dynamicQrIntervalSec = responseData?.DynamicQrIntervalSec ? Number(responseData.DynamicQrIntervalSec) : 0;
+          const approvalStatus: string = responseData?.Approval_Status || (isAutoApproved ? 'Approved' : 'Pending');
+
+          const summary = this.wizardService.buildRegistrationSummary();
+          const branchName = this.wizardService.currentBranchName;
+          const branchID = this.wizardService.currentBranchID;
+          const startMode = this.wizardService.appointmentCode
+            ? 'ac'
+            : this.wizardService.refCode ? 'bc' : 'plain';
+          const savedRefCode = this.wizardService.refCode;
+          const savedRefCatCode = this.wizardService.refCatCode;
+          const savedHcParam = this.wizardService.hcParam;
+
+          this.wizardService.clearSessionStorage();
+
+          this.router.navigate(['/registration-status'], {
+            state: {
+              registrationData: {
+                status: isAutoApproved ? 'success' : 'pending',
+                isAutoApproved,
+                approvalStatus,
+                visitorId: responseData?.SEQ_ID?.toString() || '',
+                qrCodeData: responseData?.HexCode || '',
+                isDynamicQR,
+                DynamicQrIntervalSec: dynamicQrIntervalSec,
+                registrationId: responseData?.appointment_group_id || responseData?.SEQ_ID?.toString() || '',
+                visitorName: summary.visitorName,
+                email: summary.email,
+                visitFrom: summary.visitFrom,
+                visitTo: summary.visitTo,
+                meetingWith: summary.meetingWith,
+                meetingLocation: summary.meetingLocation,
+                visitType: summary.visitType,
+                visitPurpose: summary.visitPurpose,
+                branch: summary.branch,
+              },
+              branchName,
+              branchID,
+              startMode,
+              refCode: savedRefCode,
+              refCatCode: savedRefCatCode,
+              hcParam: savedHcParam
+            }
+          });
+        },
+        error: () => {
+          this.isRetrying = false;
+        }
+      });
   }
 
   onPrintDocument() {

@@ -1,77 +1,226 @@
-<div class="registration-status-container">
-  <div class="status-card">
-    <div class="status-header">
-      <h2>{{'visitor_registration' | translate}}</h2>
+<div class="page page-{{ status }}">
+
+  <!-- Status icon -->
+  @if (status === 'success') {
+    <div class="status-icon success-icon-bg">
+      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path fill-rule="evenodd" d="M12 2c-.791 0-1.55.314-2.11.874l-.893.893a.985.985 0 0 1-.696.288H7.04A2.984 2.984 0 0 0 4.055 7.04v1.262a.986.986 0 0 1-.288.696l-.893.893a2.984 2.984 0 0 0 0 4.22l.893.893a.985.985 0 0 1 .288.696v1.262a2.984 2.984 0 0 0 2.984 2.984h1.262c.261 0 .512.104.696.288l.893.893a2.984 2.984 0 0 0 4.22 0l.893-.893a.985.985 0 0 1 .696-.288h1.262a2.984 2.984 0 0 0 2.984-2.984V15.7c0-.261.104-.512.288-.696l.893-.893a2.984 2.984 0 0 0 0-4.22l-.893-.893a.985.985 0 0 1-.288-.696V7.04a2.984 2.984 0 0 0-2.984-2.984h-1.262a.985.985 0 0 1-.696-.288l-.893-.893A2.984 2.984 0 0 0 12 2Zm3.683 7.73a1 1 0 1 0-1.414-1.413l-4.253 4.253-1.277-1.277a1 1 0 0 0-1.415 1.414l1.985 1.984a1 1 0 0 0 1.414 0l4.96-4.96Z" clip-rule="evenodd"/>
+      </svg>
+    </div>
+    <h1 class="title">{{ 'thankyou_page_approved' | translate }}</h1>
+    <p class="subtitle">{{ 'thankyou_page_approved_subtitle' | translate }}</p>
+  }
+
+  @if (status === 'pending') {
+    <div class="status-icon pending-icon-bg">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M12 6a1 1 0 0 1 1 1v5.2l2.9 1.7a1 1 0 1 1-1 1.7L11 13V7a1 1 0 0 1 1-1Zm0-4a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z" />
+      </svg>
+    </div>
+    <h1 class="title">{{ 'thankyou_page_approval_is_pending' | translate }}</h1>
+    <p class="subtitle">{{ 'thankyou_page_visitor_pass_pending' | translate }}</p>
+  }
+
+  @if (status === 'error') {
+    <div class="status-icon error-icon-bg">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M3.112 5.112a3 3 0 0 0-.17.613C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13H11zm11.372 7.372L4.937 2.937A5.5 5.5 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773a3.2 3.2 0 0 1-1.516 2.711m-.838 1.87-12-12 .708-.708 12 12z"/>
+      </svg>
+    </div>
+    <h1 class="title">{{ 'thankyou_page_server_error' | translate }}</h1>
+    <p class="subtitle">{{ 'thankyou_page_server_error_message' | translate }}</p>
+  }
+
+  <!-- Pass Card -->
+  <div class="pass-card" #passCardRef>
+    <div class="pass-header">
+      <div class="pass-brand">
+        <div class="brand-name">{{ companyName }}</div>
+
+      </div>
+      <span class="badge">{{ badgeText }}</span>
+        <div class="pass-inner-banner">
+      {{ 'thankyou_page_visitor_access_pass' | translate }}
+    </div>
+      <svg class="wave" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="waveCirclePattern" width="18" height="18" patternUnits="userSpaceOnUse">
+            <circle cx="9" cy="9" r="9" fill="white"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#waveCirclePattern)"/>
+      </svg>
     </div>
 
-    <div class="status-content">
-      <!-- Success Icon for Auto-Approved -->
-      @if (registrationData) {
-        <div class="success-icon-section">
-          <div class="success-icon">
-            <i class="pi pi-check-circle"></i>
+  
+
+    <div class="pass-body">
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0-4-4a4 4 0 0 0 4 4Zm0 2c-3.3 0-6 1.7-6 3.8V20h12v-2.2c0-2.1-2.7-3.8-6-3.8Z"/></svg>
+          </span>
+          <div>
+            <div class="info-label">{{ 'thankyou_page_visitor_name' | translate }}</div>
+            <div class="info-value">{{ visitorName }}</div>
           </div>
-          @if (registrationData.isAutoApproved) {
-            <div class="success-text">{{'registration_successful' | translate}}</div>
-          }
-          @if (!registrationData.isAutoApproved) {
-            <div class="success-text">{{'registration_successful_and_sent_for_approval' | translate}}</div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 4-8 5-8-5V6l8 5 8-5v2Z"/></svg>
+          </span>
+          <div>
+            <div class="info-label">{{ 'thankyou_page_your_email' | translate }}</div>
+            <div class="info-value">{{ email || '—' }}</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h2v2h6V2h2v2h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3V2Zm13 8H4v10h16V10Zm0-2V6H4v2h16Z"/></svg>
+          </span>
+          <div>
+            <div class="info-label">{{ 'thankyou_page_visit_from' | translate }}</div>
+            <div class="info-value">{{ visitFrom || '—' }}</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h2v2h6V2h2v2h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h3V2Zm13 8H4v10h16V10Zm0-2V6H4v2h16Z"/></svg>
+          </span>
+          <div>
+            <div class="info-label">{{ 'thankyou_page_visit_to' | translate }}</div>
+            <div class="info-value">{{ visitTo || '—' }}</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.6 8.4L4 12l3.6 3.6a3 3 0 0 0 4.2 0l1.2-1.2a2 2 0 0 1 2.8 0l1.6 1.6a3 3 0 0 0 4.2-4.2l-5-5a3 3 0 0 0-4.2 0l-1.1 1.1a2 2 0 0 1-2.8 0Z"/></svg>
+          </span>
+          <div>
+            <div class="info-label">{{ 'thankyou_page_meeting_with' | translate }}</div>
+            <div class="info-value">{{ meetingWith || '—' }}</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 1 7 7c0 5.2-7 13-7 13S5 14.2 5 9a7 7 0 0 1 7-7Zm0 4a3 3 0 1 0 0 6a3 3 0 0 0 0-6Z"/></svg>
+          </span>
+          <div>
+            <div class="info-label">{{ 'thankyou_page_meeting_location' | translate }}</div>
+            <div class="info-value">{{ meetingLocation || '—' }}</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2H4V7Zm0 4h16v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7Zm5 3a1 1 0 0 0 0 2h6a1 1 0 0 0 0-2H9Z"/></svg>
+          </span>
+          <div>
+            <div class="info-label">{{ 'thankyou_page_category' | translate }}</div>
+            <div class="info-value">{{ visitType || '—' }}</div>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7h-4V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Zm-10-2h4v2h-4V5Z"/></svg>
+          </span>
+          <div>
+            <div class="info-label">{{ 'thankyou_page_visit_purpose' | translate }}</div>
+            <div class="info-value">{{ visitPurpose || '—' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      @if (status === 'success' && qrCodeBase64) {
+        <div class="qr-section">
+          <div class="qr-box">
+            @if (qrCodeLoading) {
+              <div class="qr-loader">
+                <div class="spinner"></div>
+              </div>
+            }
+            @if (qrCodeError) {
+              <div class="qr-error-overlay">
+                <div class="error-content">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <p>{{ 'thankyou_page_failed_to_load_qr_code' | translate }}</p>
+                  <button type="button" class="qr-retry-btn" (click)="onRetryQrCode()">
+                    <i class="pi pi-refresh"></i> {{ 'thankyou_page_button_qr_retry' | translate }}
+                  </button>
+                </div>
+              </div>
+            }
+            <img [src]="qrCodeBase64" [attr.alt]="'thankyou_page_qr_code_text' | translate" (load)="onQrImageLoaded()" [style.display]="qrCodeLoading ? 'none' : 'block'" />
+          </div>
+          <div class="qr-caption">{{ 'thankyou_page_scan_qr_code' | translate }}</div>
+          @if ((registrationData.isDynamicQR || registrationData.IsDynamicQR) && registrationData.DynamicQrIntervalSec) {
+            <div class="qr-countdown">{{ 'thankyou_page_qr_refresh_note' | translate }}: <span class="countdown-timer">{{ qrCountdown }}s</span></div>
           }
         </div>
       }
 
-      <!-- Message Lines -->
-      <div class="message-section">
-        @if (messageLine1) {
-          <div class="message-line">
-            {{ messageLine1 }}
-          </div>
-        }
-        @if (messageLine2) {
-          <div class="message-line">
-            {{ messageLine2 }}
-          </div>
-        }
-        @if (messageLine3) {
-          <div class="message-line">
-            {{ messageLine3 }}
-          </div>
-        }
-      </div>
-
-      <!-- QR Code Section -->
-      @if (showQrCode && qrCodeValue) {
-        <div class="qr-code-section">
-          <div class="qr-code-container">
-            <img [src]="qrCodeImageUrl" alt="QR Code" class="qr-code-image" />
-          </div>
-          <div class="qr-code-label">
-            {{'scan_qr_code' | translate}}
-          </div>
+      @if (status === 'success' || status === 'pending') {
+        <div class="card-footer-text">
+          <p>{{ 'thankyou_page_thank_you_message' | translate }}</p>
+          <p>{{ 'thankyou_page_thank_you_sub_message' | translate }}</p>
         </div>
       }
 
-      <!-- Status Badge -->
-      <div class="status-badge" [ngClass]="registrationData.isAutoApproved ? 'approved' : 'pending'">
-        @if (registrationData.isAutoApproved) {
-          <span>{{'approved' | translate}}</span>
-        }
-        @if (!registrationData.isAutoApproved) {
-          <span>{{'pending_approval' | translate}}</span>
-        }
-      </div>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="action-buttons">
-      @if (showQrCode) {
-        <p-button [label]="'print' | translate" (onClick)="onPrint()">
-        </p-button>
-      }
-      @if (showNewRegistrationButton) {
-        <p-button [label]="'new_registration' | translate" (onClick)="onNewRegistration()">
-        </p-button>
+      @if (status === 'error') {
+        <div class="card-footer-text">
+          <p>{{ 'thankyou_page_error_footer_message' | translate }}</p>
+          <p>{{ 'thankyou_page_error_footer_sub_message' | translate }}</p>
+        </div>
       }
     </div>
   </div>
+
+  <!-- Action buttons -->
+  @if (status === 'success') {
+    <div class="action-buttons">
+      <button class="action-btn grey" type="button" (click)="onDownloadPdf()">
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10l3.5-3.5a1 1 0 1 1 1.4 1.4l-5.2 5.2a1 1 0 0 1-1.4 0L5.1 10.9a1 1 0 0 1 1.4-1.4L10 13V3a1 1 0 0 1 2 0Zm-7 14h14v4H5v-4Z"/></svg>
+        </span>
+        {{ 'thankyou_page_button_download_visitor_pass' | translate }}
+      </button>
+      <button class="action-btn grey" type="button" (click)="onShareWhatsapp()">
+        <span class="btn-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-1.9-.9-.3-.1-.5-.1-.7.1-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-1.7-.9-2.8-1.6-3.9-3.5-.3-.5.3-.5.9-1.6.1-.2 0-.4 0-.5-.1-.1-.7-1.7-1-2.3-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4C8 7.6 7 8.6 7 10.5c0 1.9 1.4 3.7 1.6 4 .2.3 2.8 4.2 6.7 5.9 2.5 1 3.4 1.1 4.6.9 1.3-.2 1.7-1 2-1.8.3-.8.3-1.5.2-1.7-.1-.1-.3-.2-.6-.4Z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.8.5 3.6 1.4 5.1L2 22l5.1-1.4C8.6 21.5 10.3 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2Zm0 18c-1.7 0-3.3-.5-4.7-1.3l-.3-.2-3.2.8.9-3.1-.2-.3C3.5 15.3 3 13.7 3 12c0-5 4-9 9-9s9 4 9 9-4 9-9 9Z"/></svg>
+        </span>
+        {{ 'thankyou_page_button_share_via_whatsapp' | translate }}
+      </button>
+      @if (showNewRegistration) {
+        <button class="action-btn green" type="button" (click)="onNewRegistration()">
+          <span class="btn-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.3 4h2.2A5 5 0 1 0 12 7V4l4 3-4 3V7Z"/></svg>
+          </span>
+          {{ 'thankyou_page_button_new_registration' | translate }}
+        </button>
+      }
+    </div>
+  }
+
+  @if (status === 'pending' && showNewRegistration) {
+    <button class="action-btn pending-btn" type="button" (click)="onNewRegistration()">
+      <span class="btn-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.3 4h2.2A5 5 0 1 0 12 7V4l4 3-4 3V7Z"/></svg>
+      </span>
+      {{ 'thankyou_page_button_new_registration' | translate }}
+    </button>
+  }
+
+  @if (status === 'error') {
+    <button class="action-btn error-btn" type="button" (click)="onRetrySubmit()" [disabled]="isRetrying">
+      <span class="btn-icon">
+        @if (isRetrying) {
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="spin"><path d="M12 2a10 10 0 0 1 10 10h-2a8 8 0 0 0-8-8V2Z"/></svg>
+        } @else {
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.3 4h2.2A5 5 0 1 0 12 7V4l4 3-4 3V7Z"/></svg>
+        }
+      </span>
+      {{ 'thankyou_page_button_submit_again' | translate }}
+    </button>
+  }
 </div>

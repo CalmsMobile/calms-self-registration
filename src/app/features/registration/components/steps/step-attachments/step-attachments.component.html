@@ -1,67 +1,145 @@
-<div class="wrapper">
+<main class="page">
+  <!-- Desktop Header -->
+  <header class="page-header flex-header">
+    <div class="header-center">
+      <img [src]="logo" alt="Company Logo" class="logo" />
+      <h1>{{ companyTitle }}</h1>
+    </div>
+    <app-language-selector class="step-lang"></app-language-selector>
+  </header>
 
-  <img src="assets/logo.png" class="header-img" alt="Company Logo">
+  <!-- Mobile Header -->
+  <header class="m-header">
+    <div class="m-header-spacer"></div>
+    <div class="m-header-center">
+      <img [src]="logo" alt="Company Logo" class="m-logo" />
+      <span class="m-company">{{ companyTitle }}</span>
+    </div>
+    <app-language-selector class="m-header-lang"></app-language-selector>
+  </header>
 
-  <div class="title"><span>Supporting</span> <br>Documents</div>
-  <div class="subtitle">Upload identification or supporting documents (Optional)</div>
+  <!-- Content -->
+  <section class="content">
+    <!-- Left panel -->
+    <div class="left">
+      <h2>
+        <span class="accent">{{ formattedPageTitle.first }}</span>
+        <span>{{ formattedPageTitle.rest }}</span>
+      </h2>
+      <p>{{ 'documents_upload_instruction' | translate }}</p>
+      <div class="illustration">
+        <img src="assets/doc.png" alt="Supporting documents illustration" />
+      </div>
+    </div>
 
-  <!-- FILE CARDS -->
-  @if (attachmentUploadEnabled && documentTypes.length > 0) {
-    <div class="files-section">
-      @for (doc of documentTypes; track doc.VisitorAttachSeqId) {
-        <div class="file-card" [attr.data-id]="doc.VisitorAttachSeqId">
-          <div class="file-top">
-            <div>
-              <div class="file-name">
+    <div class="divider"></div>
+
+    <!-- Right panel -->
+    <div class="right">
+      @if (attachmentUploadEnabled && documentTypes.length > 0) {
+        @for (doc of documentTypes; track doc.VisitorAttachSeqId) {
+          <div class="card"
+            [class.upload]="!attachments[doc.VisitorAttachSeqId].file"
+            [class.uploading]="!!attachments[doc.VisitorAttachSeqId].file && !attachments[doc.VisitorAttachSeqId].uploaded"
+            [class.uploaded]="!!attachments[doc.VisitorAttachSeqId].file && !!attachments[doc.VisitorAttachSeqId].uploaded"
+            [class.mandatory-empty]="doc.Mandatory && !attachments[doc.VisitorAttachSeqId].uploaded">
+
+            @if (doc.FileBase64 && !attachments[doc.VisitorAttachSeqId].uploaded) {
+              <a class="card-left" [href]="getDownloadUrl(doc.FileBase64)" target="_blank" rel="noopener noreferrer" [title]="'documents_upload_sample_document_tooltip' | translate">
+                <div class="icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 4h9l3 3v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm8 1v3h3" />
+                    <path d="M12 9v8" />
+                    <path d="M15 14l-3 3-3-3" />
+                  </svg>
+                </div>
+              </a>
+              <div class="card-col-divider"></div>
+            }
+
+            <div class="card-text">
+              <div class="title">
                 {{ doc.Caption }}
                 @if (doc.Mandatory) {
                   <span class="mandatory">*</span>
                 }
               </div>
               @if (!attachments[doc.VisitorAttachSeqId].file) {
-                <div class="file-sub">Max size: {{ maxSize / 1000000 }}MB (.pdf, images)</div>
-              } @else {
-                <div class="file-sub success">
-                  ({{ (attachments[doc.VisitorAttachSeqId].file?.size || 0) / 1024 / 1024 | number: '1.1-1' }}MB) 
-                  <span class="success-text">Success</span>
+                <div class="subtitle">{{ getMaxSizeLabel() }}</div>
+              }
+              @if (attachments[doc.VisitorAttachSeqId].file && attachments[doc.VisitorAttachSeqId].uploaded) {
+                <div class="subtitle uploaded-info">
+                  {{ attachments[doc.VisitorAttachSeqId].file?.name }}
+                  <span class="file-size">({{ (attachments[doc.VisitorAttachSeqId].file?.size || 0) / 1024 / 1024 | number: '1.1-1' }}MB)</span>
+                </div>
+              }
+              @if (attachments[doc.VisitorAttachSeqId].file && !attachments[doc.VisitorAttachSeqId].uploaded) {
+                <div class="progress">
+                  <div class="track">
+                    <div class="fill" [style.width.%]="attachments[doc.VisitorAttachSeqId].uploadProgress || 0"></div>
+                  </div>
                 </div>
               }
             </div>
-            <label class="upload-btn">
-              @if (!attachments[doc.VisitorAttachSeqId].file) {
-                <span>📄</span>
-                <input 
-                  type="file" 
-                  hidden 
-                  [accept]="acceptedTypes"
-                  (change)="onFileSelect($event, doc.VisitorAttachSeqId)">
-              } @else {
-                <button 
-                  type="button"
-                  class="delete-btn"
-                  (click)="removeFile(doc.VisitorAttachSeqId)"
-                  title="Delete file">
-                  🗑
-                </button>
-              }
-            </label>
+
+            <!-- Always in DOM: prevents first-click failure -->
+            <input
+              type="file"
+              style="display:none"
+              #fileInput
+              [accept]="acceptedTypes"
+              (change)="onFileSelect($event, doc.VisitorAttachSeqId)">
+
+            <!-- Idle: upload icon -->
+            @if (!attachments[doc.VisitorAttachSeqId].file) {
+              <div class="card-right" (click)="fileInput.click()" style="cursor:pointer" [title]="'documents_upload_upload_document_tooltip' | translate">
+                <div class="icon">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 4h9l3 3v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm8 1v3h3" />
+                    <path d="M12 17V9" />
+                    <path d="M9 12l3-3l3 3" />
+                  </svg>
+                </div>
+              </div>
+            }
+
+            <!-- Uploading: progress percentage -->
+            @if (attachments[doc.VisitorAttachSeqId].file && !attachments[doc.VisitorAttachSeqId].uploaded) {
+              <div class="percent">{{ attachments[doc.VisitorAttachSeqId].uploadProgress || 0 }}%</div>
+            }
+
+            <!-- Uploaded: delete button -->
+            @if (attachments[doc.VisitorAttachSeqId].file && attachments[doc.VisitorAttachSeqId].uploaded) {
+              <button
+                class="delete"
+                type="button"
+                (click)="removeFile(doc.VisitorAttachSeqId)"
+                [title]="'documents_upload_delete_tooltip' | translate">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                  <path d="M11 1.5v1h3.5a.5.5 0 0 1 0 1h-.538l-.853 10.66A2 2 0 0 1 11.115 16h-6.23a2 2 0 0 1-1.994-1.84L2.038 3.5H1.5a.5.5 0 0 1 0-1H5v-1A1.5 1.5 0 0 1 6.5 0h3A1.5 1.5 0 0 1 11 1.5m-5 0v1h4v-1a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 0-.5.5M4.5 5.029l.5 8.5a.5.5 0 1 0 .998-.06l-.5-8.5a.5.5 0 1 0-.998.06m6.53-.528a.5.5 0 0 0-.528.47l-.5 8.5a.5.5 0 0 0 .998.058l.5-8.5a.5.5 0 0 0-.47-.528M8 4.5a.5.5 0 0 0-.5.5v8.5a.5.5 0 0 0 1 0V5a.5.5 0 0 0-.5-.5"/>
+                </svg>
+              </button>
+            }
           </div>
-          @if (attachments[doc.VisitorAttachSeqId].file) {
-            <div class="progress">
-              <div class="bar" [style.width.%]="100"></div>
-            </div>
+        }
+      }
+
+      <!-- Actions -->
+      <div class="actions">
+        <div class="actions-left">
+          <button class="btn grey m-action-back" type="button" (click)="goBack()">
+            <span class="icon-left">&larr;</span> {{ 'documents_upload_button_back' | translate }}
+          </button>
+          @if (!hasMandatoryDocuments) {
+            <button class="btn grey" type="button" (click)="skipStep()">
+              {{ 'documents_upload_button_skip' | translate }} <span class="icon-right">&rarr;</span>
+            </button>
           }
         </div>
-      }
+        <button class="btn yellow" type="button" (click)="proceedToNext()" [disabled]="!allMandatoryUploaded">
+          {{ 'documents_upload_button_continue' | translate }} <span class="icon-right">&rarr;</span>
+        </button>
+      </div>
     </div>
-  }
-
-  <div class="bottom">
-    <div class="row">
-      <button class="btn white" (click)="goBack()">← Back</button>
-      <button class="btn white" (click)="skipStep()">Skip →</button>
-    </div>
-    <button class="btn continue" (click)="proceedToNext()">Continue →</button>
-  </div>
-
-</div>
+  </section>
+</main>

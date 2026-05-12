@@ -58,16 +58,26 @@ export interface VisitorSelfData {
   Email: string;
   VehicleNo: string;
   Address: string;
-  UDF1: string;
-  UDF2: string;
-  UDF3: string;
-  UDF4: string;
-  UDF5: string;
-  UDF6: string;
-  UDF7: string;
-  UDF8: string;
-  UDF9: string;
-  UDF10: string;
+  VUDF1: string;
+  VUDF2: string;
+  VUDF3: string;
+  VUDF4: string;
+  VUDF5: string;
+  VUDF6: string;
+  VUDF7: string;
+  VUDF8: string;
+  VUDF9: string;
+  VUDF10: string;
+  AUDF1: string;
+  AUDF2: string;
+  AUDF3: string;
+  AUDF4: string;
+  AUDF5: string;
+  AUDF6: string;
+  AUDF7: string;
+  AUDF8: string;
+  AUDF9: string;
+  AUDF10: string;
   MySelf: boolean;
 }
 
@@ -114,16 +124,8 @@ export interface VisitorAck {
   EndDate: string;
   FBRemarks: string;
   WorkPermitRef: string;
-  UDF1: string;
-  UDF2: string;
-  UDF3: string;
-  UDF4: string;
-  UDF5: string;
-  UDF6: string;
-  UDF7: string;
-  UDF8: string;
-  UDF9: string;
-  UDF10: string;
+  EventName: string;
+
   SafetyBriefViewed: boolean;
   VisitorsList: VisitorSelfData[];
   ID_TYPE: string;

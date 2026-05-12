@@ -3,8 +3,10 @@ import { MenuItem } from 'primeng/api';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SharedService } from '../../shared/shared.service';
+import { LabelService } from './label.service';
 import { Router } from '@angular/router';
 import { VisitorAck, VisitorSelfData } from '../models/visitor-ack.model';
+import { getEnabledSteps, StepConfig } from '../models/step-config.model';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +16,8 @@ export class WizardService {
   private stepValidity$ = new BehaviorSubject<boolean>(false);
   private validationRequested$ = new Subject<void>();
   private stepChangeRequested$ = new Subject<number>();
+  private skipRequested$ = new Subject<number>();
+  private submissionRequested$ = new Subject<void>();
   private totalSteps = 5;
   private enabledSteps: MenuItem[] = [];
 
@@ -23,6 +27,8 @@ export class WizardService {
   public canProceed$ = this.stepValidity$.asObservable();
   public onValidationRequest = this.validationRequested$.asObservable();
   public onStepChangeRequest = this.stepChangeRequested$.asObservable();
+  public onSkipRequest = this.skipRequested$.asObservable();
+  public onSubmitRequest = this.submissionRequested$.asObservable();
   private settings$ = new BehaviorSubject<any>(null);
   private attachmentSetting$ = new BehaviorSubject<any>(null);
   private questionsSetting$ = new BehaviorSubject<any>(null);
@@ -47,12 +53,30 @@ export class WizardService {
 
   currentBranchID = '';
   selectedVisitCategory = '';
+  selectedVisitCategoryName = '';
   private masterData: any | null = null;
   private visitorAckData: any | null = null;
   private branchHostData: any | null = null;
   currentBranchName = '';
 
-  constructor(private sharedService: SharedService, private router: Router) { 
+  // Raw encrypted query params from the URL
+  refCode = '';      // encrypted branch code (bc param)
+  refCatCode = '';    // encrypted category code (vc param)
+  appointmentCode = ''; // appointment code (q param)
+  hcParam = '';       // raw hc query param value (persisted so step-general can resolve it)
+  hostCodeFromQuery = ''; // host IC resolved from hc param (GetSelfRegShareURLData response)
+  categoryCodeFromQuery = ''; // category code resolved from vc+hc params (GetSelfRegShareURLData response)
+  isHostFromQuery = false; // true when hc query param was used to pre-fill host
+  /** True only when the wizard was reached via proceedToWizard() — reset on page refresh. */
+  isNavigatedFromHome = false;
+  /** The original query string from the home page URL (e.g. "?bc=ABC&vc=XYZ"). */
+  originalQueryString = '';
+
+  // Static variables for safety brief - will be replaced with dynamic data later
+  SafetyBriefing_Date = "2026-03-03T14:02:43.957";
+  SafetyBriefVideoViewed = false;
+
+  constructor(private sharedService: SharedService, private router: Router, private labelService: LabelService) {
     if (!this.currentBranchID) {
       this.currentBranchID = sessionStorage.getItem('currentBranchID') || '';
     }
@@ -61,6 +85,24 @@ export class WizardService {
     }
     if (!this.currentBranchName) {
       this.currentBranchName = sessionStorage.getItem('currentBranchName') || '';
+    }
+    if (!this.refCode) {
+      this.refCode = sessionStorage.getItem('refCode') || '';
+    }
+    if (!this.refCatCode) {
+      this.refCatCode = sessionStorage.getItem('refCatCode') || '';
+    }
+    if (!this.appointmentCode) {
+      this.appointmentCode = sessionStorage.getItem('appointmentCode') || '';
+    }
+    if (!this.hcParam) {
+      this.hcParam = sessionStorage.getItem('hcParam') || '';
+    }
+    if (this.hcParam) {
+      this.isHostFromQuery = true;
+    }
+    if (!this.originalQueryString) {
+      this.originalQueryString = sessionStorage.getItem('originalQueryString') || '';
     }
 
     if (this.currentBranchID && this.currentBranchName) {
@@ -72,10 +114,10 @@ export class WizardService {
     this.router.navigate(['/']);
   }
 
-  updateHeader(type=10, RefId = '10001'): void {
+  updateHeader(type = 10, RefId = '10001'): void {
     this.sharedService.updateHeader(
       this.currentBranchName,
-      environment.proURL + "Handler/PortalImageHandler.ashx?ScreenType="+type+"&RefSlno=" + RefId
+      environment.proURL + "Handler/PortalImageHandler.ashx?ScreenType=" + type + "&RefSlno=" + RefId
     );
   }
 
@@ -83,18 +125,48 @@ export class WizardService {
     sessionStorage.setItem('currentBranchID', this.currentBranchID);
     sessionStorage.setItem('selectedVisitCategory', this.selectedVisitCategory);
     sessionStorage.setItem('currentBranchName', this.currentBranchName);
+    if (this.refCode) sessionStorage.setItem('refCode', this.refCode);
+    if (this.refCatCode) sessionStorage.setItem('refCatCode', this.refCatCode);
+    if (this.appointmentCode) sessionStorage.setItem('appointmentCode', this.appointmentCode);
+    if (this.hcParam) sessionStorage.setItem('hcParam', this.hcParam);
+    if (this.originalQueryString) sessionStorage.setItem('originalQueryString', this.originalQueryString);
   }
 
   clearSessionStorage() {
     sessionStorage.removeItem('currentBranchID');
     sessionStorage.removeItem('selectedVisitCategory');
     sessionStorage.removeItem('currentBranchName');
+    sessionStorage.removeItem('refCode');
+    sessionStorage.removeItem('refCatCode');
+    sessionStorage.removeItem('appointmentCode');
+    sessionStorage.removeItem('hcParam');
+    sessionStorage.removeItem('originalQueryString');
     this.currentBranchID = '';
     this.selectedVisitCategory = '';
     this.currentBranchName = '';
+    this.refCode = '';
+    this.refCatCode = '';
+    this.appointmentCode = '';
+    this.hcParam = '';
+    this.hostCodeFromQuery = '';
+    this.categoryCodeFromQuery = '';
+    this.isHostFromQuery = false;
+    this.isNavigatedFromHome = false;
+    this.originalQueryString = '';
     this.formDataStore.next({});
+    this.settings$.next(null);
+    this.attachmentSetting$.next(null);
+    this.questionsSetting$.next(null);
+    this.pagesSetting$.next(null);
+    this.selfRegistrationSetting$.next(null);
+    this.udfSetting$.next(null);
+    this.labelService.resetCache();
+    this.currentStep$.next(0);
+    this.stepValidity$.next(false);
+    this.enabledSteps = [];
     this.visitorAckData = null;
     this.masterData = null;
+    this.branchHostData = null;
     this.updateHeader();
   }
 
@@ -102,8 +174,68 @@ export class WizardService {
     return this.masterData;
   }
 
+  /**
+   * Stores master data from the GetBranchHostDataForSelf API response.
+   * The response Data object uses the following table mapping:
+   *   Table   → hosts (HOSTIC, HOSTNAME, HostFloor, DEPARTMENT_REFID)
+   *   Table1  → meeting rooms (MeetingRoomSeqId, MeetingRoomDesc)
+   *   Table2  → visitor categories (visitor_ctg_id, visitor_ctg_desc)
+   *   Table3  → visit purposes (empty placeholder)
+   *   Table4  → ID types (ID_TYPECODE, IDTYPEDESCRIPTION)
+   *   Table5  → visitor IC
+   *   Table6  → SelfVisitorCategories setting
+   *   Table7  → patient name
+   *   Table8  → floors (floor_id, floor_desc)
+   *   Table9  → titles (TitleSeqId, Title)
+   *   Table10 → purposes with details (visitpurpose_id, visitpurpose_desc)
+   *   Table11 → departments (dept_id, dept_desc)
+   *   Table12 → companies (visitor_comp_code, visitor_comp_name)
+   *   Table13 → countries (CountrySeqId, ShortName, Name)
+   *
+   * The stored masterData remaps these so downstream consumers (e.g. step-general) can
+   * access data through the stable table keys they already use:
+   *   masterData.Table  → hosts
+   *   masterData.Table1 → meeting rooms / locations
+   *   masterData.Table2 → floors       (previously Table8)
+   *   masterData.Table3 → purposes     (previously Table10)
+   *   masterData.Table4 → ID types     (unchanged)
+   *   masterData.Table5 → departments  (previously Table11)
+   *   masterData.Table6 → SelfVisitorCategories setting
+   *   masterData.Table7 → companies    (previously Table12)
+   *   masterData.Table8 → floors raw   (unchanged)
+   *   masterData.Table9 → titles       (unchanged)
+   *   masterData.Table10 → purposes raw (unchanged)
+   *   masterData.Table11 → departments raw (unchanged)
+   *   masterData.Table12 → ID types    (previously Table4)
+   *   masterData.Table13 → countries   (unchanged)
+   */
   setmasterData(data: any) {
-    this.masterData = data;
+    if (!data) {
+      this.masterData = null;
+      return;
+    }
+
+    // Store the raw response and add remapped aliases so existing consumers
+    // that reference Table2/Table3/Table5/Table7/Table12 still work correctly.
+    this.masterData = {
+      ...data,
+      // Categories (original Table2)
+      Categories: data.Table2 || [],
+      // Purposes (original Table10)
+      Purposes: data.Table10 || [],
+      // meetingFloorList ← Table8 (floors)
+      Table2: data.Table8 || data.Table2 || [],
+      // purposeList ← Table10 (purposes with details)
+      Table3: data.Table10 || data.Table3 || [],
+      // departmentList ← Table11 (departments)
+      Table5: data.Table11 || data.Table5 || [],
+      // companyList ← Table12 (companies)
+      Table7: data.Table12 || data.Table7 || [],
+      // idTypeList ← Table4 (ID types)
+      Table12: data.Table4 || data.Table12 || [],
+      // Keep Table13 (countries) as-is
+      Table13: data.Table13 || [],
+    };
   }
 
   setVisitorAckData(data: any) {
@@ -116,6 +248,9 @@ export class WizardService {
 
   setBranchHostData(data: any) {
     this.branchHostData = data;
+    // Also populate masterData so step-general and other consumers
+    // can access the full table set via getmasterData().
+    this.setmasterData(data);
   }
 
   getBranchHostData() {
@@ -126,11 +261,55 @@ export class WizardService {
     console.log(allSettings);
     let settingsData: any = {};
     if (allSettings.Table?.length) {
-      settingsData = { ...allSettings.Table1[0], ...allSettings.Table2?.length ? JSON.parse(allSettings.Table2[0].SettingDetail) : {} };
+      const table1 = allSettings.Table1[0] || {};
+      const settingDetail = allSettings.Table2?.length ? JSON.parse(allSettings.Table2[0].SettingDetail) : {};
+      const localSettings = typeof table1.LocalSettings === 'string' ? JSON.parse(table1.LocalSettings) : (table1.LocalSettings || {});
+      settingsData = { ...table1, ...settingDetail, ...localSettings };
     }
     if (allSettings.Table5?.length) {
       settingsData.VideoUrl = allSettings.Table5[0]?.VideoUrl;
     }
+
+    // Store time_permit from Table8 for AptEndTime=Category mode
+    if (allSettings.Table8?.length) {
+      settingsData.CategoryTimePermit = allSettings.Table8[0]?.time_permit || '';
+    }
+    /* debugger
+    if (allSettings.Table6?.length) {
+      
+      settingsData.NdaTemplate = allSettings.Table6[0]?.NdaTemplate || '';
+      settingsData.NDAEnabled = allSettings.Table6[0]?.NDAEnabled ?? settingsData.NDAEnabled;
+    } */
+
+    // Apply defaults for field-enable flags so core fields are visible when the branch
+    // settings haven't been fully configured. API-returned values always take precedence.
+    const fieldEnableDefaults: Record<string, any> = {
+      NameEnabled: true,
+      ContactNumberEnabled: true,
+      HostNameEnabled: true,
+      EmailEnabled: true,
+      IdProofEnabled: true,
+      IdTypeEnabled: true,
+      StartEndDtEnabled: true,
+      // Optional fields default to hidden — enable via settings configuration
+      TitleEnabled: false,
+      GenderEnabled: false,
+      HostDepartmentEnabled: false,
+      CompanyEnabled: false,
+      VehicleNumberEnabled: false,
+      VehicleBrandModelEnabled: false,
+      VehicleColorEnabled: false,
+      AddressEnabled: false,
+      CountryEnabled: false,
+      ImageUploadEnabled: false,
+      WorkPermitRefEnabled: false,
+      RemarksEnabled: false,
+      RoomEnabled: false,
+      NDAEnabled: false,
+      EventEnabled: false,
+    };
+    settingsData = { ...fieldEnableDefaults, ...settingsData };
+
     this.settings$.next(settingsData);
     console.log(settingsData);
 
@@ -151,12 +330,22 @@ export class WizardService {
     return this.questionsSetting$.value;
   }
 
+  shouldSkipQuestionnaire(stepRoute: string): boolean {
+    if (stepRoute !== 'questionnaire') return false;
+    const questions = this.questionsSetting$.value;
+    return !questions || questions.length === 0;
+  }
+
   setPageSettings(pageSettings: any) {
     this.pagesSetting$.next(pageSettings);
   }
 
   setSelfRegistrationSettings(selfRegSettings: any) {
     this.selfRegistrationSetting$.next(selfRegSettings);
+  }
+
+  getSelfRegistrationSettings(): any {
+    return this.selfRegistrationSetting$.value;
   }
 
   getPageSettings() {
@@ -174,34 +363,12 @@ export class WizardService {
   updateEnabledSteps(settings: any): void {
     if (!settings) return;
 
-    console.log(settings);
-    this.enabledSteps = [
-      {
-        label: 'General Info',
-        routerLink: 'general-info',
-        visible: true
-      },
-      {
-        label: 'Attachments',
-        routerLink: 'attachments',
-        visible: settings?.AttachmentUploadEnabled
-      },
-      {
-        label: 'Prohibited Items',
-        routerLink: 'prohibited-items',
-        visible: settings?.MaterialDeclareEnabled
-      },
-      {
-        label: 'Safety Brief',
-        routerLink: 'safety-brief',
-        visible: settings?.SafetyBriefVideoEnabled
-      },
-      {
-        label: 'Questionnaire',
-        routerLink: 'questionnaire',
-        visible: settings?.QuestionnaireEnabled
-      }
-    ].filter(step => step.visible);
+    const enabledConfigs: StepConfig[] = getEnabledSteps(settings);
+
+    this.enabledSteps = enabledConfigs.map(step => ({
+      label: step.defaultLabel,
+      routerLink: step.routerLink
+    }));
 
     this.totalSteps = this.enabledSteps.length;
   }
@@ -235,7 +402,7 @@ export class WizardService {
     const formData = this.formDataStore.value;
     const settings = this.getSettings();
     const masterData = this.getmasterData();
-    
+
     let loFinalData: any = {};
 
     // Branch Information
@@ -249,31 +416,38 @@ export class WizardService {
     // Host Information (from settings)
     if (settings?.Visitor?.length > 0) {
       const visitorSettings = settings.Visitor[0];
-      
-      loFinalData.HostDeptId = visitorSettings.HostDepartmentEnabled ? (formData.general?.hostDepartment || '') : '';
-      loFinalData.HostDeptDesc = visitorSettings.HostDepartmentEnabled ? (formData.general?.hostDepartmentDesc || '') : '';
-      
-      loFinalData.HostId = visitorSettings.HostNameEnabled ? (formData.general?.hostName || '') : '';
-      loFinalData.HostDesc = visitorSettings.HostNameEnabled ? (formData.general?.hostNameDesc || '') : '';
-      
+
+      const masterData = this.getmasterData();
+      const deptId = formData.general?.department?.toString() || '';
+      const deptDesc = masterData?.Table5?.find((d: any) => (d.DepartmentSeqId ?? d.dept_id)?.toString() === deptId)?.dept_desc || deptId;
+      loFinalData.HostDeptId = visitorSettings.HostDepartmentEnabled ? deptId : '';
+      loFinalData.HostDeptDesc = visitorSettings.HostDepartmentEnabled ? deptDesc : '';
+
+      const hostId = formData.general?.host?.toString() || '';
+      const hostDesc = masterData?.Table?.find((h: any) => h.HOSTIC === hostId)?.HOSTNAME || '';
+      loFinalData.HostId = visitorSettings.HostNameEnabled ? hostId : (visitorSettings.DefaultHostId?.toString() || '');
+      loFinalData.HostDesc = visitorSettings.HostNameEnabled ? hostDesc : '';
+
       loFinalData.WorkPermitRef = visitorSettings.WorkPermitRefEnabled ? (formData.general?.workPermitRef || null) : null;
     }
 
     // General Information (from settings)
     if (settings?.General?.length > 0) {
       const generalSettings = settings.General[0];
-      
+
       loFinalData.PurposeId = generalSettings.PurposeEnabled ? (formData.general?.purpose || '') : '';
       loFinalData.PurposeDesc = generalSettings.PurposeEnabled ? (formData.general?.purposeDesc || '') : '';
-      
+
       loFinalData.FloorId = generalSettings.FloorEnabled ? (formData.general?.floor || '') : '';
       loFinalData.FloorDesc = generalSettings.FloorEnabled ? (formData.general?.floorDesc || '') : '';
-      
-      loFinalData.RoomId = generalSettings.RoomEnabled ? (formData.general?.room || '') : '';
-      loFinalData.RoomDesc = generalSettings.RoomEnabled ? (formData.general?.roomDesc || '') : '';
-      
+
+      const roomId = formData.general?.meeting_location?.toString() || formData.general?.room?.toString() || '';
+      const roomDesc = masterData?.Table1?.find((r: any) => (r.MeetingRoomSeqId || r.SeqId)?.toString() === roomId)?.MeetingRoomDesc || formData.general?.roomDesc || '';
+      loFinalData.RoomId = generalSettings.RoomEnabled ? roomId : '';
+      loFinalData.RoomDesc = generalSettings.RoomEnabled ? roomDesc : '';
+
       loFinalData.Remarks = generalSettings.RemarksEnabled ? (formData.general?.remarks || '') : '';
-      
+
       loFinalData.allowSMS = generalSettings.EnableAppointmentSMSAlert ? true : false;
     }
 
@@ -282,17 +456,16 @@ export class WizardService {
     loFinalData.EndDateTime = formData.general?.endDateTime || this.getDefaultDateTime(1); // +1 hour
     loFinalData.StartDate = formData.general?.startDate || this.getDefaultDate();
     loFinalData.EndDate = formData.general?.endDate || this.getDefaultDate();
-    
     loFinalData.NoApptSave = false;
     loFinalData.allowEmail = true;
 
     // Image settings
-    loFinalData.IsSelfRegistrationImageRectangle = settings?.Visitor?.length > 0 ? 
+    loFinalData.IsSelfRegistrationImageRectangle = settings?.Visitor?.length > 0 ?
       settings.Visitor[0].IsSelfRegistrationImageRectangle : false;
 
     // Facility Booking (if enabled)
     loFinalData.EnableFb = false; // Set based on your requirements
-    
+
     // Visitor Information
     if (settings?.Visitor?.[0]?.MultipleVisitorEnabled) {
       loFinalData.VisitorsList = formData.visitors || [];
@@ -304,7 +477,7 @@ export class WizardService {
     loFinalData.CheckList = formData.checkList || [];
     loFinalData.AttachmentList = formData.attachments || [];
     loFinalData.AnswerList = formData.questionnaire || [];
-    loFinalData.SafetyBriefViewed = formData.safetyBriefViewed || false;
+    loFinalData.SafetyBriefViewed = formData.safetyBrief?.videoWatched || false;
 
     return loFinalData;
   }
@@ -314,58 +487,136 @@ export class WizardService {
     const formData = this.formDataStore.value;
     const settings = this.getSettings();
     const generalData = formData.general || {};
-    
+
     // Format dates to match API expectation: "MM-dd-yyyy HH:mm"
     const formatDateForAPI = (date: any): string => {
       if (!date) return this.getDefaultDateTimeForAPI();
-      
+
       const d = new Date(date);
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
       const year = d.getFullYear();
       const hours = String(d.getHours()).padStart(2, '0');
       const minutes = String(d.getMinutes()).padStart(2, '0');
-      
+
       return `${month}-${day}-${year} ${hours}:${minutes}`;
     };
-    
+
+    // Combine an appointment date with a slot time string "HH:mm"
+    const formatSlotDateTime = (date: any, timeStr: string | null): string => {
+      if (!date || !timeStr) return formatDateForAPI(date);
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return this.getDefaultDateTimeForAPI();
+      const [h, m] = timeStr.split(':').map(Number);
+      d.setHours(h, m, 0, 0);
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${month}-${day}-${year} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    };
+    // Strip data URL prefix — send raw base64 only
+    const stripBase64Prefix = (src: string): string => {
+      if (!src) return '';
+      const idx = src.indexOf(';base64,');
+      return idx >= 0 ? src.substring(idx + 8) : src;
+    };
+
     // Basic VisitorAck structure matching the expected format
     let visitorAck: any = {
       Branch: this.currentBranchID?.toString() || '',
       RefBranchDesc: this.currentBranchName || '',
       CategoryId: this.selectedVisitCategory?.toString() || '',
       HostDeptId: generalData.department?.toString() || '',
-      HostId: generalData.host?.toString() || '',
+      HostId: generalData.host?.toString() || settings?.DefaultHostId?.toString() || '',
       WorkPermitRef: generalData.work_permit_ref || null,
-      PurposeId: generalData.Reason?.toString() || '',
-      PurposeDesc: '', // Will be populated from master data
+      EventName: generalData.event_name || '',
+      PurposeId: generalData.purpose?.toString() || '',
+      PurposeDesc: generalData.purposeDesc || '',
       FloorId: generalData.floor?.toString() || '',
       RoomId: generalData.meeting_location?.toString() || '',
       NoApptSave: false,
-      StartDateTime: formatDateForAPI(generalData.startDate),
-      EndDateTime: formatDateForAPI(generalData.endDate),
+      StartDateTime: generalData.enableVimsApptTimeSlot
+        ? formatSlotDateTime(generalData.appointmentDate, generalData.timeSlotStartTime)
+        : formatDateForAPI(generalData.startDate),
+      EndDateTime: generalData.enableVimsApptTimeSlot
+        ? formatSlotDateTime(generalData.appointmentDate, generalData.timeSlotEndTime)
+        : formatDateForAPI(generalData.endDate),
       Remarks: generalData.remarks || '',
       IsSelfRegistrationImageRectangle: settings?.Visitor?.[0]?.IsSelfRegistrationImageRectangle || false,
       allowSMS: false,
       allowEmail: true,
       EnableFb: generalData.facilityBooking || false,
-      
+
       // Main visitor info - get from the first visitor in the list
       FullName: this.getPrimaryVisitorFullName(formData),
       IdentityNo: this.getPrimaryVisitorIdentityNo(formData),
-      
+
       // Lists as JSON strings
       VisitorsList: this.getVisitorsList(formData),
-      CheckList: JSON.stringify(formData.checkList || []),
+      CheckList: JSON.stringify(
+        (formData.prohibitedItems?.declaredItems || []).map((item: any) => ({
+          MaterialDesc: item.description || item.MaterialDesc || '',
+          SerialNo: item.serialNumber || item.SerialNo || '',
+          MovementType: item.direction || item.MovementType || '',
+          ChecklistSeqId: item.ChecklistSeqId || ''
+        }))
+      ),
       AttachmentList: this.formatAttachmentList(formData.attachments || {}),
       AnswerList: this.formatAnswerList(formData.questionnaire || {}),
-      SafetyBriefViewed: formData.safetyBriefViewed || false,
-      SEQ_ID: 0 // Will be generated by backend
+      SafetyBriefViewed: formData.safetyBrief?.videoWatched || false,
+      SEQ_ID: this.visitorAckData?.visitorData?.seqId || 0,
+
+      // Pass encrypted query params from URL
+      RefCode: this.refCode || '',
+      RefCatCode: this.refCatCode || '',
+      q: this.appointmentCode || '',
+
+      // NDA Agreement signature (base64 PNG)
+      NDASignature: stripBase64Prefix(formData['nda-agreement']?.ndaSignature || ''),
+      NDAAccepted: formData['nda-agreement']?.ndaAccepted || false
     };
-    
+    console.log('[getVisitorAckData] payload before submit:', JSON.parse(JSON.stringify(visitorAck)));
+  
+    if (visitorAck.StartDateTime == visitorAck.EndDateTime) {
+      const now = new Date();
+      const aptEndTime = this.getSelfRegistrationSettings().AptEndTime || 'DefaultEOD';
+      let endDate: Date | null = null;
+      if (aptEndTime === 'DefaultEOD') {
+        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+      } else if (aptEndTime === 'Category') {
+       const timePermit: string = this.getSettings().CategoryTimePermit || '';
+        endDate = this.parseTimePermit(timePermit, now);
+      }
+      visitorAck.EndDateTime = endDate ? formatDateForAPI(endDate) : formatDateForAPI(now);
+    }
+    console.log('[getVisitorAckData] final payload:', JSON.parse(JSON.stringify(visitorAck)));
     return visitorAck;
   }
-  
+  /**
+     * Parse a time_permit string like "18 Hours", "2 Days", "1 Month", "3 Months" and
+     * return a Date offset from the given base date.
+     */
+  private parseTimePermit(timePermit: string, base: Date): Date | null {
+    if (!timePermit) return null;
+    const match = timePermit.trim().match(/^(\d+)\s*(hour|hours|day|days|week|weeks|month|months)$/i);
+    if (!match) return null;
+
+    const amount = parseInt(match[1], 10);
+    const unit = match[2].toLowerCase();
+    const result = new Date(base);
+
+    if (unit.startsWith('hour')) {
+      result.setHours(result.getHours() + amount);
+    } else if (unit.startsWith('day')) {
+      result.setDate(result.getDate() + amount);
+    } else if (unit.startsWith('week')) {
+      result.setDate(result.getDate() + amount * 7);
+    } else if (unit.startsWith('month')) {
+      result.setMonth(result.getMonth() + amount);
+    }
+
+    return result;
+  }
   private getDefaultDateTimeForAPI(): string {
     const now = new Date();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -373,202 +624,153 @@ export class WizardService {
     const year = now.getFullYear();
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
-    
+
     return `${month}-${day}-${year} ${hours}:${minutes}`;
   }
-  
+
   private formatAnswerList(questionnaireData: any): string {
     // Convert questionnaire data to expected format
     const answers: any[] = [];
     const questions = this.getQuestionnaireSettings(); // Get questions to determine validation requirements
-    
+
     if (questionnaireData && typeof questionnaireData === 'object') {
       Object.keys(questionnaireData).forEach(key => {
         if (key.startsWith('q')) {
           const questionId = key.replace('q', '');
           const value = questionnaireData[key];
-          
+
           // Find the question to get ValidationRequired
           const question = questions.find((q: any) => q.QuestionariesSeqId.toString() === questionId);
-          
+
+          // Always store value as a string; arrays (multiple checkbox answers) become comma-separated
+          const valueStr = Array.isArray(value)
+            ? value.join(',')
+            : (value !== null && value !== undefined ? String(value) : '');
+
           answers.push({
             id: questionId,
-            value: value || 0,
+            value: valueStr,
             ValidationRequired: question?.ValidationRequired || false
           });
         }
       });
     }
-    
+
     return JSON.stringify(answers);
   }
-  
+
   private getVisitorsList(formData: any): any[] {
     const settings = this.getSettings();
     const generalData = formData.general || {};
-    
-    console.log('getVisitorsList - formData:', formData);
+
     console.log('getVisitorsList - generalData:', generalData);
-    console.log('getVisitorsList - MultipleVisitorEnabled:', settings?.Visitor?.[0]?.MultipleVisitorEnabled);
-    
-    // Helper function to generate UUID
+
     const generateUID = () => {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         const r = Math.random() * 16 | 0;
         const v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
       });
     };
-    
-    if (settings?.Visitor?.[0]?.MultipleVisitorEnabled) {
-      // Multiple visitors mode - use saved visitors
-      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-      console.log('getVisitorsList - savedVisitors:', savedVisitors);
-      return savedVisitors.map((visitor: any, index: number) => {
-        // Extract CompanyId from object if needed
-        const companyId = (() => {
-          const company = visitor.visitor_company;
-          if (typeof company === 'object' && company !== null) {
-            const id = company.visitor_comp_code || company.id;
-            console.log('wizard.service - Multiple visitor mode, extracted CompanyId:', id);
-            return id || '';
-          }
-          return company || '';
-        })();
 
-        // Extract CountryId from object if needed
-        const countryId = (() => {
-          const country = visitor.country;
-          if (typeof country === 'object' && country !== null) {
-            return country.CountrySeqId || country.id || '';
-          }
-          return country?.toString() || '';
-        })();
+    const extractId = (obj: any, codeKey: string, idKey: string) => {
+      if (typeof obj === 'object' && obj !== null) return obj[codeKey] || obj[idKey] || '';
+      return obj?.toString() || '';
+    };
 
-        // Extract GenderId from object if needed
-        const genderId = (() => {
-          const gender = visitor.gender;
-          if (typeof gender === 'object' && gender !== null) {
-            return gender.Value || gender.id || '';
-          }
-          return gender?.toString() || '';
-        })();
+    const stripPhotoPrefix = (src: string): string => {
+      if (!src) return '';
+      const idx = src.indexOf(';base64,');
+      return idx >= 0 ? src.substring(idx + 8) : src;
+    };
 
-        return {
-          MySelf: visitor.myself || (index === 0), // First visitor is self
-          Photo: visitor.profile || '',
-          FullName: visitor.fullName || '',
-          IdentityNo: visitor.visitor_id || '',
-          Visitor_IC: visitor.visitor_id || '',
-          GenderId: genderId,
-          GenderDesc: genderId,
-          Email: visitor.email || '',
-          ID_TYPE: visitor.visitor_id_type || '',
-          ID_EXPIRED_DATE: visitor.expired_date || '',
-          CompanyId: companyId,
-          CompanyDesc: '',
-          Contact: visitor.phone || '',
-          VehicleNo: visitor.vehicle_number || '',
-          VehicleBrand: visitor.vehicle_brand || '',
-          VehicleModel: visitor.vehicle_model || '',
-          VehicleColor: visitor.vehicle_color || '',
-          CountryId: countryId,
-          CountryDesc: this.getCountryName(countryId) || '',
-          Address: visitor.visitor_address || '',
-          UDF1: visitor.udf1 || '',
-          UDF2: visitor.udf2 || '',
-          UDF3: visitor.udf3 || '',
-          UDF4: visitor.udf4 || '',
-          UDF5: visitor.udf5 || '',
-          UDF6: visitor.udf6 || '',
-          UDF7: visitor.udf7 || '',
-          UDF8: visitor.udf8 || '',
-          UDF9: visitor.udf9 || '',
-          UDF10: visitor.udf10 || '',
-          uid: generateUID()
-        };
-      });
-    } else {
-      // Single visitor mode - use current form data
-      console.log('getVisitorsList - Single visitor mode, generalData:', generalData);
-      
-      // Extract CompanyId from object if needed
-      const companyId = (() => {
-        const company = generalData.visitor_company;
-        if (typeof company === 'object' && company !== null) {
-          const id = company.visitor_comp_code || company.id;
-          console.log('wizard.service - Extracted CompanyId from object:', id, 'Original:', company);
-          return id || '';
-        }
-        console.log('wizard.service - CompanyId as string:', company);
-        return company || '';
-      })();
-
-      // Extract CountryId from object if needed
-      const countryId = (() => {
-        const country = generalData.country;
-        if (typeof country === 'object' && country !== null) {
-          return country.CountrySeqId || country.id || '';
-        }
-        return country?.toString() || '';
-      })();
-
-      // Extract GenderId from object if needed
-      const genderId = (() => {
-        const gender = generalData.gender;
-        if (typeof gender === 'object' && gender !== null) {
-          return gender.Value || gender.id || '';
-        }
-        return gender?.toString() || '';
-      })();
-
-      return [{
-        MySelf: true,
-        Photo: generalData.profile || '',
-        FullName: generalData.fullName || '',
-        IdentityNo: generalData.visitor_id || '',
-        Visitor_IC: generalData.visitor_id || '',
+    const buildVisitorEntry = (data: any, isSelf: boolean) => {
+      const companyId = extractId(data.visitor_company, 'visitor_comp_code', 'id');
+      const companyDesc = (typeof data.visitor_company === 'object' && data.visitor_company !== null)
+        ? (data.visitor_company.visitor_comp_name || '') : '';
+      const countryId = extractId(data.country, 'CountrySeqId', 'id');
+      const countryName = this.getCountryName(countryId) || '';
+      const genderId = extractId(data.gender, 'Value', 'id');
+      const genderDesc = (typeof data.gender === 'object' && data.gender !== null)
+        ? (data.gender.Name || '') : (data.gender || '');
+      const rawPhoto = data.profilePreview || (typeof data.profile === 'string' ? data.profile : '') || '';
+      return {
+        MySelf: isSelf,
+        Photo: stripPhotoPrefix(rawPhoto),
+        TitleId: data.title || '',
+        TitleDesc: data.title || '',
+        FullName: this.buildFullName(data.title, data.fullName),
+        IdentityNo: data.visitor_id || '',
+        Visitor_IC: data.visitor_id || '',
         GenderId: genderId,
-        GenderDesc: genderId,
-        Email: generalData.email || '',
-        ID_TYPE: generalData.visitor_id_type || '',
-        ID_EXPIRED_DATE: generalData.expired_date || '',
+        GenderDesc: genderDesc,
+        Email: data.email || '',
+        ID_TYPE: data.visitor_id_type || '',
+        ID_EXPIRED_DATE: data.id_expired_date || data.expired_date || '',
         CompanyId: companyId,
-        CompanyDesc: '',
-        Contact: generalData.phone || '',
-        VehicleNo: generalData.vehicle_number || '',
-        VehicleBrand: generalData.vehicle_brand || '',
-        VehicleModel: generalData.vehicle_model || '',
-        VehicleColor: generalData.vehicle_color || '',
-        CountryId: countryId,
-        CountryDesc: this.getCountryName(countryId) || '',
-        Address: generalData.visitor_address || '',
-        UDF1: generalData.udf1 || '',
-        UDF2: generalData.udf2 || '',
-        UDF3: generalData.udf3 || '',
-        UDF4: generalData.udf4 || '',
-        UDF5: generalData.udf5 || '',
-        UDF6: generalData.udf6 || '',
-        UDF7: generalData.udf7 || '',
-        UDF8: generalData.udf8 || '',
-        UDF9: generalData.udf9 || '',
-        UDF10: generalData.udf10 || '',
+        CompanyDesc: companyDesc,
+        Contact: data.phone || '',
+        VehicleNo: data.vehicle_number || '',
+        VehicleBrand: data.vehicle_brand || '',
+        VehicleModel: data.vehicle_model || '',
+        VehicleColor: data.vehicle_color || '',
+        CountryId: countryName,
+        CountryDesc: countryName,
+        Address: data.visitor_address || '',
+        VUDF1: this.normalizeUDFValue(data.VUDF1),
+        VUDF2: this.normalizeUDFValue(data.VUDF2),
+        VUDF3: this.normalizeUDFValue(data.VUDF3),
+        VUDF4: this.normalizeUDFValue(data.VUDF4),
+        VUDF5: this.normalizeUDFValue(data.VUDF5),
+        VUDF6: this.normalizeUDFValue(data.VUDF6),
+        VUDF7: this.normalizeUDFValue(data.VUDF7),
+        VUDF8: this.normalizeUDFValue(data.VUDF8),
+        VUDF9: this.normalizeUDFValue(data.VUDF9),
+        VUDF10: this.normalizeUDFValue(data.VUDF10),
+        AUDF1: this.normalizeUDFValue(data.AUDF1),
+        AUDF2: this.normalizeUDFValue(data.AUDF2),
+        AUDF3: this.normalizeUDFValue(data.AUDF3),
+        AUDF4: this.normalizeUDFValue(data.AUDF4),
+        AUDF5: this.normalizeUDFValue(data.AUDF5),
+        AUDF6: this.normalizeUDFValue(data.AUDF6),
+        AUDF7: this.normalizeUDFValue(data.AUDF7),
+        AUDF8: this.normalizeUDFValue(data.AUDF8),
+        AUDF9: this.normalizeUDFValue(data.AUDF9),
+        AUDF10: this.normalizeUDFValue(data.AUDF10),
         uid: generateUID()
-      }];
+      };
+    };
+
+    // Check MultipleVisitorEnabled from both top-level and nested path
+    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
+    if (isMultipleVisitor) {
+      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
+      console.log('getVisitorsList - MultipleVisitor mode, savedVisitors count:', savedVisitors.length);
+      if (savedVisitors.length > 0) {
+        return savedVisitors.map((visitor: any, index: number) =>
+          buildVisitorEntry(visitor, visitor.myself ?? (index === 0))
+        );
+      }
+      // No saved visitors — fall through to use current form data
+      console.log('getVisitorsList - no saved visitors, using form data');
     }
+
+    // Single visitor or multi-visitor with no explicitly saved visitors
+    console.log('getVisitorsList - using form data as single visitor');
+    return [buildVisitorEntry(generalData, true)];
   }
 
   private loadVisitorInfo(finalData: any, formData: any): void {
     const visitorData = formData.general || {};
-    
-    finalData.VisitorFullName = visitorData.fullName || '';
+
+    finalData.VisitorFullName = this.buildFullName(visitorData.title, visitorData.fullName);
     finalData.VisitorEmail = visitorData.email || '';
     finalData.VisitorContact = visitorData.phone || '';
     finalData.VisitorCompany = visitorData.company || '';
     finalData.VisitorIdNumber = visitorData.visitorId || '';
     finalData.VisitorIdType = visitorData.visitorIdType || '';
     finalData.VisitorDepartment = visitorData.department || '';
-    
+
     // Add other visitor fields as needed
     finalData.VisitorAddress = visitorData.address || '';
     finalData.VisitorCity = visitorData.city || '';
@@ -578,10 +780,16 @@ export class WizardService {
   }
 
   private getCategoryDescription(categoryId: any): string {
+    if (this.selectedVisitCategoryName) return this.selectedVisitCategoryName;
+
     const masterData = this.getmasterData();
-    if (masterData?.Table4?.length) {
-      const category = masterData.Table4.find((cat: any) => cat.VCategorySeqId === categoryId);
-      return category?.Name || '';
+    // Categories are in the original Table2 (aliased to 'Categories' in setmasterData)
+    const categoryTable = masterData?.Categories || masterData?.Table2;
+    if (categoryTable?.length) {
+      const category = categoryTable.find((cat: any) =>
+        (cat.visitor_ctg_id || cat.VCategorySeqId)?.toString() === categoryId?.toString()
+      );
+      return category?.Name || category?.visitor_ctg_desc || '';
     }
     return '';
   }
@@ -591,7 +799,7 @@ export class WizardService {
     now.setHours(now.getHours() + hoursToAdd);
     return now.toLocaleString('en-US', {
       month: '2-digit',
-      day: '2-digit', 
+      day: '2-digit',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
@@ -610,6 +818,97 @@ export class WizardService {
 
   clearFormData(): void {
     this.formDataStore.next({});
+  }
+
+  /**
+   * Builds a human-readable summary from the current form data + master data.
+   * Call this BEFORE clearSessionStorage() so all lookups still work.
+   */
+  buildRegistrationSummary(): {
+    visitorName: string; email: string;
+    visitFrom: string; visitTo: string;
+    meetingWith: string; meetingLocation: string;
+    visitType: string; visitPurpose: string;
+    branch: string;
+  } {
+    const formData = this.formDataStore.value;
+    const general = formData.general || {};
+    const master = this.getmasterData();
+    const fmt = (date: any): string => {
+      if (!date) return '';
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return String(date);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    // Host name
+    const hostId = general.host?.toString() || '';
+    const hostRow = master?.Table?.find((h: any) =>
+      (h.HOSTIC || h.HostIC || h.SeqId)?.toString() === hostId
+    );
+    const meetingWith = hostRow?.HOSTNAME || hostRow?.Name || general.hostName || '';
+
+    // Meeting room / location
+    const roomId = (general.meeting_location || general.room)?.toString() || '';
+    const roomRow = master?.Table1?.find((r: any) =>
+      (r.MeetingRoomSeqId || r.SeqId)?.toString() === roomId
+    );
+    const meetingLocation = roomRow?.MeetingRoomDesc || roomRow?.Name || general.roomDesc || '';
+
+    // Category name (visit type)
+    const catDesc = general.visitType || this.getCategoryDescription(this.selectedVisitCategory);
+
+    // Purpose name
+    const purposeId = general.purpose?.toString() || '';
+    const purposeRow = (master?.Purposes || master?.Table3)?.find((p: any) =>
+      (p.visitpurpose_id || p.SeqId)?.toString() === purposeId
+    );
+    const visitPurpose = purposeRow?.visitpurpose_desc || purposeRow?.Name || general.purposeDesc || '';
+
+    // Primary visitor name + email
+    const visitorName = this.getPrimaryVisitorFullName(formData);
+    const email = general.email || '';
+    // Format dates to match API expectation: "MM-dd-yyyy HH:mm"
+    const formatDateForAPI = (date: any): string => {
+      if (!date) return this.getDefaultDateTimeForAPI();
+
+      const d = new Date(date);
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+
+      return `${month}-${day}-${year} ${hours}:${minutes}`;
+    };
+    // Combine an appointment date with a slot time string "HH:mm"
+    const formatSlotDateTime = (date: any, timeStr: string | null): string => {
+      if (!date || !timeStr) return formatDateForAPI(date);
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return this.getDefaultDateTimeForAPI();
+      const [h, m] = timeStr.split(':').map(Number);
+      d.setHours(h, m, 0, 0);
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${month}-${day}-${year} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    };
+    return {
+      visitorName,
+      email,
+      visitFrom: general.enableVimsApptTimeSlot
+        ? formatSlotDateTime(general.appointmentDate, general.timeSlotStartTime)
+        : fmt(general.startDate),
+      visitTo: general.enableVimsApptTimeSlot
+        ? formatSlotDateTime(general.appointmentDate, general.timeSlotEndTime)
+        : fmt(general.endDate),
+      meetingWith,
+      meetingLocation,
+      visitType: catDesc,
+      visitPurpose,
+      branch: this.currentBranchName,
+    };
   }
 
   setCurrentStep(step: number): void {
@@ -651,11 +950,62 @@ export class WizardService {
     return false;
   }
 
+  /**
+   * Check if the SafetyBriefing_Date has expired (older than current date/time)
+   */
+  private isSafetyBriefingExpired(): boolean {
+    const briefingDate = new Date(this.SafetyBriefing_Date);
+    const currentDate = new Date();
+    return briefingDate < currentDate;
+  }
+
+  /**
+   * Determine if safety brief step should be skipped
+   * - If SafetyBriefVideoViewed is false → show step
+   * - If SafetyBriefVideoViewed is true AND SafetyBriefing_Date expired → show step
+   * - Otherwise → skip step
+   */
+  shouldSkipSafetyBrief(stepRoute: string): boolean {
+    // Only apply logic to safety-brief step
+    if (stepRoute !== 'safety-brief') {
+      return false;
+    }
+
+    // Show step if video not viewed
+    if (!this.SafetyBriefVideoViewed) {
+      return false;
+    }
+
+    // Show step if viewed but expired
+    if (this.SafetyBriefVideoViewed && this.isSafetyBriefingExpired()) {
+      return false;
+    }
+
+    // Skip step if viewed and not expired
+    return true;
+  }
+
   navigateToNextStep(): void {
     const nextStep = this.currentStep$.value + 1;
     if (nextStep < this.totalSteps) {
       this.requestStepChange(nextStep);
+    } else {
+      // Current step is the last step — trigger submission
+      this.requestSubmission();
     }
+  }
+
+  skipToNextStep(): void {
+    const nextStep = this.currentStep$.value + 1;
+    if (nextStep < this.totalSteps) {
+      this.skipRequested$.next(nextStep);
+    } else {
+      this.requestSubmission();
+    }
+  }
+
+  requestSubmission(): void {
+    this.submissionRequested$.next();
   }
 
   private formatAttachmentList(attachmentData: any): string {
@@ -664,99 +1014,103 @@ export class WizardService {
       return JSON.stringify([]);
     }
 
-    // Check if it has the expected structure from step-attachments component
-    if (attachmentData.nothingToDeclare !== undefined) {
-      // This is the structure from step-attachments component
+    // Structure saved by step-attachments: { attachments: { "docId": { fileName, trackerId, ... } } }
+    if (attachmentData.attachments && typeof attachmentData.attachments === 'object') {
       const attachmentArray: any[] = [];
-      
-      // If nothing to declare, return empty array
-      if (attachmentData.nothingToDeclare) {
-        return JSON.stringify([]);
-      }
-      
-      // Add declared items if any (for items being brought in/out)
-      if (attachmentData.declaredItems && Array.isArray(attachmentData.declaredItems)) {
-        attachmentData.declaredItems.forEach((item: any) => {
+
+      Object.keys(attachmentData.attachments).forEach(docId => {
+        const attachment = attachmentData.attachments[docId];
+        if (attachment.fileName && attachment.trackerId) {
+          const fileExtension = attachment.fileName.includes('.')
+            ? attachment.fileName.substring(attachment.fileName.lastIndexOf('.'))
+            : '';
+
           attachmentArray.push({
-            description: item.description,
-            serialNumber: item.serialNumber,
-            direction: item.direction,
-            type: 'declared_item'
+            VisitorAttachSeqId: parseInt(docId),
+            src: '',
+            extension: fileExtension,
+            filename: attachment.fileName,
+            uid: attachment.trackerId,
+            trackerId: attachment.trackerId,
+            primary: '1'
           });
-        });
-      }
-      
-      // Add attachment files if any (uploaded documents)
-      if (attachmentData.attachments && typeof attachmentData.attachments === 'object') {
-        Object.keys(attachmentData.attachments).forEach(docId => {
-          const attachment = attachmentData.attachments[docId];
-          if (attachment.fileName && attachment.trackerId) {
-            // Format according to the expected structure
-            const fileExtension = attachment.fileName.includes('.') ? 
-              attachment.fileName.substring(attachment.fileName.lastIndexOf('.')) : '';
-            
-            attachmentArray.push({
-              VisitorAttachSeqId: parseInt(docId),
-              src: "",
-              extension: fileExtension,
-              filename: attachment.fileName,
-              uid: attachment.trackerId,
-              trackerId: attachment.trackerId,
-              primary: "1" // Assuming all attachments are primary for now
-            });
-          }
-        });
-      }
-      
+        }
+      });
+
       return JSON.stringify(attachmentArray);
     }
-    
+
     // Fallback: if it's already an array, stringify it
     if (Array.isArray(attachmentData)) {
       return JSON.stringify(attachmentData);
     }
-    
+
     // Default: empty array
     return JSON.stringify([]);
+  }
+
+  private normalizeUDFValue(value: any): string {
+    if (value === null || value === undefined) return '';
+    if (Array.isArray(value)) return value.join(',');
+    if (value instanceof Date) {
+      const dd = String(value.getDate()).padStart(2, '0');
+      const mm = String(value.getMonth() + 1).padStart(2, '0');
+      const yyyy = value.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    }
+    // String that looks like a JS Date (e.g. from toString() or Date constructor)
+    if (typeof value === 'string' && /^[A-Z][a-z]{2}\s[A-Z][a-z]{2}\s\d{2}\s\d{4}/.test(value)) {
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return `${dd}/${mm}/${yyyy}`;
+      }
+    }
+    return String(value);
+  }
+
+  private buildFullName(title: string | null | undefined, fullName: string | null | undefined): string {
+    const settings = this.getSettings();
+    const titleEnabled = settings?.TitleEnabled;
+    const name = fullName || '';
+    if (!titleEnabled) return name;
+    const t = title?.trim().replace(/\.+$/, '');
+    return t ? `${t}.${name}` : name;
   }
 
   private getPrimaryVisitorFullName(formData: any): string {
     const settings = this.getSettings();
     const generalData = formData.general || {};
-    
-    if (settings?.Visitor?.[0]?.MultipleVisitorEnabled) {
-      // Multiple visitors mode - get from saved visitors (first one is primary)
+    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
+    if (isMultipleVisitor) {
       const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-      return savedVisitors.length > 0 ? (savedVisitors[0].fullName || '') : '';
-    } else {
-      // Single visitor mode - get from general form data
-      return generalData.fullName || '';
+      if (savedVisitors.length > 0) return this.buildFullName(savedVisitors[0].title, savedVisitors[0].fullName);
     }
+    return this.buildFullName(generalData.title, generalData.fullName);
   }
 
   private getPrimaryVisitorIdentityNo(formData: any): string {
     const settings = this.getSettings();
     const generalData = formData.general || {};
-    
-    if (settings?.Visitor?.[0]?.MultipleVisitorEnabled) {
-      // Multiple visitors mode - get from saved visitors (first one is primary)
+    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
+    if (isMultipleVisitor) {
       const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-      return savedVisitors.length > 0 ? (savedVisitors[0].visitor_id || '') : '';
-    } else {
-      // Single visitor mode - get from general form data
-      return generalData.visitor_id || '';
+      if (savedVisitors.length > 0) return savedVisitors[0].visitor_id || '';
     }
+    return generalData.visitor_id || '';
   }
 
   private getCountryName(countryId: any): string {
     if (!countryId) return '';
-    
+
     const masterData = this.getmasterData();
     if (masterData && masterData.Table13) {
       const country = masterData.Table13.find((c: any) => c.CountrySeqId.toString() === countryId.toString());
       return country ? country.Name : '';
     }
-    
+
     return '';
   }
 }
