@@ -1,4 +1,4 @@
-﻿import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -1775,15 +1775,43 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             : (savedData[controlName] ?? appointmentValue ?? null);
 
           // p-multiSelect requires an array — coerce any value coming from the API/saved data
+          // p-multiSelect requires an array — coerce any value coming from the API/saved data
           if (udf.UDFCtrlType === 30) {
             if (typeof controlValue === 'string') {
-              const parts = controlValue.split(',')
-                .map((v: string) => v.trim())
-                .filter((v: string) => v && v.toLowerCase() !== 'null');
-              controlValue = parts.length ? parts : null;
-            } else if (Array.isArray(controlValue)) {
-              const filtered = controlValue.filter((v: any) => v != null && String(v).toLowerCase() !== 'null');
-              controlValue = filtered.length ? filtered : null;
+              // Try to parse if it's a JSON array string e.g. "[\"null\", \"null\"]" or "[null]"
+              if (controlValue.trim().startsWith('[') && controlValue.trim().endsWith(']')) {
+                try {
+                  const parsed = JSON.parse(controlValue);
+                  if (Array.isArray(parsed)) {
+                    controlValue = parsed;
+                  }
+                } catch(e) {
+                  // Fallback to string processing if JSON parse fails
+                }
+              }
+              
+              // Process string if it wasn't successfully parsed into an array above
+              if (typeof controlValue === 'string') {
+                const parts = controlValue.split(',')
+                  .map((v: string) => v.replace(/['"\[\]]/g, '').trim())
+                  .filter((v: string) => v && v.toLowerCase() !== 'null');
+                
+                // Uniformly convert to strictly matched strings. Padded numbers ("0001") will align perfectly.
+                controlValue = parts.length ? parts.map(v => {
+                  const num = Number(v);
+                  return isNaN(num) ? String(v).trim() : String(num);
+                }) : null;
+              }
+            }
+            console.log(`[UDF Debug] controlValue for ${udf.formControlName}:`, controlValue);
+            
+            // Re-evaluate Array in case the JSON string parsing produced an array
+            if (Array.isArray(controlValue)) {
+              const filtered = controlValue.filter((v: any) => v != null && String(v).replace(/['"\[\]]/g, '').toLowerCase() !== 'null');
+              controlValue = filtered.length ? filtered.map((v: any) => {
+                  const num = Number(v);
+                  return isNaN(num) ? String(v).trim() : String(num);
+              }) : null;
             }
           }
 
@@ -2397,13 +2425,23 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   getUdfOptions(apptUDFSetSeqId: number): any[] {
-    return (this.udfOptions || [])
+    const opts = (this.udfOptions || [])
       .filter((item: any) => item.RefApptUDFSetSeqId === apptUDFSetSeqId)
-      .map((item: any) => ({
-        value: item.ApptUDFDetSetSeqId,
-        label: item.Name
-      }))
+      .map((item: any) => {
+        const rawVal = item.ApptUDFDetSetSeqId;
+        const num = Number(rawVal);
+        const finalVal = rawVal != null ? (isNaN(num) ? String(rawVal).trim() : String(num)) : null;
+        
+        return {
+          value: finalVal,
+          label: item.Name
+        };
+      })
       .filter((opt: any) => opt.value != null);
+    
+    // Debug log to inspect the options
+    console.log(`[UDF Debug] getUdfOptions for SetSeqId ${apptUDFSetSeqId}:`, opts);
+    return opts;
   }
 
   getUDFOptions(udfId: number): any[] {
@@ -2733,7 +2771,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           const parts = apiValue.split(/[\/\-]/);
           if (parts.length === 3) value = new Date(+parts[2], +parts[1] - 1, +parts[0]);
         } else if (udf.UDFCtrlType === 30 && typeof apiValue === 'string') {
-          value = apiValue.split(',').map((v: string) => v.trim()).filter(Boolean);
+          const parts = apiValue.split(',').map((v: string) => v.trim()).filter(Boolean);
+          value = parts.length ? parts.map(v => {
+            const num = Number(v);
+            return isNaN(num) ? String(v).trim() : String(num);
+          }) : null;
+        } else if (udf.UDFCtrlType === 30 && Array.isArray(apiValue)) {
+          const filtered = apiValue.filter(Boolean);
+          value = filtered.length ? filtered.map(v => {
+            const num = Number(v);
+            return isNaN(num) ? String(v).trim() : String(num);
+          }) : null;
         }
         this.generalForm.patchValue({ [udf.formControlName]: value });
       }
