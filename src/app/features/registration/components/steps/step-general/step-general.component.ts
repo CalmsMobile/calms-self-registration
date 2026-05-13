@@ -3553,7 +3553,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     const branchId = this.wizardService.currentBranchID;
-    const hostId = this.generalForm.get('host')?.value || this.settings?.DefaultHostId?.toString() || null;
+    const hostId = this.generalForm.get('host')?.value || this.settings?.DefaultHostId?.toString() || '';
     console.log('[MultipleApt] branchId:', branchId, '| hostId:', hostId, '(raw host:', this.generalForm.get('host')?.value, '| DefaultHostId:', this.settings?.DefaultHostId, ')');
     if (!branchId) {
       console.log('[MultipleApt] SKIP — branchId is falsy');
@@ -3567,22 +3567,22 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     };
 
     const resolvedEnd = end ?? start;
-    const seqId = this.visitorAckData?.visitorData?.seqId || '';
-    const fullName = this.generalForm.get('fullName')?.value || '';
-    const searchText = seqId ? `${seqId}_${fullName}` : fullName;
+    const searchText = this.generalForm.get('visitor_id')?.value || '';
     const catCode = this.wizardService.selectedVisitCategory || '';
     console.log(`[MultipleApt] calling API — host ${hostId} at branch ${branchId} from ${fmt(start)} to ${fmt(resolvedEnd)} | searchText: ${searchText} | catCode: ${catCode}`);
 
     this.isCheckingMultipleBooking = true;
     this.multipleBookingConflict = false;
-    this.api.GetHostMultipleAptAtSameTime(fmt(start), fmt(resolvedEnd), branchId, hostId, searchText, catCode).subscribe({
+    this.api.GetAllowBookingANDSBView(fmt(start), fmt(resolvedEnd), branchId, hostId, searchText, catCode).subscribe({
       next: (res: any) => {
         this.isCheckingMultipleBooking = false;
         const resObj = Array.isArray(res) ? res[0] : res;
         console.log('Multiple booking API response:', resObj);
         
         // The API might return { Table: [...] } directly or { Data: { Table: [...] } }
-        const rawCode = resObj?.Table?.[0]?.Code ?? resObj?.Data?.Table?.[0]?.Code;
+        const rawCode = resObj?.Table?.[0]?.AllowBooking ?? resObj?.Data?.Table?.[0]?.AllowBooking;
+        const ViewSB = resObj?.Table?.[0]?.ViewSB ?? resObj?.Data?.Table?.[0]?.ViewSB;
+        this.wizardService.setSafetyBriefViewFromApi(ViewSB);
         const code = Number(rawCode);
         
         if (code === 20) {
@@ -3596,7 +3596,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.multipleBookingConflict = false;
           onSuccess();
         } else {
-          console.warn('Unknown code from GetHostMultipleAptAtSameTime:', rawCode);
+          console.warn('Unknown code from GetAllowBookingANDSBView:', rawCode);
           this.multipleBookingConflict = false;
           onSuccess();
         }
