@@ -684,8 +684,7 @@
         </label>
         <div class="schedule-trigger"
           [class.ng-invalid]="isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate') || endBeforeStartError"
-          [class.field-disabled]="isAppointmentFlow"
-          (click)="isAppointmentFlow ? null : openScheduleDialog()">
+          (click)="openScheduleDialog()">
           <i class="pi pi-calendar"></i>
           <span>{{ getScheduleDisplayText() }}</span>
           <i class="pi pi-chevron-down"></i>
@@ -1493,8 +1492,7 @@
         <label class="m-field-label">{{'registration_page_date_and_time' | translate}} <span class="m-req">*</span></label>
         <div class="schedule-trigger m-schedule-trigger"
           [class.ng-invalid]="isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate') || endBeforeStartError"
-          [class.field-disabled]="isAppointmentFlow"
-          (click)="isAppointmentFlow ? null : openScheduleDialog()">
+          (click)="openScheduleDialog()">
           <i class="pi pi-calendar"></i>
           <span>{{ getScheduleDisplayText() }}</span>
           <i class="pi pi-chevron-down"></i>

@@ -70,11 +70,12 @@ export class ApiService {
             });
 
             if (udf.dropdown) {
-              udf.dropdown.split(',').forEach((opt: string, optIndex: number) => {
+              udf.dropdown.split(',').forEach((opt: string) => {
+                const label = opt.trim();
                 table1.push({
                   RefApptUDFSetSeqId: globalIndex,
-                  ApptUDFDetSetSeqId: optIndex + 1,
-                  Name: opt.trim()
+                  ApptUDFDetSetSeqId: label,
+                  Name: label
                 });
               });
             }

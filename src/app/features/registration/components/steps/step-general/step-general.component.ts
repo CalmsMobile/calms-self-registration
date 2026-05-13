@@ -302,7 +302,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     if (this.masterData) {
       this.meetingFloorList = this.masterData.Table2 || [];
-      this.purposeList = this.masterData.Table3 || [];
+      this.purposeList = (this.masterData.Table3 || []).map((p: any) => ({
+        ...p,
+        visitpurpose_id: p.PurposeCode ?? p.purpose_id ?? p.SeqId ?? p.visitpurpose_id ?? '',
+        visitpurpose_desc: p.visitpurpose_desc ?? p.PurposeName ?? p.purpose_name ?? '',
+      }));
       this.departmentList = (this.masterData.Table5 || []).map((d: any) => ({
         ...d,
         DName: d.DName || d.dept_desc || d.Department || '',
@@ -996,7 +1000,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (response && response.Table1 && response.Table1.length > 0) {
       let filteredRooms = [...response.Table1.filter((item: any) => {
         return !item.IsForPatientVisit;
-      })];
+      })].map((r: any) => ({
+        ...r,
+        MeetingRoomSeqId: r.MeetingRoomSeqId?.toString() ?? ''
+      }));
       this.meetingLocList = filteredRooms;
       console.log('Rooms loaded from GetBranchHostData Table1:', filteredRooms.length);
     }
@@ -1027,7 +1034,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // regardless of the field names used by the API (PurposeCode/PurposeName or visitpurpose_id/visitpurpose_desc)
       this.purposeList = purposes.map((p: any) => ({
         ...p,
-        visitpurpose_id: p.visitpurpose_id ?? p.PurposeCode ?? p.purpose_id ?? '',
+        visitpurpose_id: p.PurposeCode ?? p.purpose_id ?? p.SeqId ?? p.visitpurpose_id ?? '',
         visitpurpose_desc: p.visitpurpose_desc ?? p.PurposeName ?? p.purpose_name ?? '',
       }));
       console.log('Visit purposes loaded from branch data:', this.purposeList.length);
@@ -1040,8 +1047,47 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             visitpurpose_desc: p.PurposeName
           }));
           console.log('Visit purposes loaded from VimsAppFacilityPurposeList:', this.purposeList.length);
+          if (this.isAppointmentFlow && this.generalForm && this.visitorAckData?.visitorData) {
+            const apptData = this.visitorAckData.visitorData;
+            if (!this.generalForm.get('purpose')?.value && apptData.purposeId) {
+              const pid = String(apptData.purposeId);
+              const match = this.purposeList.find((p: any) =>
+                String(p.visitpurpose_id) === pid ||
+                String(p.visitpurpose_desc).toLowerCase() === pid.toLowerCase()
+              );
+              if (match) {
+                this.generalForm.get('purpose')?.setValue(match.visitpurpose_id);
+                this.generalForm.get('purposeDesc')?.setValue(match.visitpurpose_desc || '');
+                this.saveFormDataToWizard();
+              }
+            }
+          }
         }
       });
+    }
+
+    // Late-patch appointment auto-fill for fields whose lists load asynchronously
+    // Must run AFTER meetingLocList and purposeList are both populated above
+    if (this.isAppointmentFlow && this.generalForm && this.visitorAckData?.visitorData) {
+      const apptData = this.visitorAckData.visitorData;
+
+      if (!this.generalForm.get('meeting_location')?.value && apptData.roomId != null) {
+        this.generalForm.get('meeting_location')?.setValue(apptData.roomId.toString());
+        this.saveFormDataToWizard();
+      }
+
+      if (!this.generalForm.get('purpose')?.value && apptData.purposeId) {
+        const pid = String(apptData.purposeId);
+        const match = this.purposeList.find((p: any) =>
+          String(p.visitpurpose_id) === pid ||
+          String(p.visitpurpose_desc).toLowerCase() === pid.toLowerCase()
+        );
+        if (match) {
+          this.generalForm.get('purpose')?.setValue(match.visitpurpose_id);
+          this.generalForm.get('purposeDesc')?.setValue(match.visitpurpose_desc || '');
+          this.saveFormDataToWizard();
+        }
+      }
     }
 
     // Set department for default host if enabled after hosts are loaded
@@ -1622,6 +1668,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       : null;
     const appointmentPhotoDataUrl = appointmentPhotoRaw ? `data:image/jpeg;base64,${appointmentPhotoRaw}` : null;
 
+    // Resolve purpose from appointment data: match by ID first, then by description
+    let resolvedPurpose: any = savedData.purpose || null;
+    if (!resolvedPurpose && isPreFilledData && visitorData.purposeId) {
+      const pid = String(visitorData.purposeId);
+      const purposeMatch = this.purposeList.find((p: any) =>
+        String(p.visitpurpose_id) === pid ||
+        String(p.visitpurpose_desc).toLowerCase() === pid.toLowerCase()
+      );
+      resolvedPurpose = purposeMatch ? purposeMatch.visitpurpose_id : null;
+    }
+
     const formControls: any = {
       profile: [savedData.profile || appointmentPhotoDataUrl || null],
       profilePreview: [savedData.profilePreview || appointmentPhotoDataUrl || ''],
@@ -1640,7 +1697,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       vehicle_color: [isPreFilledData ? (visitorData.vehicleColor || savedData.vehicle_color || '') : (savedData.vehicle_color || '')],
       expired_date: [savedData.expired_date || ''],
       Reason: [savedData.Reason || ''],
-      meeting_location: [savedData.meeting_location || ''],
+      meeting_location: [savedData.meeting_location || (isPreFilledData ? (visitorData.roomId?.toString() || '') : '')],
       floor: [isPreFilledData ? (visitorData.floorId || savedData.floor || null) : (savedData.floor || null)],
       visitor_address: [isPreFilledData ? (visitorData.address || savedData.visitor_address || '') : (savedData.visitor_address || '')],
       country: [isPreFilledData ? (visitorData.countryId || savedData.country || null) : (savedData.country || null)],
@@ -1657,8 +1714,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       facilityPurpose: [savedData.facilityPurpose || null],
       facilitySelection: [savedData.facilitySelection || null],
       sharedDate: [savedData.sharedDate || null],
-      purpose: [savedData.purpose || null],
-      purposeDesc: [savedData.purposeDesc || ''],
+      purpose: [resolvedPurpose],
+      purposeDesc: [savedData.purposeDesc || (isPreFilledData && resolvedPurpose ? (this.purposeList.find((p: any) => p.visitpurpose_id === resolvedPurpose)?.visitpurpose_desc || '') : '')],
       hostName: [savedData.hostName || ''],
       roomDesc: [savedData.roomDesc || ''],
       visitType: [savedData.visitType || '']
@@ -1673,9 +1730,22 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
           // Get value from saved data, fall back to visitorData in appointment flow
           const appointmentValue = isPreFilledData ? (visitorData[controlName] ?? null) : null;
-          const controlValue = udf.UDFCtrlType === 10
+          let controlValue = udf.UDFCtrlType === 10
             ? (savedData[controlName] || appointmentValue || '')
             : (savedData[controlName] ?? appointmentValue ?? null);
+
+          // p-multiSelect requires an array — coerce any value coming from the API/saved data
+          if (udf.UDFCtrlType === 30) {
+            if (typeof controlValue === 'string') {
+              const parts = controlValue.split(',')
+                .map((v: string) => v.trim())
+                .filter((v: string) => v && v.toLowerCase() !== 'null');
+              controlValue = parts.length ? parts : null;
+            } else if (Array.isArray(controlValue)) {
+              const filtered = controlValue.filter((v: any) => v != null && String(v).toLowerCase() !== 'null');
+              controlValue = filtered.length ? filtered : null;
+            }
+          }
 
           const validators = [];
           if (udf.UDFCtrlType === 10 && udf.MinLength) {
@@ -2287,12 +2357,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   getUdfOptions(apptUDFSetSeqId: number): any[] {
-    return this.udfOptions
+    return (this.udfOptions || [])
       .filter((item: any) => item.RefApptUDFSetSeqId === apptUDFSetSeqId)
       .map((item: any) => ({
         value: item.ApptUDFDetSetSeqId,
         label: item.Name
-      }));
+      }))
+      .filter((opt: any) => opt.value != null);
   }
 
   getUDFOptions(udfId: number): any[] {
@@ -3588,9 +3659,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         
         if (code === 20) {
           this.multipleBookingConflict = true;
+          const matchedHost = this.hosts.find((h: any) =>
+            (h.HOSTIC || h.HostIC || h.SeqId)?.toString() === hostId?.toString()
+          );
+          const hostDisplayName = matchedHost?.HOSTNAME || matchedHost?.Name || hostId || this.defaultHostId || '';
+          const alertTemplate = this.labelService.getLabel('registration_page_appointment_already_exist_alert', 'caption') || 'Opps.. {Hostname} already have another appointment at same time. Please verify';
+          const alertDetail = alertTemplate.replace('{Hostname}', hostDisplayName);
           this.showMessage({
             severity: 'error',
-            detail: this.labelService.getLabel('registration_page_appointment_already_exist_alert', 'caption') || 'A booking already exists for the selected date and time.',
+            detail: alertDetail,
             life: 5000
           });
         } else if (code === 10) {
