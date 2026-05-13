@@ -596,7 +596,7 @@ export class WizardService {
      * Parse a time_permit string like "18 Hours", "2 Days", "1 Month", "3 Months" and
      * return a Date offset from the given base date.
      */
-  private parseTimePermit(timePermit: string, base: Date): Date | null {
+  parseTimePermit(timePermit: string, base: Date): Date | null {
     if (!timePermit) return null;
     const match = timePermit.trim().match(/^(\d+)\s*(hour|hours|day|days|week|weeks|month|months)$/i);
     if (!match) return null;

@@ -3488,6 +3488,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       const parts = (slot?.Code || '').split('-');
       this.timeSlotStartTime = parts[0]?.trim() || null;
       this.timeSlotEndTime = parts[1]?.trim() || null;
+      console.log('[TimeSlot] selected slot:', slot, '| Code:', slot?.Code, '| Name:', slot?.Name, '| parsed timeSlotStartTime:', this.timeSlotStartTime, '| timeSlotEndTime:', this.timeSlotEndTime);
     }
   }
 
@@ -3507,11 +3508,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         end = new Date(apptDate);
         end.setHours(h, m, 0, 0);
       }
-      if (start) return { start, end };
+      console.log('[MultipleApt] getBookingDateTimes — using appointmentDate path, apptDate:', apptDate, '| timeSlotStartTime:', this.timeSlotStartTime, '| timeSlotEndTime:', this.timeSlotEndTime, '| start:', start, '| end:', end);
+      if (start && !isNaN(start.getTime())) return { start, end: (end && !isNaN(end.getTime())) ? end : null };
+      console.log('[MultipleApt] getBookingDateTimes — appointmentDate present but start is null or Invalid Date, falling through to startDate path');
     }
     // Schedule dialog flow: startDate + endDate
     const startDate: Date | null = this.generalForm.get('startDate')?.value ?? null;
     const endDate: Date | null = this.generalForm.get('endDate')?.value ?? null;
+    console.log('[MultipleApt] getBookingDateTimes — using startDate path, startDate:', startDate, '| endDate:', endDate);
     return {
       start: startDate ? new Date(startDate) : null,
       end: endDate ? new Date(endDate) : null
@@ -3519,17 +3523,33 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   private checkAndNavigate(onSuccess: () => void): void {
-    const { start, end } = this.getBookingDateTimes();
+    let { start, end } = this.getBookingDateTimes();
+    console.log('[MultipleApt] checkAndNavigate — appointmentDate:', this.generalForm.get('appointmentDate')?.value, '| startDate:', this.generalForm.get('startDate')?.value, '| timeSlotStartTime:', this.timeSlotStartTime, '| resolved start:', start, '| end:', end);
+
+    const now = new Date();
     if (!start) {
-      console.log('No start time, skipping multiple booking check');
-      onSuccess();
-      return;
+      console.log('[MultipleApt] no start time resolved — falling back to now:', now);
+      start = now;
+    }
+
+    // Mirror wizard.service AptEndTime logic: if end equals start (or is missing), compute end
+    if (!end || end.getTime() === start.getTime()) {
+      const aptEndTime = this.wizardService.getSelfRegistrationSettings()?.AptEndTime || 'DefaultEOD';
+      if (aptEndTime === 'DefaultEOD') {
+        end = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 23, 59, 59);
+      } else if (aptEndTime === 'Category') {
+        end = this.wizardService.parseTimePermit(this.settings?.CategoryTimePermit || '', start) ?? start;
+      } else {
+        end = start;
+      }
+      console.log('[MultipleApt] end time computed via AptEndTime(' + aptEndTime + '):', end);
     }
 
     const branchId = this.wizardService.currentBranchID;
-    const hostId = this.generalForm.get('host')?.value;
+    const hostId = this.generalForm.get('host')?.value || this.settings?.DefaultHostId?.toString() || null;
+    console.log('[MultipleApt] branchId:', branchId, '| hostId:', hostId, '(raw host:', this.generalForm.get('host')?.value, '| DefaultHostId:', this.settings?.DefaultHostId, ')');
     if (!branchId) {
-      console.log('No branchId, skipping multiple booking check');
+      console.log('[MultipleApt] SKIP — branchId is falsy');
       onSuccess();
       return;
     }
@@ -3539,11 +3559,16 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
     };
 
-    console.log(`Checking multiple bookings for host ${hostId} at branch ${branchId} from ${fmt(start)} to ${end ? fmt(end) : fmt(start)}`);
+    const resolvedEnd = end ?? start;
+    const seqId = this.visitorAckData?.visitorData?.seqId || '';
+    const fullName = this.generalForm.get('fullName')?.value || '';
+    const searchText = seqId ? `${seqId}_${fullName}` : fullName;
+    const catCode = this.wizardService.selectedVisitCategory || '';
+    console.log(`[MultipleApt] calling API — host ${hostId} at branch ${branchId} from ${fmt(start)} to ${fmt(resolvedEnd)} | searchText: ${searchText} | catCode: ${catCode}`);
 
     this.isCheckingMultipleBooking = true;
     this.multipleBookingConflict = false;
-    this.api.GetHostMultipleAptAtSameTime(fmt(start), end ? fmt(end) : fmt(start), branchId, hostId).subscribe({
+    this.api.GetHostMultipleAptAtSameTime(fmt(start), fmt(resolvedEnd), branchId, hostId, searchText, catCode).subscribe({
       next: (res: any) => {
         this.isCheckingMultipleBooking = false;
         const resObj = Array.isArray(res) ? res[0] : res;
@@ -3729,6 +3754,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   goNext(): void {
+    console.log('[goNext] isImageCaptureEnabled:', this.isImageCaptureEnabled, '| ImageUploadRequired:', this.settings?.ImageUploadRequired);
     // When image capture is required, open the photo dialog first using the same lightweight
     // check as "Save and Add" (isCurrentVisitorFormValid). Full validateForm() runs after the
     // dialog in executePendingAction, so non-visitor controls (startDate, endDate, etc.) cannot
@@ -3763,15 +3789,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.checkAndNavigate(() => this.wizardService.navigateToNextStep());
         return;
       }
-      this.pendingAction = 'goNext';
-      if (this.isMultipleVisitorMode && !this.generalForm.get('profilePreview')?.value && this.savedVisitors.length > 0) {
-        const lastVisitor = this.savedVisitors[this.savedVisitors.length - 1];
-        if (lastVisitor?.profilePreview) {
-          this.generalForm.patchValue({ profilePreview: lastVisitor.profilePreview }, { emitEvent: false });
-          this.profileImage = this.sanitizer.bypassSecurityTrustUrl(lastVisitor.profilePreview);
+      this.checkAndNavigate(() => {
+        this.pendingAction = 'goNext';
+        if (this.isMultipleVisitorMode && !this.generalForm.get('profilePreview')?.value && this.savedVisitors.length > 0) {
+          const lastVisitor = this.savedVisitors[this.savedVisitors.length - 1];
+          if (lastVisitor?.profilePreview) {
+            this.generalForm.patchValue({ profilePreview: lastVisitor.profilePreview }, { emitEvent: false });
+            this.profileImage = this.sanitizer.bypassSecurityTrustUrl(lastVisitor.profilePreview);
+          }
         }
-      }
-      this.openPhotoCaptureDialog();
+        this.openPhotoCaptureDialog();
+      });
       return;
     }
 
