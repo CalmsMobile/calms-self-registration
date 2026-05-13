@@ -56,7 +56,7 @@ export class HomePageComponent implements AfterViewChecked {
   termsValid = false;
   termsAccepted = false;
   readonly currentYear = new Date().getFullYear();
-  readonly appVersion = '1.0.0';
+  readonly appVersion = environment.appVersion;
   termsScrolledToBottom = false;
   private termsAutoChecked = false;
   private _cachedTermsHtml: SafeHtml | string = '';

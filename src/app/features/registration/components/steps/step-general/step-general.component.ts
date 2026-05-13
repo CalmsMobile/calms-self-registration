@@ -22,6 +22,7 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { SharedService } from '../../../../../shared/shared.service';
 import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
+import { environment } from '../../../../../../environments/environment';
 
 
 @Component({
@@ -37,7 +38,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
 
   readonly currentYear = new Date().getFullYear();
-  readonly appVersion = '1.0.0';
+  readonly appVersion = environment.appVersion;
 
   generalForm: FormGroup = new FormGroup({});
   profileImage: SafeUrl | string = "";
