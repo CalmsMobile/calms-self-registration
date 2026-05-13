@@ -1369,8 +1369,41 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return code !== undefined && code !== null && String(code).trim() !== '' ? String(code) : null;
   }
 
+  private normalizeIdInputType(inputType: any): 'N' | 'AN' | '' {
+    const normalized = String(inputType ?? '').trim().toUpperCase();
+    if (!normalized) {
+      return '';
+    }
+
+    if (
+      normalized === 'N' ||
+      normalized === 'NUMERIC' ||
+      normalized === 'NUMBER' ||
+      normalized.startsWith('N-') ||
+      normalized.startsWith('N ')
+    ) {
+      return 'N';
+    }
+
+    if (
+      normalized === 'AN' ||
+      normalized === 'ALPHANUMERIC' ||
+      normalized.startsWith('AN-') ||
+      normalized.startsWith('AN ')
+    ) {
+      return 'AN';
+    }
+
+    // Handle descriptive values from API, e.g. "AN-Alphanumeric".
+    if (normalized.includes('ALPHA')) {
+      return 'AN';
+    }
+
+    return '';
+  }
+
   private getIdTypeInputLabel(inputType: string | undefined): string {
-    return String(inputType || '').toUpperCase() === 'N' ? 'numeric' : 'alphanumeric';
+    return this.normalizeIdInputType(inputType) === 'N' ? 'numeric' : 'alphanumeric';
   }
 
   private buildVisitorIdTypeValidator(idTypeData: any): ValidatorFn {
@@ -1381,7 +1414,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         return null;
       }
 
-      const inputType = String(idTypeData?.INPUT_TYPE || '').toUpperCase();
+      const inputType = this.normalizeIdInputType(idTypeData?.INPUT_TYPE);
       const minLength = this.toPositiveInt(idTypeData?.INPUT_MIN_LENGTH) || 0;
       const typeLabel = this.getIdTypeInputLabel(inputType);
 
@@ -1389,8 +1422,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         return { idTypeInvalid: { type: typeLabel, minLength } };
       }
 
-      if (inputType === 'AN' && !/^[A-Za-z0-9]+$/.test(value)) {
-        return { idTypeInvalid: { type: typeLabel, minLength } };
+      if (inputType === 'AN') {
+        // AN type must be strictly alphanumeric and include at least one letter
+        // and one number so it doesn't pass on length-only checks.
+        const isAlphanumericOnly = /^[A-Za-z0-9]+$/.test(value);
+        const hasLetter = /[A-Za-z]/.test(value);
+        const hasDigit = /\d/.test(value);
+        if (!isAlphanumericOnly || !hasLetter || !hasDigit) {
+          return { idTypeInvalid: { type: typeLabel, minLength } };
+        }
       }
 
       if (minLength > 0 && value.length < minLength) {
@@ -2824,7 +2864,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   getVisitorIdTypeValidationError(): string {
-    const template = this.labelService.getLabel('registration_page_id_validation_error', 'caption') ||
+    const template = this.labelService.getLabel('registration_page_error_invalid_id', 'caption') ||
       'Identity number must be {type} and at least {MinLength} characters';
     const error = this.generalForm.get('visitor_id')?.getError('idTypeInvalid') || {};
     const inputType = this.selectedIdTypeData?.INPUT_TYPE;
