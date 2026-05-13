@@ -26,6 +26,7 @@ interface Attachment {
   trackerId?: string;
   uploaded?: boolean;
   uploadProgress?: number;
+  docPath?: string;   // pre-existing server path from appointment flow
 }
 
 @Component({
@@ -106,6 +107,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
           this.attachments[docId].caption = savedData.attachments[docId].caption || '';
           this.attachments[docId].trackerId = savedData.attachments[docId].trackerId || undefined;
           this.attachments[docId].uploaded = savedData.attachments[docId].uploaded || false;
+          this.attachments[docId].docPath = savedData.attachments[docId].docPath || undefined;
           if (savedData.attachments[docId].fileName) {
             this.attachments[docId].file = {
               name: savedData.attachments[docId].fileName,
@@ -114,7 +116,37 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
           }
         }
       });
+      return;
     }
+
+    // No saved data — pre-fill from appointment ack docs
+    const ackData = this.wizardService.getIncomingVisitorAckData();
+    const docsData: any[] = ackData?.docsData || [];
+    if (!docsData.length) return;
+
+    // Build a lookup: integer seqId → attachments key (handles "106" vs "106.0" keys)
+    const attachmentKeys = Object.keys(this.attachments);
+    const keyBySeqId = new Map<number, string>();
+    attachmentKeys.forEach(k => {
+      const n = parseInt(k);
+      if (!isNaN(n)) keyBySeqId.set(n, k);
+    });
+
+    docsData.forEach((doc: any) => {
+      const docPath = doc.DocPath || doc.FilePath || doc.FileUrl || '';
+      const fileName = docPath ? docPath.replace(/\\/g, '/').split('/').pop() || 'document' : '';
+      // API returns RefVisitorAttachSeqId (matches VisitorAttachSeqId in doc type settings)
+      const refId = parseInt(doc.RefVisitorAttachSeqId ?? doc.VisitorAttachSeqId ?? '');
+      const docId = !isNaN(refId) ? keyBySeqId.get(refId) : null;
+
+      if (docId) {
+        this.attachments[docId].file = { name: fileName, size: 0 } as File;
+        this.attachments[docId].uploaded = true;
+        this.attachments[docId].docPath = docPath;
+        this.attachments[docId].caption = doc.Caption || '';
+      }
+    });
+    this.saveFormData();
   }
 
   private saveFormData(): void {
@@ -137,7 +169,8 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
           fileName: attachment.file.name,
           fileSize: attachment.file.size,
           trackerId: attachment.trackerId,
-          uploaded: attachment.uploaded || false
+          uploaded: attachment.uploaded || false,
+          docPath: attachment.docPath || null
         };
       } else {
         formData.attachments[docId] = {
@@ -145,7 +178,8 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
           fileName: null,
           fileSize: null,
           trackerId: null,
-          uploaded: false
+          uploaded: false,
+          docPath: null
         };
       }
     });

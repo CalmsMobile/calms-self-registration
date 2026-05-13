@@ -230,7 +230,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSubmitting = false;
         this.actionResult = 'resubmit';
-        this.closeModal();
+        setTimeout(() => window.location.reload(), 1500);
       },
       error: () => {
         this.isSubmitting = false;

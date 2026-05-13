@@ -1616,9 +1616,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
     }
 
+    const appointmentPhotoRaw = (isPreFilledData && !savedData.profilePreview)
+      ? (this.visitorAckData?.imageData?.[0]?.Photo || null)
+      : null;
+    const appointmentPhotoDataUrl = appointmentPhotoRaw ? `data:image/jpeg;base64,${appointmentPhotoRaw}` : null;
+
     const formControls: any = {
-      profile: [savedData.profile || null],
-      profilePreview: [savedData.profilePreview || ''],
+      profile: [savedData.profile || appointmentPhotoDataUrl || null],
+      profilePreview: [savedData.profilePreview || appointmentPhotoDataUrl || ''],
       title: [resolvedTitle],
       fullName: [resolvedFullName],
       email: [isPreFilledData ? (visitorData.email || savedData.email || '') : (savedData.email || '')],
@@ -1720,6 +1725,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     } else if (savedData.profilePreview) {
       // Restore profile image preview when navigating back
       this.profileImage = savedData.profilePreview;
+    } else if (appointmentPhotoDataUrl) {
+      this.profileImage = this.sanitizer.bypassSecurityTrustUrl(appointmentPhotoDataUrl);
     }
 
     // Initialize visitors after form is created

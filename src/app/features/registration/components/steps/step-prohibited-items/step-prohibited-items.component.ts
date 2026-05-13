@@ -13,6 +13,7 @@ interface DeclaredItem {
   description: string;
   serialNumber: string;
   direction: string;
+  ChecklistSeqId?: number | string;
 }
 
 @Component({
@@ -62,6 +63,18 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
     const saved = this.wizardService.getFormData('prohibitedItems');
     if (saved?.declaredItems?.length) {
       this.declaredItems = saved.declaredItems;
+    } else {
+      const ackData = this.wizardService.getIncomingVisitorAckData();
+      const items: any[] = ackData?.itemDeclarationData || [];
+      if (items.length) {
+        this.declaredItems = items.map((item: any) => ({
+          description: item.MaterialDesc || '',
+          serialNumber: item.SerialNo || '',
+          direction: item.MovementType || '',
+          ChecklistSeqId: item.ChecklistSeqId
+        }));
+        this.saveFormData();
+      }
     }
   }
 

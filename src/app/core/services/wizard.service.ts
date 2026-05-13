@@ -1020,11 +1020,11 @@ export class WizardService {
 
       Object.keys(attachmentData.attachments).forEach(docId => {
         const attachment = attachmentData.attachments[docId];
-        if (attachment.fileName && attachment.trackerId) {
-          const fileExtension = attachment.fileName.includes('.')
-            ? attachment.fileName.substring(attachment.fileName.lastIndexOf('.'))
-            : '';
+        const fileExtension = (attachment.fileName || '').includes('.')
+          ? attachment.fileName.substring(attachment.fileName.lastIndexOf('.'))
+          : '';
 
+        if (attachment.fileName && attachment.trackerId) {
           attachmentArray.push({
             VisitorAttachSeqId: parseInt(docId),
             src: '',
@@ -1032,6 +1032,17 @@ export class WizardService {
             filename: attachment.fileName,
             uid: attachment.trackerId,
             trackerId: attachment.trackerId,
+            primary: '1'
+          });
+        } else if (attachment.fileName && attachment.docPath) {
+          // Pre-existing doc from appointment — reference server path directly
+          attachmentArray.push({
+            VisitorAttachSeqId: parseInt(docId),
+            src: attachment.docPath,
+            extension: fileExtension,
+            filename: attachment.fileName,
+            uid: '',
+            trackerId: '',
             primary: '1'
           });
         }
