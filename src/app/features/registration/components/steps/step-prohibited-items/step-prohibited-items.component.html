@@ -23,23 +23,23 @@
 
     <div class="right">
       <div class="form">
-        <label class="field" [class.field-error]="showFieldErrors && !newItem.description.trim()">
-          <span class="label">{{ 'equipment_movement_item_description' | translate }}</span>
+        <label class="field" [class.field-error]="showFieldErrors && isDescMandatory && !newItem.description.trim()">
+          <span class="label">{{ 'equipment_movement_item_description' | translate }}@if(isDescMandatory){<span class="req">*</span>}</span>
           <input type="text"
             [(ngModel)]="newItem.description"
             (ngModelChange)="checkInputs()"
             [placeholder]="'equipment_movement_item_description' | translate:'placeholder'" />
         </label>
-        <label class="field" [class.field-error]="showFieldErrors && !newItem.serialNumber.trim()">
-          <span class="label">{{ 'equipment_movement_serial_number' | translate }}</span>
+        <label class="field" [class.field-error]="showFieldErrors && isSerialMandatory && !newItem.serialNumber.trim()">
+          <span class="label">{{ 'equipment_movement_serial_number' | translate }}@if(isSerialMandatory){<span class="req">*</span>}</span>
           <input type="text"
             [(ngModel)]="newItem.serialNumber"
             (ngModelChange)="checkInputs()"
             [placeholder]="'equipment_movement_serial_number' | translate:'placeholder'" />
         </label>
         <div class="direction-row">
-          <label class="field" [class.field-error]="showFieldErrors && !newItem.direction">
-            <span class="label">{{ 'equipment_movement_direction' | translate }}</span>
+          <label class="field" [class.field-error]="showFieldErrors && isTypeMandatory && !newItem.direction">
+            <span class="label">{{ 'equipment_movement_direction' | translate }}@if(isTypeMandatory){<span class="req">*</span>}</span>
             <p-select
               [(ngModel)]="newItem.direction"
               (onChange)="checkInputs()"
@@ -88,7 +88,7 @@
           <button class="btn grey" type="button" (click)="goBack()"><span class="icon-left">&larr;</span> {{ 'equipment_movement_button_back' | translate }}</button>
           <button class="btn grey" type="button" (click)="skipStep()">{{ 'equipment_movement_button_skip' | translate }} <span class="icon-right">&rarr;</span></button>
         </div>
-        <button class="btn yellow" type="button" [disabled]="partiallyFilled" (click)="proceedToNext()">{{ 'equipment_movement_button_continue' | translate }} <span class="icon-right">&rarr;</span></button>
+        <button class="btn yellow" type="button" [disabled]="continueDisabled" (click)="proceedToNext()">{{ 'equipment_movement_button_continue' | translate }} <span class="icon-right">&rarr;</span></button>
       </div>
     </div>
   </section>
@@ -118,23 +118,23 @@
   <!-- Form Card -->
   <div class="m-card">
     <div class="m-form">
-      <div class="m-field" [class.m-field-error]="showFieldErrors && !newItem.description.trim()">
-        <span class="m-label">{{ 'equipment_movement_item_description' | translate }}</span>
+      <div class="m-field" [class.m-field-error]="showFieldErrors && isDescMandatory && !newItem.description.trim()">
+        <span class="m-label">{{ 'equipment_movement_item_description' | translate }}@if(isDescMandatory){<span class="req">*</span>}</span>
         <input class="m-input" type="text"
           [(ngModel)]="newItem.description"
           (ngModelChange)="checkInputs()"
           [placeholder]="'equipment_movement_item_description' | translate:'placeholder'" />
       </div>
-      <div class="m-field" [class.m-field-error]="showFieldErrors && !newItem.serialNumber.trim()">
-        <span class="m-label">{{ 'equipment_movement_serial_number' | translate }}</span>
+      <div class="m-field" [class.m-field-error]="showFieldErrors && isSerialMandatory && !newItem.serialNumber.trim()">
+        <span class="m-label">{{ 'equipment_movement_serial_number' | translate }}@if(isSerialMandatory){<span class="req">*</span>}</span>
         <input class="m-input" type="text"
           [(ngModel)]="newItem.serialNumber"
           (ngModelChange)="checkInputs()"
           [placeholder]="'equipment_movement_serial_number' | translate:'placeholder'" />
       </div>
       <div class="m-direction-row">
-        <div class="m-field" [class.m-field-error]="showFieldErrors && !newItem.direction">
-          <span class="m-label">{{ 'equipment_movement_direction' | translate }}</span>
+        <div class="m-field" [class.m-field-error]="showFieldErrors && isTypeMandatory && !newItem.direction">
+          <span class="m-label">{{ 'equipment_movement_direction' | translate }}@if(isTypeMandatory){<span class="req">*</span>}</span>
           <p-select
             [(ngModel)]="newItem.direction"
             (onChange)="checkInputs()"
@@ -191,7 +191,7 @@
         {{ 'equipment_movement_button_skip' | translate }} <span>&#8594;</span>
       </button>
     </div>
-    <button class="m-btn m-btn-yellow" type="button" [disabled]="partiallyFilled" (click)="proceedToNext()">
+    <button class="m-btn m-btn-yellow" type="button" [disabled]="continueDisabled" (click)="proceedToNext()">
       {{ 'equipment_movement_button_continue' | translate }} <span>&#8594;</span>
     </button>
   </div>

@@ -34,11 +34,29 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   showFieldErrors = false;
   duplicateError = '';
 
+  settings: any = {};
+
+  get isDescMandatory(): boolean { return !!this.settings?.MItemDescMandatory; }
+  get isSerialMandatory(): boolean { return !!this.settings?.MSerialNoMandatory; }
+  get isTypeMandatory(): boolean { return !!this.settings?.MTypeMandatory; }
+
   get partiallyFilled(): boolean {
     const { description, serialNumber, direction } = this.newItem;
-    const filled = [!!description.trim(), !!serialNumber.trim(), !!direction];
-    return filled.some(v => v) && !filled.every(v => v);
+    const hasAny = !!description.trim() || !!serialNumber.trim() || !!direction;
+    const mandatoryOk = (!this.isDescMandatory || !!description.trim()) &&
+                        (!this.isSerialMandatory || !!serialNumber.trim()) &&
+                        (!this.isTypeMandatory || !!direction);
+    return hasAny && !mandatoryOk;
   }
+
+  get continueDisabled(): boolean {
+    const { description, serialNumber, direction } = this.newItem;
+    return (this.isDescMandatory && !description.trim()) ||
+           (this.isSerialMandatory && !serialNumber.trim()) ||
+           (this.isTypeMandatory && !direction);
+  }
+
+
 
   logo = 'assets/logo.png';
   companyTitle = '';
@@ -60,6 +78,10 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.settings = this.wizardService.getSettings() || {};
+    console.log('MItemDescMandatory:', this.settings.MItemDescMandatory);
+    console.log('MSerialNoMandatory:', this.settings.MSerialNoMandatory);
+    console.log('MTypeMandatory:', this.settings.MTypeMandatory);
     const saved = this.wizardService.getFormData('prohibitedItems');
     if (saved?.declaredItems?.length) {
       this.declaredItems = saved.declaredItems;
@@ -87,10 +109,13 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   }
 
   checkInputs(): void {
-    this.canAdd = !!this.newItem.description.trim() &&
-                  !!this.newItem.serialNumber.trim() &&
-                  !!this.newItem.direction;
-    this.showFieldErrors = this.partiallyFilled;
+    const { description, serialNumber, direction } = this.newItem;
+    const hasAny = !!description.trim() || !!serialNumber.trim() || !!direction;
+    const mandatoryOk = (!this.isDescMandatory || !!description.trim()) &&
+                        (!this.isSerialMandatory || !!serialNumber.trim()) &&
+                        (!this.isTypeMandatory || !!direction);
+    this.canAdd = hasAny && mandatoryOk;
+    this.showFieldErrors = hasAny && !mandatoryOk;
     this.duplicateError = '';
   }
 
@@ -140,11 +165,10 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   }
 
   proceedToNext(): void {
-    if (this.partiallyFilled) {
+    if (this.continueDisabled) {
       this.showFieldErrors = true;
       return;
     }
-    // Auto-add item if all fields are filled
     if (this.canAdd) {
       this.addItem();
     }
