@@ -3880,7 +3880,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const resolvedEnd = end ?? start;
     const searchText = this.generalForm.get('visitor_id')?.value || '';
     const catCode = this.wizardService.selectedVisitCategory || '';
-    const workPermitRef = this.generalForm.get('work_permit_ref')?.value || '';
+    const workPermitRef = this.settings?.WorkPermitRefEnabled ? (this.generalForm.get('work_permit_ref')?.value || '') : '';
     console.log(`[MultipleApt] calling API — host ${hostId} at branch ${branchId} from ${fmt(start)} to ${fmt(resolvedEnd)} | searchText: ${searchText} | catCode: ${catCode} | workPermitRef: ${workPermitRef}`);
 
     this.isCheckingMultipleBooking = true;
@@ -3898,7 +3898,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.wizardService.setSafetyBriefViewFromApi(ViewSB);
         const code = Number(rawCode);
 
-        if (InvalidWP === false) {
+        if (this.settings?.WorkPermitRefEnabled && InvalidWP === false) {
           this.showMessage({
             severity: 'error',
             detail: this.labelService.getLabel('registration_page_invalid_work_permit_alert', 'caption') || 'Invalid work permit reference',
