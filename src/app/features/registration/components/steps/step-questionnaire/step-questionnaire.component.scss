@@ -150,14 +150,19 @@
 
 /* ===== RIGHT ===== */
 .right {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: 22px;
   overflow-y: auto;
-  height: 100%;
+  overflow-x: hidden;
+  height: auto;
+  max-height: 100%;
   min-height: 0;
   padding-right: 40px;
   padding-bottom: 0;
+  scroll-padding-bottom: 96px;
+  overscroll-behavior: contain;
 
   &::-webkit-scrollbar { width: 4px; }
   &::-webkit-scrollbar-track { background: rgba(0,0,0,0.04); border-radius: 10px; }
@@ -241,13 +246,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: sticky;
-  bottom: 28px;
-  z-index: 5;
-  margin-top: auto;
-  padding: 14px 0;
-  background: rgba(245, 245, 245, 0.96);
-  box-shadow: 0 -12px 24px rgba(245, 245, 245, 0.92);
+  position: static;
+  flex-shrink: 0;
+  margin-top: 18px;
+  margin-bottom: 24px;
+  padding: 14px 0 0;
+  background: transparent;
+  box-shadow: none;
 
   .actions-left {
     display: flex;
@@ -430,27 +435,33 @@
 @media (min-width: 769px) and (max-height: 820px) {
   :host {
     height: 100dvh;
-    overflow-y: auto;
+    overflow: hidden;
     overflow-x: hidden;
   }
 
   .page {
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
-    padding-bottom: 96px;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+    padding-bottom: 0;
   }
 
   .content {
-    flex: none;
+    flex: 1;
     min-height: 0;
-    overflow: visible;
+    overflow: hidden;
   }
 
   .right {
+    flex: 1 1 auto;
     height: auto;
-    overflow: visible;
-    padding-bottom: 72px;
+    max-height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 0;
+    scroll-padding-bottom: 96px;
+    overscroll-behavior: contain;
   }
 
   .questions {
