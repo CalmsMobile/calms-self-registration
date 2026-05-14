@@ -134,31 +134,42 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
 
   private restoreFormData(): void {
     const savedData = this.wizardService.getFormData('questionnaire');
-    console.log('=== QUESTIONNAIRE RESTORE ===');
-    console.log('Saved data from wizard:', savedData);
-    console.log('=============================');
     if (savedData) {
-      // Restore form data - handle both radio buttons and checkboxes
       Object.keys(savedData).forEach(key => {
         const control = this.questionnaireForm.get(key);
         if (control) {
           const value = savedData[key];
-          
-          // If it's a FormArray (checkbox group), populate it properly
           if (control instanceof FormArray) {
             control.clear();
             if (Array.isArray(value)) {
-              value.forEach((v: string) => {
-                control.push(this.fb.control(v));
-              });
+              value.forEach((v: string) => control.push(this.fb.control(v)));
             }
           } else {
-            // Regular FormControl (radio button)
             control.setValue(value);
           }
         }
       });
+      return;
     }
+
+    // No saved data — pre-fill from appointment ack data if available
+    const ackData = this.wizardService.getIncomingVisitorAckData();
+    const qnaRows: any[] = ackData?.questionnaireData || [];
+    if (!qnaRows.length) return;
+
+    qnaRows.forEach((row: any) => {
+      const key = `q${row.QuestionariesSeqId}`;
+      const control = this.questionnaireForm.get(key);
+      if (!control || !row.Answer) return;
+      const answers = (row.Answer as string).split(',').map((s: string) => s.trim()).filter(Boolean);
+      if (control instanceof FormArray) {
+        control.clear();
+        answers.forEach(v => control.push(this.fb.control(v)));
+      } else {
+        control.setValue(answers[0] ?? null);
+      }
+    });
+    this.saveFormData();
   }
 
   private saveFormData(): void {

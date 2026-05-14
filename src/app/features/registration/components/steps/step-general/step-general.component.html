@@ -134,19 +134,23 @@
       <div class="form-field">
         <label class="field-label" for="visitor_id">
           {{'registration_page_identity_no' | translate}}
-          <span class="required-star">{{settings?.IdProofRequired ? '*' : ''}}</span>
+          <span class="required-star">{{isVisitorIdMandatory() ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-id-card"></i></span>
           <input pInputText id="visitor_id" [placeholder]="'registration_page_identity_no' | translate:'placeholder'"
             formControlName="visitor_id" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id')}"
-            [disabled]="isFieldDisabled('visitor_id')" (blur)="onVisitorIdBlur()">
+            [disabled]="isFieldDisabled('visitor_id')" [attr.maxlength]="visitorIdMaxLength" (blur)="onVisitorIdBlur()">
           @if (generalForm.get('visitor_id')?.value && !generalForm.get('visitor_id')?.disabled) {
           <button type="button" class="field-clear-btn" (click)="clearField('visitor_id')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
         </div>
-        @if (isFieldInvalidRequired('visitor_id')) {
+        @if (isFieldRequired('visitor_id')) {
         <small class="error-message">{{ getRequiredError('identity_no') }}</small>
+        } @else if (isVisitorIdTypeValidationError()) {
+        <small class="error-message">{{ getVisitorIdTypeValidationError() }}</small>
+        } @else if (isFieldMaxLengthError('visitor_id')) {
+        <small class="error-message">{{ getMaxLengthError(visitorIdMaxLength) }}</small>
         }
       </div>
       }
@@ -680,8 +684,7 @@
         </label>
         <div class="schedule-trigger"
           [class.ng-invalid]="isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate') || endBeforeStartError"
-          [class.field-disabled]="isAppointmentFlow"
-          (click)="isAppointmentFlow ? null : openScheduleDialog()">
+          (click)="openScheduleDialog()">
           <i class="pi pi-calendar"></i>
           <span>{{ getScheduleDisplayText() }}</span>
           <i class="pi pi-chevron-down"></i>
@@ -1020,18 +1023,22 @@
       <!-- 5. Visitor ID -->
       @if (settings?.IdProofEnabled) {
       <div class="m-form-field">
-        <label class="m-field-label">{{'registration_page_identity_no' | translate}} <span class="m-req">{{settings?.IdProofRequired ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{'registration_page_identity_no' | translate}} <span class="m-req">{{isVisitorIdMandatory() ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-id-card"></i></span>
           <input pInputText [placeholder]="'registration_page_identity_no' | translate:'placeholder'"
             formControlName="visitor_id" [class]="{'ng-invalid': isFieldInvalidRequired('visitor_id')}"
-            [disabled]="isFieldDisabled('visitor_id')" (blur)="onVisitorIdBlur()">
+            [disabled]="isFieldDisabled('visitor_id')" [attr.maxlength]="visitorIdMaxLength" (blur)="onVisitorIdBlur()">
           @if (generalForm.get('visitor_id')?.value && !generalForm.get('visitor_id')?.disabled) {
           <button type="button" class="field-clear-btn" (click)="clearField('visitor_id')" tabindex="-1"><i class="pi pi-times"></i></button>
           }
         </div>
-        @if (isFieldInvalidRequired('visitor_id')) {
+        @if (isFieldRequired('visitor_id')) {
         <small class="m-error">{{ getRequiredError('identity_no') }}</small>
+        } @else if (isVisitorIdTypeValidationError()) {
+        <small class="m-error">{{ getVisitorIdTypeValidationError() }}</small>
+        } @else if (isFieldMaxLengthError('visitor_id')) {
+        <small class="m-error">{{ getMaxLengthError(visitorIdMaxLength) }}</small>
         }
       </div>
       }
@@ -1485,8 +1492,7 @@
         <label class="m-field-label">{{'registration_page_date_and_time' | translate}} <span class="m-req">*</span></label>
         <div class="schedule-trigger m-schedule-trigger"
           [class.ng-invalid]="isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate') || endBeforeStartError"
-          [class.field-disabled]="isAppointmentFlow"
-          (click)="isAppointmentFlow ? null : openScheduleDialog()">
+          (click)="openScheduleDialog()">
           <i class="pi pi-calendar"></i>
           <span>{{ getScheduleDisplayText() }}</span>
           <i class="pi pi-chevron-down"></i>

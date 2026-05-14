@@ -22,6 +22,7 @@ import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { SharedService } from '../../../../../shared/shared.service';
 import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
+import { environment } from '../../../../../../environments/environment';
 
 
 @Component({
@@ -37,7 +38,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
 
   readonly currentYear = new Date().getFullYear();
-  readonly appVersion = '1.0.0';
+  readonly appVersion = environment.appVersion;
 
   generalForm: FormGroup = new FormGroup({});
   profileImage: SafeUrl | string = "";
@@ -94,6 +95,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   scheduleEndTime = '10:00';
   scheduleActiveField: 'start' | 'end' = 'start';
   selectedIdTypeData: any = null;
+  visitorIdDynamicMaxLength: number | null = null;
   gbShowMemberId = false;
   showTime = true;
   masterData: any = {};
@@ -171,6 +173,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Pending action after photo capture dialog resolves
   pendingAction: 'goNext' | 'addVisitor' | null = null;
 
+  // Multiple booking check
+  multipleBookingConflict = false;
+  isCheckingMultipleBooking = false;
+
   private destroy$ = new Subject<void>();
   private _activeMessageKeys = new Set<string>();
 
@@ -180,13 +186,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this._activeMessageKeys.has(key)) return;
     this._activeMessageKeys.add(key);
     const life = msg.life ?? 3000;
-    
+
     if (msg.summary) {
       this.messageHelper.showWithTitle(msg.severity as any, msg.summary, msg.detail || '', life);
     } else {
       this.messageHelper.show(msg.severity as any, msg.detail || '', life);
     }
-    
+
     setTimeout(() => this._activeMessageKeys.delete(key), life + 200);
   }
 
@@ -240,6 +246,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.settings.SearchExistingVisitor = selfRegSettings.SearchExistingVisitor ?? this.settings.SearchExistingVisitor;
         this.settings.EnableWhitelistValidation = selfRegSettings.EnableWhitelistValidation ?? this.settings.EnableWhitelistValidation;
         this.settings.AptEndTime = selfRegSettings.AptEndTime ?? this.settings.AptEndTime ?? '';
+        this.settings.AllowMultipleBooking = selfRegSettings.AllowMultipleBooking ?? this.settings.AllowMultipleBooking;
       }
       this.isSingaporePDPARequired = settings?.IsSingaporePDPARequired === true;
       this.loadUdfSettings();
@@ -263,6 +270,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
       if (sr.AptEndTime !== undefined) {
         this.settings = { ...this.settings, AptEndTime: sr.AptEndTime };
+      }
+      if (sr.AllowMultipleBooking !== undefined) {
+        this.settings = { ...this.settings, AllowMultipleBooking: sr.AllowMultipleBooking };
       }
     });
 
@@ -292,7 +302,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     if (this.masterData) {
       this.meetingFloorList = this.masterData.Table2 || [];
-      this.purposeList = this.masterData.Table3 || [];
+      this.purposeList = (this.masterData.Table3 || []).map((p: any) => ({
+        ...p,
+        visitpurpose_id: p.PurposeCode ?? p.purpose_id ?? p.SeqId ?? p.visitpurpose_id ?? '',
+        visitpurpose_desc: p.visitpurpose_desc ?? p.PurposeName ?? p.purpose_name ?? '',
+      }));
       this.departmentList = (this.masterData.Table5 || []).map((d: any) => ({
         ...d,
         DName: d.DName || d.dept_desc || d.Department || '',
@@ -513,6 +527,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.timeSlotList = [];
     this.timeSlotStartTime = null;
     this.timeSlotEndTime = null;
+    this.multipleBookingConflict = false;
     this.generalForm.patchValue({ timeSlot: '' });
   }
 
@@ -985,7 +1000,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (response && response.Table1 && response.Table1.length > 0) {
       let filteredRooms = [...response.Table1.filter((item: any) => {
         return !item.IsForPatientVisit;
-      })];
+      })].map((r: any) => ({
+        ...r,
+        MeetingRoomSeqId: r.MeetingRoomSeqId?.toString() ?? ''
+      }));
       this.meetingLocList = filteredRooms;
       console.log('Rooms loaded from GetBranchHostData Table1:', filteredRooms.length);
     }
@@ -1016,7 +1034,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // regardless of the field names used by the API (PurposeCode/PurposeName or visitpurpose_id/visitpurpose_desc)
       this.purposeList = purposes.map((p: any) => ({
         ...p,
-        visitpurpose_id: p.visitpurpose_id ?? p.PurposeCode ?? p.purpose_id ?? '',
+        visitpurpose_id: p.PurposeCode ?? p.purpose_id ?? p.SeqId ?? p.visitpurpose_id ?? '',
         visitpurpose_desc: p.visitpurpose_desc ?? p.PurposeName ?? p.purpose_name ?? '',
       }));
       console.log('Visit purposes loaded from branch data:', this.purposeList.length);
@@ -1029,8 +1047,47 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             visitpurpose_desc: p.PurposeName
           }));
           console.log('Visit purposes loaded from VimsAppFacilityPurposeList:', this.purposeList.length);
+          if (this.isAppointmentFlow && this.generalForm && this.visitorAckData?.visitorData) {
+            const apptData = this.visitorAckData.visitorData;
+            if (!this.generalForm.get('purpose')?.value && apptData.purposeId) {
+              const pid = String(apptData.purposeId);
+              const match = this.purposeList.find((p: any) =>
+                String(p.visitpurpose_id) === pid ||
+                String(p.visitpurpose_desc).toLowerCase() === pid.toLowerCase()
+              );
+              if (match) {
+                this.generalForm.get('purpose')?.setValue(match.visitpurpose_id);
+                this.generalForm.get('purposeDesc')?.setValue(match.visitpurpose_desc || '');
+                this.saveFormDataToWizard();
+              }
+            }
+          }
         }
       });
+    }
+
+    // Late-patch appointment auto-fill for fields whose lists load asynchronously
+    // Must run AFTER meetingLocList and purposeList are both populated above
+    if (this.isAppointmentFlow && this.generalForm && this.visitorAckData?.visitorData) {
+      const apptData = this.visitorAckData.visitorData;
+
+      if (!this.generalForm.get('meeting_location')?.value && apptData.roomId != null) {
+        this.generalForm.get('meeting_location')?.setValue(apptData.roomId.toString());
+        this.saveFormDataToWizard();
+      }
+
+      if (!this.generalForm.get('purpose')?.value && apptData.purposeId) {
+        const pid = String(apptData.purposeId);
+        const match = this.purposeList.find((p: any) =>
+          String(p.visitpurpose_id) === pid ||
+          String(p.visitpurpose_desc).toLowerCase() === pid.toLowerCase()
+        );
+        if (match) {
+          this.generalForm.get('purpose')?.setValue(match.visitpurpose_id);
+          this.generalForm.get('purposeDesc')?.setValue(match.visitpurpose_desc || '');
+          this.saveFormDataToWizard();
+        }
+      }
     }
 
     // Set department for default host if enabled after hosts are loaded
@@ -1261,11 +1318,167 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   get isVisitorIdMaxLengthRestricted(): boolean {
-    return this.isSingaporePDPARequired;
+    return this.visitorIdMaxLength < 50;
   }
 
   get visitorIdMaxLength(): number {
-    return this.isSingaporePDPARequired ? 4 : 50; // Default max length when not restricted
+    if (this.isSingaporePDPARequired) {
+      return 4;
+    }
+    return this.visitorIdDynamicMaxLength || 50;
+  }
+
+  isVisitorIdMandatory(): boolean {
+    const selectedIdType = this.generalForm?.get('visitor_id_type')?.value;
+    const hasSelectedIdType = selectedIdType !== null && selectedIdType !== undefined && String(selectedIdType).trim() !== '';
+    return !!(this.settings?.IdProofEnabled && (this.settings?.IdProofRequired || hasSelectedIdType));
+  }
+
+  private toPositiveInt(value: any): number | null {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return null;
+    }
+    return Math.trunc(parsed);
+  }
+
+  private getIdTypeByCode(idTypeCode: any): any | null {
+    if (idTypeCode === null || idTypeCode === undefined || idTypeCode === '') {
+      return null;
+    }
+
+    const normalizedCode = String(idTypeCode).trim();
+    return this.idTypeList.find((item: any) =>
+      String(item.ID_TYPECODE ?? item.SEQ_ID ?? '').trim() === normalizedCode
+    ) || null;
+  }
+
+  private isIdTypeMarkedAsDefault(idType: any): boolean {
+    const isDefault = idType?.IS_DEFAULT;
+    const isDefaultType = idType?.IS_DEFAULT_TYPE;
+    return isDefault === true || isDefault === 1 || String(isDefault).toLowerCase() === 'true' ||
+      isDefaultType === true || isDefaultType === 1 || String(isDefaultType).toLowerCase() === 'true';
+  }
+
+  private getDefaultIdTypeCode(): string | null {
+    const defaultType = this.idTypeList.find((idType: any) => this.isIdTypeMarkedAsDefault(idType));
+    if (!defaultType) {
+      return null;
+    }
+    const code = defaultType.ID_TYPECODE ?? defaultType.SEQ_ID;
+    return code !== undefined && code !== null && String(code).trim() !== '' ? String(code) : null;
+  }
+
+  private normalizeIdInputType(inputType: any): 'N' | 'AN' | '' {
+    const normalized = String(inputType ?? '').trim().toUpperCase();
+    if (!normalized) {
+      return '';
+    }
+
+    if (
+      normalized === 'N' ||
+      normalized === 'NUMERIC' ||
+      normalized === 'NUMBER' ||
+      normalized.startsWith('N-') ||
+      normalized.startsWith('N ')
+    ) {
+      return 'N';
+    }
+
+    if (
+      normalized === 'AN' ||
+      normalized === 'ALPHANUMERIC' ||
+      normalized.startsWith('AN-') ||
+      normalized.startsWith('AN ')
+    ) {
+      return 'AN';
+    }
+
+    // Handle descriptive values from API, e.g. "AN-Alphanumeric".
+    if (normalized.includes('ALPHA')) {
+      return 'AN';
+    }
+
+    return '';
+  }
+
+  private getIdTypeInputLabel(inputType: string | undefined): string {
+    return this.normalizeIdInputType(inputType) === 'N' ? 'numeric' : 'alphanumeric';
+  }
+
+  private buildVisitorIdTypeValidator(idTypeData: any): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const rawValue = control.value;
+      const value = rawValue == null ? '' : String(rawValue).trim();
+      if (!value) {
+        return null;
+      }
+
+      const inputType = this.normalizeIdInputType(idTypeData?.INPUT_TYPE);
+      const minLength = this.toPositiveInt(idTypeData?.INPUT_MIN_LENGTH) || 0;
+      const typeLabel = this.getIdTypeInputLabel(inputType);
+
+      if (inputType === 'N' && !/^\d+$/.test(value)) {
+        return { idTypeInvalid: { type: typeLabel, minLength } };
+      }
+
+      if (inputType === 'AN') {
+        // AN type must be strictly alphanumeric and include at least one letter
+        // and one number so it doesn't pass on length-only checks.
+        const isAlphanumericOnly = /^[A-Za-z0-9]+$/.test(value);
+        const hasLetter = /[A-Za-z]/.test(value);
+        const hasDigit = /\d/.test(value);
+        if (!isAlphanumericOnly || !hasLetter || !hasDigit) {
+          return { idTypeInvalid: { type: typeLabel, minLength } };
+        }
+      }
+
+      if (minLength > 0 && value.length < minLength) {
+        return { idTypeInvalid: { type: typeLabel, minLength } };
+      }
+
+      return null;
+    };
+  }
+
+  private applyVisitorIdValidationRules(idTypeData: any | null = null): void {
+    const visitorIdControl = this.generalForm.get('visitor_id');
+    if (!visitorIdControl) {
+      return;
+    }
+
+    const validators: ValidatorFn[] = [];
+
+    const hasSelectedIdType = !!(this.settings?.IdTypeEnabled && idTypeData);
+    if (this.settings?.IdProofEnabled && (this.settings?.IdProofRequired || hasSelectedIdType)) {
+      validators.push(Validators.required);
+    }
+
+    let maxLength: number | null = this.isSingaporePDPARequired ? 4 : null;
+
+    if (!this.isSingaporePDPARequired && idTypeData) {
+      const configuredMax = this.toPositiveInt(idTypeData.INPUT_MAX_LENGTH);
+      if (configuredMax) {
+        maxLength = configuredMax;
+      }
+    }
+
+    if (maxLength) {
+      validators.push(Validators.maxLength(maxLength));
+    }
+
+    if (!this.isSingaporePDPARequired && this.settings?.IdTypeEnabled && idTypeData) {
+      validators.push(this.buildVisitorIdTypeValidator(idTypeData));
+    } else if (!this.isSingaporePDPARequired) {
+      const fallbackMinLength = this.toPositiveInt(this.settings?.IdProofMinLength);
+      if (fallbackMinLength) {
+        validators.push(Validators.minLength(fallbackMinLength));
+      }
+    }
+
+    this.visitorIdDynamicMaxLength = maxLength;
+    visitorIdControl.setValidators(validators);
+    visitorIdControl.updateValueAndValidity();
   }
 
   private processPageSettings(pageSettings: any[]): void {
@@ -1455,7 +1668,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     let resolvedIdType: string | null = isPreFilledData
       ? (visitorData.idType || savedData.visitor_id_type || null)
       : (savedData.visitor_id_type || null);
-    if (isPreFilledData && resolvedIdType && this.idTypeList.length > 0) {
+    if (!resolvedIdType && this.settings?.IdTypeEnabled) {
+      resolvedIdType = this.getDefaultIdTypeCode();
+    }
+    if (resolvedIdType && this.idTypeList.length > 0) {
       const codeMatch = this.idTypeList.find((t: any) => t.ID_TYPECODE === resolvedIdType);
       if (!codeMatch) {
         const descMatch = this.idTypeList.find((t: any) =>
@@ -1487,9 +1703,25 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
     }
 
+    const appointmentPhotoRaw = (isPreFilledData && !savedData.profilePreview)
+      ? (this.visitorAckData?.imageData?.[0]?.Photo || null)
+      : null;
+    const appointmentPhotoDataUrl = appointmentPhotoRaw ? `data:image/jpeg;base64,${appointmentPhotoRaw}` : null;
+
+    // Resolve purpose from appointment data: match by ID first, then by description
+    let resolvedPurpose: any = savedData.purpose || null;
+    if (!resolvedPurpose && isPreFilledData && visitorData.purposeId) {
+      const pid = String(visitorData.purposeId);
+      const purposeMatch = this.purposeList.find((p: any) =>
+        String(p.visitpurpose_id) === pid ||
+        String(p.visitpurpose_desc).toLowerCase() === pid.toLowerCase()
+      );
+      resolvedPurpose = purposeMatch ? purposeMatch.visitpurpose_id : null;
+    }
+
     const formControls: any = {
-      profile: [savedData.profile || null],
-      profilePreview: [savedData.profilePreview || ''],
+      profile: [savedData.profile || appointmentPhotoDataUrl || null],
+      profilePreview: [savedData.profilePreview || appointmentPhotoDataUrl || ''],
       title: [resolvedTitle],
       fullName: [resolvedFullName],
       email: [isPreFilledData ? (visitorData.email || savedData.email || '') : (savedData.email || '')],
@@ -1505,7 +1737,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       vehicle_color: [isPreFilledData ? (visitorData.vehicleColor || savedData.vehicle_color || '') : (savedData.vehicle_color || '')],
       expired_date: [savedData.expired_date || ''],
       Reason: [savedData.Reason || ''],
-      meeting_location: [savedData.meeting_location || ''],
+      meeting_location: [savedData.meeting_location || (isPreFilledData ? (visitorData.roomId?.toString() || '') : '')],
       floor: [isPreFilledData ? (visitorData.floorId || savedData.floor || null) : (savedData.floor || null)],
       visitor_address: [isPreFilledData ? (visitorData.address || savedData.visitor_address || '') : (savedData.visitor_address || '')],
       country: [isPreFilledData ? (visitorData.countryId || savedData.country || null) : (savedData.country || null)],
@@ -1522,8 +1754,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       facilityPurpose: [savedData.facilityPurpose || null],
       facilitySelection: [savedData.facilitySelection || null],
       sharedDate: [savedData.sharedDate || null],
-      purpose: [savedData.purpose || null],
-      purposeDesc: [savedData.purposeDesc || ''],
+      purpose: [resolvedPurpose],
+      purposeDesc: [savedData.purposeDesc || (isPreFilledData && resolvedPurpose ? (this.purposeList.find((p: any) => p.visitpurpose_id === resolvedPurpose)?.visitpurpose_desc || '') : '')],
       hostName: [savedData.hostName || ''],
       roomDesc: [savedData.roomDesc || ''],
       visitType: [savedData.visitType || '']
@@ -1538,9 +1770,50 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
           // Get value from saved data, fall back to visitorData in appointment flow
           const appointmentValue = isPreFilledData ? (visitorData[controlName] ?? null) : null;
-          const controlValue = udf.UDFCtrlType === 10
+          let controlValue = udf.UDFCtrlType === 10
             ? (savedData[controlName] || appointmentValue || '')
             : (savedData[controlName] ?? appointmentValue ?? null);
+
+          // p-multiSelect requires an array — coerce any value coming from the API/saved data
+          // p-multiSelect requires an array — coerce any value coming from the API/saved data
+          if (udf.UDFCtrlType === 30) {
+            if (typeof controlValue === 'string') {
+              // Try to parse if it's a JSON array string e.g. "[\"null\", \"null\"]" or "[null]"
+              if (controlValue.trim().startsWith('[') && controlValue.trim().endsWith(']')) {
+                try {
+                  const parsed = JSON.parse(controlValue);
+                  if (Array.isArray(parsed)) {
+                    controlValue = parsed;
+                  }
+                } catch(e) {
+                  // Fallback to string processing if JSON parse fails
+                }
+              }
+              
+              // Process string if it wasn't successfully parsed into an array above
+              if (typeof controlValue === 'string') {
+                const parts = controlValue.split(',')
+                  .map((v: string) => v.replace(/['"\[\]]/g, '').trim())
+                  .filter((v: string) => v && v.toLowerCase() !== 'null');
+                
+                // Uniformly convert to strictly matched strings. Padded numbers ("0001") will align perfectly.
+                controlValue = parts.length ? parts.map(v => {
+                  const num = Number(v);
+                  return isNaN(num) ? String(v).trim() : String(num);
+                }) : null;
+              }
+            }
+            console.log(`[UDF Debug] controlValue for ${udf.formControlName}:`, controlValue);
+            
+            // Re-evaluate Array in case the JSON string parsing produced an array
+            if (Array.isArray(controlValue)) {
+              const filtered = controlValue.filter((v: any) => v != null && String(v).replace(/['"\[\]]/g, '').toLowerCase() !== 'null');
+              controlValue = filtered.length ? filtered.map((v: any) => {
+                  const num = Number(v);
+                  return isNaN(num) ? String(v).trim() : String(num);
+              }) : null;
+            }
+          }
 
           const validators = [];
           if (udf.UDFCtrlType === 10 && udf.MinLength) {
@@ -1591,6 +1864,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     } else if (savedData.profilePreview) {
       // Restore profile image preview when navigating back
       this.profileImage = savedData.profilePreview;
+    } else if (appointmentPhotoDataUrl) {
+      this.profileImage = this.sanitizer.bypassSecurityTrustUrl(appointmentPhotoDataUrl);
     }
 
     // Initialize visitors after form is created
@@ -1760,14 +2035,16 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const currentForm = this.getCurrentVisitorForm();
 
     if (this.isCurrentVisitorFormValid()) {
-      // If image upload is enabled, show the photo dialog before saving.
-      // After the user captures/uploads/skips, performAddVisitor() will be called.
-      if (this.isImageCaptureEnabled) {
-        this.pendingAction = 'addVisitor';
-        this.openPhotoCaptureDialog();
-        return;
-      }
-      this.performAddVisitor();
+      this.checkAndNavigate(() => {
+        // If image upload is enabled, show the photo dialog before saving.
+        // After the user captures/uploads/skips, performAddVisitor() will be called.
+        if (this.isImageCaptureEnabled) {
+          this.pendingAction = 'addVisitor';
+          this.openPhotoCaptureDialog();
+          return;
+        }
+        this.performAddVisitor();
+      });
     } else {
       // Mark only visitor-related required fields as touched to show validation errors
       const requiredFields = this.getRequiredVisitorFields();
@@ -1894,12 +2171,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Helper method to get required visitor fields based on settings
   private getRequiredVisitorFields(): string[] {
     const requiredFields = [];
+    const selectedIdType = this.getCurrentVisitorForm()?.get('visitor_id_type')?.value;
+    const hasSelectedIdType = selectedIdType !== null && selectedIdType !== undefined && String(selectedIdType).trim() !== '';
 
     if (this.settings) {
       if (this.settings.NameEnabled && this.settings.NameRequired) requiredFields.push('fullName');
       if (this.settings.EmailEnabled && this.settings.EmailRequired) requiredFields.push('email');
       if (this.settings.ContactNumberEnabled && this.settings.ContactNumberRequired) requiredFields.push('phone');
-      if (this.settings.IdProofEnabled && this.settings.IdProofRequired) requiredFields.push('visitor_id');
+      if (this.settings.IdProofEnabled && (this.settings.IdProofRequired || hasSelectedIdType)) requiredFields.push('visitor_id');
       if (this.settings.GenderEnabled && this.settings.GenderRequired) requiredFields.push('gender');
       if (this.settings.CompanyEnabled && this.settings.CompanyRequired) requiredFields.push('visitor_company');
       if (this.settings.VehicleNumberEnabled && this.settings.VehicleNumberRequired) requiredFields.push('vehicle_number');
@@ -2047,9 +2326,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
     this.setupControl('phone', this.settings.ContactNumberEnabled, this.settings.ContactNumberRequired, this.settings.ContactNumberMinLength);
 
-    // Setup visitor_id with PDPA max length restriction if enabled
-    const visitorIdMaxLength = this.isSingaporePDPARequired ? 4 : undefined;
-    this.setupControl('visitor_id', this.settings.IdProofEnabled, this.settings.IdProofRequired, undefined, visitorIdMaxLength);
+    // Setup visitor_id rules from selected ID type (min/type/max) or fallback settings.
+    this.setupControl('visitor_id', this.settings.IdProofEnabled, this.settings.IdProofRequired);
     this.setupControl('visitor_id_type', this.settings.IdTypeEnabled, this.settings.IdTypeRequired);
 
     this.setupControl('gender', this.settings.GenderEnabled, this.settings.GenderRequired);
@@ -2139,17 +2417,31 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (savedExpiryDate && this.showIdExpiryField) {
         this.generalForm.get('id_expired_date')?.setValue(savedExpiryDate, { emitEvent: false });
       }
+    } else {
+      this.selectedIdTypeData = null;
+      this.applyVisitorIdValidationRules(null);
     }
 
   }
 
   getUdfOptions(apptUDFSetSeqId: number): any[] {
-    return this.udfOptions
+    const opts = (this.udfOptions || [])
       .filter((item: any) => item.RefApptUDFSetSeqId === apptUDFSetSeqId)
-      .map((item: any) => ({
-        value: item.ApptUDFDetSetSeqId,
-        label: item.Name
-      }));
+      .map((item: any) => {
+        const rawVal = item.ApptUDFDetSetSeqId;
+        const num = Number(rawVal);
+        const finalVal = rawVal != null ? (isNaN(num) ? String(rawVal).trim() : String(num)) : null;
+        
+        return {
+          value: finalVal,
+          label: item.Name
+        };
+      })
+      .filter((opt: any) => opt.value != null);
+    
+    // Debug log to inspect the options
+    console.log(`[UDF Debug] getUdfOptions for SetSeqId ${apptUDFSetSeqId}:`, opts);
+    return opts;
   }
 
   getUDFOptions(udfId: number): any[] {
@@ -2264,19 +2556,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     // Block if time slot is enabled but no slots available for selected date
-   /*  if (this.enableVimsApptTimeSlot && this.timeSlotsLoaded && this.timeSlotList.length === 0) {
-      const dateField = this.enableFBInSelfReg ? 'sharedDate' : 'appointmentDate';
-      const hasDate = !!this.generalForm.get(dateField)?.value;
-      if (hasDate) {
-        this.showMessage({
-          severity: 'warn',
-          summary: this.labelService.getLabel('registration_page_no_slots_available_alert', 'caption') || 'No Slots Available',
-          detail: this.labelService.getLabel('registration_page_no_time_slots_available', 'caption') || 'No time slots available for the selected date'
-        });
-        this.wizardService.setStepValid(false);
-        return false;
-      }
-    } */
+    /*  if (this.enableVimsApptTimeSlot && this.timeSlotsLoaded && this.timeSlotList.length === 0) {
+       const dateField = this.enableFBInSelfReg ? 'sharedDate' : 'appointmentDate';
+       const hasDate = !!this.generalForm.get(dateField)?.value;
+       if (hasDate) {
+         this.showMessage({
+           severity: 'warn',
+           summary: this.labelService.getLabel('registration_page_no_slots_available_alert', 'caption') || 'No Slots Available',
+           detail: this.labelService.getLabel('registration_page_no_time_slots_available', 'caption') || 'No time slots available for the selected date'
+         });
+         this.wizardService.setStepValid(false);
+         return false;
+       }
+     } */
 
     // Validate end datetime is after start datetime
     this.checkEndBeforeStart();
@@ -2479,7 +2771,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           const parts = apiValue.split(/[\/\-]/);
           if (parts.length === 3) value = new Date(+parts[2], +parts[1] - 1, +parts[0]);
         } else if (udf.UDFCtrlType === 30 && typeof apiValue === 'string') {
-          value = apiValue.split(',').map((v: string) => v.trim()).filter(Boolean);
+          const parts = apiValue.split(',').map((v: string) => v.trim()).filter(Boolean);
+          value = parts.length ? parts.map(v => {
+            const num = Number(v);
+            return isNaN(num) ? String(v).trim() : String(num);
+          }) : null;
+        } else if (udf.UDFCtrlType === 30 && Array.isArray(apiValue)) {
+          const filtered = apiValue.filter(Boolean);
+          value = filtered.length ? filtered.map(v => {
+            const num = Number(v);
+            return isNaN(num) ? String(v).trim() : String(num);
+          }) : null;
         }
         this.generalForm.patchValue({ [udf.formControlName]: value });
       }
@@ -2600,6 +2902,28 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return control.hasError('maxlength') && (control.dirty || control.touched);
   }
 
+  isVisitorIdTypeValidationError(): boolean {
+    const control = this.generalForm.get('visitor_id');
+    if (!control || !control.enabled) {
+      return false;
+    }
+    const hasBeenInteracted = control.dirty || control.touched;
+    return control.hasError('idTypeInvalid') && hasBeenInteracted;
+  }
+
+  getVisitorIdTypeValidationError(): string {
+    const template = this.labelService.getLabel('registration_page_error_invalid_id', 'caption') ||
+      'Identity number must be {type} and at least {MinLength} characters';
+    const error = this.generalForm.get('visitor_id')?.getError('idTypeInvalid') || {};
+    const inputType = this.selectedIdTypeData?.INPUT_TYPE;
+    const typeText = error.type || this.getIdTypeInputLabel(inputType);
+    const minLength = error.minLength ?? this.toPositiveInt(this.selectedIdTypeData?.INPUT_MIN_LENGTH) ?? 0;
+
+    return template
+      .replace(/\{type\}/gi, String(typeText))
+      .replace(/\{MinLength\}/gi, String(minLength));
+  }
+
   getRequiredError(fieldKey: string): string {
     const key = fieldKey?.trim()?.toLowerCase().replace(/\s+/g, '_') || '';
     const template = this.labelService.getLabel('registration_page_error_required', 'caption') || '{Field} is required';
@@ -2639,13 +2963,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!translateKey || !fallback) {
       return fallback;
     }
-    
+
     const translation = this.labelService.getLabel(translateKey.toLowerCase().trim(), 'caption');
     // If translation exists (not the formatted-key fallback), return it
     if (translation && translation !== this.formatKeyAsReadable(translateKey)) {
       return translation;
     }
-    
+
     // Otherwise, return the fallback
     return fallback;
   }
@@ -2658,13 +2982,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!translateKey || !fallback) {
       return fallback;
     }
-    
+
     const translation = this.labelService.getLabel(translateKey.toLowerCase().trim(), 'placeholder');
     // If translation exists (not the formatted-key fallback), return it
     if (translation && translation !== this.formatKeyAsReadable(translateKey)) {
       return translation;
     }
-    
+
     // Otherwise, return the fallback
     return fallback;
   }
@@ -2792,7 +3116,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // When image is required, goNext() deferred validateForm() to here so the dialog
       // could open without being blocked by non-visitor controls (e.g. startDate/endDate).
       const isValid = this.validateForm();
-      if (isValid) this.wizardService.navigateToNextStep();
+      if (isValid) this.checkAndNavigate(() => this.wizardService.navigateToNextStep());
     } else if (action === 'addVisitor') {
       this.performAddVisitor();
     }
@@ -3242,41 +3566,33 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   onIdTypeChange(event: any, visitorIndex?: number): void {
-    const idTypeCode = event.value;
+    const idTypeCode = event?.value;
     console.log('ID Type changed:', idTypeCode);
 
+    const selectedIdType = this.getIdTypeByCode(idTypeCode);
+    this.selectedIdTypeData = selectedIdType;
+    this.applyVisitorIdValidationRules(selectedIdType);
+
     if (this.settings?.IdExpiredEnabled) {
-      if (idTypeCode) {
-        const selectedIdType = this.idTypeList.find(item => item.ID_TYPECODE === idTypeCode);
-        if (selectedIdType) {
-          this.selectedIdTypeData = selectedIdType;
+      if (selectedIdType?.ID_EXPIRED_DATE === true) {
+        // Show ID expired date field
+        this.showIdExpiryField = true;
 
-          if (selectedIdType.ID_EXPIRED_DATE === true) {
-            // Show ID expired date field
-            this.showIdExpiryField = true;
-
-            // Set validation for expiry date if required
-            if (this.settings?.IdExpiredRequired) {
-              this.generalForm.get('id_expired_date')?.setValidators([Validators.required]);
-            }
-          } else {
-            // Hide ID expired date field and clear value
-            this.showIdExpiryField = false;
-            this.generalForm.get('id_expired_date')?.setValue(null);
-            this.generalForm.get('id_expired_date')?.clearValidators();
-          }
-
-          // Update validators
-          this.generalForm.get('id_expired_date')?.updateValueAndValidity();
+        // Set validation for expiry date if required
+        if (this.settings?.IdExpiredRequired) {
+          this.generalForm.get('id_expired_date')?.setValidators([Validators.required]);
+        } else {
+          this.generalForm.get('id_expired_date')?.clearValidators();
         }
       } else {
         // No ID type selected, hide expiry field
         this.showIdExpiryField = false;
-        this.selectedIdTypeData = null;
         this.generalForm.get('id_expired_date')?.setValue(null);
         this.generalForm.get('id_expired_date')?.clearValidators();
-        this.generalForm.get('id_expired_date')?.updateValueAndValidity();
       }
+
+      // Update validators
+      this.generalForm.get('id_expired_date')?.updateValueAndValidity();
     }
   }
 
@@ -3339,7 +3655,124 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       const parts = (slot?.Code || '').split('-');
       this.timeSlotStartTime = parts[0]?.trim() || null;
       this.timeSlotEndTime = parts[1]?.trim() || null;
+      console.log('[TimeSlot] selected slot:', slot, '| Code:', slot?.Code, '| Name:', slot?.Name, '| parsed timeSlotStartTime:', this.timeSlotStartTime, '| timeSlotEndTime:', this.timeSlotEndTime);
     }
+  }
+
+  private getBookingDateTimes(): { start: Date | null; end: Date | null } {
+    // VIMS time-slot flow: appointmentDate + slot start/end times
+    const apptDate: Date | null = this.generalForm.get('appointmentDate')?.value ?? null;
+    if (apptDate) {
+      let start: Date | null = null;
+      let end: Date | null = null;
+      if (this.timeSlotStartTime) {
+        const [h, m] = this.timeSlotStartTime.split(':').map(Number);
+        start = new Date(apptDate);
+        start.setHours(h, m, 0, 0);
+      }
+      if (this.timeSlotEndTime) {
+        const [h, m] = this.timeSlotEndTime.split(':').map(Number);
+        end = new Date(apptDate);
+        end.setHours(h, m, 0, 0);
+      }
+      console.log('[MultipleApt] getBookingDateTimes — using appointmentDate path, apptDate:', apptDate, '| timeSlotStartTime:', this.timeSlotStartTime, '| timeSlotEndTime:', this.timeSlotEndTime, '| start:', start, '| end:', end);
+      if (start && !isNaN(start.getTime())) return { start, end: (end && !isNaN(end.getTime())) ? end : null };
+      console.log('[MultipleApt] getBookingDateTimes — appointmentDate present but start is null or Invalid Date, falling through to startDate path');
+    }
+    // Schedule dialog flow: startDate + endDate
+    const startDate: Date | null = this.generalForm.get('startDate')?.value ?? null;
+    const endDate: Date | null = this.generalForm.get('endDate')?.value ?? null;
+    console.log('[MultipleApt] getBookingDateTimes — using startDate path, startDate:', startDate, '| endDate:', endDate);
+    return {
+      start: startDate ? new Date(startDate) : null,
+      end: endDate ? new Date(endDate) : null
+    };
+  }
+
+  private checkAndNavigate(onSuccess: () => void): void {
+    let { start, end } = this.getBookingDateTimes();
+    console.log('[MultipleApt] checkAndNavigate — appointmentDate:', this.generalForm.get('appointmentDate')?.value, '| startDate:', this.generalForm.get('startDate')?.value, '| timeSlotStartTime:', this.timeSlotStartTime, '| resolved start:', start, '| end:', end);
+
+    const now = new Date();
+    if (!start) {
+      console.log('[MultipleApt] no start time resolved — falling back to now:', now);
+      start = now;
+    }
+
+    // Mirror wizard.service AptEndTime logic: if end equals start (or is missing), compute end
+    if (!end || end.getTime() === start.getTime()) {
+      const aptEndTime = this.wizardService.getSelfRegistrationSettings()?.AptEndTime || 'DefaultEOD';
+      if (aptEndTime === 'DefaultEOD') {
+        end = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 23, 59, 59);
+      } else if (aptEndTime === 'Category') {
+        end = this.wizardService.parseTimePermit(this.settings?.CategoryTimePermit || '', start) ?? start;
+      } else {
+        end = start;
+      }
+      console.log('[MultipleApt] end time computed via AptEndTime(' + aptEndTime + '):', end);
+    }
+
+    const branchId = this.wizardService.currentBranchID;
+    const hostId = this.generalForm.get('host')?.value || this.settings?.DefaultHostId?.toString() || '';
+    console.log('[MultipleApt] branchId:', branchId, '| hostId:', hostId, '(raw host:', this.generalForm.get('host')?.value, '| DefaultHostId:', this.settings?.DefaultHostId, ')');
+    if (!branchId) {
+      console.log('[MultipleApt] SKIP — branchId is falsy');
+      onSuccess();
+      return;
+    }
+
+    const fmt = (d: Date) => {
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+    };
+
+    const resolvedEnd = end ?? start;
+    const searchText = this.generalForm.get('visitor_id')?.value || '';
+    const catCode = this.wizardService.selectedVisitCategory || '';
+    console.log(`[MultipleApt] calling API — host ${hostId} at branch ${branchId} from ${fmt(start)} to ${fmt(resolvedEnd)} | searchText: ${searchText} | catCode: ${catCode}`);
+
+    this.isCheckingMultipleBooking = true;
+    this.multipleBookingConflict = false;
+    this.api.GetAllowBookingANDSBView(fmt(start), fmt(resolvedEnd), branchId, hostId, searchText, catCode).subscribe({
+      next: (res: any) => {
+        this.isCheckingMultipleBooking = false;
+        const resObj = Array.isArray(res) ? res[0] : res;
+        console.log('Multiple booking API response:', resObj);
+        
+        // The API might return { Table: [...] } directly or { Data: { Table: [...] } }
+        const rawCode = resObj?.Table?.[0]?.AllowBooking ?? resObj?.Data?.Table?.[0]?.AllowBooking;
+        const ViewSB = resObj?.Table?.[0]?.ViewSB ?? resObj?.Data?.Table?.[0]?.ViewSB;
+        this.wizardService.setSafetyBriefViewFromApi(ViewSB);
+        const code = Number(rawCode);
+        
+        if (code === 20) {
+          this.multipleBookingConflict = true;
+          const matchedHost = this.hosts.find((h: any) =>
+            (h.HOSTIC || h.HostIC || h.SeqId)?.toString() === hostId?.toString()
+          );
+          const hostDisplayName = matchedHost?.HOSTNAME || matchedHost?.Name || hostId || this.defaultHostId || '';
+          const alertTemplate = this.labelService.getLabel('registration_page_appointment_already_exist_alert', 'caption') || 'Opps.. {Hostname} already have another appointment at same time. Please verify';
+          const alertDetail = alertTemplate.replace('{Hostname}', hostDisplayName);
+          this.showMessage({
+            severity: 'error',
+            detail: alertDetail,
+            life: 5000
+          });
+        } else if (code === 10) {
+          this.multipleBookingConflict = false;
+          onSuccess();
+        } else {
+          console.warn('Unknown code from GetAllowBookingANDSBView:', rawCode);
+          this.multipleBookingConflict = false;
+          onSuccess();
+        }
+      },
+      error: (err) => {
+        console.error('Error checking multiple booking:', err);
+        this.isCheckingMultipleBooking = false;
+        onSuccess();
+      }
+    });
   }
 
   validateVisitorIdAndExpiry(): { isValid: boolean; errorMessage?: string } {
@@ -3347,6 +3780,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const idTypeCode = this.generalForm.get('visitor_id_type')?.value;
     const expiryDate = this.generalForm.get('id_expired_date')?.value;
     const endDate = this.generalForm.get('endDate')?.value;
+    const visitorIdCtrl = this.generalForm.get('visitor_id');
 
     // ID Proof validation
     if (this.settings?.IdProofEnabled) {
@@ -3376,35 +3810,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           return { isValid: false, errorMessage: 'Invalid Singapore PDPA format' };
         }
       } else {
-        // ID Type specific validation
-        if (visitorId !== '' && this.settings?.IdTypeEnabled && idTypeCode && this.selectedIdTypeData) {
-          const idTypeData = this.selectedIdTypeData;
+        if (visitorIdCtrl?.hasError('idTypeInvalid')) {
+          return { isValid: false, errorMessage: this.getVisitorIdTypeValidationError() };
+        }
 
-          // Check input type (Numeric or Alphanumeric)
-          if (idTypeData.INPUT_TYPE === 'N') {
-            if (isNaN(Number(visitorId))) {
-              return { isValid: false, errorMessage: 'Visitor NRIC/Passport should be number only' };
-            }
-          }
+        if (visitorIdCtrl?.hasError('maxlength')) {
+          return {
+            isValid: false,
+            errorMessage: this.getMaxLengthError(this.visitorIdMaxLength)
+          };
+        }
 
-          // Check maximum length
-          if (visitorId.length > idTypeData.INPUT_MAX_LENGTH) {
-            const typeText = idTypeData.INPUT_TYPE === 'N' ? 'digits' : 'characters';
-            return {
-              isValid: false,
-              errorMessage: `Visitor NRIC/Passport cannot contain more than ${idTypeData.INPUT_MAX_LENGTH} ${typeText}`
-            };
-          }
-
-          // Check minimum length
-          if (visitorId.length < idTypeData.INPUT_MIN_LENGTH) {
-            const typeText = idTypeData.INPUT_TYPE === 'N' ? 'digits' : 'characters';
-            return {
-              isValid: false,
-              errorMessage: `Visitor NRIC/Passport should contain atleast ${idTypeData.INPUT_MIN_LENGTH} ${typeText}`
-            };
-          }
-        } else {
+        // Generic minimum length validation when no ID type is selected
+        if (visitorId !== '' && (!this.settings?.IdTypeEnabled || !idTypeCode || !this.selectedIdTypeData)) {
           // Generic minimum length validation when no ID type is selected
           if (visitorId && this.settings?.IdProofMinLength &&
             parseInt(this.settings.IdProofMinLength) > 0 &&
@@ -3509,14 +3927,18 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   goNext(): void {
+    console.log('[goNext] isImageCaptureEnabled:', this.isImageCaptureEnabled, '| ImageUploadRequired:', this.settings?.ImageUploadRequired);
     // When image capture is required, open the photo dialog first using the same lightweight
     // check as "Save and Add" (isCurrentVisitorFormValid). Full validateForm() runs after the
     // dialog in executePendingAction, so non-visitor controls (startDate, endDate, etc.) cannot
     // block the dialog from appearing.
     if (this.isImageCaptureEnabled && this.settings?.ImageUploadRequired) {
       if (this.isCurrentVisitorFormValid()) {
-        this.pendingAction = 'goNext';
-        this.openPhotoCaptureDialog();
+        // Run booking check BEFORE opening the photo dialog
+        this.checkAndNavigate(() => {
+          this.pendingAction = 'goNext';
+          this.openPhotoCaptureDialog();
+        });
       } else {
         const requiredFields = this.getRequiredVisitorFields().filter(f => f !== 'profile');
         requiredFields.forEach(f => {
@@ -3537,22 +3959,24 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (this.isImageCaptureEnabled) {
       // Image enabled but not required — skip dialog when all visitors already saved.
       if (this.isMultipleVisitorMode && this.savedVisitors.length > 0 && !formHadActiveVisitor) {
-        this.wizardService.navigateToNextStep();
+        this.checkAndNavigate(() => this.wizardService.navigateToNextStep());
         return;
       }
-      this.pendingAction = 'goNext';
-      if (this.isMultipleVisitorMode && !this.generalForm.get('profilePreview')?.value && this.savedVisitors.length > 0) {
-        const lastVisitor = this.savedVisitors[this.savedVisitors.length - 1];
-        if (lastVisitor?.profilePreview) {
-          this.generalForm.patchValue({ profilePreview: lastVisitor.profilePreview }, { emitEvent: false });
-          this.profileImage = this.sanitizer.bypassSecurityTrustUrl(lastVisitor.profilePreview);
+      this.checkAndNavigate(() => {
+        this.pendingAction = 'goNext';
+        if (this.isMultipleVisitorMode && !this.generalForm.get('profilePreview')?.value && this.savedVisitors.length > 0) {
+          const lastVisitor = this.savedVisitors[this.savedVisitors.length - 1];
+          if (lastVisitor?.profilePreview) {
+            this.generalForm.patchValue({ profilePreview: lastVisitor.profilePreview }, { emitEvent: false });
+            this.profileImage = this.sanitizer.bypassSecurityTrustUrl(lastVisitor.profilePreview);
+          }
         }
-      }
-      this.openPhotoCaptureDialog();
+        this.openPhotoCaptureDialog();
+      });
       return;
     }
 
-    this.wizardService.navigateToNextStep();
+    this.checkAndNavigate(() => this.wizardService.navigateToNextStep());
   }
 
 }

@@ -10,7 +10,8 @@ import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { ApiService } from '../../../../core/services/api.service';
 import { WizardService } from '../../../../core/services/wizard.service';
-import { filter, Subject, takeUntil } from 'rxjs';
+import { filter, forkJoin, of, Subject, takeUntil } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { SharedService } from '../../../../shared/shared.service';
 import { environment } from '../../../../../environments/environment';
 import { ToastModule } from 'primeng/toast';
@@ -55,7 +56,7 @@ export class HomePageComponent implements AfterViewChecked {
   termsValid = false;
   termsAccepted = false;
   readonly currentYear = new Date().getFullYear();
-  readonly appVersion = '1.0.0';
+  readonly appVersion = environment.appVersion;
   termsScrolledToBottom = false;
   private termsAutoChecked = false;
   private _cachedTermsHtml: SafeHtml | string = '';
@@ -500,13 +501,32 @@ export class HomePageComponent implements AfterViewChecked {
             VUDF10: visitorData.VUDF10
           };
 
-          // Store visitor data in wizard service for use in step-general
-          this.wizardService.setVisitorAckData({
-            visitorData: parsedVisitorData,
-            imageData: table2Data,
-            itemDeclarationData: table3Data,
-            isAppointmentFlow: true
-          });
+          // Fetch previously uploaded docs and questionnaire answers for pre-fill
+          const seqId = String(parsedVisitorData.seqId || '');
+          const storeAckData = (docsData: any[], questionnaireData: any[]) => {
+            this.wizardService.setVisitorAckData({
+              visitorData: parsedVisitorData,
+              imageData: table2Data,
+              itemDeclarationData: table3Data,
+              docsData,
+              questionnaireData,
+              isAppointmentFlow: true
+            });
+          };
+
+          if (seqId) {
+            forkJoin({
+              docs: this.api.GetVisitorDocsBySeqId(seqId).pipe(catchError(() => of(null))),
+              qna:  this.api.GetVisitorQuestionariesByAppointmentId(seqId).pipe(catchError(() => of(null)))
+            }).subscribe((res: any) => {
+              storeAckData(
+                res?.docs?.Table1 || res?.docs?.Table || [],
+                res?.qna?.Table || []
+              );
+            });
+          } else {
+            storeAckData([], []);
+          }
 
           // Set branch and category from visitor data
           if (parsedVisitorData.branchId) {
@@ -602,7 +622,8 @@ export class HomePageComponent implements AfterViewChecked {
             TermsnCondTemplate: tcSettings.TermsnCond || '',
             SearchExistingVisitor: tcSettings.SearchExistingVisitor ?? false,
             EnableWhitelistValidation: tcSettings.EnableWhitelistValidation ?? false,
-            AptEndTime: tcSettings.AptEndTime || ''
+            AptEndTime: tcSettings.AptEndTime || '',
+            AllowMultipleBooking: tcSettings.AllowMultipleBooking ?? false
           });
          
           // Check AllowOnlywithVC flag

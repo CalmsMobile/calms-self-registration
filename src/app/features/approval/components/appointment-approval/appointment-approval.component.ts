@@ -149,6 +149,14 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     return parts[parts.length - 1] || 'Document';
   }
 
+  getDocUrl(doc: any): string {
+    const path = doc.FilePath || doc.FileUrl || doc.DocPath;
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const base = environment.apiURL.replace(/\/app\/api\/vims$/i, '');
+    return base + '/fs/' + path.replace(/\\/g, '/');
+  }
+
   getQnaOptions(item: any): { label: string; index: number; isSelected: boolean; isCorrect: boolean }[] {
     const selected = (item.Answer || '').split(',').map((s: string) => s.trim()).filter(Boolean);
     const correct  = (item.CrtAnswers || '').split(',').map((s: string) => s.trim()).filter(Boolean);
@@ -222,7 +230,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
       next: () => {
         this.isSubmitting = false;
         this.actionResult = 'resubmit';
-        this.closeModal();
+        setTimeout(() => window.location.reload(), 1500);
       },
       error: () => {
         this.isSubmitting = false;
@@ -251,15 +259,28 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     }
   }
 
+  downloadDoc(doc: any): void {
+    const url = this.getDocUrl(doc);
+    const fileName = this.getDocFileName(doc.DocPath || doc.FilePath || doc.FileUrl);
+    if (!url) return;
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      },
+      error: () => { window.open(url, '_blank'); }
+    });
+  }
+
   downloadAll() {
-    this.docsData.forEach((doc: any) => {
-      const url = doc.FilePath || doc.FileUrl || doc.DocPath;
-      if (!url) return;
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = '';
-      a.target = '_blank';
-      a.click();
+    this.docsData.forEach((doc: any, i: number) => {
+      setTimeout(() => this.downloadDoc(doc), i * 300);
     });
   }
 

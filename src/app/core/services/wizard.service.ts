@@ -75,6 +75,7 @@ export class WizardService {
   // Static variables for safety brief - will be replaced with dynamic data later
   SafetyBriefing_Date = "2026-03-03T14:02:43.957";
   SafetyBriefVideoViewed = false;
+  canViewSafetyBriefVideo = true;
 
   constructor(private sharedService: SharedService, private router: Router, private labelService: LabelService) {
     if (!this.currentBranchID) {
@@ -153,6 +154,7 @@ export class WizardService {
     this.isHostFromQuery = false;
     this.isNavigatedFromHome = false;
     this.originalQueryString = '';
+    this.canViewSafetyBriefVideo = true;
     this.formDataStore.next({});
     this.settings$.next(null);
     this.attachmentSetting$.next(null);
@@ -168,6 +170,36 @@ export class WizardService {
     this.masterData = null;
     this.branchHostData = null;
     this.updateHeader();
+  }
+
+  /**
+   * Updates whether the safety-brief step should be available based on
+   * GetAllowBookingANDSBView.ViewSB.
+   * Defaults to true when the API value is missing/empty.
+   */
+  setSafetyBriefViewFromApi(viewSB: any): void {
+    if (viewSB === null || viewSB === undefined || viewSB === '') {
+      this.canViewSafetyBriefVideo = true;
+      return;
+    }
+
+    if (typeof viewSB === 'boolean') {
+      this.canViewSafetyBriefVideo = viewSB;
+      return;
+    }
+
+    const normalized = String(viewSB).trim().toLowerCase();
+    if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'n') {
+      this.canViewSafetyBriefVideo = false;
+      return;
+    }
+    if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'y') {
+      this.canViewSafetyBriefVideo = true;
+      return;
+    }
+
+    // Unknown values should not force-skip safety brief.
+    this.canViewSafetyBriefVideo = true;
   }
 
   getmasterData() {
@@ -596,7 +628,7 @@ export class WizardService {
      * Parse a time_permit string like "18 Hours", "2 Days", "1 Month", "3 Months" and
      * return a Date offset from the given base date.
      */
-  private parseTimePermit(timePermit: string, base: Date): Date | null {
+  parseTimePermit(timePermit: string, base: Date): Date | null {
     if (!timePermit) return null;
     const match = timePermit.trim().match(/^(\d+)\s*(hour|hours|day|days|week|weeks|month|months)$/i);
     if (!match) return null;
@@ -938,6 +970,7 @@ export class WizardService {
   resetWizard(): void {
     this.currentStep$.next(0);
     this.stepValidity$.next(false);
+    this.canViewSafetyBriefVideo = true;
   }
 
   canNavigateToStep(requestedStep: number): boolean {
@@ -961,6 +994,7 @@ export class WizardService {
 
   /**
    * Determine if safety brief step should be skipped
+    * - If booking API ViewSB says false -> skip step
    * - If SafetyBriefVideoViewed is false → show step
    * - If SafetyBriefVideoViewed is true AND SafetyBriefing_Date expired → show step
    * - Otherwise → skip step
@@ -969,6 +1003,11 @@ export class WizardService {
     // Only apply logic to safety-brief step
     if (stepRoute !== 'safety-brief') {
       return false;
+    }
+
+    // Booking API explicitly says safety brief should not be shown.
+    if (!this.canViewSafetyBriefVideo) {
+      return true;
     }
 
     // Show step if video not viewed
@@ -1020,11 +1059,11 @@ export class WizardService {
 
       Object.keys(attachmentData.attachments).forEach(docId => {
         const attachment = attachmentData.attachments[docId];
-        if (attachment.fileName && attachment.trackerId) {
-          const fileExtension = attachment.fileName.includes('.')
-            ? attachment.fileName.substring(attachment.fileName.lastIndexOf('.'))
-            : '';
+        const fileExtension = (attachment.fileName || '').includes('.')
+          ? attachment.fileName.substring(attachment.fileName.lastIndexOf('.'))
+          : '';
 
+        if (attachment.fileName && attachment.trackerId) {
           attachmentArray.push({
             VisitorAttachSeqId: parseInt(docId),
             src: '',
@@ -1032,6 +1071,17 @@ export class WizardService {
             filename: attachment.fileName,
             uid: attachment.trackerId,
             trackerId: attachment.trackerId,
+            primary: '1'
+          });
+        } else if (attachment.fileName && attachment.docPath) {
+          // Pre-existing doc from appointment — reference server path directly
+          attachmentArray.push({
+            VisitorAttachSeqId: parseInt(docId),
+            src: attachment.docPath,
+            extension: fileExtension,
+            filename: attachment.fileName,
+            uid: '',
+            trackerId: '',
             primary: '1'
           });
         }
