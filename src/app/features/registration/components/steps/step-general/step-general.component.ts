@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
+﻿import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -394,6 +394,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.scheduleEndDate = null;
       this.scheduleEndTime = '10:00';
     }
+
+    this.enforceScheduleDateBounds();
+    if (this.scheduleStartDate) {
+      this.scheduleCalendarDate = new Date(this.scheduleStartDate);
+    }
+
     this.scheduleActiveField = 'start';
     this.showScheduleDialog = true;
   }
@@ -410,17 +416,27 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     } else {
       this.scheduleEndDate = new Date(date);
     }
+
+    this.enforceScheduleDateBounds();
     this.checkScheduleTimes();
   }
 
   applySchedule(): void {
+    this.enforceScheduleDateBounds();
     if (!this.scheduleStartDate || !this.scheduleEndDate) return;
+
     const [sh, sm] = this.scheduleStartTime.split(':').map(Number);
     const [eh, em] = this.scheduleEndTime.split(':').map(Number);
     const start = new Date(this.scheduleStartDate);
     start.setHours(sh, sm, 0, 0);
-    const end = new Date(this.scheduleEndDate);
+    let end = new Date(this.scheduleEndDate);
     end.setHours(eh, em, 0, 0);
+
+    const endMaxDate = this.getEndDateMaxByStart(start);
+    if (endMaxDate && end.getTime() > endMaxDate.getTime()) {
+      end = new Date(endMaxDate);
+    }
+
     if (end <= start) {
       this.scheduleEndBeforeStartError = true;
       return;
@@ -447,6 +463,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!val) { this.scheduleStartDate = null; return; }
     const [y, m, d] = val.split('-').map(Number);
     this.scheduleStartDate = new Date(y, m - 1, d);
+    this.enforceScheduleDateBounds();
     this.checkScheduleTimes();
   }
 
@@ -459,12 +476,47 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!val) { this.scheduleEndDate = null; return; }
     const [y, m, d] = val.split('-').map(Number);
     this.scheduleEndDate = new Date(y, m - 1, d);
+    this.enforceScheduleDateBounds();
     this.checkScheduleTimes();
   }
 
   get minDateStr(): string {
     const d = this.minDate;
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  get scheduleStartMinDate(): Date {
+    const d = new Date(this.minDate);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  get scheduleStartMaxDate(): Date | undefined {
+    const allowApptDays = this.getAllowApptDays();
+    if (allowApptDays <= 0) {
+      return undefined;
+    }
+
+    return this.endOfDay(this.addDays(this.scheduleStartMinDate, allowApptDays));
+  }
+
+  get scheduleEndMaxDate(): Date | undefined {
+    if (!this.scheduleStartDate) {
+      return undefined;
+    }
+
+    const maxEndDate = this.getEndDateMaxByStart(this.scheduleStartDate);
+    return maxEndDate || undefined;
+  }
+
+  get scheduleStartMaxDateStr(): string {
+    const maxDate = this.scheduleStartMaxDate;
+    return maxDate ? this.formatDateToYYYYMMDD(maxDate) : '';
+  }
+
+  get scheduleEndMaxDateStr(): string {
+    const maxDate = this.scheduleEndMaxDate;
+    return maxDate ? this.formatDateToYYYYMMDD(maxDate) : '';
   }
 
   formatTime12(time: string): string {
@@ -487,6 +539,62 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const end = new Date(this.scheduleEndDate);
     end.setHours(eh, em, 0, 0);
     this.scheduleEndBeforeStartError = end <= start;
+  }
+
+  private enforceScheduleDateBounds(): void {
+    if (this.scheduleStartDate) {
+      const minStart = this.scheduleStartMinDate;
+      if (this.scheduleStartDate.getTime() < minStart.getTime()) {
+        this.scheduleStartDate = new Date(minStart);
+      }
+
+      const maxStart = this.scheduleStartMaxDate;
+      if (maxStart && this.scheduleStartDate.getTime() > maxStart.getTime()) {
+        this.scheduleStartDate = new Date(maxStart);
+      }
+    }
+
+    if (!this.scheduleStartDate) {
+      return;
+    }
+
+    if (!this.scheduleEndDate || this.scheduleEndDate.getTime() < this.scheduleStartDate.getTime()) {
+      this.scheduleEndDate = new Date(this.scheduleStartDate);
+    }
+
+    const maxEnd = this.getEndDateMaxByStart(this.scheduleStartDate);
+    if (maxEnd && this.scheduleEndDate.getTime() > maxEnd.getTime()) {
+      this.scheduleEndDate = new Date(maxEnd);
+    }
+  }
+
+  private getAllowApptDays(): number {
+    return this.toNonNegativeInt(this.settings?.AllowApptDays);
+  }
+
+  private getAllowApptEndDays(): number {
+    return this.toNonNegativeInt(this.settings?.AllowApptEndDays);
+  }
+
+  private getEndDateMaxByStart(startDate: Date): Date | null {
+    const allowApptEndDays = this.getAllowApptEndDays();
+    if (allowApptEndDays <= 0) {
+      return null;
+    }
+
+    return this.endOfDay(this.addDays(startDate, allowApptEndDays));
+  }
+
+  private addDays(baseDate: Date, days: number): Date {
+    const result = new Date(baseDate);
+    result.setDate(result.getDate() + days);
+    return result;
+  }
+
+  private endOfDay(date: Date): Date {
+    const result = new Date(date);
+    result.setHours(23, 59, 59, 999);
+    return result;
   }
 
   getScheduleDisplayText(): string {
@@ -1342,6 +1450,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return Math.trunc(parsed);
   }
 
+  private toNonNegativeInt(value: any): number {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+      return 0;
+    }
+    return Math.trunc(parsed);
+  }
+
   private getIdTypeByCode(idTypeCode: any): any | null {
     if (idTypeCode === null || idTypeCode === undefined || idTypeCode === '') {
       return null;
@@ -1609,6 +1725,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (savedData.endDate) return; // already saved — don't overwrite
 
     const aptEndTime = this.settings?.AptEndTime;
+    const allowApptDays = this.getAllowApptDays();
+    const allowApptEndDays = this.getAllowApptEndDays();
+    const startDate = this.generalForm.get('startDate')?.value
+      ? new Date(this.generalForm.get('startDate')?.value)
+      : now;
     let endDate: Date | null = null;
 
     if (aptEndTime === 'DefaultEOD') {
@@ -1616,6 +1737,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     } else if (aptEndTime === 'Category') {
       const timePermit: string = this.settings?.CategoryTimePermit || '';
       endDate = this.parseTimePermit(timePermit, now);
+
+      // Keep existing behavior when both limits are not configured.
+      if (endDate && !(allowApptDays === 0 && allowApptEndDays === 0)) {
+        endDate = this.clampCategoryEndDateBySettings(endDate, startDate, now, allowApptDays, allowApptEndDays);
+      }
     }
 
     // Fallback: default end to 1 hour after start when AptEndTime is not configured
@@ -1624,6 +1750,31 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     this.generalForm.get('endDate')?.setValue(endDate);
+  }
+
+  private clampCategoryEndDateBySettings(
+    categoryEndDate: Date,
+    startDate: Date,
+    now: Date,
+    allowApptDays: number,
+    allowApptEndDays: number
+  ): Date {
+    const maxCandidates: Date[] = [];
+
+    if (allowApptDays > 0) {
+      maxCandidates.push(this.endOfDay(this.addDays(now, allowApptDays)));
+    }
+
+    if (allowApptEndDays > 0) {
+      maxCandidates.push(this.endOfDay(this.addDays(startDate, allowApptEndDays)));
+    }
+
+    if (maxCandidates.length === 0) {
+      return categoryEndDate;
+    }
+
+    const maxAllowed = new Date(Math.min(...maxCandidates.map((d) => d.getTime())));
+    return categoryEndDate.getTime() > maxAllowed.getTime() ? maxAllowed : categoryEndDate;
   }
 
   /**

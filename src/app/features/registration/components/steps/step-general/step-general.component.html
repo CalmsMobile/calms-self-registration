@@ -1902,7 +1902,8 @@
     <!-- Inline Calendar -->
     <div class="sd-calendar">
       <p-datepicker [inline]="true" [(ngModel)]="scheduleCalendarDate"
-        [minDate]="scheduleActiveField === 'end' && scheduleStartDate ? scheduleStartDate : minDate"
+        [minDate]="scheduleActiveField === 'end' && scheduleStartDate ? scheduleStartDate : scheduleStartMinDate"
+        [maxDate]="scheduleActiveField === 'end' ? scheduleEndMaxDate : scheduleStartMaxDate"
         [showTime]="false" dateFormat="dd/mm/yy"
         (onSelect)="onScheduleCalendarSelect($event)">
       </p-datepicker>
@@ -1944,7 +1945,7 @@
       <div class="m-sd-card-inputs">
         <div class="m-sd-input-wrap">
           <i class="pi pi-calendar m-sd-input-icon"></i>
-          <input type="date" class="m-sd-input" [(ngModel)]="scheduleStartDateStr" [min]="minDateStr" />
+          <input type="date" class="m-sd-input" [(ngModel)]="scheduleStartDateStr" [min]="minDateStr" [max]="scheduleStartMaxDateStr" />
         </div>
         <div class="m-sd-input-wrap">
           <i class="pi pi-clock m-sd-input-icon"></i>
@@ -1969,7 +1970,7 @@
       <div class="m-sd-card-inputs">
         <div class="m-sd-input-wrap">
           <i class="pi pi-calendar m-sd-input-icon"></i>
-          <input type="date" class="m-sd-input" [(ngModel)]="scheduleEndDateStr" [min]="scheduleStartDateStr || minDateStr" />
+          <input type="date" class="m-sd-input" [(ngModel)]="scheduleEndDateStr" [min]="scheduleStartDateStr || minDateStr" [max]="scheduleEndMaxDateStr" />
         </div>
         <div class="m-sd-input-wrap">
           <i class="pi pi-clock m-sd-input-icon"></i>
