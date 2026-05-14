@@ -1,7 +1,12 @@
 <div class="language-wrapper" [class.lang-open]="showDropdown">
   <!-- Language button -->
   <button class="lang-btn" (click)="toggleDropdown()" type="button" aria-label="Select language">
-    文A
+    <img
+      class="lang-flag lang-flag-trigger"
+      [src]="getFlagImageUrl(selectedLanguage?.LanguageCode)"
+      [alt]="selectedLanguage ? selectedLanguage.LanguageName + ' flag' : 'Selected language flag'"
+      (error)="onFlagImageError($event)"
+    />
   </button>
 
   <!-- Backdrop + panel -->
@@ -13,7 +18,13 @@
             [class.active]="selectedLanguage?.LanguageId === lang.LanguageId"
             (click)="selectLanguage(lang)"
             type="button">
-      <span class="lang-flag">{{ getLanguageSign(lang.LanguageCode) }}</span>
+      <img
+        class="lang-flag"
+        [src]="getFlagImageUrl(lang.LanguageCode)"
+        [alt]="lang.LanguageName + ' flag'"
+        loading="lazy"
+        (error)="onFlagImageError($event)"
+      />
       <span class="lang-name">{{ lang.LanguageName }}</span>
     </button>
     }

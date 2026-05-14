@@ -22,6 +22,34 @@ export class LanguageSelectorComponent implements OnInit {
   languages: LanguageModel[] = [];
   selectedLanguage?: LanguageModel;
   showDropdown = false;
+  private readonly flagFallbackPath = 'assets/flags/globe.svg';
+  private readonly languageToCountryMap: Record<string, string> = {
+    en: 'US',
+    fr: 'FR',
+    de: 'DE',
+    es: 'ES',
+    pt: 'PT',
+    it: 'IT',
+    nl: 'NL',
+    pl: 'PL',
+    sv: 'SE',
+    ru: 'RU',
+    ar: 'SA',
+    hi: 'IN',
+    ta: 'IN',
+    te: 'IN',
+    ml: 'IN',
+    kn: 'IN',
+    bn: 'BD',
+    zh: 'CN',
+    ja: 'JP',
+    ko: 'KR',
+    th: 'TH',
+    vi: 'VN',
+    ms: 'MY',
+    id: 'ID',
+    tr: 'TR'
+  };
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent) {
@@ -93,17 +121,32 @@ export class LanguageSelectorComponent implements OnInit {
     this.showDropdown = false;
   }
 
-  getLanguageSign(languageCode: string): string {
-    if (!languageCode) return '?';
-    const map: Record<string, string> = {
-      en: 'A',  fr: 'Fr', de: 'De', es: 'Es', pt: 'Pt',
-      it: 'It', nl: 'Nl', pl: 'Pl', sv: 'Sv', ru: 'Я',
-      ar: 'ع',  hi: 'अ',  ta: 'அ',  te: 'తె', ml: 'മ',
-      kn: 'ಕ',  bn: 'বা', zh: '文',  ja: 'あ', ko: '한',
-      th: 'ก',  vi: 'Vt', ms: 'Ms', id: 'Id', tr: 'Tr'
-    };
-    const code = languageCode.toLowerCase().split('-')[0];
-    return map[code] ?? code.toUpperCase().slice(0, 2);
+  getFlagImageUrl(languageCode?: string | null): string {
+    const countryCode = this.resolveCountryCode(languageCode);
+    return countryCode ? `https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png` : this.flagFallbackPath;
+  }
+
+  onFlagImageError(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (!image || image.dataset['fallbackApplied'] === 'true') {
+      return;
+    }
+
+    image.dataset['fallbackApplied'] = 'true';
+    image.src = this.flagFallbackPath;
+    image.classList.add('is-fallback');
+  }
+
+  private resolveCountryCode(languageCode?: string | null): string {
+    if (!languageCode) {
+      return '';
+    }
+
+    const segments = languageCode.toLowerCase().split(/[-_]/).filter(Boolean);
+    const languagePart = segments[0];
+    const regionPart = segments.find((segment, index) => index > 0 && /^[a-z]{2}$/.test(segment));
+
+    return (regionPart || this.languageToCountryMap[languagePart] || '').toUpperCase();
   }
 
   onLanguageChange(event: { value: LanguageModel }): void {
