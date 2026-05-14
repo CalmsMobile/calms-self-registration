@@ -1,5 +1,6 @@
 @if (!isLoading) {
 <div class="page">
+  <div class="app-version-tag">v{{ appVersion }}</div>
   <!-- Error / Access Denied overlay -->
   @if (isAccessDenied || (hasInvalidUrl && !isAccessDenied)) {
   <div class="error-overlay">
@@ -30,7 +31,7 @@
 
     <!-- Right panel — content -->
     <div class="pre-right">
-      <footer class="app-footer">&copy; {{ currentYear }} All rights reserved. v{{ appVersion }}</footer>
+      <footer class="app-footer">&copy; {{ currentYear }} All rights reserved.</footer>
       <div class="pre-right-scroll">
         <div class="pre-center">
           <!-- Logo -->
@@ -164,7 +165,7 @@
         </div>
         }
       </div>
-      <footer class="app-footer">&copy; {{ currentYear }} All rights reserved. v{{ appVersion }}</footer>
+      <footer class="app-footer">&copy; {{ currentYear }} All rights reserved.</footer>
     </div>
   </div>
   }
