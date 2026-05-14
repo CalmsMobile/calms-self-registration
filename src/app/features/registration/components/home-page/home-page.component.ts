@@ -781,9 +781,9 @@ export class HomePageComponent implements AfterViewChecked {
              } */
             // Branch selection caption and placeholder
             this.branchTranslation = {
-              caption: settings.BranchCaption || settings.BranchLabel || settings.Caption || 'Branch',
-              placeholder: settings.BranchPlaceholder || settings.Placeholder || 'Select Branch'
-            };
+            caption: this.initializePageSettings.branchSelectionCaption || 'Branch',
+            placeholder: this.initializePageSettings.branchSelectionPlaceHolder || 'Select Branch'
+          };
 
             // SRWelcomeTitle and ShowWelcomeTitle
             if (settings.ShowWelcomeTitle !== undefined) {
