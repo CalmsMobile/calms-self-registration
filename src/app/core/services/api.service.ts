@@ -316,15 +316,16 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/GetVisitorNDABySeqId`, { "SEQ_ID": seqId });
   }
 
-  GetAllowBookingANDSBView(startDateTime: string, endDateTime: string, refBranchSeqId: string, hostId: any, searchText: string, catCode: string) {
-    const loParam = {
+  GetAllowBookingANDSBView(startDateTime: string, endDateTime: string, refBranchSeqId: string, hostId: any, searchText: string, catCode: string, workPermitRef?: string) {
+    const loParam: any = {
       "START_DATE": startDateTime,
       "END_DATE": endDateTime,
       "RefBranchSeqId": refBranchSeqId,
       "hostID": hostId,
       "SearchText": searchText,
       "CheckSB": 1,
-      "CatCode": catCode
+      "CatCode": catCode,
+      "WorkPermitRef": workPermitRef || null
     };
     return this.apiBase.post(`${this.baseUrl}/GetAllowBookingANDSBView`, loParam);
   }
