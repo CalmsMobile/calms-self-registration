@@ -1,20 +1,31 @@
-.language-wrapper {
+:host {
   position: relative;
+  z-index: 2147483000;
   display: inline-block;
 }
 
+.language-wrapper {
+  position: relative;
+  display: inline-block;
+  z-index: 2147483000;
+}
+
+.language-wrapper.lang-open {
+  z-index: 2147483000;
+}
+
 .lang-btn {
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 41px;
   border-radius: 50%;
-  background: #f5f5f5;
+  background: #ffffff;
   border: none;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
   display: grid;
   place-items: center;
   cursor: pointer;
   font-weight: 600;
-  font-size: 18px;
+  font-size: 14px;
   color: #555;
   transition: background 0.2s ease, box-shadow 0.2s ease;
 
@@ -38,31 +49,33 @@
 .lang-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 99;
+  z-index: 2147483001;
+  background: rgba(0, 0, 0, 0.45);
 }
 
 .lang-panel {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 12px);
   right: 0;
-  width: 230px;
-  max-height: 78vh;
+  width: 187px;
+  max-height: min(50vh, 440px);
   background: #fff;
-  border-radius: 14px;
-  padding: 8px 0;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+  border-radius: 24px;
+  padding: 10px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.2);
   overflow-y: auto;
-  z-index: 100;
+  z-index: 2147483002;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 
   &::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
   }
   &::-webkit-scrollbar-track {
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background: #d0d0d0;
-    border-radius: 3px;
+    background: #d8d8d8;
+    border-radius: 999px;
   }
 }
 
@@ -70,42 +83,52 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 12px;
+  min-height: 46px;
+  padding: 0 24px;
+  margin: 0 0 4px;
   border: none;
+  border-radius: 12px;
   background: transparent;
-  font-size: 14px;
-  color: #4a4a4a;
+  font-size: 18px;
+  color: #707070;
   cursor: pointer;
   text-align: left;
-  transition: background 120ms ease, color 120ms ease;
+  transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 
   &:hover {
-    background: #f3f0ff;
-    color: #3b2b8f;
+    background: #fff2f2;
+    color: #4f4f4f;
   }
 
   &.active {
-    background: #ede7ff;
-    color: #3b2b8f;
+    background: var(--theme-primary-yellow);
+    color: var(--theme-primary-fg-color);
 
     .lang-name {
-      font-weight: 600;
+      font-weight: 700;
     }
   }
 }
 
 .lang-flag {
-  width: 20px;
+  width: 22px;
   text-align: center;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1;
   flex-shrink: 0;
+  font-weight: 600;
 }
 
 .lang-name {
-  font-size: 14px;
+  font-size: 18px;
+  line-height: 1.2;
   color: inherit;
+  font-weight: 400;
 }
 @media (max-width: 768px) {
  .lang-btn{
