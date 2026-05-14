@@ -324,11 +324,9 @@ export class ApiService {
       "hostID": hostId,
       "SearchText": searchText,
       "CheckSB": 1,
-      "CatCode": catCode
+      "CatCode": catCode,
+      "WorkPermitRef": workPermitRef || null
     };
-    if (workPermitRef) {
-      loParam["WorkPermitRef"] = workPermitRef;
-    }
     return this.apiBase.post(`${this.baseUrl}/GetAllowBookingANDSBView`, loParam);
   }
 
