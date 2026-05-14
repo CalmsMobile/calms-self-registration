@@ -3729,11 +3729,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const resolvedEnd = end ?? start;
     const searchText = this.generalForm.get('visitor_id')?.value || '';
     const catCode = this.wizardService.selectedVisitCategory || '';
-    console.log(`[MultipleApt] calling API — host ${hostId} at branch ${branchId} from ${fmt(start)} to ${fmt(resolvedEnd)} | searchText: ${searchText} | catCode: ${catCode}`);
+    const workPermitRef = this.generalForm.get('work_permit_ref')?.value || '';
+    console.log(`[MultipleApt] calling API — host ${hostId} at branch ${branchId} from ${fmt(start)} to ${fmt(resolvedEnd)} | searchText: ${searchText} | catCode: ${catCode} | workPermitRef: ${workPermitRef}`);
 
     this.isCheckingMultipleBooking = true;
     this.multipleBookingConflict = false;
-    this.api.GetAllowBookingANDSBView(fmt(start), fmt(resolvedEnd), branchId, hostId, searchText, catCode).subscribe({
+    this.api.GetAllowBookingANDSBView(fmt(start), fmt(resolvedEnd), branchId, hostId, searchText, catCode, workPermitRef).subscribe({
       next: (res: any) => {
         this.isCheckingMultipleBooking = false;
         const resObj = Array.isArray(res) ? res[0] : res;
@@ -3742,9 +3743,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         // The API might return { Table: [...] } directly or { Data: { Table: [...] } }
         const rawCode = resObj?.Table?.[0]?.AllowBooking ?? resObj?.Data?.Table?.[0]?.AllowBooking;
         const ViewSB = resObj?.Table?.[0]?.ViewSB ?? resObj?.Data?.Table?.[0]?.ViewSB;
+        const InvalidWP = resObj?.Table?.[0]?.InvalidWP ?? resObj?.Data?.Table?.[0]?.InvalidWP;
         this.wizardService.setSafetyBriefViewFromApi(ViewSB);
         const code = Number(rawCode);
-        
+
+        if (InvalidWP === false) {
+          this.showMessage({
+            severity: 'error',
+            detail: this.labelService.getLabel('registration_page_invalid_work_permit_alert', 'caption') || 'Invalid work permit reference',
+            life: 5000
+          });
+          return;
+        }
+
         if (code === 20) {
           this.multipleBookingConflict = true;
           const matchedHost = this.hosts.find((h: any) =>
