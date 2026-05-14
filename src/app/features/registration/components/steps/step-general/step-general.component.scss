@@ -59,6 +59,7 @@
    ============================================ */
 .page-header {
   position: relative;
+  z-index: 2147482000;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -88,8 +89,11 @@
 .step-lang {
   position: absolute;
   right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  z-index: 2147482001;
 }
 
 /* ============================================
@@ -146,7 +150,7 @@
   margin-top: 10px;
   font-size: 16px;
   color: #6b7280;
-  max-width: 360px;
+  max-width: 620px;
 }
 .subtitle {
   font-size: 14px;
@@ -1217,7 +1221,7 @@ textarea {
   }
 
   .btn {
-    padding: 10px 20px;
+    padding: 9px 18px;
     font-size: 13px;
   }
 
@@ -1278,7 +1282,7 @@ textarea {
   }
 
   .btn {
-    padding: 8px 16px;
+    padding: 9px 18px;
     font-size: 12px;
   }
 }
@@ -1739,7 +1743,7 @@ textarea {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 60px 12px;
+  padding: 12px 60px 18px;
   margin: 0 -60px;
   border-top: 1px solid #e8e8e8;
   box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.07);
@@ -1770,7 +1774,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 26px;
+  padding: 9px 18px;
   border-radius: 999px;
   border: none;
   font-family: var(--font-family);
@@ -3375,7 +3379,7 @@ textarea {
     justify-content: center;
     gap: 8px;
     height: 45px;
-    padding: 0 20px;
+    padding: 9px 18px;
     border-radius: 999px;
     border: none;
     font-family: var(--font-family);

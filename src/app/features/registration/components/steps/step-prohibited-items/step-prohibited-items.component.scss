@@ -58,6 +58,7 @@
 /* ===== HEADER ===== */
 .page-header {
   position: relative;
+  z-index: 2147482000;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -75,8 +76,11 @@
 .step-lang {
   position: absolute;
   right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  z-index: 2147482001;
 }
 
 .logo {
@@ -119,7 +123,7 @@
   margin-top: 10px;
   font-size: 16px;
   color: #6b7280;
-  max-width: 420px;
+  max-width: 620px;
 }
 
 .illustration {
@@ -149,8 +153,9 @@
   padding-top: 6px;
   overflow-y: auto;
   height: 100%;
+  min-height: 0;
   padding-right: 40px;
-  padding-bottom: 16px;
+  padding-bottom: 0;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -409,6 +414,13 @@
   justify-content: space-between;
   align-items: center;
   //margin-top: 54px;
+  position: sticky;
+  bottom: 28px;
+  z-index: 5;
+  margin-top: auto;
+  padding: 14px 0;
+  
+  box-shadow: 0 -12px 24px rgba(245, 245, 245, 0.92);
 }
 
 .actions-left {
@@ -418,7 +430,7 @@
 
 .btn {
   border: none;
-  padding: 13px 28px;
+  padding: 9px 18px;
   border-radius: 999px;
   font-size: 16px;
   font-weight: 600;
@@ -468,6 +480,41 @@
    ============================================ */
 .mobile-page {
   display: none;
+}
+
+@media (min-width: 769px) and (max-height: 820px) {
+  :host {
+    height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .page {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    padding-bottom: 96px;
+  }
+
+  .layout {
+    flex: none;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .right {
+    height: auto;
+    overflow: visible;
+    padding-bottom: 72px;
+  }
+
+  .actions {
+    position: static;
+    margin-top: 18px;
+    margin-bottom: 24px;
+    padding: 14px 0 0;
+    box-shadow: none;
+  }
 }
 
 @media (max-width: 768px) {
@@ -803,6 +850,7 @@
     bottom: 0;
     background: #f6f6f6;
     padding-top: 10px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     z-index: 10;
   }
 
@@ -817,7 +865,7 @@
     justify-content: center;
     gap: 8px;
     height: 46px;
-    padding: 0 20px;
+    padding: 9px 18px;
     border-radius: 999px;
     border: none;
     font-size: 14px;
@@ -923,7 +971,7 @@
   }
 
   .btn {
-    padding: 12px 20px;
+    padding: 9px 18px;
     font-size: 14px;
   }
 
