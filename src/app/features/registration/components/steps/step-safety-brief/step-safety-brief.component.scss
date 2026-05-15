@@ -28,8 +28,6 @@
   padding: 24px 52px 20px;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  overflow-y: auto;
   position: relative;
   z-index: 0;
 
@@ -59,7 +57,6 @@
 /* ===== HEADER ===== */
 .page-header {
   position: relative;
-  z-index: 2147482000;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -77,11 +74,8 @@
 .step-lang {
   position: absolute;
   right: 0;
-  top: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  z-index: 2147482001;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .logo {
@@ -301,16 +295,11 @@
 /* ===== ACTIONS ===== */
 .actions {
   flex-shrink: 0;
-  position: sticky;
-  bottom: 28px;
-  z-index: 5;
   margin-top: 20px;
-  padding: 12px 0;
+  padding-bottom: 4px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  
-  box-shadow: 0 -12px 24px rgba(245, 245, 245, 0.92);
 }
 
 .btn {
@@ -361,34 +350,6 @@
 
 .m-back-btn {
   display: none;
-}
-
-@media (min-width: 769px) and (max-height: 820px) {
-  :host {
-    height: 100dvh;
-    overflow-y: auto;
-    overflow-x: hidden;
-  }
-
-  .page {
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
-    padding-bottom: 96px;
-  }
-
-  .video-card {
-    flex: none;
-    min-height: 360px;
-  }
-
-  .actions {
-    position: static;
-    margin-top: 18px;
-    margin-bottom: 72px;
-    padding: 14px 0 0;
-    box-shadow: none;
-  }
 }
 
 /* ===== RESPONSIVE ===== */
@@ -449,7 +410,7 @@
   .video-inner .safety-video { height: 100%; }
   .play-button { width: 70px; height: 70px; i { font-size: 26px; } }
   .actions { flex-direction: column; gap: 10px; margin-top: 14px; }
-  .btn { width: 100%; justify-content: center; height: 40px; padding: 9px 18px; font-size: 14px; }
+  .btn { width: 100%; justify-content: center; height: 46px; padding: 0 20px; font-size: 14px; }
   .m-action-back { display: flex; }
 }
 
