@@ -418,7 +418,7 @@
       <div class="form-field">
         <label class="field-label" for="work_permit_ref">
           {{'registration_page_permit_to_work_reference' | translate}}
-          <span class="required-star">{{settings?.WorkPermitRefRequired ? '*' : ''}}</span>
+          <span class="required-star">{{settings?.EnableWorkPermitRef ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-file"></i></span>
@@ -1269,7 +1269,7 @@
       <!-- Work Permit Reference -->
       @if (settings?.WorkPermitRefEnabled) {
       <div class="m-form-field">
-        <label class="m-field-label">{{'registration_page_permit_to_work_reference' | translate}} <span class="m-req">{{settings?.WorkPermitRefRequired ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{'registration_page_permit_to_work_reference' | translate}} <span class="m-req">{{settings?.EnableWorkPermitRef ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-file"></i></span>
           <input pInputText [placeholder]="'registration_page_permit_to_work_reference' | translate:'placeholder'"
