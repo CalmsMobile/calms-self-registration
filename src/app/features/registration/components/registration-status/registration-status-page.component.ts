@@ -80,9 +80,13 @@ export class RegistrationStatusPageComponent implements OnInit {
     private wizardService: WizardService,
     private api: ApiService
   ) {
-    // Get data from navigation state
+    // One-time flag set by the app before navigating here.
+    // On browser refresh, history.state is restored but this flag is gone → redirect to home.
+    const validNav = sessionStorage.getItem('navigatingToStatus') === 'true';
+    sessionStorage.removeItem('navigatingToStatus');
+
     const navigation = this.router.currentNavigation();
-    if (navigation?.extras?.state) {
+    if (validNav && navigation?.extras?.state) {
       const s = navigation.extras.state;
       this.registrationData = s['registrationData'];
       this.branchName       = s['branchName']  || '';
@@ -96,7 +100,10 @@ export class RegistrationStatusPageComponent implements OnInit {
   }
 
   ngOnInit() {
-    // Update header with branch information if available
+    if (!this.registrationData) {
+      this.router.navigate(['/']);
+      return;
+    }
     if (this.branchName && this.branchID) {
       this.sharedService.updateHeader(
         this.branchName,
@@ -158,6 +165,7 @@ export class RegistrationStatusPageComponent implements OnInit {
 
           this.wizardService.clearSessionStorage();
 
+          sessionStorage.setItem('navigatingToStatus', 'true');
           this.router.navigate(['/registration-status'], {
             state: {
               registrationData: {

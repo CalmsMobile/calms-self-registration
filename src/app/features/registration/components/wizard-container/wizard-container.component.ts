@@ -409,7 +409,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               // Clear session storage after successful submission
               this.wizardService.clearSessionStorage();
 
-              // Navigate to registration status page with response data
+              sessionStorage.setItem('navigatingToStatus', 'true');
               this.router.navigate(['/registration-status'], {
                 state: {
                   registrationData: {
@@ -462,6 +462,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               const errHcParam = this.wizardService.hcParam;
               const errAllowMultipleBooking = this.wizardService.getSettings()?.AllowMultipleBooking ?? true;
 
+              sessionStorage.setItem('navigatingToStatus', 'true');
               this.router.navigate(['/registration-status'], {
                 state: {
                   registrationData: {
