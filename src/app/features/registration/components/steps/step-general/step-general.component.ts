@@ -64,6 +64,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   capturedImage: string | null = null;
   dialogPreviousImage: string | null = null; // existing photo shown in dialog before camera starts
   dialogMode: 'preview' | 'camera' = 'camera'; // 'preview' when existing photo is present
+  pendingUploadFile: File | null = null; // original File from upload, used by useCapture instead of re-encoding
   hosts: any[] = [];
   departmentList: any[] = [];
   hostNameList: any[] = [];
@@ -3178,30 +3179,24 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Create preview
       const reader = new FileReader();
       reader.onload = (e: any) => {
-        const imageUrl = this.sanitizer.bypassSecurityTrustUrl(e.target.result);
+        if (closeDialog) {
+          // Show uploaded image as preview in the dialog (same UX as camera capture).
+          // useCapture() will pick up pendingUploadFile to avoid re-encoding from base64.
+          this.pendingUploadFile = file;
+          this.capturedImage = e.target.result;
+          this.stopCamera();
+          this.dialogMode = 'camera';
+          return;
+        }
 
+        const imageUrl = this.sanitizer.bypassSecurityTrustUrl(e.target.result);
         if (this.isMultipleVisitorMode && visitorIndex !== undefined) {
-          // Update specific visitor's profile (legacy FormArray path)
           this.visitorsArray.at(visitorIndex).get('profile')?.setValue(file);
-          // Also store base64 preview for display and payload
           this.profileImage = imageUrl;
           this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
         } else {
-          // Main form (both single and multi-visitor current-form)
           this.profileImage = imageUrl;
           this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
-        }
-
-        if (closeDialog) {
-          // In multi-visitor mode, sync the uploaded photo to the latest savedVisitor
-          // so back-navigation can restore it correctly (same as useCapture).
-          if (this.isMultipleVisitorMode && this.savedVisitors.length > 0) {
-            const targetIdx = this.savedVisitors.length - 1;
-            this.savedVisitors[targetIdx] = { ...this.savedVisitors[targetIdx], profile: file, profilePreview: e.target.result };
-            this.saveFormDataToWizard();
-          }
-          this.closePhotoCaptureDialog();
-          this.executePendingAction();
         }
       };
       reader.readAsDataURL(file);
@@ -3349,6 +3344,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   retakePhoto(): void {
     this.capturedImage = null;
+    this.pendingUploadFile = null;
     setTimeout(() => this.startCamera(), 100);
   }
 
@@ -3357,13 +3353,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const base64 = this.capturedImage;
     const imageUrl = this.sanitizer.bypassSecurityTrustUrl(base64);
     this.profileImage = imageUrl;
-    // Convert base64 to a File object
-    const byteString = atob(base64.split(',')[1]);
-    const mimeType = base64.split(',')[0].split(':')[1].split(';')[0];
-    const ab = new ArrayBuffer(byteString.length);
-    const ia = new Uint8Array(ab);
-    for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-    const file = new File([ab], 'photo.jpg', { type: mimeType });
+    // Use original uploaded File if available, otherwise convert from base64 (camera capture)
+    let file: File;
+    if (this.pendingUploadFile) {
+      file = this.pendingUploadFile;
+      this.pendingUploadFile = null;
+    } else {
+      const byteString = atob(base64.split(',')[1]);
+      const mimeType = base64.split(',')[0].split(':')[1].split(';')[0];
+      const ab = new ArrayBuffer(byteString.length);
+      const ia = new Uint8Array(ab);
+      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+      file = new File([ab], 'photo.jpg', { type: mimeType });
+    }
     this.generalForm.patchValue({ profile: file, profilePreview: base64 });
     // In multi-visitor mode, sync the captured photo back to the corresponding savedVisitor
     // so back-navigation can restore it and show 'preview' mode in the dialog.
