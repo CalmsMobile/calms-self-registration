@@ -58,7 +58,6 @@
 /* ===== HEADER ===== */
 .page-header {
   position: relative;
-  z-index: 2147482000;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -741,22 +740,8 @@
     padding: 18px 18px;
     border: 1px dashed #d9d9d9;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
-    overflow-y: auto;
-    max-height: 280px;
-
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.04);
-      border-radius: 10px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: var(--primary);
-      border-radius: 10px;
-    }
+    overflow: visible;
+    max-height: none;
   }
 
   .m-list-title {
@@ -861,12 +846,11 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    position: sticky;
-    bottom: 0;
-    background: #f6f6f6;
-    padding-top: 10px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    z-index: 10;
+    position: static;
+    background: transparent;
+    padding-top: 0;
+    padding-bottom: 0;
+    z-index: auto;
   }
 
   .m-actions-row {
