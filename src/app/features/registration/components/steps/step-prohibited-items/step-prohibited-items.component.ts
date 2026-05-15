@@ -122,7 +122,7 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
 
   addItem(): void {
     if (!this.canAdd) return;
-    const isDuplicate = this.declaredItems.some(
+    const isDuplicate = !!this.newItem.serialNumber.trim() && this.declaredItems.some(
       item => item.serialNumber.trim().toLowerCase() === this.newItem.serialNumber.trim().toLowerCase()
            && item.direction === this.newItem.direction
     );
