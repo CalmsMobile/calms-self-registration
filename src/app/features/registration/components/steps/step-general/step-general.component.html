@@ -1,5 +1,4 @@
 <main class="page">
-  <div class="step-version-tag">v{{ appVersion }}</div>
   <!-- Page Header -->
   <header class="page-header flex-header">
     <div class="header-center">
@@ -866,7 +865,7 @@
       {{ 'registration_page_button_back' | translate }}
     </button>
     }
-    <span class="step-copyright">&copy; {{ currentYear }} All rights reserved.</span>
+    <span class="step-copyright">&copy; {{ currentYear }} CALMS Technologies. All rights reserved. v{{ appVersion }}</span>
     <div class="actions-right">
       @if (isMultipleVisitorMode) {
         @if (editingVisitorIndex >= 0) {
@@ -1663,7 +1662,7 @@
           </button>
         }
       </div>
-      <p class="step-copyright">&copy; {{ currentYear }} All rights reserved. v{{ appVersion }}</p>
+      <p class="step-copyright">&copy; {{ currentYear }} CALMS Technologies. All rights reserved. v{{ appVersion }}</p>
     </div>
 
   </div>

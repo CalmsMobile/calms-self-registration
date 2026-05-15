@@ -55,29 +55,12 @@
   padding: 0 60px;
 }
 
-.step-version-tag {
-  position: absolute;
-  top: 8px;
-  right: 0;
-  z-index: 2147482002;
-  font-size: 12px;
-  font-weight: 600;
-  color: #7f8792;
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(127, 135, 146, 0.2);
-  border-radius: 999px;
-  padding: 2px 10px;
-  line-height: 1.4;
-  pointer-events: none;
-  user-select: none;
-}
-
 /* ============================================
    PAGE HEADER
    ============================================ */
 .page-header {
   position: relative;
-  z-index: 2147482000;
+  //z-index: 2147482000;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -3395,7 +3378,7 @@ textarea {
     color: #9ca3af;
     line-height: 1.2;
     white-space: normal;
-    padding: 4px 0 0;
+    //padding: 4px 0 0;
     pointer-events: none;
   }
 

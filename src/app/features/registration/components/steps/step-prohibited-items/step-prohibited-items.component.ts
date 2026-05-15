@@ -28,8 +28,8 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   newItem = { description: '', serialNumber: '', direction: '' };
   canAdd = false;
   directionOptions = [
-    { label: 'IN', value: 'IN' },
-    { label: 'OUT', value: 'OUT' }
+    { label: 'In', value: 'In' },
+    { label: 'Out', value: 'Out' }
   ];
   showFieldErrors = false;
   duplicateError = '';
