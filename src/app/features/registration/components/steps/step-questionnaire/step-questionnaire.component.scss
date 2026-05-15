@@ -458,8 +458,8 @@
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    padding-bottom: 0;
-    scroll-padding-bottom: 96px;
+    padding-bottom: 24px;
+    scroll-padding-bottom: 120px;
     overscroll-behavior: contain;
   }
 
@@ -476,6 +476,13 @@
   }
 }
 
+@media (min-width: 769px) and (max-height: 700px) {
+  .right {
+    padding-bottom: 72px;
+    scroll-padding-bottom: 160px;
+  }
+}
+
 @media (max-width: 768px) {
   .page {
     display: none;
@@ -485,9 +492,10 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    min-height: 100dvh;
     background: #f6f6f6;
     font-family: var(--font-family);
-    padding-bottom: 32px;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
   }
 
@@ -652,6 +660,7 @@
   /* Actions */
   .m-actions {
     margin: 20px 16px 0;
+    margin-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     gap: 12px;
