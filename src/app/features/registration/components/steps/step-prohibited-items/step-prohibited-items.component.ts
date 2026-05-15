@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SelectModule } from 'primeng/select';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { SharedService } from '../../../../../shared/shared.service';
 import { LabelService } from '../../../../../core/services/label.service';
@@ -19,13 +18,13 @@ interface DeclaredItem {
 @Component({
   selector: 'app-step-prohibited-items',
   standalone: true,
-  imports: [CommonModule, FormsModule, SelectModule, TranslatePipe, LanguageSelectorComponent],
+  imports: [CommonModule, FormsModule, TranslatePipe, LanguageSelectorComponent],
   templateUrl: './step-prohibited-items.component.html',
   styleUrl: './step-prohibited-items.component.scss'
 })
 export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   declaredItems: DeclaredItem[] = [];
-  newItem = { description: '', serialNumber: '', direction: '' };
+  newItem = { description: '', serialNumber: '', direction: 'In' };
   canAdd = false;
   directionOptions = [
     { label: 'In', value: 'In' },
@@ -42,7 +41,7 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
 
   get partiallyFilled(): boolean {
     const { description, serialNumber, direction } = this.newItem;
-    const hasAny = !!description.trim() || !!serialNumber.trim() || !!direction;
+    const hasAny = !!description.trim() || !!serialNumber.trim();
     const mandatoryOk = (!this.isDescMandatory || !!description.trim()) &&
                         (!this.isSerialMandatory || !!serialNumber.trim()) &&
                         (!this.isTypeMandatory || !!direction);
@@ -111,7 +110,7 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
 
   checkInputs(): void {
     const { description, serialNumber, direction } = this.newItem;
-    const hasAny = !!description.trim() || !!serialNumber.trim() || !!direction;
+    const hasAny = !!description.trim() || !!serialNumber.trim();
     const mandatoryOk = (!this.isDescMandatory || !!description.trim()) &&
                         (!this.isSerialMandatory || !!serialNumber.trim()) &&
                         (!this.isTypeMandatory || !!direction);
@@ -133,7 +132,7 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
     }
     this.duplicateError = '';
     this.declaredItems.push({ ...this.newItem });
-    this.newItem = { description: '', serialNumber: '', direction: '' };
+    this.newItem = { description: '', serialNumber: '', direction: 'In' };
     this.canAdd = false;
     this.showFieldErrors = false;
     this.saveFormData();

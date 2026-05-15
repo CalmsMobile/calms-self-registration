@@ -38,23 +38,23 @@
             [placeholder]="'equipment_movement_serial_number' | translate:'placeholder'" />
         </label>
         <div class="direction-row">
-          <label class="field" [class.field-error]="showFieldErrors && isTypeMandatory && !newItem.direction">
+          <div class="field" [class.field-error]="showFieldErrors && isTypeMandatory && !newItem.direction">
             <span class="label">{{ 'equipment_movement_direction' | translate }}@if(isTypeMandatory){<span class="req">*</span>}</span>
-            <p-select
-              [(ngModel)]="newItem.direction"
-              (onChange)="checkInputs()"
-              [options]="directionOptions"
-              optionLabel="label"
-              optionValue="value"
-              [placeholder]="'equipment_movement_direction' | translate:'placeholder'"
-              appendTo="body">
-            </p-select>
-          </label>
-          <button class="btn-outline" type="button" [disabled]="!canAdd" (click)="addItem()" title="{{ 'equipment_movement_add_item_tooltip' | translate }}">
-            <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="44" height="44" fill="currentColor" viewBox="0 0 24 24">
-              <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z" clip-rule="evenodd" />
-            </svg>
-          </button>
+            <div class="direction-radio-group">
+              @for (opt of directionOptions; track opt.value) {
+                <label class="radio-option">
+                  <input type="radio" name="item-direction" [value]="opt.value"
+                    [(ngModel)]="newItem.direction" (change)="checkInputs()" />
+                  <span>{{ opt.label }}</span>
+                </label>
+              }
+              <button class="btn-outline" type="button" [disabled]="!canAdd" (click)="addItem()" title="{{ 'equipment_movement_add_item_tooltip' | translate }}">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" viewBox="0 0 24 24">
+                  <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
         @if (duplicateError) {
           <div class="duplicate-error">{{ duplicateError }}</div>
@@ -135,16 +135,15 @@
       <div class="m-direction-row">
         <div class="m-field" [class.m-field-error]="showFieldErrors && isTypeMandatory && !newItem.direction">
           <span class="m-label">{{ 'equipment_movement_direction' | translate }}@if(isTypeMandatory){<span class="req">*</span>}</span>
-          <p-select
-            [(ngModel)]="newItem.direction"
-            (onChange)="checkInputs()"
-            [options]="directionOptions"
-            optionLabel="label"
-            optionValue="value"
-            [placeholder]="'equipment_movement_direction' | translate:'placeholder'"
-            styleClass="m-p-select"
-            appendTo="body">
-          </p-select>
+          <div class="direction-radio-group">
+            @for (opt of directionOptions; track opt.value) {
+              <label class="radio-option">
+                <input type="radio" name="m-item-direction" [value]="opt.value"
+                  [(ngModel)]="newItem.direction" (change)="checkInputs()" />
+                <span>{{ opt.label }}</span>
+              </label>
+            }
+          </div>
         </div>
         <button class="m-add-btn" type="button" [disabled]="!canAdd" (click)="addItem()" title="{{ 'equipment_movement_add_item_tooltip' | translate }}">
           <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 24 24">
