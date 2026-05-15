@@ -3842,11 +3842,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   private checkAndNavigate(onSuccess: () => void): void {
     let { start, end } = this.getBookingDateTimes();
-    console.log('[MultipleApt] checkAndNavigate — appointmentDate:', this.generalForm.get('appointmentDate')?.value, '| startDate:', this.generalForm.get('startDate')?.value, '| timeSlotStartTime:', this.timeSlotStartTime, '| resolved start:', start, '| end:', end);
-
+  
     const now = new Date();
     if (!start) {
-      console.log('[MultipleApt] no start time resolved — falling back to now:', now);
       start = now;
     }
 

@@ -50,6 +50,7 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
   }
 
   get continueDisabled(): boolean {
+    if (this.declaredItems.length > 0) return false;
     const { description, serialNumber, direction } = this.newItem;
     return (this.isDescMandatory && !description.trim()) ||
            (this.isSerialMandatory && !serialNumber.trim()) ||
