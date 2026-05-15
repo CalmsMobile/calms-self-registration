@@ -2498,7 +2498,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.setupControl('visitor_address', this.settings.AddressEnabled, this.settings.AddressRequired);
     this.setupControl('country', this.settings.CountryEnabled, this.settings.CountryRequired);
     this.setupControl('meeting_location', this.settings.RoomEnabled, this.settings.RoomRequired);
-    this.setupControl('work_permit_ref', this.settings.WorkPermitRefEnabled, this.settings.EnableWorkPermitRef);
+    this.setupControl('work_permit_ref', this.settings.WorkPermitRefEnabled, this.settings.EnableWorkPermitRef && this.settings.WorkPermitRefEnabled);
     this.setupControl('event_name', this.settings.EventEnabled, this.settings.EventRequired);
     this.setupControl('remarks', this.settings.RemarksEnabled, this.settings.RemarksRequired);
     // Don't require host when it's auto-selected from the hc query param
@@ -3896,7 +3896,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.wizardService.setSafetyBriefViewFromApi(ViewSB);
         const code = Number(rawCode);
 
-        if (this.settings?.EnableWorkPermitRef && InvalidWP === false) {
+        if (this.settings?.EnableWorkPermitRef && this.settings?.WorkPermitRefEnabled && InvalidWP === false) {
           this.showMessage({
             severity: 'error',
             detail: this.labelService.getLabel('registration_page_invalid_work_permit_alert', 'caption') || 'Invalid work permit reference',
