@@ -716,8 +716,8 @@
 
   .m-add-btn {
     align-self: flex-end;
-    width: 48px;
-    height: 48px;
+    width: 42px;
+    height: 42px;
     padding: 0;
     border-radius: 50%;
     border: 2px dotted #c4c4c4;
@@ -736,9 +736,10 @@
       fill: currentColor;
     }
 
-    &:hover:not(:disabled) {
+    &:not(:disabled) {
       border-color: var(--primary);
       color: var(--primary);
+      border-style: solid;
     }
 
     &:disabled {
@@ -786,18 +787,14 @@
   }
 
   .m-direction-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 12px;
-
     .m-field {
-      flex: 1;
       min-width: 0;
+      gap: 0;
     }
 
     .m-add-btn {
+      margin-left: 8px;
       flex-shrink: 0;
-      align-self: flex-end;
     }
   }
 
