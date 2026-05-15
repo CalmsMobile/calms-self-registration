@@ -787,14 +787,18 @@
   }
 
   .m-direction-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+
     .m-field {
+      flex: 1;
       min-width: 0;
-      gap: 0;
     }
 
     .m-add-btn {
-      margin-left: 8px;
       flex-shrink: 0;
+      align-self: flex-end;
     }
   }
 
