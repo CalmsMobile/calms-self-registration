@@ -404,6 +404,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               const savedRefCode = this.wizardService.refCode;
               const savedRefCatCode = this.wizardService.refCatCode;
               const savedHcParam = this.wizardService.hcParam;
+              const allowMultipleBooking = this.wizardService.getSettings()?.AllowMultipleBooking ?? true;
 
               // Clear session storage after successful submission
               this.wizardService.clearSessionStorage();
@@ -435,7 +436,8 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                   startMode: startMode,
                   refCode: savedRefCode,
                   refCatCode: savedRefCatCode,
-                  hcParam: savedHcParam
+                  hcParam: savedHcParam,
+                  allowMultipleBooking: allowMultipleBooking
                 }
               });
             },
@@ -458,6 +460,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               const errRefCode = this.wizardService.refCode;
               const errRefCatCode = this.wizardService.refCatCode;
               const errHcParam = this.wizardService.hcParam;
+              const errAllowMultipleBooking = this.wizardService.getSettings()?.AllowMultipleBooking ?? true;
 
               this.router.navigate(['/registration-status'], {
                 state: {
@@ -470,7 +473,8 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                   startMode: errStartMode,
                   refCode: errRefCode,
                   refCatCode: errRefCatCode,
-                  hcParam: errHcParam
+                  hcParam: errHcParam,
+                  allowMultipleBooking: errAllowMultipleBooking
                 }
               });
             }

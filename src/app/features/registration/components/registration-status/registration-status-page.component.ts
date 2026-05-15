@@ -66,6 +66,7 @@ export class RegistrationStatusPageComponent implements OnInit {
 
   /** How the registration flow was originally started. */
   private startMode: StartMode = 'plain';
+  private allowMultipleBooking: boolean = true;
   /** Preserved bc/vc/hc params so we can navigate back to home with same params. */
   private refCode    = '';
   private refCatCode = '';
@@ -86,10 +87,11 @@ export class RegistrationStatusPageComponent implements OnInit {
       this.registrationData = s['registrationData'];
       this.branchName       = s['branchName']  || '';
       this.branchID         = s['branchID']    || '';
-      this.startMode        = (s['startMode'] as StartMode) || 'plain';
-      this.refCode          = s['refCode']     || '';
-      this.refCatCode       = s['refCatCode']  || '';
-      this.hcParam          = s['hcParam']     || '';
+      this.startMode           = (s['startMode'] as StartMode) || 'plain';
+      this.allowMultipleBooking = s['allowMultipleBooking'] ?? true;
+      this.refCode             = s['refCode']     || '';
+      this.refCatCode          = s['refCatCode']  || '';
+      this.hcParam             = s['hcParam']     || '';
     }
   }
 
@@ -108,7 +110,7 @@ export class RegistrationStatusPageComponent implements OnInit {
    * via an appointment code (ac). For ac flows the link is single-use.
    */
   get showNewRegistration(): boolean {
-    return this.startMode !== 'ac';
+    return this.startMode !== 'ac' && this.allowMultipleBooking;
   }
 
   onNewRegistration() {
