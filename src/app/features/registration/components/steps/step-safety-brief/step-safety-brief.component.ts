@@ -38,7 +38,7 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
   private _activeMessageKeys = new Set<string>();
 
   get formattedPageTitle(): { first: string; rest: string } {
-    const text = this.labelService.getLabel('safety_briefing_video_page_title', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
+    const text = this.labelService.getLabel('safety_briefing_video_page_title', 'caption') || this.wizardService.pageTitle;
     const i = text.indexOf(' ');
     return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
   }

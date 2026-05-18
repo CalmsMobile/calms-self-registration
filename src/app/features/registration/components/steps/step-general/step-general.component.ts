@@ -46,7 +46,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   companyTitle = '';
 
   get formattedPageTitle(): { first: string; rest: string } {
-    const text = this.labelService.getLabel('registration_page_page_title', 'caption') || this.wizardService.pageTitle || 'Visitor Registration';
+    const text = this.labelService.getLabel('registration_page_page_title', 'caption') || this.wizardService.pageTitle;
     const i = text.indexOf(' ');
     return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
   }

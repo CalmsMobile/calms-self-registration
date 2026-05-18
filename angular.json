@@ -24,7 +24,10 @@
         "build": {
           "builder": "@angular/build:application",
           "options": {
-            "outputPath": "dist/calms-self-registration",
+            "outputPath": {
+              "base": "dist/calms-self-registration",
+              "browser": "selfregistration"
+            },
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -75,7 +78,7 @@
               "sourceMap": true
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular/build:dev-server",

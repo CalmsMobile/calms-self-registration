@@ -115,7 +115,7 @@ export class HomePageComponent implements AfterViewChecked {
   }
 
   get formattedPageTitle(): { first: string, rest: string } {
-    const fullTitle = this.pageTitle || 'Visitor Registration'; // Default if empty, translate pipe not easily usable in logic without subscription, assuming default string for split logic or handled in template
+   
     // Ideally we rely on the same logic as template: pageTitle || translate pipe
     // But for splitting, we need the string. 
     // If pageTitle is set, use it. If not, we might display "Visitor Registration" as fallback for now or handle TranslateService. 
@@ -124,7 +124,7 @@ export class HomePageComponent implements AfterViewChecked {
     // Better approach: simple split method used in template with a pipe, OR just simple logic here if pageTitle is populated.
     // Let's assume pageTitle is populated or we strictly use what's available.
 
-    const text = this.wizardService.pageTitle || 'Visitor Registration';
+    const text = this.wizardService.pageTitle;
     const firstSpaceIndex = text.indexOf(' ');
 
     if (firstSpaceIndex === -1) {
