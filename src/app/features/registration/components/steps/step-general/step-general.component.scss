@@ -194,6 +194,30 @@
   }
 }
 
+.ocr-scan-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid #9ca3af;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+
+  &:hover {
+    background: rgba(156, 163, 175, 0.08);
+  }
+
+  i {
+    font-size: 16px;
+    color: #6b7280;
+  }
+}
+
 /* ============================================
    LOADING (pacman — same as home page)
    ============================================ */
@@ -1550,6 +1574,137 @@ textarea {
   align-self: center;
 
   &:hover { color: #777; }
+}
+
+/* ============================================
+   OCR SCANNER DIALOG
+   ============================================ */
+::ng-deep .ocr-scan-dialog {
+  .p-dialog-content {
+    padding: 0;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .p-dialog-header {
+    display: none;
+  }
+}
+
+.ocr-container {
+  position: relative;
+  width: 400px;
+  max-width: 94vw;
+  padding: 16px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--font-family);
+}
+
+.ocr-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: #f0f0f0;
+  color: #444;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  transition: background 0.15s;
+
+  &:hover { background: #e0e0e0; color: #111; }
+}
+
+.ocr-frame-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ocr-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.ocr-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #555;
+  font-size: 48px;
+}
+
+.ocr-card-guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 82%;
+  height: 78%;
+  border: 2.5px dashed var(--primary);
+  border-radius: 8px;
+  pointer-events: none;
+  box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.25);
+}
+
+.ocr-actions {
+  display: flex;
+  justify-content: center;
+  min-height: 56px;
+  align-items: center;
+}
+
+.ocr-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+}
+
+.ocr-capture-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: none;
+  background: var(--primary);
+  color: var(--theme-primary-fg-color);
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(var(--theme-primary-yellow-rgb), 0.4);
+  transition: transform 0.15s, box-shadow 0.15s;
+
+  &:hover:not(:disabled) {
+    transform: scale(1.08);
+    box-shadow: 0 6px 18px rgba(var(--theme-primary-yellow-rgb), 0.5);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 }
 
 .search-profile-container {
@@ -3043,6 +3198,21 @@ textarea {
     i {
       font-size: 16px;
       color: #707070;
+    }
+  }
+
+  .m-ocr-scan-btn {
+    border-style: solid;
+    border-color: #9ca3af;
+    background: transparent;
+    color: #6b7280;
+
+    i {
+      color: #6b7280;
+    }
+
+    &:hover {
+      background: rgba(156, 163, 175, 0.08);
     }
   }
 

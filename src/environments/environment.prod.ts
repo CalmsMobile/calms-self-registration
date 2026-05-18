@@ -4,4 +4,5 @@ export const environment = {
   proURL: '../',
   apiURL: '../app/api/Vims',
   portalApiURL: '../app/api/portal',
+  openAiApiKey: ''
 };

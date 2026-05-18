@@ -18,6 +18,7 @@ import { ProgressBarModule } from 'primeng/progressbar';
 import { filter, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../../core/services/api.service';
 import { LabelService } from '../../../../../core/services/label.service';
+import { OcrService } from '../../../../../core/services/ocr.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { SharedService } from '../../../../../shared/shared.service';
@@ -36,6 +37,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   @ViewChild('cameraVideo') cameraVideoRef!: ElementRef<HTMLVideoElement>;
   @ViewChild('captureCanvas') captureCanvasRef!: ElementRef<HTMLCanvasElement>;
   @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('ocrVideo') ocrVideoRef!: ElementRef<HTMLVideoElement>;
+  @ViewChild('ocrCanvas') ocrCanvasRef!: ElementRef<HTMLCanvasElement>;
 
   readonly currentYear = new Date().getFullYear();
   readonly appVersion = environment.appVersion;
@@ -55,6 +58,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return !!(this.settings?.ImageUploadEnabled || this.settings?.ImageUploadRequired);
   }
 
+  get isOcrScanEnabled(): boolean {
+    return !!this.settings?.EnableIDOCRScan;
+  }
+
   // Photo capture dialog
   showPhotoCaptureDialog = false;
   isCameraOn = false;
@@ -65,6 +72,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   dialogPreviousImage: string | null = null; // existing photo shown in dialog before camera starts
   dialogMode: 'preview' | 'camera' = 'camera'; // 'preview' when existing photo is present
   pendingUploadFile: File | null = null; // original File from upload, used by useCapture instead of re-encoding
+
+  // OCR scanner dialog
+  showOcrDialog = false;
+  ocrIsCameraOn = false;
+  ocrCapturedImage: string | null = null;
+  ocrCameraStream: MediaStream | null = null;
+  ocrFacingMode: 'user' | 'environment' = 'environment';
+  ocrProcessing = false;
+
   hosts: any[] = [];
   departmentList: any[] = [];
   hostNameList: any[] = [];
@@ -211,7 +227,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     private api: ApiService,
     private labelService: LabelService,
     private sharedService: SharedService,
-    private router: Router
+    private router: Router,
+    private ocrService: OcrService
   ) {
     this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
     this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
@@ -248,6 +265,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.settings.EnableWhitelistValidation = selfRegSettings.EnableWhitelistValidation ?? this.settings.EnableWhitelistValidation;
         this.settings.AptEndTime = selfRegSettings.AptEndTime ?? this.settings.AptEndTime ?? '';
         this.settings.AllowMultipleBooking = selfRegSettings.AllowMultipleBooking ?? this.settings.AllowMultipleBooking;
+        this.settings.EnableIDOCRScan = selfRegSettings.EnableIDOCRScan ?? this.settings.EnableIDOCRScan ?? false;
       }
       this.isSingaporePDPARequired = settings?.IsSingaporePDPARequired === true;
       this.loadUdfSettings();
@@ -274,6 +292,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
       if (sr.AllowMultipleBooking !== undefined) {
         this.settings = { ...this.settings, AllowMultipleBooking: sr.AllowMultipleBooking };
+      }
+      if (sr.EnableIDOCRScan !== undefined) {
+        this.settings = { ...this.settings, EnableIDOCRScan: sr.EnableIDOCRScan };
       }
     });
 
@@ -2592,7 +2613,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       .filter((opt: any) => opt.value != null);
     
     // Debug log to inspect the options
-    console.log(`[UDF Debug] getUdfOptions for SetSeqId ${apptUDFSetSeqId}:`, opts);
+
     return opts;
   }
 
@@ -3402,6 +3423,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.stopCamera();
+    this.stopOcrCamera();
     if (this.wizardService.currentBranchID) {
       this.saveFormDataToWizard();
     }
@@ -4139,6 +4161,225 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     this.checkAndNavigate(() => this.wizardService.navigateToNextStep());
+  }
+
+  openOcrScanner(): void {
+    this.ocrCapturedImage = null;
+    // Use back camera on mobile, front on desktop
+    this.ocrFacingMode = window.innerWidth <= 768 ? 'environment' : 'user';
+    this.showOcrDialog = true;
+    setTimeout(() => this.startOcrCamera(), 300);
+  }
+
+  async startOcrCamera(): Promise<void> {
+    this.stopOcrCamera();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: this.ocrFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      this.ocrCameraStream = stream;
+      const videoEl = this.ocrVideoRef?.nativeElement;
+      if (videoEl) {
+        videoEl.srcObject = stream;
+        videoEl.play();
+      }
+      this.ocrIsCameraOn = true;
+    } catch (err: any) {
+      this.ocrIsCameraOn = false;
+      const isPermissionDenied = err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError';
+      this.showMessage({
+        severity: 'error',
+        summary: isPermissionDenied ? 'Camera Access Denied' : 'Camera Error',
+        detail: isPermissionDenied
+          ? 'Camera permission was denied. Please allow camera access.'
+          : 'Could not access camera.'
+      });
+    }
+  }
+
+  stopOcrCamera(): void {
+    if (this.ocrCameraStream) {
+      this.ocrCameraStream.getTracks().forEach(t => t.stop());
+      this.ocrCameraStream = null;
+    }
+    this.ocrIsCameraOn = false;
+  }
+
+  captureOcrPhoto(): void {
+    const video = this.ocrVideoRef?.nativeElement;
+    const canvas = this.ocrCanvasRef?.nativeElement;
+    if (!video || !canvas) return;
+
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+
+    // Draw full frame first (shown as preview)
+    canvas.width = vw;
+    canvas.height = vh;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+    this.ocrCapturedImage = canvas.toDataURL('image/jpeg', 0.92);
+    this.stopOcrCamera();
+
+    // Crop to the guide rectangle (82% w × 78% h, centered) for OCR
+    const cropW = Math.round(vw * 0.82);
+    const cropH = Math.round(vh * 0.78);
+    const cropX = Math.round((vw - cropW) / 2);
+    const cropY = Math.round((vh - cropH) / 2);
+
+    const cropCanvas = document.createElement('canvas');
+    cropCanvas.width = cropW;
+    cropCanvas.height = cropH;
+    cropCanvas.getContext('2d')!.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+    const croppedDataUrl = cropCanvas.toDataURL('image/jpeg', 0.92);
+
+    this.runOcr(croppedDataUrl);
+  }
+
+  private async runOcr(dataUrl: string): Promise<void> {
+    this.ocrProcessing = true;
+    console.log('[OCR] Starting extraction...');
+    try {
+      const result = await this.ocrService.extractFromDataUrl(dataUrl);
+      const ocr = result.structuredData;
+      console.group('[OCR] Result');
+      console.log('Structured Data:', ocr);
+      console.log('Raw Text:', result.rawText);
+      console.log('Token Usage:', result.tokenUsage);
+      console.log('Processing Time:', result.processingTimeMs + 'ms');
+      console.groupEnd();
+
+      if (!ocr) return;
+
+      if (this.settings?.SearchExistingVisitor) {
+        await this.ocrSearchAndPopulate(ocr);
+      } else {
+        this.applyOcrToForm(ocr, {});
+      }
+
+      this.closeOcrDialog();
+    } catch (err) {
+      console.error('[OCR] Extraction failed:', err);
+    } finally {
+      this.ocrProcessing = false;
+    }
+  }
+
+  private async ocrSearchAndPopulate(ocr: any): Promise<void> {
+    const branchId = this.wizardService.currentBranchID;
+    const nric = ocr.id_number || ocr.document_number || null;
+    const email = ocr.email || null;
+    const phone = ocr.phone || null;
+
+    let apiVisitor: any = null;
+    let matchedBy: string | null = null;
+
+    if (nric) {
+      // Build labelled parallel searches
+      const searches: { label: string; promise: Promise<any> }[] = [
+        { label: `NRIC (${nric})`, promise: this.searchVisitorAsync(nric, branchId) }
+      ];
+      if (email) searches.push({ label: `Email (${email})`, promise: this.searchVisitorAsync(email, branchId) });
+      if (phone) searches.push({ label: `Phone (${phone})`, promise: this.searchVisitorAsync(phone, branchId) });
+
+      const results = await Promise.all(searches.map(s => s.promise));
+      console.log('[OCR] Search results:', searches.map((s, i) => ({ field: s.label, found: !!results[i] })));
+
+      const foundIdx = results.findIndex(r => r != null);
+      if (foundIdx !== -1) {
+        apiVisitor = results[foundIdx];
+        matchedBy = searches[foundIdx].label;
+      }
+    } else {
+      // No NRIC — search email and phone in parallel
+      const searches: { label: string; promise: Promise<any> }[] = [];
+      if (email) searches.push({ label: `Email (${email})`, promise: this.searchVisitorAsync(email, branchId) });
+      if (phone) searches.push({ label: `Phone (${phone})`, promise: this.searchVisitorAsync(phone, branchId) });
+
+      if (searches.length) {
+        const results = await Promise.all(searches.map(s => s.promise));
+        console.log('[OCR] Search results:', searches.map((s, i) => ({ field: s.label, found: !!results[i] })));
+
+        const foundIdx = results.findIndex(r => r != null);
+        if (foundIdx !== -1) {
+          apiVisitor = results[foundIdx];
+          matchedBy = searches[foundIdx].label;
+        }
+      }
+    }
+
+    if (apiVisitor) {
+      console.log(`[OCR] Visitor matched by → ${matchedBy}. Populating from API + OCR fallback.`);
+      this.applyVisitorToForm(apiVisitor);
+      this.applyOcrToForm(ocr, this.getFormSnapshot());
+    } else {
+      console.log('[OCR] No visitor found in DB. Populating from OCR data only.');
+      this.applyOcrToForm(ocr, {});
+    }
+  }
+
+  private searchVisitorAsync(query: string, branchId: string): Promise<any> {
+    return new Promise(resolve => {
+      this.api.SearchVisitor(query, branchId).subscribe({
+        next: (res: any) => resolve(res?.Table1?.[0] ?? null),
+        error: () => resolve(null)
+      });
+    });
+  }
+
+  private getFormSnapshot(): Record<string, any> {
+    const v = this.generalForm.value;
+    const snapshot: Record<string, any> = {};
+    Object.keys(v).forEach(k => {
+      const val = v[k];
+      if (val !== null && val !== undefined && val !== '') snapshot[k] = val;
+    });
+    return snapshot;
+  }
+
+  private applyOcrToForm(ocr: any, existing: Record<string, any>): void {
+    const patch: Record<string, any> = {};
+
+    const set = (field: string, value: any) => {
+      if (value != null && value !== '' && !existing[field]) patch[field] = value;
+    };
+
+    set('fullName', ocr.full_name);
+    set('visitor_id', ocr.id_number || ocr.document_number);
+    set('email', ocr.email);
+    set('phone', ocr.phone);
+    set('visitor_company', ocr.company);
+
+    // Gender: map text to form value "0"=Female "1"=Male "2"=Others
+    if (!existing['gender'] && ocr.gender) {
+      const g = ocr.gender.toLowerCase();
+      if (g.includes('female') || g === 'f') patch['gender'] = '0';
+      else if (g.includes('male') || g === 'm') patch['gender'] = '1';
+      else patch['gender'] = '2';
+    }
+
+    // Address: populate individual fields or full address
+    if (ocr.address) {
+      const addr = ocr.address;
+      set('address', addr.full || [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(', '));
+    }
+
+    if (Object.keys(patch).length) {
+      console.log('[OCR] Patching form fields:', patch);
+      this.generalForm.patchValue(patch);
+    }
+  }
+
+  retakeOcrPhoto(): void {
+    this.ocrCapturedImage = null;
+    setTimeout(() => this.startOcrCamera(), 100);
+  }
+
+  closeOcrDialog(): void {
+    this.stopOcrCamera();
+    this.ocrCapturedImage = null;
+    this.showOcrDialog = false;
   }
 
 }

@@ -6,5 +6,6 @@ export const environment = {
   appVersion: '1.0.5',
   proURL: 'https://rndv7.calmsweb.com/',
   apiURL: 'https://rndv7.calmsweb.com/app/api/vims',
-  portalApiURL: 'https://rndv7.calmsweb.com/app/api/portal'
+  portalApiURL: 'https://rndv7.calmsweb.com/app/api/portal',
+  openAiApiKey: ''
 };
