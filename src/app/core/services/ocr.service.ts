@@ -45,6 +45,9 @@ export class OcrService {
   private readonly model = 'gpt-4.1-mini';
 
   async extractFromDataUrl(dataUrl: string): Promise<OcrResult> {
+    const key = this.apiKey;
+    console.log('[OCR] API key source:', environment.openAiApiKey ? 'environment' : 'localStorage', '| key set:', !!key, '| prefix:', key.slice(0, 10) + '...');
+
     const start = performance.now();
     const base64 = dataUrl.split(',')[1];
 
@@ -99,7 +102,7 @@ Rules:
     const response: any = await firstValueFrom(
       this.http.post(this.apiUrl, payload, {
         headers: {
-          Authorization: `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${key}`,
           'Content-Type': 'application/json'
         }
       })
