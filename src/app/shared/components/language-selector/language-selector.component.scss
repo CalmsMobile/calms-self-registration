@@ -152,7 +152,7 @@
 }
 
  .lang-panel {
-    width: 160px;
+    width: max-content;
     max-height: min(42vh, 280px);
     border-radius: 20px;
     padding: 8px;
@@ -163,7 +163,7 @@
     padding: 0 16px;
     gap: 8px;
     margin-bottom: 4px;
-    font-size: 14px;
+    font-size: 12px;
     border-radius: 10px;
  }
 

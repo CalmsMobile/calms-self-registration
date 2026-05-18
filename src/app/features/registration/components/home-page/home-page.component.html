@@ -39,8 +39,8 @@
           <!-- Title -->
           @if (showWelcomeTitle) {
           <h1 class="pre-title">
-            <span class="accent">{{ formattedPageTitle.first || 'Visitor' }}</span><br>
-            {{ formattedPageTitle.rest || 'Registration' }}
+            <span class="accent">{{ formattedPageTitle.first }}</span><br>
+            {{ formattedPageTitle.rest }}
           </h1>
           }
 
@@ -200,8 +200,8 @@
     <img [src]="logo" alt="Company Logo" class="m-logo" />
     @if (showWelcomeTitle) {
     <h1 class="m-welcome">
-      <span class="m-welcome-accent">{{ formattedPageTitle.first || 'Visitor' }}</span><br>
-      {{ formattedPageTitle.rest || 'Registration' }}
+      <span class="m-welcome-accent">{{ formattedPageTitle.first}}</span><br>
+      {{ formattedPageTitle.rest }}
     </h1>
     }
     <div class="m-form">
@@ -235,8 +235,8 @@
     <!-- Page title -->
     @if (showWelcomeTitle) {
     <div class="m-post-title">
-      <span class="m-post-accent">{{ formattedPageTitle.first || 'Visitor' }}</span><br>
-      <span class="m-post-rest">{{ formattedPageTitle.rest || 'Registration' }}</span>
+      <span class="m-post-accent">{{ formattedPageTitle.first }}</span><br>
+      <span class="m-post-rest">{{ formattedPageTitle.rest }}</span>
     </div>
     }
 

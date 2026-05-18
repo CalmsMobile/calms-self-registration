@@ -247,9 +247,7 @@
   align-items: center;
   position: static;
   flex-shrink: 0;
-  margin-top: 18px;
-  margin-bottom: 24px;
-  padding: 14px 0 0;
+  padding: 14px 0 10px;
   background: transparent;
   box-shadow: none;
 
@@ -469,9 +467,7 @@
 
   .actions {
     position: static;
-    margin-top: 18px;
-    margin-bottom: 24px;
-    padding: 14px 0 0;
+    padding: 14px 0 10px;
     box-shadow: none;
   }
 }
