@@ -32,7 +32,18 @@
       }
       @if (isOcrScanEnabled) {
       <button type="button" class="ocr-scan-btn" (click)="openOcrScanner()" [title]="'Scan ID'">
-        <i class="pi pi-camera"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 100 100" fill="currentColor">
+          <!-- Top-left corner -->
+          <path d="M10,10 L10,30 L16,30 L16,16 L30,16 L30,10 Z"/>
+          <!-- Top-right corner -->
+          <path d="M90,10 L70,10 L70,16 L84,16 L84,30 L90,30 Z"/>
+          <!-- Bottom-left corner -->
+          <path d="M10,90 L10,70 L16,70 L16,84 L30,84 L30,90 Z"/>
+          <!-- Bottom-right corner -->
+          <path d="M90,90 L70,90 L70,84 L84,84 L84,70 L90,70 Z"/>
+          <!-- OCR text -->
+          <text x="50" y="58" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="currentColor">OCR</text>
+        </svg>
       </button>
       }
       </div>
@@ -939,7 +950,13 @@
           }
           @if (isOcrScanEnabled) {
           <button type="button" class="m-returning-btn m-ocr-scan-btn" (click)="openOcrScanner()" title="Scan ID">
-            <i class="pi pi-camera"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 100 100" fill="currentColor">
+              <path d="M10,10 L10,30 L16,30 L16,16 L30,16 L30,10 Z"/>
+              <path d="M90,10 L70,10 L70,16 L84,16 L84,30 L90,30 Z"/>
+              <path d="M10,90 L10,70 L16,70 L16,84 L30,84 L30,90 Z"/>
+              <path d="M90,90 L70,90 L70,84 L84,84 L84,70 L90,70 Z"/>
+              <text x="50" y="58" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="currentColor">OCR</text>
+            </svg>
           </button>
           }
         </div>
@@ -1894,10 +1911,27 @@
   styleClass="ocr-scan-dialog" [showHeader]="false" (onHide)="stopOcrCamera()">
   <div class="ocr-container">
 
+    <!-- Close -->
     <button type="button" class="ocr-close-btn" (click)="closeOcrDialog()">
       <i class="pi pi-times"></i>
     </button>
 
+    <!-- Header -->
+    <div class="ocr-header">
+      <div class="ocr-icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 100 100" fill="currentColor">
+          <path d="M10,10 L10,30 L16,30 L16,16 L30,16 L30,10 Z"/>
+          <path d="M90,10 L70,10 L70,16 L84,16 L84,30 L90,30 Z"/>
+          <path d="M10,90 L10,70 L16,70 L16,84 L30,84 L30,90 Z"/>
+          <path d="M90,90 L70,90 L70,84 L84,84 L84,70 L90,70 Z"/>
+          <text x="50" y="58" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="700">OCR</text>
+        </svg>
+      </div>
+    </div>
+
+    <hr class="ocr-divider" />
+
+    <!-- Camera frame -->
     <div class="ocr-frame-wrapper">
       <video #ocrVideo autoplay playsinline
         [style.display]="ocrIsCameraOn && !ocrCapturedImage ? 'block' : 'none'"
@@ -1916,6 +1950,7 @@
       <div class="ocr-card-guide"></div>
     </div>
 
+    <!-- Capture / Loader / Retake -->
     <div class="ocr-actions">
       @if (!ocrCapturedImage) {
         <button type="button" class="ocr-capture-btn" (click)="captureOcrPhoto()" [disabled]="!ocrIsCameraOn">
@@ -1924,15 +1959,9 @@
       } @else if (ocrProcessing) {
         <div class="ocr-loader">
           <div class="loader">
-            <div class="pacman">
-              <div class="top"></div>
-              <div class="bottom"></div>
-            </div>
+            <div class="pacman"><div class="top"></div><div class="bottom"></div></div>
             <div class="dots">
-              <div class="dot"></div>
-              <div class="dot"></div>
-              <div class="dot"></div>
-              <div class="dot"></div>
+              <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
             </div>
           </div>
         </div>
