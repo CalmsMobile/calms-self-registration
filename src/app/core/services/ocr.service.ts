@@ -64,7 +64,8 @@ Schema:
   "document_number": string | null,
   "date_of_birth": string | null,
 "company_name" : string |null,
-  "email": string| null;
+  "email": string | null,
+  "phone_number": string | null,
   "gender": string | null,
   "address": {
     "full": string | null,
@@ -84,6 +85,7 @@ Rules:
 - Extract full_name exactly as printed
 - Return gender in English
 - in id number remove space or other special characters
+- For phone_number: include country code if visible; remove spaces and dashes (e.g. +60123456789)
 - Infer document_type (e.g. "Passport", "Driving License", "National ID")`;
 
     const payload = {

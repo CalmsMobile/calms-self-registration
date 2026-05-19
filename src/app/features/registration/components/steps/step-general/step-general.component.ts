@@ -4270,7 +4270,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const branchId = this.wizardService.currentBranchID;
     const nric = ocr.id_number || ocr.document_number || null;
     const email = ocr.email || null;
-    const phone = ocr.phone || null;
+    const phone = ocr.phone_number || null;
 
     let apiVisitor: any = null;
     let matchedBy: string | null = null;
@@ -4348,7 +4348,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     set('fullName', ocr.full_name);
     set('visitor_id', ocr.id_number || ocr.document_number);
     set('email', ocr.email);
-    set('phone', ocr.phone);
+    set('phone', ocr.phone_number);
     set('visitor_company', ocr.company);
 
     // Gender: map text to form value "0"=Female "1"=Male "2"=Others
