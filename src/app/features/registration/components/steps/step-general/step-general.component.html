@@ -1931,6 +1931,10 @@
 
     <hr class="ocr-divider" />
 
+    <!-- Title and Description -->
+    <h2 class="ocr-title">{{ 'registration_page_smart_ocr_scanner_title' | translate }}</h2>
+    <p class="ocr-description">{{ 'registration_page_smart_ocr_scanner_description' | translate }}</p>
+
     <!-- Camera frame -->
     <div class="ocr-frame-wrapper">
       <video #ocrVideo autoplay playsinline
@@ -1970,6 +1974,9 @@
           <i class="pi pi-refresh"></i>
         </button>
       }
+      <button type="button" class="ocr-scanner-btn">
+        {{ 'registration_page_smart_ocr_scanner_button' | translate }}
+      </button>
     </div>
 
     <canvas #ocrCanvas style="display:none"></canvas>
