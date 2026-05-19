@@ -80,6 +80,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   ocrCameraStream: MediaStream | null = null;
   ocrFacingMode: 'user' | 'environment' = 'environment';
   ocrProcessing = false;
+  ocrNoDataFound = false;
 
   hosts: any[] = [];
   departmentList: any[] = [];
@@ -4258,7 +4259,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.applyOcrToForm(ocr, {});
       }
 
-      this.closeOcrDialog();
+      if (!this.ocrNoDataFound) {
+        this.closeOcrDialog();
+      }
     } catch (err) {
       console.error('[OCR] Extraction failed:', err);
     } finally {
@@ -4368,10 +4371,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (Object.keys(patch).length) {
       console.log('[OCR] Patching form fields:', patch);
       this.generalForm.patchValue(patch);
+      this.ocrNoDataFound = false;
+    } else {
+      this.ocrNoDataFound = true;
     }
   }
 
   retakeOcrPhoto(): void {
+    this.ocrNoDataFound = false;
     this.ocrCapturedImage = null;
     setTimeout(() => this.startOcrCamera(), 100);
   }

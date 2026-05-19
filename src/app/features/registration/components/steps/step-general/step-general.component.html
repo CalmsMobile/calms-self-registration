@@ -1966,9 +1966,7 @@
 
     <!-- DESCRIPTION -->
     <p class="ocr-description">
-      Quickly scan and extract text from documents with our AI-powered OCR scanner.
-      Simply align your document within the frame and capture the image for fast,
-      accurate, and secure text recognition.
+      {{ 'registration_page_smart_ocr_scanner_description_' | translate }}
     </p>
 
     <!-- CAMERA -->
@@ -2000,16 +1998,17 @@
     </div>
 
     <!-- INFO -->
+    @if (ocrNoDataFound) {
     <div class="ocr-info-alert">
 
       <i class="pi pi-exclamation-triangle"></i>
 
       <span>
-        automatically detect and extract text from images, PDFs,
-        and scanned documents. Supports multiple languages and formats.
+        {{ 'registration_page_smart_ocr_scanner_no_data_alert' | translate }}
       </span>
 
     </div>
+    }
 
     <!-- ACTION -->
     <div class="ocr-actions">
@@ -2024,7 +2023,7 @@
 
           <i class="pi pi-camera"></i>
 
-          <span>Capture</span>
+          <span>{{ 'registration_page_smart_ocr_scanner_button' | translate }}</span>
 
         </button>
 
@@ -2057,9 +2056,9 @@
           class="ocr-capture-btn"
           (click)="retakeOcrPhoto()">
 
-          <i class="pi pi-refresh"></i>
+          <i class="pi pi-camera"></i>
 
-          <span>Retake</span>
+          <span>{{ 'registration_page_smart_ocr_scanner_button' | translate }}</span>
 
         </button>
 
