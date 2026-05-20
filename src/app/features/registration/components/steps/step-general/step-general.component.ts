@@ -4169,6 +4169,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Use back camera on mobile, front on desktop
     this.ocrFacingMode = window.innerWidth <= 768 ? 'environment' : 'user';
     this.showOcrDialog = true;
+    this.ocrNoDataFound = false;
     setTimeout(() => this.startOcrCamera(), 300);
   }
 
