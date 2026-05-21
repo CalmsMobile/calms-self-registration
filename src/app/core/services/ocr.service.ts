@@ -6,30 +6,17 @@ import { environment } from '../../../environments/environment';
 export interface OcrResult {
   rawText: string;
   structuredData: {
-    document_type: string | null;
-    country: string | null;
     full_name: string | null;
-    first_name: string | null;
-    last_name: string | null;
     id_number: string | null;
     document_number: string | null;
-    date_of_birth: string | null;
-    age: number | null;
+    company_name: string | null;
+    email: string | null;
+    phone_number: string | null;
     gender: string | null;
-    nationality: string | null;
+    country: string | null;
     address: {
       full: string | null;
-      line1: string | null;
-      line2: string | null;
-      city: string | null;
-      state: string | null;
-      postal_code: string | null;
-      country: string | null;
     };
-    issue_date: string | null;
-    expiry_date: string | null;
-    issuing_authority: string | null;
-    has_photo: boolean;
   } | null;
   tokenUsage?: { prompt: number; completion: number; total: number };
   processingTimeMs?: number;
@@ -60,22 +47,16 @@ Return ONLY valid JSON. No explanation. No markdown.
 Schema:
 {
   "full_name": string | null,
-  "id_number": string | null,
-  "document_number": string | null,
-  "date_of_birth": string | null,
-"company_name" : string |null,
+  "id_number": string | null,   // national ID, passport number, document number, IC — whichever is visible
+  "company_name" : string |null,
   "email": string | null,
   "phone_number": string | null,
   "gender": string | null,
   "address": {
     "full": string | null,
-    "line1": string | null,
-    "line2": string | null,
-    "city": string | null,
-    "state": string | null,
-    "postal_code": string | null,
-    "country": string | null
+   
   },
+   "country": string | null 
 
 }
 
@@ -84,8 +65,6 @@ Rules:
 - Do not hallucinate missing values — return null if not found
 - Extract full_name exactly as printed
 - Return gender in English
-- in id number remove space or other special characters
-- For phone_number: find and include country code; remove spaces and dashes (e.g. +60123456789)
 - Infer document_type (e.g. "Passport", "Driving License", "National ID", "Business Card)`;
 
     const payload = {
