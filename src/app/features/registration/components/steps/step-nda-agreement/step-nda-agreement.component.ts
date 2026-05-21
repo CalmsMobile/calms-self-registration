@@ -98,7 +98,30 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   getNdaHtml(): SafeHtml {
     const settings = this.wizardService.getSettings();
     if (settings?.NdaTemplate) {
-      return this.sanitizer.bypassSecurityTrustHtml(settings.NdaTemplate);
+      const general = this.wizardService.getFormData('general') || {};
+      // In multiple-visitor mode the primary visitor is in savedVisitors[0]
+      const primary = general.savedVisitors?.[0] || general.visitors?.[0] || general;
+      const val = (v: any) => (v != null && v !== '') ? String(v).trim() || 'N/A' : 'N/A';
+      // Build full name with optional title prefix
+      const titleEnabled = settings?.TitleEnabled;
+      const title = primary.title?.toString().replace(/\.+$/, '').trim();
+      const rawName = primary.fullName || general.fullName || '';
+      const fullName = titleEnabled && title ? `${title}.${rawName}` : rawName;
+      // Company may be an autocomplete object or a plain string
+      const companyRaw = primary.visitor_company ?? general.visitor_company;
+      const company = typeof companyRaw === 'object' && companyRaw !== null
+        ? (companyRaw.visitor_comp_name || '')
+        : (companyRaw || '');
+      const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const html = settings.NdaTemplate
+        .replace(/#VisitorName#/g, val(fullName))
+        .replace(/#NRIC#/g, val(primary.visitor_id ?? general.visitor_id))
+        .replace(/#Email#/g, val(primary.email ?? general.email))
+        .replace(/#ContactNo#/g, val(primary.phone ?? general.phone))
+        .replace(/#VisitorCompany#/g, val(company))
+        .replace(/#CurrentDate#/g, today)
+        .replace(/#VisitorSignature#/g, '');
+      return this.sanitizer.bypassSecurityTrustHtml(html);
     }
     return '';
   }

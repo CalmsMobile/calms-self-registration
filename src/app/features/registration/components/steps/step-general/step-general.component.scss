@@ -3731,7 +3731,8 @@ s
   position: absolute;
 
   width: 82%;
-  height: 72%;
+  aspect-ratio: 85.6 / 54; /* ISO ID-1: national ID / driving licence / credit card */
+  max-height: 86%;
 
   border: 4px dashed #ff2359;
   border-radius: 18px;
@@ -3852,7 +3853,8 @@ s
 
   .ocr-card-guide {
     width: 84%;
-    height: 70%;
+    aspect-ratio: 85.6 / 54;
+    max-height: 86%;
   }
 
   .ocr-placeholder {
@@ -3924,7 +3926,8 @@ s
 
   .ocr-card-guide {
     width: 86%;
-    height: 68%;
+    aspect-ratio: 85.6 / 54;
+    max-height: 86%;
     border-width: 3px;
   }
 
