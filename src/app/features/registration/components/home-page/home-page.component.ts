@@ -927,10 +927,10 @@ export class HomePageComponent implements AfterViewChecked {
             this.wizardService.pageTitle = this.initializePageSettings.SRWelcomeTitle;
           }
 
-          this.branchTranslation = {
+          /* this.branchTranslation = {
             caption: this.initializePageSettings.branchSelectionCaption || 'Branch',
             placeholder: this.initializePageSettings.branchSelectionPlaceHolder || 'Select Branch'
-          };
+          }; */
 
           if (this.initializePageSettings.OrgLogo) {
             this.logo = this.initializePageSettings.OrgLogo;

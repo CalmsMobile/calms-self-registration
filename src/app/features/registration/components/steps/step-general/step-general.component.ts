@@ -80,6 +80,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   ocrCameraStream: MediaStream | null = null;
   ocrFacingMode: 'user' | 'environment' = 'environment';
   ocrProcessing = false;
+  ocrNoDataFound = false;
 
   hosts: any[] = [];
   departmentList: any[] = [];
@@ -4168,6 +4169,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Use back camera on mobile, front on desktop
     this.ocrFacingMode = window.innerWidth <= 768 ? 'environment' : 'user';
     this.showOcrDialog = true;
+    this.ocrNoDataFound = false;
     setTimeout(() => this.startOcrCamera(), 300);
   }
 
@@ -4258,7 +4260,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.applyOcrToForm(ocr, {});
       }
 
-      this.closeOcrDialog();
+      if (!this.ocrNoDataFound) {
+        this.closeOcrDialog();
+      }
     } catch (err) {
       console.error('[OCR] Extraction failed:', err);
     } finally {
@@ -4270,7 +4274,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const branchId = this.wizardService.currentBranchID;
     const nric = ocr.id_number || ocr.document_number || null;
     const email = ocr.email || null;
-    const phone = ocr.phone || null;
+    const phone = ocr.phone_number || null;
 
     let apiVisitor: any = null;
     let matchedBy: string | null = null;
@@ -4348,7 +4352,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     set('fullName', ocr.full_name);
     set('visitor_id', ocr.id_number || ocr.document_number);
     set('email', ocr.email);
-    set('phone', ocr.phone);
+    set('phone', ocr.phone_number);
     set('visitor_company', ocr.company);
 
     // Gender: map text to form value "0"=Female "1"=Male "2"=Others
@@ -4368,10 +4372,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (Object.keys(patch).length) {
       console.log('[OCR] Patching form fields:', patch);
       this.generalForm.patchValue(patch);
+      this.ocrNoDataFound = false;
+    } else {
+      this.ocrNoDataFound = true;
     }
   }
 
   retakeOcrPhoto(): void {
+    this.ocrNoDataFound = false;
     this.ocrCapturedImage = null;
     setTimeout(() => this.startOcrCamera(), 100);
   }

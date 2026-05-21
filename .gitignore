@@ -30,3 +30,5 @@ NOTIFICATION_SYSTEM_GUIDE.md
 README_NOTIFICATIONS.md
 VERIFICATION_CHECKLIST.md
 VISUAL_MOCKUPS.md
+src/environments/environment.prod.ts
+src/environments/environment.ts
