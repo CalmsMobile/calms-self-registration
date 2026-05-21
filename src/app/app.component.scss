@@ -1,13 +1,20 @@
 .app-container {
-  display: flex;
+  position: relative;
+  /* display: flex;
   flex-direction: column;
   min-height: 100vh;
   gap: 12px;
   background-image: url('/assets/bg-abstract.jpg');
+
+  &.no-bg {
+    background-image: none;
+    background: none;
+    gap: 0;
+  }
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
-  background-attachment: fixed;
+  background-attachment: fixed; */
 
   @media (max-width: 1024px) {
     background-attachment: scroll; // Better performance on tablets
@@ -18,7 +25,7 @@
   }
 
   @media (max-width: 600px) {
-    background-image: url('/assets/mobile-background.jpg');
+    background-image: url('../assets/mobile-background.jpg');
     background-attachment: scroll;
     gap: 6px;
   }
@@ -63,12 +70,18 @@
     }
   }
 
-  .app-content {
+  /* .app-content {
     flex: 1;
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;
     padding: 0 16px;
+
+    &.full-width {
+      max-width: none;
+      padding: 0;
+      margin: 0;
+    }
 
     @media (max-width: 768px) {
       padding: 0 12px;
@@ -82,21 +95,26 @@
       padding: 0 4px;
     }
   }
-}
+ */
+  // Home page override — full viewport, no background/gap
+  &.on-home {
+    gap: 0;
+    background: none;
+    background-image: none;
+    padding: 0;
+    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
 
-.global-language-icon {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 1000;
-
-  @media (max-width: 600px) {
-    top: 40px;
-    right: 30px;
-  }
-
-  @media (max-width: 480px) {
-    top: 40px;
-    right: 30px;
+    .app-content {
+      flex: 1;
+      max-width: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
   }
 }

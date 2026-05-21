@@ -1,18 +1,140 @@
 :root {
-  --font-family: 'Inter', sans-serif;
+  color-scheme: light only;
+  --font-family: 'Poppins', sans-serif;
   --theme-bg-color: #D9D9D9;
   --theme-bg-light-color: #f2f2f2;
   --theme-bg-dark-color: #b1b0b0;
-  --theme-primary-text-color: #0D0D0D;
+  --theme-primary-text-color: #4d525c;
   --theme-secondary-text-color: #373737;
-  --theme-primary-green-color: #03a781;
-  ;
-  --theme-green-light-color: #53A67F;
-  --theme-green-color: #027158;
-  ;
+  --theme-primary-yellow: #f5b942;
+  --theme-primary-yellow-rgb: 245, 185, 66; /* RGB version for rgba() usage */
+  --theme-primary-fg-color: #000000; /* Default fg for primary buttons; overridden by ColorFg */
+  --theme-primary-green-color: var(--theme-primary-yellow);
   --theme-error-color: #e80505;
-  --theme-border-radius: 16px;
+  --theme-border-radius: 20px;
   --theme-glossy-white: rgba(255, 255, 255, 0.85);
+
+  /* Dynamic background image (set by ThemeService from BgImage / BgImageOpacity) */
+  --app-bg-image: none;
+  --app-bg-opacity: 0;
+
+  /* PrimeNG aura/material common overrides */
+  --p-primary-color: #f5b942;
+  --p-primary-contrast-color: #000000;
+  --p-primary-hover-color: #e5ab3b;
+  --p-primary-active-color: #d69d2e;
+
+  /* Force all primary shades to avoid any green fallback */
+  --p-primary-50: #fffbeb;
+  --p-primary-100: #fef3c7;
+  --p-primary-200: #fde68a;
+  --p-primary-300: #fcd34d;
+  --p-primary-400: #fbbf24;
+  --p-primary-500: #f5b942;
+  --p-primary-600: #d97706;
+  --p-primary-700: #b45309;
+  --p-primary-800: #92400e;
+  --p-primary-900: #78350f;
+
+  /* Form controls highlights */
+  --p-inputtext-focus-border-color: #f5b942;
+  --p-select-focus-border-color: #f5b942 !important;
+  --p-datepicker-focus-border-color: #f5b942;
+  --p-checkbox-checked-background: #f5b942;
+  --p-checkbox-checked-border-color: #f5b942;
+  --p-radiobutton-checked-background: #f5b942;
+  --p-radiobutton-checked-border-color: #f5b942;
+
+  /* Selection colors */
+  --p-list-option-selected-background: #fde68a !important;
+  --p-list-option-selected-focus-background: #fde68a !important;
+  --p-list-option-selected-color: #000;
+  --p-highlight-background: #fde68a !important;
+  --p-highlight-color: #000 !important;
+}
+
+/* Global Progress Bar Overrides */
+::ng-deep {
+  .p-progressbar {
+    background: #f1f5f9 !important; // Track color
+
+    // For indeterminate mode
+    .p-progressbar-value {
+      background: #eab308 !important; // Animated bar color
+    }
+  }
+}
+
+
+/* Global dropdown overlay style */
+.p-select-overlay,
+.p-multiselect-overlay,
+.p-autocomplete-overlay {
+  border-radius: 14px !important;
+  border: 2px solid #ececec !important;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.1) !important;
+  padding: 6px 0 !important;
+  margin-top: 6px !important;
+
+  .p-select-list-container,
+  .p-multiselect-list-container,
+  .p-autocomplete-list-container {
+    border-radius: 14px;
+  }
+}
+
+// Global PrimeNG overrides for focus rings and highlights
+::ng-deep {
+
+  .p-focus,
+  .p-inputwrapper-focus,
+  .p-focus-within {
+    box-shadow: 0 0 0 0.15rem rgba(245, 185, 66, 0.3) !important;
+    border-color: #f5b942 !important;
+  }
+
+  .p-select-open {
+    border-color: #f5b942 !important;
+  }
+
+  /* Force background of selected items to yellow */
+  .p-select-option-selected,
+  .p-multiselect-option-selected,
+  .p-listbox-option-selected {
+    background: #fde68a !important;
+    color: #000 !important;
+  }
+
+  /* Ensure no teal/green on hover */
+  .p-select-option:hover,
+  .p-multiselect-option:hover {
+    background: #fffbeb !important;
+  }
+}
+
+.p-button:not(.p-dialog-close-button):not(.p-panel-header-icon):not(.back-btn):not(.next-btn):not(.p-datepicker-trigger):not(.p-datepicker-button) {
+  border-radius: var(--theme-border-radius) !important;
+  background-color: var(--theme-primary-yellow) !important;
+  border-color: var(--theme-primary-yellow) !important;
+  color: var(--theme-primary-fg-color) !important;
+
+  &:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+  }
+}
+
+/* Dynamic background image overlay — applied to .app-bg-overlay elements */
+.app-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: var(--app-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: var(--app-bg-opacity);
+  pointer-events: none;
+  z-index: 0;
 }
 
 body {
@@ -21,53 +143,24 @@ body {
   color: var(--theme-primary-text-color);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color-scheme: light !important;
-  }
-}
-
-/***   Header   ***/
 .app-container {
   background-color: var(--theme-bg-color);
 }
 
-.p-button:not(.p-dialog-close-button):not(.p-panel-header-icon) {
-  border-radius: var(--theme-border-radius) !important;
-  background-color: var(--theme-primary-green-color) !important;
-  // border-color: var(--theme-bg-dark-color) !important;
-  color: var(--theme-bg-light-color) !important;
-
-  &:disabled {
-    color: var(--theme-bg-color) !important;
-    cursor: not-allowed !important;
-  }
-}
-
-.p-steps-item-number {
-  background-color: var(--theme-bg-color) !important;
-  color: var(--theme-primary-text-color) !important;
-  border-radius: var(--theme-border-radius) !important;
-}
-
-.p-steps-item-label {
-  color: var(--theme-secondary-text-color) !important;
-}
-
 .p-steps-item-active {
   .p-steps-item-label {
-    color: var(--theme-primary-green-color) !important;
+    color: var(--theme-primary-yellow) !important;
   }
 
   .p-steps-item-number {
-    color: var(--theme-bg-light-color) !important;
-    border-color: var(--theme-primary-green-color) !important;
-    background-color: var(--theme-primary-green-color) !important;
+    color: #000 !important;
+    border-color: var(--theme-primary-yellow) !important;
+    background-color: var(--theme-primary-yellow) !important;
   }
 }
 
 .step-container {
-  max-width: 1200px;
+  max-width: 1250px;
   margin: 0 auto;
   padding: 1rem;
   height: 100%;
@@ -85,18 +178,181 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
-  border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 @media (max-width: 768px) {
   .step-container {
-    padding: 0.5rem;
+    padding: 0;
+    border-radius: 0;
   }
 
   .step-content {
     padding: 1rem;
+    border-radius: 0;
   }
 }
+/* ── Toast responsive overrides ── */
+.p-toast {
+  max-width: calc(100vw - 2rem) !important;
+  width: auto !important;
+}
+
+.p-toast-message {
+  font-size: 0.85rem !important;
+}
+
+.p-toast-message-content {
+  padding: 0.6rem 0.75rem !important;
+  gap: 0.5rem !important;
+  align-items: center !important;
+}
+
+.p-toast-summary {
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+.p-toast-detail {
+  font-size: 0.8rem !important;
+  margin-top: 0.15rem !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+/* Style for messages without summary (title) - for better alignment and spacing */
+.p-toast-message:has(:not(.p-toast-summary)) .p-toast-detail,
+.app-toast-dense .p-toast-detail {
+  font-size: 0.85rem !important;
+  margin: 0 !important;
+  padding: 0.2rem 0 !important;
+  line-height: 1.5 !important;
+}
+
+/* Ensure proper vertical centering when only detail is present */
+.p-toast-message:has(:not(.p-toast-summary)) .p-toast-message-content {
+  padding: 0.5rem 0.75rem !important;
+  min-height: 2rem !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+@media (max-width: 960px) {
+  .p-toast {
+    width: calc(100vw - 2rem) !important;
+    left: 1rem !important;
+    right: 1rem !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .p-toast {
+    width: calc(100vw - 1rem) !important;
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+    top: 0.5rem !important;
+    transform: none !important;
+  }
+
+  .p-toast-message {
+    font-size: 0.8rem !important;
+    border-radius: 8px !important;
+  }
+
+  .p-toast-message-content {
+    padding: 0.5rem 0.6rem !important;
+    min-height: 2rem !important;
+  }
+
+  .p-toast-summary {
+    font-size: 0.8rem !important;
+  }
+
+  .p-toast-detail {
+    font-size: 0.75rem !important;
+    line-height: 1.4 !important;
+  }
+
+  .app-toast-dense .p-toast-detail {
+    font-size: 0.8rem !important;
+  }
+
+  .p-toast-icon-close {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+  }
+}
+
+
+/* ===== COMMON: Page header title ===== */
+.page-header h1,
+.page-header .header-title {
+  font-size: 26px;
+}
+
+@media print {
+  .action-buttons,
+  .action-btn,
+  .pending-btn,
+  .error-btn {
+    display: none !important;
+  }
+}
+
+// ─── Dynamic Font Faces ───────────────────────────────────────────────────────
+
+@font-face { font-family: "Acme-Regular"; src: url("assets/fonts/Acme/Acme-Regular.ttf"); }
+@font-face { font-family: "Alegreya_Sans-Regular"; src: url("assets/fonts/Alegreya_Sans/AlegreyaSans-Regular.ttf"); }
+@font-face { font-family: "AnekDevanagari-Regular"; src: url("assets/fonts/Anek_Devanagari/static/AnekDevanagari-Regular.ttf"); }
+@font-face { font-family: "Archivo-Regular"; src: url("assets/fonts/Archivo/static/Archivo-Regular.ttf"); }
+@font-face { font-family: "Anta-Regular"; src: url("assets/fonts/Anta/Anta-Regular.ttf"); }
+@font-face { font-family: "BeVietnamPro-Regular"; src: url("assets/fonts/Be_Vietnam_Pro/BeVietnamPro-Regular.ttf"); }
+@font-face { font-family: "BreeSerif-Regular"; src: url("assets/fonts/Bree_Serif/BreeSerif-Regular.ttf"); }
+@font-face { font-family: "Cantarell-Regular"; src: url("assets/fonts/Cantarell/Cantarell-Regular.ttf"); }
+@font-face { font-family: "Catamaran-Regular"; src: url("assets/fonts/Catamaran/static/Catamaran-Regular.ttf"); }
+@font-face { font-family: "Comfortaa-Regular"; src: url("assets/fonts/Comfortaa/static/Comfortaa-Regular.ttf"); }
+@font-face { font-family: "ConcertOne-Regular"; src: url("assets/fonts/Concert_One/ConcertOne-Regular.ttf"); }
+@font-face { font-family: "DidactGothic-Regular"; src: url("assets/fonts/Didact_Gothic/DidactGothic-Regular.ttf"); }
+@font-face { font-family: "DMSans-Regular"; src: url("assets/fonts/DM_Sans/static/DMSans-Regular.ttf"); }
+@font-face { font-family: "Domine-Regular"; src: url("assets/fonts/Domine/static/Domine-Regular.ttf"); }
+@font-face { font-family: "Dosis-Regular"; src: url("assets/fonts/Dosis/static/Dosis-Regular.ttf"); }
+@font-face { font-family: "GothamBook-Regular"; src: url("assets/fonts/Gotham/GothamBook.ttf"); }
+@font-face { font-family: "HindMadurai-Regular"; src: url("assets/fonts/Hind_Madurai/HindMadurai-Regular.ttf"); }
+@font-face { font-family: "JosefinSans-Regular"; src: url("assets/fonts/Josefin_Sans/static/JosefinSans-Regular.ttf"); }
+@font-face { font-family: "Jost-Regular"; src: url("assets/fonts/Jost/static/Jost-Regular.ttf"); }
+@font-face { font-family: "Karla-Regular"; src: url("assets/fonts/Karla/static/Karla-Regular.ttf"); }
+@font-face { font-family: "Lato-Regular"; src: url("assets/fonts/Lato/Lato-Regular.ttf"); }
+@font-face { font-family: "Lexend-Regular"; src: url("assets/fonts/Lexend/static/Lexend-Regular.ttf"); }
+@font-face { font-family: "LexendDeca-Regular"; src: url("assets/fonts/Lexend_Deca/static/LexendDeca-Regular.ttf"); }
+@font-face { font-family: "Lora-Regular"; src: url("assets/fonts/Lora/static/Lora-Regular.ttf"); }
+@font-face { font-family: "Manrope-Regular"; src: url("assets/fonts/Manrope/Manrope-Regular.ttf"); }
+@font-face { font-family: "Montserrat-Regular"; src: url("assets/fonts/Montserrat/static/Montserrat-Regular.ttf"); }
+@font-face { font-family: "Mulish-Regular"; src: url("assets/fonts/Mulish/static/Mulish-Regular.ttf"); }
+@font-face { font-family: "NanumGothic-Regular"; src: url("assets/fonts/Nanum_Gothic/NanumGothic-Regular.ttf"); }
+@font-face { font-family: "NunitoSans_10pt_Condensed-Regular"; src: url("assets/fonts/Nunito_Sans/static/NunitoSans_10pt_Condensed-Regular.ttf"); }
+@font-face { font-family: "OpenSans-Regular"; src: url("assets/fonts/Open_Sans/static/OpenSans-Regular.ttf"); }
+@font-face { font-family: "Poppins-Regular"; src: url("assets/fonts/Poppins/Poppins-Regular.ttf"); }
+@font-face { font-family: "PTSans-Regular"; src: url("assets/fonts/PT_Sans/PTSans-Regular.ttf"); }
+@font-face { font-family: "PTSansCaption-Regular"; src: url("assets/fonts/PT_Sans_Caption/PTSansCaption-Regular.ttf"); }
+@font-face { font-family: "Quicksand-Regular"; src: url("assets/fonts/Quicksand/static/Quicksand-Regular.ttf"); }
+@font-face { font-family: "Raleway-Regular"; src: url("assets/fonts/Raleway/static/Raleway-Regular.ttf"); }
+@font-face { font-family: "RobotoCondensed-Regular"; src: url("assets/fonts/Roboto_Condensed/static/RobotoCondensed-Regular.ttf"); }
+@font-face { font-family: "Rubik-Regular"; src: url("assets/fonts/Rubik/static/Rubik-Regular.ttf"); }
+@font-face { font-family: "SF-Pro-Display-Regular"; src: url("assets/fonts/San-Francisco/SF-Pro-Display-Regular.otf"); }
+@font-face { font-family: "Signika-Regular"; src: url("assets/fonts/Signika/static/Signika-Regular.ttf"); }
+@font-face { font-family: "SourceSerif4-Regular"; src: url("assets/fonts/Source_Serif_4/static/SourceSerif4-Regular.ttf"); }
+@font-face { font-family: "Spectral-Regular"; src: url("assets/fonts/Spectral/Spectral-Regular.ttf"); }
+@font-face { font-family: "TitilliumWeb-Regular"; src: url("assets/fonts/Titillium_Web/TitilliumWeb-Regular.ttf"); }
+@font-face { font-family: "Ubuntu-Regular"; src: url("assets/fonts/Ubuntu/Ubuntu-Regular.ttf"); }
+@font-face { font-family: "Vollkorn-Regular"; src: url("assets/fonts/Vollkorn/static/Vollkorn-Regular.ttf"); }
+
+// Weight variants
+@font-face { font-family: "Poppins-Light"; src: url("assets/fonts/Poppins/Poppins-Light.ttf"); }
+@font-face { font-family: "Poppins-ExtraLight"; src: url("assets/fonts/Poppins/Poppins-ExtraLight.ttf"); }
+@font-face { font-family: "Poppins-Medium"; src: url("assets/fonts/Poppins/Poppins-Medium.ttf"); }
+@font-face { font-family: "Manrope-Light"; src: url("assets/fonts/Manrope/Manrope-Light.ttf"); }
+@font-face { font-family: "Manrope-ExtraLight"; src: url("assets/fonts/Manrope/Manrope-ExtraLight.ttf"); }
+@font-face { font-family: "Manrope-Medium"; src: url("assets/fonts/Manrope/Manrope-Medium.ttf"); }
+@font-face { font-family: "GothamBook"; font-style: normal; font-weight: normal; src: url("assets/fonts/Gotham/GothamBook.woff2"); }

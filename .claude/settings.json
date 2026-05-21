@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/mymac/Documents/Office/calms-self-registration config user.name:*)",
+      "Bash(git -C /Users/mymac/Documents/Office/calms-self-registration config user.email)",
+      "Bash(git -C /Users/mymac/Documents/Office/calms-self-registration remote -v)",
+      "Bash(git config:*)",
+      "Bash(git -C /Users/mymac/Documents/Office/calms-self-registration config:*)",
+      "Bash(gh api:*)",
+      "Bash(git -C /Users/mymac/Documents/Office/calms-self-registration status)",
+      "Bash(git -C /Users/mymac/Documents/Office/calms-self-registration branch -a)",
+      "Bash(git -C /Users/mymac/Documents/Office/calms-self-registration log main..Aravind --oneline)",
+      "Bash(git -C /Users/mymac/Documents/Office/calms-self-registration diff main..Aravind --stat)",
+      "Bash(git -C /Users/mymac/Documents/Office/calms-self-registration push origin Aravind)",
+      "Read(//Users/mymac/Downloads/calms-self-registration/**)",
+      "Read(//Users/mymac/Downloads/**)",
+      "Bash(grep:*)",
+      "Read(//tmp/**)"
+    ]
+  }
+}

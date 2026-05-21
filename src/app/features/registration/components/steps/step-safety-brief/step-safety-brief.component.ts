@@ -1,19 +1,23 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, HostListener } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnInit, OnDestroy, HostListener, NgZone } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { WizardService } from '../../../../../core/services/wizard.service';
-
-import { MessageService } from 'primeng/api';
+import { LabelService } from '../../../../../core/services/label.service';
+import { MessageHelperService } from '../../../../../core/services/message-helper.service';
+import { SharedService } from '../../../../../shared/shared.service';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
+import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { environment } from '../../../../../../environments/environment';
 
 @Component({
   selector: 'app-step-safety-brief',
   templateUrl: './step-safety-brief.component.html',
   styleUrls: ['./step-safety-brief.component.scss'],
-  imports: [ButtonModule, ToastModule, TranslatePipe]
+  imports: [ButtonModule, ToastModule, TranslatePipe, LanguageSelectorComponent]
 })
-export class StepSafetyBriefComponent implements AfterViewInit {
+export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('safetyVideo') videoElement!: ElementRef<HTMLVideoElement>;
   @ViewChild('videoContainer') videoContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('playButton') playButton!: ElementRef<HTMLButtonElement>;
@@ -23,15 +27,37 @@ export class StepSafetyBriefComponent implements AfterViewInit {
   showPlayButton = true;
   isFullscreen = false;
   videoSource = '';
+  isReplaying = false; // Track if user is replaying video
+  isPausedMidVideo = false; // Track if video was paused due to visibility/focus loss
+  videoDuration = 0;       // total duration in seconds (loaded from metadata)
+  currentTime = 0;         // current playback position in seconds
+  logo = 'assets/logo.png';
+  companyTitle = '';
+
+  private destroy$ = new Subject<void>();
+  private _activeMessageKeys = new Set<string>();
+
+  get formattedPageTitle(): { first: string; rest: string } {
+    const text = this.labelService.getLabel('safety_briefing_video_page_title', 'caption') || this.wizardService.pageTitle;
+    const i = text.indexOf(' ');
+    return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
+  }
+
+  private bodyStyleObserver?: MutationObserver;
 
   constructor(
     private wizardService: WizardService,
-    private messageService: MessageService
+    private messageHelper: MessageHelperService,
+    private labelService: LabelService,
+    private sharedService: SharedService,
+    private ngZone: NgZone
   ) {
     // Subscribe to validation requests from wizard
-    this.wizardService.onValidationRequest.subscribe(() => {
+    this.wizardService.onValidationRequest.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.validateStep();
     });
+    this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
+    this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
   }
 
   ngOnInit() {
@@ -40,10 +66,10 @@ export class StepSafetyBriefComponent implements AfterViewInit {
       this.videoSource = environment.proURL + 'FS/' + videoSettings.VideoUrl;
     } else {
       //this.wizardService.gotoHomePage();
-      this.messageService.add({
+      this.showMessage({
         severity: 'warn',
-        summary: 'Warning',
-        detail: 'Safety briefing video is not available.'
+        summary: this.labelService.getLabel('safety_briefing_video_not_available_title', 'caption') || 'Warning',
+        detail: this.labelService.getLabel('safety_briefing_video_not_available_message', 'caption') || 'Safety briefing video is not available.'
       });
     }
 
@@ -54,11 +80,30 @@ export class StepSafetyBriefComponent implements AfterViewInit {
       this.showReplay = true;
       this.showPlayButton = false;
     }
+    
+    // Ensure scroll is enabled (clean up PrimeNG dialog artifacts from navigation)
+    this.forceEnableScroll();
+    
+    // Monitor body for PrimeNG's p-overflow-hidden class
+    this.startBodyStyleObserver();
+    
+    // Add window focus listener to re-enable scroll if user switches tabs/windows
+    window.addEventListener('focus', this.handleWindowFocus);
+    
+    // Pause video when tab is hidden (tab switch, minimize, OS switching)
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    // Pause video when another window covers the browser
+    window.addEventListener('blur', this.handleWindowBlur);
   }
 
   ngAfterViewInit(): void {
     this.setupVideo();
     this.setupFullscreenListener();
+    
+    // Additional scroll enable after view init (important for navigation back scenario)
+    setTimeout(() => {
+      this.forceEnableScroll();
+    }, 100);
   }
 
   setupVideo(): void {
@@ -69,15 +114,38 @@ export class StepSafetyBriefComponent implements AfterViewInit {
     video.setAttribute('webkit-playsinline', '');
     video.setAttribute('muted', ''); // Helps with autoplay on some browsers
 
+    video.addEventListener('loadedmetadata', () => {
+      this.videoDuration = video.duration || 0;
+    });
+
+    video.addEventListener('timeupdate', () => {
+      this.currentTime = video.currentTime || 0;
+    });
+
     video.addEventListener('ended', () => {
       this.handleVideoEnd();
     });
   }
 
   setupFullscreenListener(): void {
-    document.addEventListener('fullscreenchange', () => {
-      this.isFullscreen = !!document.fullscreenElement;
-    });
+    // Listen to multiple fullscreen change events for different browsers
+    const fullscreenChangeHandler = () => {
+      const isCurrentlyFullscreen = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+      this.isFullscreen = isCurrentlyFullscreen;
+      
+      // If exiting fullscreen, ensure scroll is enabled
+      if (!isCurrentlyFullscreen) {
+        console.log('Fullscreen exited - enabling scroll');
+        setTimeout(() => this.enableBodyScroll(), 0);
+        setTimeout(() => this.enableBodyScroll(), 100);
+        setTimeout(() => this.enableBodyScroll(), 300);
+      }
+    };
+    
+    document.addEventListener('fullscreenchange', fullscreenChangeHandler);
+    document.addEventListener('webkitfullscreenchange', fullscreenChangeHandler);
+    document.addEventListener('mozfullscreenchange', fullscreenChangeHandler);
+    document.addEventListener('MSFullscreenChange', fullscreenChangeHandler);
   }
 
   async startPlayback(): Promise<void> {
@@ -89,15 +157,17 @@ export class StepSafetyBriefComponent implements AfterViewInit {
       this.videoEnded = false;
       this.showReplay = false;
 
-      // Reset and prepare video
-      video.currentTime = 0;
+      // Only reset to beginning if starting fresh (not resuming after visibility/blur pause)
+      if (!this.isPausedMidVideo) {
+        video.currentTime = 0;
+      }
+      this.isPausedMidVideo = false;
 
       // Must be triggered by user gesture
       await video.play();
 
-      // Enter fullscreen
+      // Always enter fullscreen (first play or replay)
       await this.requestFullscreen(container);
-
       // Hide cursor after 3 seconds (for desktop)
       setTimeout(() => {
         container.style.cursor = 'none';
@@ -106,10 +176,10 @@ export class StepSafetyBriefComponent implements AfterViewInit {
     } catch (error) {
       console.error('Playback failed:', error);
       this.showPlayButton = true;
-      this.messageService.add({
+      this.showMessage({
         severity: 'error',
-        summary: 'Playback Error',
-        detail: 'Please click play to start the video'
+        summary: this.labelService.getLabel('safety_briefing_video_play_error_title', 'caption') || 'Playback Error',
+        detail: this.labelService.getLabel('safety_briefing_video_play_error_message', 'caption') || 'Please click play to start the video'
       });
     }
   }
@@ -128,9 +198,21 @@ export class StepSafetyBriefComponent implements AfterViewInit {
   }
 
   handleVideoEnd(): void {
+    console.log('Video ended - starting cleanup');
     this.videoEnded = true;
     this.showReplay = true;
+    this.isReplaying = false; // Reset replay flag
+    
+    // Ensure fullscreen is exited properly
     this.exitFullscreen();
+    
+    // Force enable body scroll
+    this.forceEnableScroll();
+    
+    // Reset video container cursor
+    if (this.videoContainer) {
+      this.videoContainer.nativeElement.style.cursor = 'default';
+    }
     
     // Save completion status immediately
     this.saveCompletionStatus();
@@ -152,22 +234,160 @@ export class StepSafetyBriefComponent implements AfterViewInit {
     this.wizardService.setStepValid(isValid);
 
     if (!isValid) {
-      this.messageService.add({
+      this.showMessage({
         severity: 'error',
-        summary: 'Safety Briefing Required',
-        detail: 'Please watch the complete safety briefing video to proceed'
+        summary: this.labelService.getLabel('safety_briefing_video_required', 'caption'),
+        detail: this.labelService.getLabel('safety_briefing_video_instruction', 'caption'),
+        life: 5000
       });
     }
   }
 
   exitFullscreen(): void {
-    if (!document.fullscreenElement) return;
+    console.log('Attempting to exit fullscreen');
+    
+    // Check multiple fullscreen APIs
+    const isFullscreen = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+    
+    if (!isFullscreen) {
+      this.isFullscreen = false;
+      this.enableBodyScroll();
+      return;
+    }
 
-    const container = this.videoContainer.nativeElement;
-    container.style.cursor = 'default';
+    const container = this.videoContainer?.nativeElement;
+    if (container) {
+      container.style.cursor = 'default';
+    }
 
-    document.exitFullscreen().catch(console.warn);
+    // Try multiple exit fullscreen methods
+    const exitPromise = document.exitFullscreen ? document.exitFullscreen() : 
+                        (document as any).webkitExitFullscreen ? (document as any).webkitExitFullscreen() : 
+                        Promise.resolve();
+
+    exitPromise
+      .then(() => {
+        console.log('Fullscreen exited successfully');
+        this.isFullscreen = false;
+        this.forceEnableScroll();
+      })
+      .catch((err: unknown) => {
+        console.warn('Error exiting fullscreen:', err);
+        this.isFullscreen = false;
+        this.forceEnableScroll();
+      });
+  }
+
+  /**
+   * Enable body scroll by removing any overflow restrictions
+   */
+  private enableBodyScroll(): void {
+    try {
+      // Re-enable scroll on body and html elements
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+      
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.position = '';
+      
+      // Remove scroll lock classes (including PrimeNG's p-overflow-hidden)
+      document.body.classList.remove('no-scroll', 'overflow-hidden', 'p-overflow-hidden');
+      document.documentElement.classList.remove('no-scroll', 'overflow-hidden', 'p-overflow-hidden');
+      
+      // Remove any leftover PrimeNG dialog mask overlays from previous navigation
+      document.querySelectorAll('.p-dialog-mask').forEach(mask => mask.remove());
+    } catch (error) {
+      console.error('Error enabling body scroll:', error);
+    }
+  }
+
+  /**
+   * Start monitoring body element for PrimeNG's p-overflow-hidden class
+   * PrimeNG modal dialog adds this class and may not clean it up on navigation
+   */
+  private startBodyStyleObserver(): void {
+    this.stopBodyStyleObserver();
+    
+    this.bodyStyleObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes') {
+          const target = mutation.target as HTMLElement;
+          
+          // Watch for PrimeNG's p-overflow-hidden class being added
+          if (mutation.attributeName === 'class' && target.classList.contains('p-overflow-hidden')) {
+            console.warn('Detected p-overflow-hidden on body - removing it');
+            target.classList.remove('p-overflow-hidden');
+          }
+          
+          // Watch for inline overflow:hidden
+          if (mutation.attributeName === 'style') {
+            if (target.style.overflow === 'hidden') {
+              target.style.overflow = '';
+            }
+          }
+        }
+      });
+    });
+    
+    this.bodyStyleObserver.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['style', 'class']
+    });
+  }
+  
+  /**
+   * Stop monitoring body/html element
+   */
+  private stopBodyStyleObserver(): void {
+    if (this.bodyStyleObserver) {
+      console.log('Stopping body style observer');
+      this.bodyStyleObserver.disconnect();
+      this.bodyStyleObserver = undefined;
+    }
+  }
+
+  /**
+   * Ensure scroll is enabled - called with a delay after video ends
+   */
+  private ensureScrollEnabled(): void {
+    // Force exit fullscreen if still active (check both APIs)
+    const isFullscreen = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+    if (isFullscreen) {
+      try {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          (document as any).webkitExitFullscreen();
+        }
+      } catch (err) {
+        console.warn('Force exit fullscreen failed:', err);
+      }
+    }
+    
+    // Ensure body scroll is enabled
+    this.enableBodyScroll();
+    
+    // Reset fullscreen flag
     this.isFullscreen = false;
+    
+    // Trigger change detection to update UI
+    if (this.videoContainer) {
+      this.videoContainer.nativeElement.style.pointerEvents = '';
+    }
+  }
+
+  /**
+   * Force enable scroll - clean up PrimeNG dialog artifacts and body overflow
+   */
+  private forceEnableScroll(): void {
+    // Immediate cleanup
+    this.enableBodyScroll();
+    
+    // Delayed cleanup to catch any async PrimeNG dialog teardown
+    setTimeout(() => this.enableBodyScroll(), 100);
+    setTimeout(() => this.enableBodyScroll(), 500);
   }
 
   @HostListener('document:keydown.escape', ['$event'])
@@ -176,36 +396,150 @@ export class StepSafetyBriefComponent implements AfterViewInit {
     if (this.isFullscreen && !this.videoEnded) {
       keyboardEvent.preventDefault();
       keyboardEvent.stopPropagation();
-      this.messageService.add({
+      this.showMessage({
         severity: 'warn',
-        summary: 'Attention',
-        detail: 'Please watch the complete safety video',
+        summary: this.labelService.getLabel('safety_briefing_video_escape_warning_title', 'caption') || 'Attention',
+        detail: this.labelService.getLabel('safety_briefing_video_escape_warning_message', 'caption') || 'Please watch the complete safety video',
         life: 3000
       });
     }
   }
 
   onReplay(): void {
-    this.startPlayback();
+    console.log('Replay button clicked - will play in fullscreen');
+    
+    // Mark as replaying
+    this.isReplaying = true;
+    
+    // Force enable scroll first
+    this.forceEnableScroll();
+    
+    // Ensure any existing fullscreen is exited before replaying
+    const isFullscreen = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
+    
+    if (isFullscreen) {
+      const exitPromise = document.exitFullscreen ? document.exitFullscreen() : 
+                          (document as any).webkitExitFullscreen ? (document as any).webkitExitFullscreen() : 
+                          Promise.resolve();
+      
+      exitPromise.then(() => {
+        setTimeout(() => this.startPlayback(), 100);
+      }).catch(() => {
+        setTimeout(() => this.startPlayback(), 100);
+      });
+    } else {
+      this.startPlayback();
+    }
+  }
+
+  goBack(): void {
+    const prevStep = this.wizardService.getCurrentStepIndex() - 1;
+    if (prevStep >= 0) {
+      this.wizardService.requestStepChange(prevStep);
+    }
+  }
+
+  formatTime(seconds: number): string {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  get progressPercent(): number {
+    if (!this.videoDuration) return 0;
+    return Math.min(100, (this.currentTime / this.videoDuration) * 100);
   }
 
   onNext(): void {
-    // Validate before proceeding
-    this.validateStep();
-    
-    // Only proceed if validation passes
     const savedData = this.wizardService.getFormData('safetyBrief');
     const wasWatched = savedData?.videoWatched || false;
-    
+
     if (this.videoEnded || wasWatched) {
       this.wizardService.setStepValid(true);
       this.wizardService.navigateToNextStep();
     } else {
-      this.messageService.add({
+      this.showMessage({
         severity: 'error',
-        summary: 'Safety Briefing Required',
-        detail: 'Please watch the complete safety briefing video to proceed'
+        summary: this.labelService.getLabel('safety_briefing_video_required', 'caption'),
+        detail: this.labelService.getLabel('safety_briefing_video_instruction', 'caption'),
+        life: 5000
       });
+    }
+  }
+
+  private showMessage(msg: { severity: string; summary?: string; detail?: string; life?: number }): void {
+    const key = `${msg.severity}|${msg.summary}|${msg.detail}`;
+    if (this._activeMessageKeys.has(key)) return;
+    this._activeMessageKeys.add(key);
+    const life = msg.life ?? 3000;
+    setTimeout(() => this._activeMessageKeys.delete(key), life);
+    
+    if (msg.summary) {
+      this.messageHelper.showWithTitle(msg.severity as any, msg.summary, msg.detail || '', life);
+    } else {
+      this.messageHelper.show(msg.severity as any, msg.detail || '', life);
+    }
+  }
+
+  ngOnDestroy(): void {
+    console.log('Component destroying - cleaning up');
+
+    // Unsubscribe all takeUntil-guarded observables
+    this.destroy$.next();
+    this.destroy$.complete();
+
+    // Stop monitoring body styles
+    this.stopBodyStyleObserver();
+    
+    // Ensure cleanup when component is destroyed
+    this.exitFullscreen();
+    this.forceEnableScroll();
+    
+    // Stop video if playing
+    if (this.videoElement?.nativeElement) {
+      const video = this.videoElement.nativeElement;
+      video.pause();
+      video.currentTime = 0;
+    }
+    
+    // Remove window focus listener
+    window.removeEventListener('focus', this.handleWindowFocus);
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    window.removeEventListener('blur', this.handleWindowBlur);
+  }
+  
+  // Window focus handler to enable scroll when user returns to page
+  private handleWindowFocus = () => {
+    setTimeout(() => this.forceEnableScroll(), 50);
+  };
+
+  // Pause video when tab becomes hidden (tab switch, window minimize)
+  private handleVisibilityChange = () => {
+    if (document.hidden) {
+      this.pauseVideoOnHide();
+    }
+  };
+
+  // Pause video when window loses focus (another window/app comes to front)
+  private handleWindowBlur = () => {
+    this.pauseVideoOnHide();
+  };
+
+  /**
+   * Pause the video if it is currently playing mid-way.
+   * Shows the play overlay so the user can tap to resume.
+   */
+  private pauseVideoOnHide(): void {
+    const video = this.videoElement?.nativeElement;
+    if (video && !video.paused && !this.videoEnded) {
+      video.pause();
+      this.ngZone.run(() => {
+        this.isPausedMidVideo = true;
+        this.showPlayButton = true;
+      });
+      // Exit fullscreen so the page is accessible when user returns
+      this.exitFullscreen();
     }
   }
 }

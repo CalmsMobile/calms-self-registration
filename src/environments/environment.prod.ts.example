@@ -1,0 +1,11 @@
+// Copy this file to environment.prod.ts and fill in your values.
+// DO NOT commit environment.prod.ts — it is listed in .gitignore.
+
+export const environment = {
+  production: true,
+  appVersion: '1.0.6',
+  proURL: '../',
+  apiURL: '../app/api/Vims',
+  portalApiURL: '../app/api/portal',
+  openAiApiKey: 'YOUR_OPENAI_API_KEY_HERE'
+};

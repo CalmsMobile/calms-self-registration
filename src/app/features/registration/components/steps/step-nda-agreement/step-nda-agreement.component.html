@@ -1,0 +1,141 @@
+<main class="page">
+  <!-- Header -->
+  <header class="page-header flex-header">
+    <div class="header-center">
+      <img [src]="logo" alt="Logo" class="logo" />
+      <h1>{{ companyTitle }}</h1>
+    </div>
+    <app-language-selector class="step-lang"></app-language-selector>
+  </header>
+
+  <section class="content">
+    <div class="left">
+      <h2>
+        <span class="accent">{{ formattedPageTitle.first }}</span>
+        <span>{{ formattedPageTitle.rest }}</span>
+      </h2>
+      <p>{{ 'nda_agreement_instruction' | translate }}</p>
+      <div class="illustration">
+        <img [src]="illustrationUrl" alt="NDA illustration" />
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="right">
+      <div class="card">
+        <div class="terms">
+          <div class="terms-title">{{ 'nda_agreement_nda_content_title' | translate }}</div>
+          <div #termsBox class="terms-box" [innerHTML]="getNdaHtml()" (scroll)="onTermsScroll($event)"></div>
+        </div>
+      </div>
+
+      @if (showValidationError) {
+        <span class="error-message">{{ 'nda_agreement_sign_pad_note' | translate }}</span>
+      }
+
+      <div class="actions">
+        <button class="btn grey" type="button" (click)="goBack()">
+          <span class="icon-left">&#8592;</span> {{ 'nda_agreement_button_back' | translate }}
+        </button>
+        <button class="btn yellow" type="button" (click)="openSignature()" [disabled]="!ndaScrolledToBottom">
+          {{ 'nda_agreement_button_sign' | translate }} <span class="icon-right">&#9998;</span>
+        </button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Signature Modal -->
+<div class="modal" [class.active]="showSignatureModal">
+  <div class="modal-overlay" (click)="closeSignature()"></div>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-header">
+      <div class="modal-title">{{ 'nda_agreement_sign_pad_title' | translate }}</div>
+      <button class="modal-close" type="button" (click)="closeSignature()">&#215;</button>
+    </div>
+    <div class="signature-box">
+      <canvas
+        #signatureCanvas
+        class="signature-canvas"
+        (mousedown)="onMouseDown($event)"
+        (mousemove)="onMouseMove($event)"
+        (mouseup)="onMouseUp()"
+        (mouseleave)="onMouseLeave()"
+        (touchstart)="onTouchStart($event)"
+        (touchmove)="onTouchMove($event)"
+        (touchend)="onTouchEnd($event)"
+      ></canvas>
+    </div>
+    <div class="signature-label">{{ 'nda_agreement_sign_pad_note' | translate }}</div>
+    <div class="modal-actions">
+      <button class="btn grey" type="button" (click)="clearSignature()">{{ 'nda_agreement_button_clear' | translate }}</button>
+      <button class="btn yellow" type="button" (click)="submitSignature()" [disabled]="!hasSigned">{{ 'nda_agreement_button_submit' | translate }}</button>
+    </div>
+  </div>
+</div>
+
+<p-toast></p-toast>
+
+<!-- Submitting loader overlay -->
+@if (isSubmitting) {
+<div class="submitting-overlay">
+  <div class="loader">
+    <div class="pacman">
+      <div class="top"></div>
+      <div class="bottom"></div>
+    </div>
+    <div class="dots">
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+  </div>
+</div>
+}
+
+<!-- Mobile Layout -->
+<div class="mobile-page">
+  <!-- Header -->
+  <header class="m-header">
+    <div class="m-header-spacer"></div>
+    <div class="m-header-center">
+      <img [src]="logo" alt="Logo" class="m-logo" />
+      <span class="m-company">{{ companyTitle }}</span>
+    </div>
+    <app-language-selector class="m-header-lang"></app-language-selector>
+  </header>
+
+  <!-- Title -->
+  <div class="m-title-wrap">
+    <h1 class="m-title">
+      <span class="m-accent">{{ formattedPageTitle.first }}</span>
+      <span>{{ formattedPageTitle.rest }}</span>
+    </h1>
+    <p class="m-subtitle">{{ 'nda_agreement_instruction' | translate }}</p>
+  </div>
+
+  <!-- Terms Card -->
+  <div class="m-card">
+    <div class="m-terms-title">{{ 'nda_agreement_nda_content_title' | translate }}</div>
+    <div class="m-terms-box" [innerHTML]="getNdaHtml()" (scroll)="onTermsScroll($event)"></div>
+  </div>
+
+  @if (showValidationError) {
+  <p class="m-error">{{ 'nda_agreement_sign_pad_note' | translate }}</p>
+  }
+
+  <!-- Actions -->
+  <div class="m-actions">
+    <div class="m-actions-row">
+      <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
+        <span>&#8592;</span> {{ 'nda_agreement_button_back' | translate }}
+      </button>
+      <button class="m-btn m-btn-yellow" type="button" (click)="openSignature()" [disabled]="!ndaScrolledToBottom">
+        {{ 'nda_agreement_button_sign' | translate }} <span>&#9998;</span>
+      </button>
+    </div>
+   
+  </div>
+</div>

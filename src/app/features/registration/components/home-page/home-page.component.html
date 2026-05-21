@@ -1,162 +1,336 @@
 @if (!isLoading) {
-<div class="setup-container" [ngStyle]="getBackgroundStyle()">
-  <!-- Access denied message for base URL restriction -->
-  @if (isAccessDenied) {
-  <div class="error-container">
+<div class="page">
+  <!-- Error / Access Denied overlay -->
+  @if (isAccessDenied || (hasInvalidUrl && !isAccessDenied)) {
+  <div class="error-overlay">
     <div class="error-card">
-      <h1>Access Restricted</h1>
+      @if (isAccessDenied) {
+      <h1>{{ 'home_page_access_restricted' | translate }}</h1>
       <div class="error-content">
         <i class="pi pi-ban error-icon"></i>
         <p class="error-message">{{ baseUrlAccessDeniedInstruction }}</p>
-        <p class="error-subtitle">Please contact your administrator for a valid registration link.</p>
       </div>
-    </div>
-  </div>
-  }
-
-  <!-- Error message for invalid URL -->
-  @if (hasInvalidUrl && !isAccessDenied) {
-  <div class="error-container">
-    <div class="error-card">
-      <h1>Invalid URL</h1>
+      } @else {
       <div class="error-content">
         <i class="pi pi-exclamation-triangle error-icon"></i>
         <p class="error-message">{{ errorMessage }}</p>
-        <p class="error-subtitle">Please contact your administrator for a valid registration link.</p>
       </div>
+      }
     </div>
   </div>
   }
 
-  <!-- Normal registration form -->
   @if (!hasInvalidUrl && !isAccessDenied) {
-  <!-- Show illustration only when no branch is selected -->
+
+  <!-- ========== STATE 1: Before branch selected — centered 2-panel layout ========== -->
   @if (!selectedBranch) {
+  <div class="pre-branch">
+    <!-- Left panel — image -->
+    <div class="pre-left"></div>
 
-  <div class="illustration-container">
-    <img src="/assets/illustration.png" alt="abstract">
-  </div>
+    <!-- Right panel — content -->
+    <div class="pre-right">
+      <footer class="app-footer">&copy; {{ currentYear }} CALMS Technologies. All rights reserved. v{{ appVersion }}</footer>
+      <div class="pre-right-scroll">
+        <div class="pre-center">
+          <!-- Logo -->
+          <img [src]="logo" alt="Company Logo" class="pre-logo">
 
-  <!-- Static Logo and Title - centered above card when no branch selected -->
+          <!-- Title -->
+          @if (showWelcomeTitle) {
+          <h1 class="pre-title">
+            <span class="accent">{{ formattedPageTitle.first }}</span><br>
+            {{ formattedPageTitle.rest }}
+          </h1>
+          }
 
-  }
+          <!-- Subtitle / Welcome text -->
 
-  <!-- Dynamic Logo and Title - shown when branch is selected -->
-  @if (selectedBranch) {
-  <div class="branch-header">
-    <img routerLink="/" [src]="logo" alt="Company Logo" class="logo-company">
-    <h1 routerLink="/" class="app-title">{{title}}</h1>
-  </div>
-  }
+          <!-- Branch Selection -->
+          @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
+          <div class="pre-form">
+            <div class="pre-field">
+              <div class="pre-label">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
+              <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
+                [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
+                optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
+                [autofocus]="false" appendTo="body" styleClass="home-select"
+                [class.select-empty]="!selectedBranch">
+              </p-select>
+            </div>
+          </div>
+          }
 
-  <div class="setup-card">
-    @if (!selectedBranch) {
-    <div class="header-container">
-      <div class="logo-container">
-        <img src="/assets/logo.png" alt="Company Logo" class="logo">
+        </div>
       </div>
-      <h1 class="welcome-title">Welcome to CALMS</h1>
-    </div>}
-    <!-- Show page title when branch is selected -->
-    @if (selectedBranch) {
-    <div>
-      <h1 class="page-title">
-        <span class="title-highlight">{{ formattedPageTitle.first }}</span>
-        <br>
-        <span class="title-normal">{{ formattedPageTitle.rest }}</span>
-      </h1>
+    </div>
+  </div>
+  }
+
+  <!-- ========== STATE 2: After branch selected — 3-column layout ========== -->
+  @if (selectedBranch) {
+  <!-- Header with logo -->
+  <div class="header">
+    <div class="header-brand">
+      <img [src]="logo" alt="Company Logo" />
+      @if (title) {
+      <span class="header-company-name">{{ title }}</span>
+      }
+    </div>
+    <app-language-selector class="header-lang"></app-language-selector>
+  </div>
+
+  <!-- Main content area -->
+  <div class="content">
+    <!-- Left panel: title + illustration -->
+    <div class="left">
+      @if (showWelcomeTitle) {
+      <h2>
+        <span class="accent">{{ formattedPageTitle.first }}</span>
+        <span>{{ formattedPageTitle.rest }}</span>
+      </h2>
+      }
+      <div class="subtitle">{{ 'home_page_instruction' | translate }}</div>
+      <img src="assets/visit.png" alt="Visitor illustration" />
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Right panel: form -->
+    <div class="right-col">
+      <div class="right">
+        <!-- Branch Selection (shown if multiple branches) -->
+        @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
+        <div class="field">
+          <div class="label">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
+          <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
+            [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
+            optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
+            [autofocus]="false" appendTo="body" styleClass="home-select"
+            [class.select-empty]="!selectedBranch">
+          </p-select>
+        </div>
+        }
+
+        <!-- Category Selection -->
+        @if (selectedBranch && categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
+        <div class="field field-visit">
+          <div class="label">{{ categoryTranslation.caption || ('home_page_category' | translate) }}</div>
+          <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
+            [placeholder]="categoryTranslation.placeholder || ('home_page_category' | translate:'placeholder')" optionLabel="visitor_ctg_desc"
+            optionValue="visitor_ctg_id" [showClear]="true"
+            [autofocus]="false" appendTo="body" styleClass="home-select"
+            [class.select-empty]="!selectedCategory">
+          </p-select>
+        </div>
+        }
+
+        <!-- Terms and Conditions -->
+        @if (selectedBranch && selectedCategory && shouldShowTerms()) {
+        <div class="terms">
+          <h4>{{ 'home_page_terms_and_conditions_title' | translate }}</h4>
+          <div class="terms-body"
+               (scroll)="onTermsScroll($event)"
+               #termsBodyRef
+               [innerHTML]="getTermsHtml()">
+          </div>
+          <div style="display: none;">
+            <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
+          </div>
+
+          <!-- Checkbox at bottom right -->
+          <div class="terms-checkbox-wrapper" [class.disabled]="!termsScrolledToBottom">
+            <span class="terms-agree-label">{{ 'home_page_i_agree_to_the_terms_and_conditions' | translate }}</span>
+            <div class="checkbox-container">
+              <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsScrolledToBottom && (termsAccepted = !termsAccepted)">
+                @if (termsAccepted) {
+                <i class="pi pi-check"></i>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+        }
+
+        <!-- Continue Button -->
+        @if (selectedBranch && selectedCategory) {
+        <div class="actions">
+          <button class="btn" type="button"
+            [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
+            (click)="proceedToWizard()">
+            <span>{{ 'home_page_button_agree_and_proceed' | translate }}</span>
+            <i class="pi pi-arrow-right btn-icon"></i>
+          </button>
+        </div>
+        }
+      </div>
+      <footer class="app-footer">&copy; {{ currentYear }} CALMS Technologies. All rights reserved. v{{ appVersion }}</footer>
+    </div>
+  </div>
+  }
+
+  }
+</div>
+
+<!-- ===================== MOBILE VIEW ===================== -->
+<div class="mobile-page">
+
+  @if (isAccessDenied || (hasInvalidUrl && !isAccessDenied)) {
+  <div class="m-error-wrapper">
+    <div class="m-error-card">
+      @if (isAccessDenied) {
+      <i class="pi pi-ban m-error-icon"></i>
+      <p class="m-error-message">{{ baseUrlAccessDeniedInstruction }}</p>
+      } @else {
+      <i class="pi pi-exclamation-triangle m-error-icon"></i>
+      <p class="m-error-message">{{ errorMessage }}</p>
+      }
+    </div>
+  </div>
+  }
+
+  @if (!hasInvalidUrl && !isAccessDenied) {
+
+  <!-- ===== STATE 1: No branch yet — hero image layout ===== -->
+  @if (!selectedBranch && branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
+  <div class="m-hero">
+    <!-- <app-language-selector class="m-lang"></app-language-selector> -->
+  </div>
+  <div class="m-content">
+    <img [src]="logo" alt="Company Logo" class="m-logo" />
+    @if (showWelcomeTitle) {
+    <h1 class="m-welcome">
+      <span class="m-welcome-accent">{{ formattedPageTitle.first}}</span><br>
+      {{ formattedPageTitle.rest }}
+    </h1>
+    }
+    <div class="m-form">
+      <div class="m-field-group">
+        <div class="m-label" style="text-align: center;">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
+        <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
+          [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
+          optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
+          [autofocus]="false" appendTo="body" styleClass="home-select"
+          [class.select-empty]="!selectedBranch">
+        </p-select>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ===== STATE 2: Branch selected (or from query) — full form layout ===== -->
+  @if (selectedBranch || branchList.length === 1 || isBranchFromQuery || isAppointmentFlow) {
+  <div class="m-post-wrap">
+
+    <!-- Header: back + logo + company name + language -->
+    <header class="m-post-header">
+      <div class="m-header-spacer"></div>
+      <div class="m-post-header-center">
+        <img [src]="logo" alt="Company Logo" class="m-post-logo" />
+        <p class="m-post-company">{{ title }}</p>
+      </div>
+      <app-language-selector class="m-post-lang"></app-language-selector>
+    </header>
+
+    <!-- Page title -->
+    @if (showWelcomeTitle) {
+    <div class="m-post-title">
+      <span class="m-post-accent">{{ formattedPageTitle.first }}</span><br>
+      <span class="m-post-rest">{{ formattedPageTitle.rest }}</span>
     </div>
     }
 
-    <!-- Show language selector when both branch and category are selected -->
-    @if (selectedBranch && selectedCategory) {
-    <div class="language-selector">
-    </div>
-    }
+    <!-- Form -->
+    <div class="m-post-form">
 
-    <div class="form-container">
       <!-- Branch Selection -->
       @if (branchList.length !== 1 && !isBranchFromQuery && !isAppointmentFlow) {
-      <div class="form-field">
-        <label for="branch_input">{{ branchTranslation.caption || ('branch' | translate) }}</label>
+      <div class="m-field-group">
+        <div class="m-label">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
         <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
-          [placeholder]="branchTranslation.placeholder || ('branch' | translate:'placeholder')"
-          optionLabel="Branch_Name" inputId="branch_input" optionValue="RefBranchSeqID" [showClear]="true"
-          [autofocus]="false" appendTo="body">
+          [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
+          optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
+          [autofocus]="false" appendTo="body" styleClass="home-select"
+          [class.select-empty]="!selectedBranch">
         </p-select>
       </div>
       }
 
       <!-- Category Selection -->
-      @if (selectedBranch && categories.length !== 1) {
-      <div class="form-field">
-        <label for="category_input">{{ 'category' | translate }}</label>
+      @if (categories.length !== 1 && !isCategoryFromQuery && !isAppointmentFlow) {
+      <div class="m-field-group">
+        <div class="m-label">{{ categoryTranslation.caption || ('home_page_category' | translate) }}</div>
         <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
-          [placeholder]="'category' | translate:'placeholder'" optionLabel="visitor_ctg_desc" inputId="category_input"
-          optionValue="visitor_ctg_id" [showClear]="!isAppointmentFlow" [disabled]="isAppointmentFlow"
-          [autofocus]="false" appendTo="body">
+          [placeholder]="categoryTranslation.placeholder || ('home_page_category' | translate:'placeholder')" optionLabel="visitor_ctg_desc"
+          optionValue="visitor_ctg_id" [showClear]="true"
+          [autofocus]="false" appendTo="body" styleClass="home-select"
+          [class.select-empty]="!selectedCategory">
         </p-select>
       </div>
       }
 
       <!-- Terms and Conditions -->
-      @if (selectedBranch && selectedCategory) {
-      @if (shouldShowTerms()) {
-      <div class="terms-section">
-        <h2 class="terms-header">Terms and Condition</h2>
-
-        <div class="terms-content">
-          <h3>For CALMS</h3>
-          <p>
-            By submitting your information, you agree and consent to Calms Technologies Sdn Bhd
-            and its related corporations, and its managing agent, collecting, using and disclosing
-            such information for the purposes of seeking clarification on the information submitted
-            or contacting you in event of any emergencies and related purposes.
-          </p>
+      @if (selectedBranch && selectedCategory && shouldShowTerms()) {
+      <div class="m-terms-card">
+        <div class="m-terms-head">
+          <h3>{{ 'home_page_terms_and_conditions_title' | translate }}</h3>
+        </div>
+        <div class="m-terms-body"
+             #mTermsBodyRef
+             (scroll)="onTermsScroll($event)"
+             [innerHTML]="getTermsHtml()">
         </div>
 
-        <!-- Hidden terms component for validation -->
-        <div style="display: none;">
-          <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
-        </div>
-
-        <!-- Checkbox at bottom -->
-        <div class="terms-checkbox-wrapper">
+        <!-- Checkbox at bottom right -->
+        <div class="terms-checkbox-wrapper" [class.disabled]="!termsScrolledToBottom">
+          <span class="terms-agree-label">{{ 'home_page_i_agree_to_the_terms_and_conditions' | translate }}</span>
           <div class="checkbox-container">
-            <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsAccepted = !termsAccepted">
+            <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsScrolledToBottom && (termsAccepted = !termsAccepted)">
               @if (termsAccepted) {
               <i class="pi pi-check"></i>
               }
             </div>
-            <span>I agree to the terms and conditions</span>
           </div>
         </div>
       </div>
       }
-      }
-      <!-- Back button and Continue button -->
+
+      <!-- Continue Button -->
       @if (selectedBranch && selectedCategory) {
-      <div class="button-container">
-        <button class="back-button" (click)="goBack()">
-          <i class="pi pi-arrow-left"></i>
-          <span>Back</span>
-        </button>
-        <p-button [label]="'agree_and_proceed' | translate" icon="pi pi-arrow-right" iconPos="right"
-          [disabled]="!termsAccepted || !termsValid" (onClick)="proceedToWizard()">
-        </p-button>
-      </div>
+      <button class="m-continue" type="button"
+        [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
+        (click)="proceedToWizard()">
+        <span>{{ 'home_page_button_agree_and_proceed' | translate }}</span>
+        <i class="pi pi-arrow-right"></i>
+      </button>
       }
+
     </div>
   </div>
   }
+
+  }
+
+  <footer class="m-fixed-footer">&copy; {{ currentYear }} CALMS Technologies. All rights reserved. v{{ appVersion }}</footer>
+
 </div>
 }
 
 @if (isLoading) {
-<div class="loading-indicator" [ngStyle]="getBackgroundStyle()">
+<div class="loading-overlay">
   <div class="loading-content">
-    <p-progressbar mode="indeterminate" [style]="{ height: '8px', width: '300px' }" />
-    <p>Loading...</p>
+    <div class="loader">
+      <div class="pacman">
+        <div class="top"></div>
+        <div class="bottom"></div>
+      </div>
+      <div class="dots">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
   </div>
 </div>
 }

@@ -1,6 +1,5 @@
-import { Component, ViewChild, ElementRef, EventEmitter, Output, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { SelectModule } from 'primeng/select';
+import { Component, EventEmitter, Output, OnInit, HostListener } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ApiService } from '../../../core/services/api.service';
 import { LanguageService } from '../../../core/services/language.service';
 
@@ -13,16 +12,52 @@ interface LanguageModel {
 @Component({
   selector: 'app-language-selector',
   standalone: true,
-  imports: [SelectModule, FormsModule],
+  imports: [CommonModule],
   templateUrl: './language-selector.component.html',
   styleUrl: './language-selector.component.scss'
 })
 export class LanguageSelectorComponent implements OnInit {
   @Output() languageChange = new EventEmitter<LanguageModel>();
 
-  langSelect!: ElementRef;
   languages: LanguageModel[] = [];
   selectedLanguage?: LanguageModel;
+  showDropdown = false;
+  private readonly flagFallbackPath = 'assets/flags/globe.svg';
+  private readonly languageToCountryMap: Record<string, string> = {
+    en: 'US',
+    fr: 'FR',
+    de: 'DE',
+    es: 'ES',
+    pt: 'PT',
+    it: 'IT',
+    nl: 'NL',
+    pl: 'PL',
+    sv: 'SE',
+    ru: 'RU',
+    ar: 'SA',
+    hi: 'IN',
+    ta: 'IN',
+    te: 'IN',
+    ml: 'IN',
+    kn: 'IN',
+    bn: 'BD',
+    zh: 'CN',
+    ja: 'JP',
+    ko: 'KR',
+    th: 'TH',
+    vi: 'VN',
+    ms: 'MY',
+    id: 'ID',
+    tr: 'TR'
+  };
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('app-language-selector')) {
+      this.showDropdown = false;
+    }
+  }
 
   constructor(
     private api: ApiService,
@@ -73,6 +108,45 @@ export class LanguageSelectorComponent implements OnInit {
         }
       }
     });
+  }
+
+  toggleDropdown() {
+    this.showDropdown = !this.showDropdown;
+  }
+
+  selectLanguage(lang: LanguageModel) {
+    this.selectedLanguage = lang;
+    this.languageService.setLanguage(lang);
+    this.languageChange.emit(lang);
+    this.showDropdown = false;
+  }
+
+  getFlagImageUrl(languageCode?: string | null): string {
+    const countryCode = this.resolveCountryCode(languageCode);
+    return countryCode ? `https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png` : this.flagFallbackPath;
+  }
+
+  onFlagImageError(event: Event): void {
+    const image = event.target as HTMLImageElement;
+    if (!image || image.dataset['fallbackApplied'] === 'true') {
+      return;
+    }
+
+    image.dataset['fallbackApplied'] = 'true';
+    image.src = this.flagFallbackPath;
+    image.classList.add('is-fallback');
+  }
+
+  private resolveCountryCode(languageCode?: string | null): string {
+    if (!languageCode) {
+      return '';
+    }
+
+    const segments = languageCode.toLowerCase().split(/[-_]/).filter(Boolean);
+    const languagePart = segments[0];
+    const regionPart = segments.find((segment, index) => index > 0 && /^[a-z]{2}$/.test(segment));
+
+    return (regionPart || this.languageToCountryMap[languagePart] || '').toUpperCase();
   }
 
   onLanguageChange(event: { value: LanguageModel }): void {

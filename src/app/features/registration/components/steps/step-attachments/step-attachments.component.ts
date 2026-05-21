@@ -1,25 +1,23 @@
 import { Component, Input, OnInit, OnDestroy } from '@angular/core';
-import { FileUploadModule } from 'primeng/fileupload';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { PanelModule } from 'primeng/panel';
-import { TableModule } from 'primeng/table';
-import { CheckboxModule } from 'primeng/checkbox';
-import { Select } from 'primeng/select';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { MessageService, ConfirmationService } from 'primeng/api';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
-
+import { SharedService } from '../../../../../shared/shared.service';
+import { LabelService } from '../../../../../core/services/label.service';
+import { MessageHelperService } from '../../../../../core/services/message-helper.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
+import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { Subject, takeUntil } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpEventType } from '@angular/common/http';
+import { environment } from '../../../../../../environments/environment';
 
 interface DocumentType {
   VisitorAttachSeqId: string;
   Caption: string;
   Mandatory: boolean;
   RefAddVisitorSeqId: number;
+  FileBase64?: string;
+  FileName?: string;
 }
 
 interface Attachment {
@@ -27,15 +25,16 @@ interface Attachment {
   caption: string;
   trackerId?: string;
   uploaded?: boolean;
+  uploadProgress?: number;
+  docPath?: string;   // pre-existing server path from appointment flow
 }
 
 @Component({
   selector: 'app-step-attachments',
   standalone: true,
-  imports: [FileUploadModule, InputTextModule, ButtonModule, TableModule, TranslatePipe, FormsModule, ConfirmDialogModule, PanelModule, CheckboxModule, Select],
+  imports: [CommonModule, FormsModule, TranslatePipe, LanguageSelectorComponent],
   templateUrl: './step-attachments.component.html',
-  styleUrl: './step-attachments.component.scss',
-  providers: [ConfirmationService]
+  styleUrl: './step-attachments.component.scss'
 })
 export class StepAttachmentsComponent implements OnInit, OnDestroy {
   @Input() stepSettings: any;
@@ -43,125 +42,144 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
 
   attachments: { [key: string]: Attachment } = {};
   maxSize = 2000000;
-  acceptedTypes = 'image/*, .pdf';
-  
+  acceptedTypes = '.pdf,.jpg,.jpeg,.png';
+
   attachmentUploadEnabled = false;
-  materialDeclareEnabled = false;
-  
+  logo = 'assets/logo.png';
+  companyTitle = '';
+
+  get formattedPageTitle(): { first: string; rest: string } {
+    const text = this.labelService.getLabel('documents_upload_page_title', 'caption') || this.wizardService.pageTitle;
+    const i = text.indexOf(' ');
+    return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
+  }
+
   private destroy$ = new Subject<void>();
 
   constructor(
-    private wizardService: WizardService, 
-    private messageService: MessageService, 
-    private confirmationService: ConfirmationService,
-    private http: HttpClient
+    private wizardService: WizardService,
+    private http: HttpClient,
+    private sharedService: SharedService,
+    private messageHelper: MessageHelperService,
+    private labelService: LabelService
   ) {
-    this.wizardService.onValidationRequest.subscribe(() => {
-      this.validateStep();
-    });
+    this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
+    this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
   }
 
   ngOnInit(): void {
+    // Subscribe here (not constructor) so takeUntil properly cleans it up on destroy
+    this.wizardService.onValidationRequest
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.validateStep());
+
     const mainSettings = this.wizardService.getSettings();
     this.attachmentUploadEnabled = mainSettings?.AttachmentUploadEnabled ?? false;
-    this.materialDeclareEnabled = mainSettings?.MaterialDeclareEnabled ?? false;
 
     const settings = this.wizardService.getAttachmentSettings();
 
-    if(!settings || settings.length === 0) {
-      this.wizardService.gotoHomePage();
-      return;
+    if (settings && settings.length > 0) {
+      this.documentTypes = settings;
+      this.documentTypes.forEach(doc => {
+        this.attachments[doc.VisitorAttachSeqId] = { file: null, caption: '' };
+      });
     }
-    this.documentTypes = settings;
 
-    // Initialize attachments object
-    this.documentTypes.forEach(doc => {
-      this.attachments[doc.VisitorAttachSeqId] = {
-        file: null,
-        caption: ''
-      };
-    });
-
-    // Restore saved data
     this.restoreFormData();
   }
 
   ngOnDestroy(): void {
-    this.saveFormData();
+    // Only save if the wizard session is still active.
+    // clearSessionStorage() sets currentBranchID to '' — if empty, submission already
+    // cleared everything and we must NOT write stale data back into formDataStore.
+    if (this.wizardService.currentBranchID) {
+      this.saveFormData();
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   private restoreFormData(): void {
     const savedData = this.wizardService.getFormData('attachments');
-    if (savedData) {
-      // Restore item declaration data
-      this.nothingToDeclare = savedData.nothingToDeclare || false;
-      this.declaredItems = savedData.declaredItems || [];
-      
-      // Restore attachment captions and file references
-      if (savedData.attachments) {
-        Object.keys(savedData.attachments).forEach(docId => {
-          if (this.attachments[docId]) {
-            this.attachments[docId].caption = savedData.attachments[docId].caption || '';
-            this.attachments[docId].trackerId = savedData.attachments[docId].trackerId || undefined;
-            this.attachments[docId].uploaded = savedData.attachments[docId].uploaded || false;
-            
-            // Note: File objects cannot be restored from storage, 
-            // but we can show that they were uploaded previously
-            if (savedData.attachments[docId].fileName) {
-              // Create a placeholder to indicate file was uploaded
-              this.attachments[docId].file = {
-                name: savedData.attachments[docId].fileName,
-                size: savedData.attachments[docId].fileSize || 0
-              } as File;
-            }
+    if (savedData?.attachments) {
+      Object.keys(savedData.attachments).forEach(docId => {
+        if (this.attachments[docId]) {
+          this.attachments[docId].caption = savedData.attachments[docId].caption || '';
+          this.attachments[docId].trackerId = savedData.attachments[docId].trackerId || undefined;
+          this.attachments[docId].uploaded = savedData.attachments[docId].uploaded || false;
+          this.attachments[docId].docPath = savedData.attachments[docId].docPath || undefined;
+          if (savedData.attachments[docId].fileName) {
+            this.attachments[docId].file = {
+              name: savedData.attachments[docId].fileName,
+              size: savedData.attachments[docId].fileSize || 0
+            } as File;
           }
-        });
-      }
+        }
+      });
+      return;
     }
+
+    // No saved data — pre-fill from appointment ack docs
+    const ackData = this.wizardService.getIncomingVisitorAckData();
+    const docsData: any[] = ackData?.docsData || [];
+    if (!docsData.length) return;
+
+    // Build a lookup: integer seqId → attachments key (handles "106" vs "106.0" keys)
+    const attachmentKeys = Object.keys(this.attachments);
+    const keyBySeqId = new Map<number, string>();
+    attachmentKeys.forEach(k => {
+      const n = parseInt(k);
+      if (!isNaN(n)) keyBySeqId.set(n, k);
+    });
+
+    docsData.forEach((doc: any) => {
+      const docPath = doc.DocPath || doc.FilePath || doc.FileUrl || '';
+      const fileName = docPath ? docPath.replace(/\\/g, '/').split('/').pop() || 'document' : '';
+      // API returns RefVisitorAttachSeqId (matches VisitorAttachSeqId in doc type settings)
+      const refId = parseInt(doc.RefVisitorAttachSeqId ?? doc.VisitorAttachSeqId ?? '');
+      const docId = !isNaN(refId) ? keyBySeqId.get(refId) : null;
+
+      if (docId) {
+        this.attachments[docId].file = { name: fileName, size: 0 } as File;
+        this.attachments[docId].uploaded = true;
+        this.attachments[docId].docPath = docPath;
+        this.attachments[docId].caption = doc.Caption || '';
+      }
+    });
+    this.saveFormData();
   }
 
   private saveFormData(): void {
-    const formData = {
-      nothingToDeclare: this.nothingToDeclare,
-      declaredItems: this.declaredItems,
-      attachments: {} as any
-    };
-
-    // Generate UUID for tracker ID
-    const generateUID = () => {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const generateUID = () =>
+      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
         const r = Math.random() * 16 | 0;
-        const v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
       });
-    };
 
-    // Save attachment data (captions and file info)
+    const formData: any = { attachments: {} };
+
     Object.keys(this.attachments).forEach(docId => {
       const attachment = this.attachments[docId];
       if (attachment.file) {
-        // Generate trackerId if not exists
         if (!attachment.trackerId) {
           attachment.trackerId = `${generateUID()}_0`;
         }
-        
         formData.attachments[docId] = {
           caption: attachment.caption,
           fileName: attachment.file.name,
           fileSize: attachment.file.size,
           trackerId: attachment.trackerId,
-          uploaded: attachment.uploaded || false
+          uploaded: attachment.uploaded || false,
+          docPath: attachment.docPath || null
         };
       } else {
-        // Keep empty structure for documents without files
         formData.attachments[docId] = {
           caption: attachment.caption,
           fileName: null,
           fileSize: null,
           trackerId: null,
-          uploaded: false
+          uploaded: false,
+          docPath: null
         };
       }
     });
@@ -169,116 +187,77 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     this.wizardService.updateFormData('attachments', formData);
   }
 
-  nothingToDeclare: boolean = false;
-  declaredItems: any[] = [];
-  newItem: any = {
-    description: '',
-    serialNumber: '',
-    direction: 'IN'
-  };
-
-  directionOptions = [
-    { label: 'Bringing In', value: 'IN' },
-    { label: 'Taking Out', value: 'OUT' }
-  ];
-
-  onNothingToDeclareChange() {
-    if (this.nothingToDeclare) {
-      this.declaredItems = [];
-    }
-    this.saveFormData(); // Save immediately when changed
-  }
-
-  addItem() {
-    if (this.newItem.description) {
-      this.declaredItems.push({ ...this.newItem });
-      this.newItem = {
-        description: '',
-        serialNumber: '',
-        direction: 'IN'
-      };
-      this.saveFormData(); // Save immediately when item added
-    }
-  }
-
-  removeItem(index: number) {
-    this.declaredItems.splice(index, 1);
-    this.saveFormData(); // Save immediately when item removed
-  }
-
-  getDirectionLabel(value: string): string {
-    const option = this.directionOptions.find(opt => opt.value === value);
-    return option ? option.label : '';
-  }
-
   onFileSelect(event: any, docId: string): void {
-    const file = event.files[0];
-    if (file) {
-      // Generate trackerId
-      const generateUID = () => {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-          const r = Math.random() * 16 | 0;
-          const v = c == 'x' ? r : (r & 0x3 | 0x8);
-          return v.toString(16);
-        });
-      };
-      
-      const trackerId = `${generateUID()}_0`;
-      
-      // Store file temporarily
-      this.attachments[docId].file = file;
-      this.attachments[docId].trackerId = trackerId;
-      this.attachments[docId].uploaded = false;
-      
-      // Upload to ImageChunkHandler
-      this.uploadFileToHandler(file, trackerId, docId);
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'];
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!allowedExtensions.includes(ext)) {
+      const typeMsg = this.labelService.getLabel('documents_upload_file_invalid_alert', 'caption') || 'Only PDF, JPG, JPEG, PNG, DOC, and DOCX files are allowed.';
+      this.messageHelper.warn(typeMsg, 4000);
+      input.value = '';
+      return;
     }
+
+    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+    if (nameWithoutExt.length > 50) {
+      const nameMsg = this.labelService.getLabel('documents_upload_file_name_invalid_alert', 'caption') || 'File name must not exceed 50 characters.';
+      this.messageHelper.warn(nameMsg, 4000);
+      input.value = '';
+      return;
+    }
+
+    if (file.size > this.maxSize) {
+      const alertTemplate = this.labelService.getLabel('documents_upload_max_size_alert_message', 'caption') || `Maximum file size is {maxSize} MB. Please select a smaller file.`;
+      const alertDetail = alertTemplate.replace('{maxSize}', (this.maxSize / 1000000).toString());
+      this.messageHelper.warn(alertDetail, 4000);
+      input.value = '';
+      return;
+    }
+
+    if (this.attachments[docId].file) {
+      this.removeFile(docId);
+    }
+
+    const generateUID = () =>
+      'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+
+    const trackerId = `${generateUID()}_0`;
+    this.attachments[docId].file = file;
+    this.attachments[docId].trackerId = trackerId;
+    this.attachments[docId].uploaded = false;
+
+    this.uploadFileToHandler(file, trackerId, docId);
+    input.value = '';
   }
 
   private uploadFileToHandler(file: File, trackerId: string, docId: string): void {
     const formData = new FormData();
     formData.append('trackerId', trackerId);
     formData.append('temp', file, file.name);
-    
-    // Use the endpoint you specified
-    const uploadUrl = 'http://localhost:7222/Handler/ImageChunkHandler.ashx?op=profile&ac=upload&nologin=1&isResize=1';
-    
-    this.http.post(uploadUrl, formData).subscribe({
-      next: (response: any) => {
-        // Mark as uploaded
-        this.attachments[docId].uploaded = true;
-        this.saveFormData();
-        
-        this.messageService.add({
-          severity: 'success',
-          summary: 'File Uploaded',
-          detail: `${file.name} uploaded successfully`
-        });
-      },
-      error: (error) => {
-        console.error('Upload failed:', error);
-        
-        // Remove file on upload failure
-        this.attachments[docId].file = null;
-        this.attachments[docId].trackerId = undefined;
-        this.attachments[docId].uploaded = false;
-        
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Upload Failed',
-          detail: `Failed to upload ${file.name}. Please try again.`
-        });
-      }
-    });
-  }
 
-  confirmDelete(docId: string): void {
-    this.confirmationService.confirm({
-      message: 'Are you sure you want to delete this file?',
-      header: 'Confirm Deletion',
-      icon: 'pi pi-exclamation-triangle',
-      accept: () => {
-        this.removeFile(docId);
+    const uploadUrl = `${environment.proURL}Handler/ImageChunkHandler.ashx?op=profile&ac=upload&nologin=1&isResize=1`;
+
+    this.attachments[docId].uploadProgress = 0;
+
+    this.http.post(uploadUrl, formData, { reportProgress: true, observe: 'events' }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (event: any) => {
+        if (event.type === HttpEventType.UploadProgress && event.total) {
+          this.attachments[docId].uploadProgress = Math.round(100 * event.loaded / event.total);
+        } else if (event.type === HttpEventType.Response) {
+          this.attachments[docId].uploadProgress = 100;
+          this.attachments[docId].uploaded = true;
+          this.saveFormData();
+        }
+      },
+      error: () => {
+        this.attachments[docId].uploaded = false;
+        this.attachments[docId].uploadProgress = undefined;
       }
     });
   }
@@ -287,57 +266,57 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     this.attachments[docId].file = null;
     this.attachments[docId].trackerId = undefined;
     this.attachments[docId].uploaded = false;
-    this.saveFormData(); // Save immediately when file removed
-    this.messageService.add({
-      severity: 'info',
-      summary: 'File Removed',
-      detail: 'You can upload a new file'
-    });
-  }
-
-  getRequiredDocuments(): DocumentType[] {
-    return this.documentTypes.filter(doc => doc.Mandatory);
-  }
-
-  validateAttachments(): boolean {
-    const requiredDocs = this.getRequiredDocuments();
-    return requiredDocs.every(doc => this.attachments[doc.VisitorAttachSeqId].file !== null);
+    this.saveFormData();
   }
 
   validateStep(): void {
-    const attachmentsValid = this.attachmentUploadEnabled ? this.validateAttachments() : true;
-    const itemDeclarationValid = this.materialDeclareEnabled ? this.validateItemDeclaration() : true;
-    
-    const isValid = attachmentsValid && itemDeclarationValid;
+    const isValid = this.attachmentUploadEnabled
+      ? this.documentTypes.filter(d => d.Mandatory).every(d => this.attachments[d.VisitorAttachSeqId].file !== null)
+      : true;
     this.wizardService.setStepValid(isValid);
-
-    if (!attachmentsValid) {
-      const missingDocs = this.getRequiredDocuments()
-        .filter(doc => !this.attachments[doc.VisitorAttachSeqId].file)
-        .map(doc => doc.Caption);
-
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Missing Documents',
-        detail: `Please upload: ${missingDocs.join(', ')}`
-      });
-    }
-
-    if (!itemDeclarationValid) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Item Declaration Required',
-        detail: 'Please either check "I have nothing to declare" or add items to declare'
-      });
-    }
-
-    if (isValid) {
-      this.saveFormData(); // Save when validation passes
-    }
+    if (isValid) this.saveFormData();
   }
 
-  private validateItemDeclaration(): boolean {
-    // Valid if either nothing to declare is checked OR items are declared
-    return this.nothingToDeclare || this.declaredItems.length > 0;
+  getMaxSizeLabel(): string {
+    const template = this.labelService.getLabel('documents_upload_max_size_label', 'caption');
+    if (template) {
+      return template.replace('{maxSize}', (this.maxSize / 1000000).toString());
+    }
+    return `Max size: ${this.maxSize / 1000000}MB (.pdf, images)`;
+  }
+
+  goBack(): void {
+    this.saveFormData();
+    const prev = this.wizardService.getCurrentStepIndex() - 1;
+    if (prev >= 0) this.wizardService.requestStepChange(prev);
+  }
+
+  skipStep(): void {
+    this.saveFormData();
+    this.wizardService.skipToNextStep();
+  }
+
+  get hasMandatoryDocuments(): boolean {
+    return this.attachmentUploadEnabled && this.documentTypes.some(d => d.Mandatory);
+  }
+
+  get allMandatoryUploaded(): boolean {
+    if (!this.attachmentUploadEnabled) return true;
+    return this.documentTypes
+      .filter(d => d.Mandatory)
+      .every(d => {
+        const att = this.attachments[d.VisitorAttachSeqId];
+        return att?.file !== null && att?.uploaded === true;
+      });
+  }
+
+  proceedToNext(): void {
+    this.validateStep();
+    this.saveFormData();
+    this.wizardService.navigateToNextStep();
+  }
+
+  getDownloadUrl(filePath: string): string {
+    return `${environment.proURL}${filePath.replace(/\\/g, '/')}`;
   }
 }

@@ -1,0 +1,197 @@
+<main class="page">
+  <header class="page-header flex-header">
+    <div class="header-center">
+      <img [src]="logo" alt="Logo" class="logo" />
+      <h1>{{ companyTitle }}</h1>
+    </div>
+    <app-language-selector class="step-lang"></app-language-selector>
+  </header>
+
+  <section class="layout">
+    <div class="left">
+      <h2>
+        <span class="accent">{{ formattedPageTitle.first }}</span>
+        <span>{{ formattedPageTitle.rest }}</span>
+      </h2>
+      <p>{{ 'equipment_movement_instruction' | translate }}</p>
+      <div class="illustration">
+        <img src="assets/item.png" alt="Equipment movement illustration" />
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="right">
+      <div class="form">
+        <label class="field" [class.field-error]="showFieldErrors && isDescMandatory && !newItem.description.trim()">
+          <span class="label">{{ 'equipment_movement_item_description' | translate }}@if(isDescMandatory){<span class="req">*</span>}</span>
+          <input type="text"
+            [(ngModel)]="newItem.description"
+            (ngModelChange)="checkInputs()"
+            [placeholder]="'equipment_movement_item_description' | translate:'placeholder'" />
+        </label>
+        <label class="field" [class.field-error]="showFieldErrors && isSerialMandatory && !newItem.serialNumber.trim()">
+          <span class="label">{{ 'equipment_movement_serial_number' | translate }}@if(isSerialMandatory){<span class="req">*</span>}</span>
+          <input type="text"
+            [(ngModel)]="newItem.serialNumber"
+            (ngModelChange)="checkInputs()"
+            [placeholder]="'equipment_movement_serial_number' | translate:'placeholder'" />
+        </label>
+        <div class="direction-row">
+          <div class="field" [class.field-error]="showFieldErrors && isTypeMandatory && !newItem.direction">
+            <span class="label">{{ 'equipment_movement_direction' | translate }}@if(isTypeMandatory){<span class="req">*</span>}</span>
+            <div class="direction-radio-group">
+              @for (opt of directionOptions; track opt.value) {
+                <label class="radio-option">
+                  <input type="radio" name="item-direction" [value]="opt.value"
+                    [(ngModel)]="newItem.direction" (change)="checkInputs()" />
+                  <span>{{ opt.label }}</span>
+                </label>
+              }
+              <button class="btn-outline" type="button" [disabled]="!canAdd" (click)="addItem()" title="{{ 'equipment_movement_add_item_tooltip' | translate }}">
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="38" height="38" fill="currentColor" viewBox="0 0 24 24">
+                  <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        @if (duplicateError) {
+          <div class="duplicate-error">{{ duplicateError }}</div>
+        }
+      </div>
+
+      @if (declaredItems.length > 0) {
+      <div class="list">
+        <div class="list-title">{{ 'equipment_movement_added_items' | translate }}</div>
+        <div class="list-items">
+          @for (item of declaredItems; track $index) {
+          <div class="item">
+            <div class="item-name">{{ item.description }}</div>
+            <div class="badge" [class.in]="item.direction === 'IN'">
+              <span class="arrow">{{ item.direction === 'IN' ? '\u25BC' : '\u25B2' }}</span>
+              {{ item.direction }}
+            </div>
+            <button class="delete" type="button" (click)="removeItem($index)" aria-label="Delete" [title]="'equipment_movement_delete_item_tooltip' | translate">
+              <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                <path fill-rule="evenodd" d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+          }
+        </div>
+      </div>
+      }
+
+      <div class="actions">
+        <div class="actions-left">
+          <button class="btn grey" type="button" (click)="goBack()"><span class="icon-left">&larr;</span> {{ 'equipment_movement_button_back' | translate }}</button>
+          <button class="btn grey" type="button" (click)="skipStep()">{{ 'equipment_movement_button_skip' | translate }} <span class="icon-right">&rarr;</span></button>
+        </div>
+        <button class="btn yellow" type="button" [disabled]="continueDisabled" (click)="proceedToNext()">{{ 'equipment_movement_button_continue' | translate }} <span class="icon-right">&rarr;</span></button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- Mobile Layout -->
+<div class="mobile-page">
+  <!-- Header -->
+  <header class="m-header">
+    <div class="m-header-spacer"></div>
+    <div class="m-header-center">
+      <img [src]="logo" alt="Logo" class="m-logo" />
+      <span class="m-company">{{ companyTitle }}</span>
+    </div>
+    <app-language-selector class="m-header-lang"></app-language-selector>
+  </header>
+
+  <!-- Title -->
+  <div class="m-title-wrap">
+    <h1 class="m-title">
+      <span class="m-accent">{{ formattedPageTitle.first }}</span>
+      <span>{{ formattedPageTitle.rest }}</span>
+    </h1>
+    <p class="m-subtitle">{{ 'equipment_movement_instruction' | translate }}</p>
+  </div>
+
+  <!-- Form Card -->
+  <div class="m-card">
+    <div class="m-form">
+      <div class="m-field" [class.m-field-error]="showFieldErrors && isDescMandatory && !newItem.description.trim()">
+        <span class="m-label">{{ 'equipment_movement_item_description' | translate }}@if(isDescMandatory){<span class="req">*</span>}</span>
+        <input class="m-input" type="text"
+          [(ngModel)]="newItem.description"
+          (ngModelChange)="checkInputs()"
+          [placeholder]="'equipment_movement_item_description' | translate:'placeholder'" />
+      </div>
+      <div class="m-field" [class.m-field-error]="showFieldErrors && isSerialMandatory && !newItem.serialNumber.trim()">
+        <span class="m-label">{{ 'equipment_movement_serial_number' | translate }}@if(isSerialMandatory){<span class="req">*</span>}</span>
+        <input class="m-input" type="text"
+          [(ngModel)]="newItem.serialNumber"
+          (ngModelChange)="checkInputs()"
+          [placeholder]="'equipment_movement_serial_number' | translate:'placeholder'" />
+      </div>
+      <div class="m-direction-row">
+        <div class="m-field" [class.m-field-error]="showFieldErrors && isTypeMandatory && !newItem.direction">
+          <span class="m-label">{{ 'equipment_movement_direction' | translate }}@if(isTypeMandatory){<span class="req">*</span>}</span>
+          <div class="direction-radio-group">
+            @for (opt of directionOptions; track opt.value) {
+              <label class="radio-option">
+                <input type="radio" name="m-item-direction" [value]="opt.value"
+                  [(ngModel)]="newItem.direction" (change)="checkInputs()" />
+                <span>{{ opt.label }}</span>
+              </label>
+            }
+          </div>
+        </div>
+        <button class="m-add-btn" type="button" [disabled]="!canAdd" (click)="addItem()" title="{{ 'equipment_movement_add_item_tooltip' | translate }}">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" d="M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm11-4.243a1 1 0 1 0-2 0V11H7.757a1 1 0 1 0 0 2H11v3.243a1 1 0 1 0 2 0V13h3.243a1 1 0 1 0 0-2H13V7.757Z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+      @if (duplicateError) {
+        <div class="m-duplicate-error">{{ duplicateError }}</div>
+      }
+    </div>
+  </div>
+
+  <!-- Items List -->
+  @if (declaredItems.length > 0) {
+  <div class="m-list-card">
+    <div class="m-list-title">{{ 'equipment_movement_added_items' | translate }}</div>
+    <div class="m-list-items">
+      @for (item of declaredItems; track $index) {
+      <div class="m-item">
+        <div class="m-item-name">{{ item.description }}</div>
+        <div class="m-badge" [class.in]="item.direction === 'IN'">
+          <span>{{ item.direction === 'IN' ? '▼' : '▲' }}</span>
+          {{ item.direction }}
+        </div>
+        <button class="m-delete" type="button" (click)="removeItem($index)" aria-label="Delete" [title]="'equipment_movement_delete_item_tooltip' | translate">
+          <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 24 24">
+            <path fill-rule="evenodd" d="M8.586 2.586A2 2 0 0 1 10 2h4a2 2 0 0 1 2 2v2h3a1 1 0 1 1 0 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V8a1 1 0 0 1 0-2h3V4a2 2 0 0 1 .586-1.414ZM10 6h4V4h-4v2Zm1 4a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Zm4 0a1 1 0 1 0-2 0v8a1 1 0 1 0 2 0v-8Z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- Actions -->
+  <div class="m-actions">
+    <div class="m-actions-row">
+      <button class="m-btn m-btn-grey" type="button" (click)="goBack()">
+        <span>&#8592;</span> {{ 'equipment_movement_button_back' | translate }}
+      </button>
+      <button class="m-btn m-btn-grey" type="button" (click)="skipStep()">
+        {{ 'equipment_movement_button_skip' | translate }} <span>&#8594;</span>
+      </button>
+    </div>
+    <button class="m-btn m-btn-yellow" type="button" [disabled]="continueDisabled" (click)="proceedToNext()">
+      {{ 'equipment_movement_button_continue' | translate }} <span>&#8594;</span>
+    </button>
+  </div>
+</div>
