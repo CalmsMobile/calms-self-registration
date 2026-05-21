@@ -85,7 +85,7 @@ Rules:
 - Extract full_name exactly as printed
 - Return gender in English
 - in id number remove space or other special characters
-- For phone_number: include country code if visible; remove spaces and dashes (e.g. +60123456789)
+- For phone_number: find and include country code; remove spaces and dashes (e.g. +60123456789)
 - Infer document_type (e.g. "Passport", "Driving License", "National ID", "Business Card)`;
 
     const payload = {

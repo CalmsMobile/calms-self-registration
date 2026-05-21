@@ -4353,7 +4353,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     set('visitor_id', ocr.id_number || ocr.document_number);
     set('email', ocr.email);
     set('phone', ocr.phone_number);
-    set('visitor_company', ocr.company);
+    const companyName = ocr.company_name || ocr.company || null;
+    if (companyName && !existing['visitor_company']) {
+      // visitor_company is an autocomplete — check if a matching entry exists in companyList
+      const match = this.companyList?.find((c: any) =>
+        c.visitor_comp_name?.toLowerCase() === companyName.toLowerCase()
+      );
+      patch['visitor_company'] = match ?? { visitor_comp_name: companyName };
+    }
 
     // Gender: map text to form value "0"=Female "1"=Male "2"=Others
     if (!existing['gender'] && ocr.gender) {

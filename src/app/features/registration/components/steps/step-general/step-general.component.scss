@@ -3961,13 +3961,12 @@ s
   }
 }
 
-.ocr-scan-btn
-{
-     border-radius: 21px;
-    border: 2px solid rgba(118, 115, 115, 0.6588235294);
-    width: 40px;
-    height: 39px;
-
+.ocr-scan-btn {
+  border-radius: 21px;
+  border: 2px solid rgba(118, 115, 115, 0.6588235294);
+  width: 40px;
+  height: 39px;
+  cursor: pointer;
 }
 
 :host ::ng-deep .search-profile-dialog.p-dialog {
