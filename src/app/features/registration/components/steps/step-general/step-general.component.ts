@@ -80,6 +80,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   ocrCameraStream: MediaStream | null = null;
   ocrFacingMode: 'user' | 'environment' = 'environment';
   ocrProcessing = false;
+  ocrNoDataFound = false;
 
   hosts: any[] = [];
   departmentList: any[] = [];
@@ -4168,6 +4169,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Use back camera on mobile, front on desktop
     this.ocrFacingMode = window.innerWidth <= 768 ? 'environment' : 'user';
     this.showOcrDialog = true;
+    this.ocrNoDataFound = false;
     setTimeout(() => this.startOcrCamera(), 300);
   }
 
@@ -4258,7 +4260,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.applyOcrToForm(ocr, {});
       }
 
-      this.closeOcrDialog();
+      if (!this.ocrNoDataFound) {
+        this.closeOcrDialog();
+      }
     } catch (err) {
       console.error('[OCR] Extraction failed:', err);
     } finally {
@@ -4270,7 +4274,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const branchId = this.wizardService.currentBranchID;
     const nric = ocr.id_number || ocr.document_number || null;
     const email = ocr.email || null;
-    const phone = ocr.phone || null;
+    const phone = ocr.phone_number || null;
 
     let apiVisitor: any = null;
     let matchedBy: string | null = null;
@@ -4346,10 +4350,18 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     };
 
     set('fullName', ocr.full_name);
-    set('visitor_id', ocr.id_number || ocr.document_number);
+    const rawId = ocr.id_number || ocr.document_number;
+    set('visitor_id', rawId ? rawId.replace(/[^a-zA-Z0-9]/g, '') : null);
     set('email', ocr.email);
-    set('phone', ocr.phone);
-    set('visitor_company', ocr.company);
+    set('phone', ocr.phone_number);
+    const companyName = ocr.company_name || ocr.company || null;
+    if (companyName && !existing['visitor_company']) {
+      // visitor_company is an autocomplete — check if a matching entry exists in companyList
+      const match = this.companyList?.find((c: any) =>
+        c.visitor_comp_name?.toLowerCase() === companyName.toLowerCase()
+      );
+      patch['visitor_company'] = match ?? { visitor_comp_name: companyName };
+    }
 
     // Gender: map text to form value "0"=Female "1"=Male "2"=Others
     if (!existing['gender'] && ocr.gender) {
@@ -4359,19 +4371,23 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       else patch['gender'] = '2';
     }
 
-    // Address: populate individual fields or full address
-    if (ocr.address) {
-      const addr = ocr.address;
-      set('address', addr.full || [addr.line1, addr.line2, addr.city, addr.state, addr.postal_code, addr.country].filter(Boolean).join(', '));
+    set('country', ocr.country);
+
+    if (ocr.address?.full) {
+      set('address', ocr.address.full);
     }
 
     if (Object.keys(patch).length) {
       console.log('[OCR] Patching form fields:', patch);
       this.generalForm.patchValue(patch);
+      this.ocrNoDataFound = false;
+    } else {
+      this.ocrNoDataFound = true;
     }
   }
 
   retakeOcrPhoto(): void {
+    this.ocrNoDataFound = false;
     this.ocrCapturedImage = null;
     setTimeout(() => this.startOcrCamera(), 100);
   }
