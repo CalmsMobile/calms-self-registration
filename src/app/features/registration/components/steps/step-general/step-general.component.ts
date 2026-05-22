@@ -180,6 +180,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   // Original host data for filtering
   originalHostData: any[] = [];
+  private departmentAutoSetByHost = false;
 
   // Multiple visitors functionality
   visitors: any[] = [];
@@ -1558,6 +1559,42 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return this.normalizeIdInputType(inputType) === 'N' ? 'numeric' : 'alphanumeric';
   }
 
+  private stripForbiddenChars(value: string): string {
+    return value.replace(/[<>"'`&\\]/g, '');
+  }
+
+  private applyForbiddenCharStripping(): void {
+    const textFields = [
+      'fullName', 'phone', 'visitor_id', 'visitor_company', 'visitor_address',
+      'vehicle_number', 'vehicle_brand', 'vehicle_model', 'vehicle_color',
+      'work_permit_ref', 'remarks', 'event_name'
+    ];
+    textFields.forEach(name => {
+      const ctrl = this.generalForm.get(name);
+      if (ctrl) {
+        ctrl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => {
+          if (val && typeof val === 'string') {
+            const stripped = this.stripForbiddenChars(val);
+            if (stripped !== val) ctrl.setValue(stripped, { emitEvent: false });
+          }
+        });
+      }
+    });
+    this.udfSettings.forEach((udf: any) => {
+      if (udf.Enabled && udf.UDFCtrlType === 10) {
+        const ctrl = this.generalForm.get(udf.formControlName);
+        if (ctrl) {
+          ctrl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => {
+            if (val && typeof val === 'string') {
+              const stripped = this.stripForbiddenChars(val);
+              if (stripped !== val) ctrl.setValue(stripped, { emitEvent: false });
+            }
+          });
+        }
+      }
+    });
+  }
+
   private buildVisitorIdTypeValidator(idTypeData: any): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
       const rawValue = control.value;
@@ -2609,6 +2646,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.applyVisitorIdValidationRules(null);
     }
 
+    this.applyForbiddenCharStripping();
   }
 
   getUdfOptions(apptUDFSetSeqId: number): any[] {
@@ -3512,9 +3550,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     if (!selectedHostId) {
       this.generalForm.get('hostName')?.setValue('', { emitEvent: false });
-      // Re-apply the current department filter instead of showing all hosts
-      const currentDept = this.generalForm.get('department')?.value;
-      this.onDepartmentChange({ value: currentDept || null }, true);
+      if (this.departmentAutoSetByHost) {
+        this.generalForm.get('department')?.setValue(null, { emitEvent: false });
+        this.departmentAutoSetByHost = false;
+        this.onDepartmentChange({ value: null }, true);
+      } else {
+        const currentDept = this.generalForm.get('department')?.value;
+        this.onDepartmentChange({ value: currentDept || null }, true);
+      }
       return;
     }
 
@@ -3558,6 +3601,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         if (!currentDepartment) {
           console.log('Setting department from host:', deptValue);
           this.generalForm.get('department')?.setValue(deptValue, { emitEvent: false });
+          this.departmentAutoSetByHost = true;
         }
 
         // Always filter the host list to the host's department so the dropdown narrows
@@ -3585,6 +3629,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   onDepartmentChange(event: any, skipHostClear = false): void {
     const selectedDepartment = event.value;
     console.log('Department changed to:', selectedDepartment);
+    if (!skipHostClear) this.departmentAutoSetByHost = false;
 
     if (!selectedDepartment || !this.originalHostData || this.originalHostData.length === 0) {
       // Reset to all hosts if no department selected or no original data

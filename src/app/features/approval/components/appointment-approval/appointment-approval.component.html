@@ -438,10 +438,13 @@
           <p class="modal-copy">This action cannot be undone. Please provide a reason for the rejection.</p>
         </div>
         <p class="modal-section-label">Reason for Rejection</p>
-        <textarea class="modal-textarea" placeholder="Enter reason here..." [(ngModel)]="rejectRemarks"></textarea>
+        <textarea class="modal-textarea" [class.input-error]="showRejectError" placeholder="Enter reason here..." [(ngModel)]="rejectRemarks" (input)="showRejectError = false"></textarea>
+        @if (showRejectError) {
+          <small class="error-message">You need to write something</small>
+        }
         <div class="modal-actions">
           <button class="modal-btn ghost" type="button" (click)="closeModal()" [disabled]="isSubmitting">Cancel</button>
-          <button class="modal-btn reject" type="button" (click)="reject()" [disabled]="isSubmitting || !rejectRemarks.trim()">
+          <button class="modal-btn reject" type="button" (click)="reject()" [disabled]="isSubmitting">
             {{ isSubmitting ? 'Rejecting...' : 'Reject' }}
           </button>
         </div>

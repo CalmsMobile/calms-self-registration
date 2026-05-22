@@ -108,7 +108,13 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  private stripForbiddenChars(value: string): string {
+    return value.replace(/[<>"'`&\\]/g, '');
+  }
+
   checkInputs(): void {
+    this.newItem.description = this.stripForbiddenChars(this.newItem.description);
+    this.newItem.serialNumber = this.stripForbiddenChars(this.newItem.serialNumber);
     const { description, serialNumber, direction } = this.newItem;
     const hasAny = !!description.trim() || !!serialNumber.trim();
     const mandatoryOk = (!this.isDescMandatory || !!description.trim()) &&

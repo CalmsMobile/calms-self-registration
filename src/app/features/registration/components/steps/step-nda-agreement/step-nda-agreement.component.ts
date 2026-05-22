@@ -7,7 +7,6 @@ import {
   AfterViewInit,
   HostListener
 } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Subject, takeUntil } from 'rxjs';
 import { ToastModule } from 'primeng/toast';
 import { WizardService } from '../../../../../core/services/wizard.service';
@@ -51,7 +50,6 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
 
   constructor(
     private wizardService: WizardService,
-    private sanitizer: DomSanitizer,
     private messageHelper: MessageHelperService,
     private sharedService: SharedService,
     private labelService: LabelService
@@ -95,14 +93,14 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
 
   // ---------- NDA content ----------
 
-  getNdaHtml(): SafeHtml {
+  getNdaHtml(): string {
     const settings = this.wizardService.getSettings();
     if (settings?.NdaTemplate) {
       const visitor = this.wizardService.getPrimaryVisitorNdaData();
       const na = 'N/A';
       const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
 
-      const html = settings.NdaTemplate
+      return settings.NdaTemplate
         .replace(/#CurrentDate#/gi, dateStr)
         .replace(/#VisitorName#/gi, visitor.fullName || na)
         .replace(/#NRIC#/gi, visitor.visitorId || na)
@@ -110,8 +108,6 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
         .replace(/#ContactNo#/gi, visitor.phone || na)
         .replace(/#VisitorCompany#/gi, visitor.company || na)
         .replace(/#VisitorSignature#/gi, '<span style="display:inline-block;min-width:200px;border-bottom:1px solid #333;">&nbsp;</span>');
-
-      return this.sanitizer.bypassSecurityTrustHtml(html);
     }
     return '';
   }

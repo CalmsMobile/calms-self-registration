@@ -959,7 +959,7 @@
 .modal-textarea {
   width: 100%;
   resize: none;
-  border: none;
+  border: 2px solid transparent;
   outline: none;
   border-radius: 18px;
   background: #f0f3f8;
@@ -970,6 +970,14 @@
   font-size: 17px;
 
   &::placeholder { color: #92a2bb; }
+  &.input-error { border-color: #e53935; background: #fff5f5; }
+}
+
+.error-message {
+  display: block;
+  margin-top: 6px;
+  color: #e53935;
+  font-size: 13px;
 }
 
 .file-list,

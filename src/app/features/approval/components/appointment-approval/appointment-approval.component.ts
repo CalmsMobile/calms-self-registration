@@ -43,6 +43,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   errorMessage = '';
 
   rejectRemarks = '';
+  showRejectError = false;
 
   /** 'approved' | 'rejected' | 'resubmit' | '' */
   actionResult = '';
@@ -206,7 +207,9 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   }
 
   reject() {
-    if (this.isSubmitting || !this.rejectRemarks.trim()) return;
+    if (!this.rejectRemarks.trim()) { this.showRejectError = true; return; }
+    if (this.isSubmitting) return;
+    this.showRejectError = false;
     this.isSubmitting = true;
     this.apiService.AppointmentApprovalByVisitor(
       this.seqId, 'Cancelled', this.hostIc, this.rejectRemarks, 'Rejected', this.hostSeqId, this.createdBy, this.refApptApprovalLevelSeqId

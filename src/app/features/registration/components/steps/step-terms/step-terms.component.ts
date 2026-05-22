@@ -1,7 +1,5 @@
 import { Component, EventEmitter, Input, Output, OnInit } from '@angular/core';
 import { WizardService } from '../../../../../core/services/wizard.service';
-
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 
 @Component({
@@ -15,7 +13,7 @@ export class StepTermsComponent implements OnInit {
   termsAccepted = true; // Auto-accept since user clicked agree button to get here
   @Output() termsStatus = new EventEmitter<boolean>();
 
-  constructor(private wizardService: WizardService, private sanitizer: DomSanitizer) {
+  constructor(private wizardService: WizardService) {
   }
 
   ngOnInit() {
@@ -32,12 +30,9 @@ export class StepTermsComponent implements OnInit {
   return settings?.TermsnCondEnabled || false;
 }
 
-  getSafeHtml(): SafeHtml {
+  getSafeHtml(): string {
     const settings = this.wizardService.getSettings();
-    if (settings && settings.TermsnCondTemplate) {
-      return this.sanitizer.bypassSecurityTrustHtml(settings.TermsnCondTemplate);
-    }
-    return '';
+    return settings?.TermsnCondTemplate ?? '';
   }
 
   validateTerms(): boolean {
