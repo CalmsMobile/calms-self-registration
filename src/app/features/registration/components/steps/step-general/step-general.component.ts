@@ -118,6 +118,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   showTime = true;
   masterData: any = {};
   isLoading = true;
+  private _udfSettingsReady = false;
+  private _branchDataReady = false;
   pageSettings: any[] = [];
   udfSettings: any[] = [];
   udfOptions: any[] = [];
@@ -891,8 +893,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.setupConditionalControls();
       this.applyDefaultDateTimes();
 
-      // Set loading to false after everything is initialized
-      this.isLoading = false;
+      // In appointment flow, hold the loader until branch data (titleList) is also ready
+      // so the form never flashes with concatenated "Mr.Name" in the fullName field.
+      this._udfSettingsReady = true;
+      if (this._branchDataReady || !this.isAppointmentFlow) {
+        this.isLoading = false;
+      }
     });
   }
 
@@ -1228,6 +1234,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     // Apply query parameter host filtering for appointment flow
     this.applyQueryParamHostFiltering();
+
+    // Signal that branch data (including titleList) is ready.
+    // In appointment flow the loader is held until both UDF settings and branch data arrive.
+    this._branchDataReady = true;
+    if (this._udfSettingsReady) {
+      this.isLoading = false;
+    }
   }
 
   /**
