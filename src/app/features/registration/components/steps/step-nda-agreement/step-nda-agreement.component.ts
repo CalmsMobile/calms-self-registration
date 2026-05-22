@@ -98,7 +98,20 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
   getNdaHtml(): SafeHtml {
     const settings = this.wizardService.getSettings();
     if (settings?.NdaTemplate) {
-      return this.sanitizer.bypassSecurityTrustHtml(settings.NdaTemplate);
+      const visitor = this.wizardService.getPrimaryVisitorNdaData();
+      const na = 'N/A';
+      const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+
+      const html = settings.NdaTemplate
+        .replace(/#CurrentDate#/gi, dateStr)
+        .replace(/#VisitorName#/gi, visitor.fullName || na)
+        .replace(/#NRIC#/gi, visitor.visitorId || na)
+        .replace(/#Email#/gi, visitor.email || na)
+        .replace(/#ContactNo#/gi, visitor.phone || na)
+        .replace(/#VisitorCompany#/gi, visitor.company || na)
+        .replace(/#VisitorSignature#/gi, '<span style="display:inline-block;min-width:200px;border-bottom:1px solid #333;">&nbsp;</span>');
+
+      return this.sanitizer.bypassSecurityTrustHtml(html);
     }
     return '';
   }

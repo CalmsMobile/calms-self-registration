@@ -1152,6 +1152,31 @@ export class WizardService {
     return generalData.visitor_id || '';
   }
 
+  getPrimaryVisitorNdaData(): { fullName: string; visitorId: string; email: string; phone: string; company: string } {
+    const formData = this.formDataStore.value;
+    const generalData = formData.general || {};
+    const settings = this.getSettings();
+    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
+
+    let data = generalData;
+    if (isMultipleVisitor) {
+      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
+      if (savedVisitors.length > 0) data = savedVisitors[0];
+    }
+
+    const company = typeof data.visitor_company === 'object'
+      ? (data.visitor_company?.visitor_comp_name || '')
+      : (data.visitor_company || '');
+
+    return {
+      fullName: this.buildFullName(data.title, data.fullName),
+      visitorId: data.visitor_id || '',
+      email: data.email || '',
+      phone: data.phone || '',
+      company
+    };
+  }
+
   private getCountryName(countryId: any): string {
     if (!countryId) return '';
 
