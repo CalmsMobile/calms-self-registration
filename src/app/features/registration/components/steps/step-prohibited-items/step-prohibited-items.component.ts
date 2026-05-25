@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { stripForbiddenChars } from '../../../../../shared/utils/sanitize.utils';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
@@ -108,13 +109,9 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  private stripForbiddenChars(value: string): string {
-    return value.replace(/[<>"'`&\\]/g, '');
-  }
-
   checkInputs(): void {
-    this.newItem.description = this.stripForbiddenChars(this.newItem.description);
-    this.newItem.serialNumber = this.stripForbiddenChars(this.newItem.serialNumber);
+    this.newItem.description = stripForbiddenChars(this.newItem.description);
+    this.newItem.serialNumber = stripForbiddenChars(this.newItem.serialNumber);
     const { description, serialNumber, direction } = this.newItem;
     const hasAny = !!description.trim() || !!serialNumber.trim();
     const mandatoryOk = (!this.isDescMandatory || !!description.trim()) &&

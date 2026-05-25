@@ -1,4 +1,5 @@
 ﻿import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
+import { stripForbiddenChars } from '../../../../../shared/utils/sanitize.utils';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -2929,6 +2930,28 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   private saveFormDataToWizard(): void {
     const formData = { ...this.generalForm.getRawValue() };
+
+    const textFields = [
+      'fullName', 'email', 'visitor_id', 'visitor_company', 'visitor_address',
+      'vehicle_number', 'vehicle_brand', 'vehicle_model', 'vehicle_color',
+      'work_permit_ref', 'remarks',
+    ];
+    for (const field of textFields) {
+      if (typeof formData[field] === 'string') {
+        formData[field] = stripForbiddenChars(formData[field]);
+      }
+    }
+    if (this.udfSettings) {
+      for (const udf of this.udfSettings) {
+        if (udf.Enabled && udf.UDFCtrlType === 10) {
+          const key = udf.formControlName;
+          if (typeof formData[key] === 'string') {
+            formData[key] = stripForbiddenChars(formData[key]);
+          }
+        }
+      }
+    }
+
     // Always persist savedVisitors so they survive back navigation
     if (this.isMultipleVisitorMode) {
       formData.savedVisitors = this.savedVisitors;

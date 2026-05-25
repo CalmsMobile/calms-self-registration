@@ -7,6 +7,7 @@ import {
   AfterViewInit,
   HostListener
 } from '@angular/core';
+import { stripForbiddenChars } from '../../../../../shared/utils/sanitize.utils';
 import { Subject, takeUntil } from 'rxjs';
 import { ToastModule } from 'primeng/toast';
 import { WizardService } from '../../../../../core/services/wizard.service';
@@ -99,14 +100,15 @@ export class StepNdaAgreementComponent implements OnInit, AfterViewInit, OnDestr
       const visitor = this.wizardService.getPrimaryVisitorNdaData();
       const na = 'N/A';
       const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+      const strip = (v: string | undefined) => v ? stripForbiddenChars(v) : na;
 
       return settings.NdaTemplate
         .replace(/#CurrentDate#/gi, dateStr)
-        .replace(/#VisitorName#/gi, visitor.fullName || na)
-        .replace(/#NRIC#/gi, visitor.visitorId || na)
-        .replace(/#Email#/gi, visitor.email || na)
-        .replace(/#ContactNo#/gi, visitor.phone || na)
-        .replace(/#VisitorCompany#/gi, visitor.company || na)
+        .replace(/#VisitorName#/gi, strip(visitor.fullName))
+        .replace(/#NRIC#/gi, strip(visitor.visitorId))
+        .replace(/#Email#/gi, strip(visitor.email))
+        .replace(/#ContactNo#/gi, strip(visitor.phone))
+        .replace(/#VisitorCompany#/gi, strip(visitor.company))
         .replace(/#VisitorSignature#/gi, '<span style="display:inline-block;min-width:200px;border-bottom:1px solid #333;">&nbsp;</span>');
     }
     return '';
