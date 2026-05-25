@@ -915,9 +915,11 @@
 
   <!-- Header -->
   <header class="m-header">
+    @if (canGoBackToHome) {
     <button type="button" class="m-btn-back-top" (click)="goBack()" [title]="'registration_page_button_back' | translate">
       <i class="pi pi-arrow-left"></i>
     </button>
+    }
     <div class="m-header-center">
       <img [src]="logo" alt="Logo" class="m-logo" />
       <span class="m-brand">{{ companyTitle }}</span>

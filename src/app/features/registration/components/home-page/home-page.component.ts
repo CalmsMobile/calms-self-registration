@@ -1018,7 +1018,7 @@ export class HomePageComponent implements AfterViewChecked {
 
   getPageSettings() {
     this.api.GetVisitorSelfRegistrationPageSetup(this.selectedBranch, this.wizardService.refCode || undefined)
-      .subscribe((pageSettings: any) => {
+      .subscribe(async (pageSettings: any) => {
         this.wizardService.setPageSettings(pageSettings);
         if (pageSettings?.Table?.length) {
           // Update selectedBranch with the resolved RefBranchSeqId from API
@@ -1036,8 +1036,9 @@ export class HomePageComponent implements AfterViewChecked {
 
           // Once branch is resolved from API, load categories and handle auto-selection
           if (this.isBranchFromQuery) {
-            // Now that branch is resolved, load labels/settings
-            this.getSelfRegistrationSettings();
+            // Await so that TermsnCondEnabled is populated before onCategoryChange
+            // checks shouldShowTerms() — otherwise the race causes terms to be skipped.
+            await this.getSelfRegistrationSettings();
 
             // Categories are loaded by loadBranchHostDataAsync via Table2
 

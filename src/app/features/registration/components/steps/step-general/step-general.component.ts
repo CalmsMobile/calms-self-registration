@@ -219,9 +219,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   get canGoBackToHome(): boolean {
-    return !this.wizardService.appointmentCode &&
-      !this.wizardService.refCatCode &&
-      !this.wizardService.categoryCodeFromQuery;
+    const selfRegSettings = this.wizardService.getSelfRegistrationSettings();
+    if (!selfRegSettings?.TermsnCondEnabled) return false;
+    return !!this.labelService.getLabel('terms_and_conditions_tc', 'caption');
   }
 
   constructor(
@@ -4170,26 +4170,24 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    if (this.canGoBackToHome) {
-      const queryParams: any = {};
-      if (this.wizardService.refCode) {
-        queryParams['bc'] = this.wizardService.refCode;
-      }
-      if (this.wizardService.hcParam) {
-        queryParams['hc'] = this.wizardService.hcParam;
-      }
-      // Pass current branch/category so home page can restore selections
-      if (!this.wizardService.refCode && this.wizardService.currentBranchID) {
-        queryParams['_branchId'] = this.wizardService.currentBranchID;
-      }
-      if (!this.wizardService.refCatCode && this.wizardService.selectedVisitCategory) {
-        queryParams['_catId'] = this.wizardService.selectedVisitCategory;
-      }
-      this.router.navigate(['/'], Object.keys(queryParams).length > 0 ? { queryParams } : {});
-    } else {
-      const prev = this.wizardService.getCurrentStepIndex() - 1;
-      if (prev >= 0) this.wizardService.requestStepChange(prev);
+    if (this.wizardService.originalQueryString) {
+      this.router.navigateByUrl('/' + this.wizardService.originalQueryString);
+      return;
     }
+    const queryParams: any = {};
+    if (this.wizardService.refCode) {
+      queryParams['bc'] = this.wizardService.refCode;
+    }
+    if (this.wizardService.hcParam) {
+      queryParams['hc'] = this.wizardService.hcParam;
+    }
+    if (!this.wizardService.refCode && this.wizardService.currentBranchID) {
+      queryParams['_branchId'] = this.wizardService.currentBranchID;
+    }
+    if (!this.wizardService.refCatCode && this.wizardService.selectedVisitCategory) {
+      queryParams['_catId'] = this.wizardService.selectedVisitCategory;
+    }
+    this.router.navigate(['/'], Object.keys(queryParams).length > 0 ? { queryParams } : {});
   }
 
   goNext(): void {
