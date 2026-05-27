@@ -648,13 +648,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     endDateControl?.markAsTouched();
   }
 
-  onAppointmentDateSelect(selectedDate: Date) {
+  onAppointmentDateSelect(selectedDate: Date, restoreSlotCode?: string | null) {
     const branchId = this.wizardService.currentBranchID;
     const categoryId = this.wizardService.selectedVisitCategory;
 
     if (selectedDate && branchId && categoryId) {
       const formattedDate = this.formatDateToYYYYMMDD(selectedDate);
-      this.loadTimeSlots(formattedDate, branchId, categoryId);
+      this.loadTimeSlots(formattedDate, branchId, categoryId, restoreSlotCode);
     }
 
     // Clear time slot when date changes
@@ -856,13 +856,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return `${year}-${month}-${day}`;
   }
 
-  private loadTimeSlots(currentDate: string, branchId: string, categoryId: string) {
+  private loadTimeSlots(currentDate: string, branchId: string, categoryId: string, restoreSlotCode?: string | null) {
     this.timeSlotsLoaded = false;
     const catCodeEnc = this.wizardService.refCatCode || undefined;
     this.api.GetApptTimeSlot(currentDate, branchId, categoryId, catCodeEnc).subscribe((response: any) => {
       if (response?.Table?.length) {
         this.timeSlotList = response.Table;
         this.setupControl('timeSlot', true, true);
+        this.autoSelectSlot(restoreSlotCode);
       } else {
         this.timeSlotList = [];
         this.setupControl('timeSlot', true, false);
@@ -873,6 +874,28 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
       this.timeSlotsLoaded = true;
     });
+  }
+
+  private autoSelectSlot(restoreSlotCode?: string | null): void {
+    let slot: any = null;
+
+    if (restoreSlotCode) {
+      slot = this.timeSlotList.find((s: any) => s.Code === restoreSlotCode);
+    } else if (this.isAppointmentFlow) {
+      const startTime = this.visitorAckData?.visitorData?.startTime;
+      if (startTime) {
+        const d = new Date(startTime);
+        const hhmm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        slot = this.timeSlotList.find((s: any) => s.Code?.startsWith(hhmm));
+      }
+    }
+
+    if (slot) {
+      this.generalForm.get('timeSlot')?.setValue(slot.Code);
+      const parts = (slot.Code as string).split('-');
+      this.timeSlotStartTime = parts[0]?.trim() || null;
+      this.timeSlotEndTime = parts[1]?.trim() || null;
+    }
   }
 
   private loadUdfSettings() {
@@ -946,14 +969,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           // loading manually here so the time slot dropdown becomes visible.
           if (this.enableVimsApptTimeSlot && this.isAppointmentFlow) {
             const prefilledDate = this.generalForm.get('appointmentDate')?.value;
-            // Preserve the pre-filled slot ID before onAppointmentDateSelect clears it
-            const prefilledSlotId = this.visitorAckData?.visitorData?.appTimeSlotSeqID || null;
+            // Pass restoreSlotCode so autoSelectSlot runs inside the async callback
+            // after timeSlotList is populated. When AppTimeSlotSeqID is null, autoSelectSlot
+            // falls back to matching START_TIME against slot Code (e.g. "10:05-11:05").
+            const prefilledSlotCode = this.visitorAckData?.visitorData?.appTimeSlotSeqID || null;
             if (prefilledDate) {
-              this.onAppointmentDateSelect(prefilledDate instanceof Date ? prefilledDate : new Date(prefilledDate));
-              // Restore the slot ID after slots load (onAppointmentDateSelect clears timeSlot)
-              if (prefilledSlotId) {
-                this.generalForm.get('timeSlot')?.setValue(prefilledSlotId);
-              }
+              this.onAppointmentDateSelect(
+                prefilledDate instanceof Date ? prefilledDate : new Date(prefilledDate),
+                prefilledSlotCode
+              );
             }
           }
         } else {
@@ -1965,7 +1989,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       meeting_location: [savedData.meeting_location || (isPreFilledData ? (visitorData.roomId?.toString() || '') : '')],
       floor: [isPreFilledData ? (visitorData.floorId || savedData.floor || null) : (savedData.floor || null)],
       visitor_address: [isPreFilledData ? (visitorData.address || savedData.visitor_address || '') : (savedData.visitor_address || '')],
-      country: [isPreFilledData ? (visitorData.countryId || savedData.country || null) : (savedData.country || null)],
+      country: [isPreFilledData ? (this.resolveCountrySeqId(visitorData.countryId) || savedData.country || null) : (savedData.country || null)],
       work_permit_ref: [savedData.work_permit_ref || ''],
       event_name: [savedData.event_name || ''],
       remarks: [isPreFilledData ? (visitorData.remarks || savedData.remarks || '') : (savedData.remarks || '')],
@@ -2986,6 +3010,16 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   onExistingGuestClick(): void {
     this.showReturningVisitorPopup = true;
+  }
+
+  private resolveCountrySeqId(value: any): any {
+    if (!value) return null;
+    const match = this.countryList.find((c: any) =>
+      c.CountrySeqId === value || c.CountrySeqId?.toString() === value?.toString() ||
+      c.ShortName === value || c.Code === value ||
+      c.CountryCode === value || c.Name === value || c.CountryName === value
+    );
+    return match?.CountrySeqId ?? value;
   }
 
   private applyVisitorToForm(visitor: any): void {

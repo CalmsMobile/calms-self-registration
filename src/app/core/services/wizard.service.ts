@@ -717,11 +717,16 @@ export class WizardService {
     };
 
     const buildVisitorEntry = (data: any, isSelf: boolean) => {
-      const companyId = extractId(data.visitor_company, 'visitor_comp_code', 'id');
+      const companyId = (typeof data.visitor_company === 'object' && data.visitor_company !== null)
+        ? (data.visitor_company.visitor_comp_code || data.visitor_company.id || '') : '';
       const companyDesc = (typeof data.visitor_company === 'object' && data.visitor_company !== null)
-        ? (data.visitor_company.visitor_comp_name || '') : '';
+        ? (data.visitor_company.visitor_comp_name || '')
+        : (data.visitor_company || '');
       const countryId = extractId(data.country, 'CountrySeqId', 'id');
-      const countryName = this.getCountryName(countryId) || '';
+      const masterData = this.getmasterData();
+      const countryObj = masterData?.Table13?.find((c: any) => c.CountrySeqId?.toString() === countryId?.toString());
+      const countryShortName = countryObj?.ShortName || '';
+      const countryName = countryObj?.Name || '';
       const genderId = extractId(data.gender, 'Value', 'id');
       const genderDesc = (typeof data.gender === 'object' && data.gender !== null)
         ? (data.gender.Name || '') : (data.gender || '');
@@ -746,7 +751,7 @@ export class WizardService {
         VehicleBrand: data.vehicle_brand || '',
         VehicleModel: data.vehicle_model || '',
         VehicleColor: data.vehicle_color || '',
-        CountryId: countryName,
+        CountryId: countryShortName,
         CountryDesc: countryName,
         Address: data.visitor_address || '',
         VUDF1: this.normalizeUDFValue(data.VUDF1),
@@ -1177,15 +1182,4 @@ export class WizardService {
     };
   }
 
-  private getCountryName(countryId: any): string {
-    if (!countryId) return '';
-
-    const masterData = this.getmasterData();
-    if (masterData && masterData.Table13) {
-      const country = masterData.Table13.find((c: any) => c.CountrySeqId.toString() === countryId.toString());
-      return country ? country.Name : '';
-    }
-
-    return '';
-  }
 }
