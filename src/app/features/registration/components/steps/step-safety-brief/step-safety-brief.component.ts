@@ -178,8 +178,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
       this.showPlayButton = true;
       this.showMessage({
         severity: 'error',
-        summary: this.labelService.getLabel('safety_briefing_video_play_error_title', 'caption') || 'Playback Error',
-        detail: this.labelService.getLabel('safety_briefing_video_play_error_message', 'caption') || 'Please click play to start the video'
+        summary: this.labelService.getLabel('safety_briefing_video_video_play_error_title', 'caption') || 'Playback Error',
+        detail: this.labelService.getLabel('safety_briefing_video_video_play_error_message', 'caption') || 'Please click play to start the video'
       });
     }
   }
