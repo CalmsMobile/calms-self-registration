@@ -546,6 +546,17 @@ export class WizardService {
       const year = d.getFullYear();
       return `${month}-${day}-${year} ${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
     };
+
+    const formatDateOnlyForAPI = (date: any): string => {
+      if (!date) return '';
+      const d = new Date(date);
+      if (isNaN(d.getTime())) return '';
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${month}-${day}-${year}`;
+    };
+
     // Strip data URL prefix — send raw base64 only
     const stripBase64Prefix = (src: string): string => {
       if (!src) return '';
@@ -582,6 +593,10 @@ export class WizardService {
       // Main visitor info - get from the first visitor in the list
       FullName: this.getPrimaryVisitorFullName(formData),
       IdentityNo: this.getPrimaryVisitorIdentityNo(formData),
+      Visitor_IC: this.getPrimaryVisitorIdentityNo(formData),
+      ID_TYPE: this.getPrimaryVisitorIdType(formData),
+      ID_TYPE_DESC: this.resolveIdTypeDescription(this.getPrimaryVisitorIdType(formData)),
+      ID_EXPIRED_DATE: formatDateOnlyForAPI(this.getPrimaryVisitorIdExpiredDate(formData)),
 
       // Lists as JSON strings
       VisitorsList: this.getVisitorsList(formData),
@@ -742,7 +757,8 @@ export class WizardService {
         GenderId: genderId,
         GenderDesc: genderDesc,
         Email: data.email || '',
-        ID_TYPE: data.visitor_id_type || '',
+        ID_TYPE: this.resolveIdType(data.visitor_id_type || data.idType),
+        ID_TYPE_DESC: this.resolveIdTypeDescription(data.visitor_id_type || data.idType),
         ID_EXPIRED_DATE: data.id_expired_date || data.expired_date || '',
         CompanyId: companyId,
         CompanyDesc: companyDesc,
@@ -1180,6 +1196,91 @@ export class WizardService {
       phone: data.phone || '',
       company
     };
+  }
+
+  private getPrimaryVisitorIdType(formData: any): string {
+    const settings = this.getSettings();
+    const generalData = formData.general || {};
+    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
+    let idType = '';
+    if (isMultipleVisitor) {
+      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
+      if (savedVisitors.length > 0) {
+        idType = savedVisitors[0].visitor_id_type || savedVisitors[0].idType || '';
+      }
+    } else {
+      idType = generalData.visitor_id_type || '';
+    }
+    return this.resolveIdType(idType);
+  }
+
+  private getPrimaryVisitorIdExpiredDate(formData: any): any {
+    const settings = this.getSettings();
+    const generalData = formData.general || {};
+    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
+    if (isMultipleVisitor) {
+      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
+      if (savedVisitors.length > 0) {
+        return savedVisitors[0].id_expired_date || savedVisitors[0].expired_date || null;
+      }
+    }
+    return generalData.id_expired_date || generalData.expired_date || null;
+  }
+
+  resolveIdType(idTypeVal: any): string {
+    if (!idTypeVal) {
+      const master = this.getmasterData();
+      const idTypes = master?.Table12 || master?.Table4 || [];
+      if (idTypes.length > 0) {
+        const defaultType = idTypes.find((t: any) => t.IS_DEFAULT === true || t.IS_DEFAULT_TYPE === true);
+        if (defaultType) {
+          return defaultType.ID_TYPECODE || defaultType.SEQ_ID?.toString() || '';
+        }
+        return idTypes[0].ID_TYPECODE || idTypes[0].SEQ_ID?.toString() || '';
+      }
+      return '';
+    }
+
+    const normalized = String(idTypeVal).trim();
+    const master = this.getmasterData();
+    const idTypes = master?.Table12 || master?.Table4 || [];
+    if (idTypes.length > 0) {
+      const codeMatch = idTypes.find((t: any) =>
+        String(t.ID_TYPECODE ?? '').trim() === normalized ||
+        String(t.SEQ_ID ?? '').trim() === normalized
+      );
+      if (codeMatch) {
+        return codeMatch.ID_TYPECODE || codeMatch.SEQ_ID?.toString() || '';
+      }
+      const descMatch = idTypes.find((t: any) =>
+        t.IDTYPEDESCRIPTION?.toLowerCase() === normalized.toLowerCase() ||
+        t.IDTYPEDESCRIPTION?.toLowerCase().includes(normalized.toLowerCase())
+      );
+      if (descMatch) {
+        return descMatch.ID_TYPECODE || descMatch.SEQ_ID?.toString() || '';
+      }
+    }
+    return normalized;
+  }
+
+  resolveIdTypeDescription(idTypeVal: any): string {
+    const master = this.getmasterData();
+    const idTypes = master?.Table12 || master?.Table4 || [];
+    if (!idTypes.length) return '';
+
+    if (!idTypeVal) {
+      const defaultType = idTypes.find((t: any) => t.IS_DEFAULT === true || t.IS_DEFAULT_TYPE === true);
+      return (defaultType || idTypes[0])?.IDTYPEDESCRIPTION || '';
+    }
+
+    const normalized = String(idTypeVal).trim();
+    const match = idTypes.find((t: any) =>
+      String(t.ID_TYPECODE ?? '').trim() === normalized ||
+      String(t.SEQ_ID ?? '').trim() === normalized
+    ) || idTypes.find((t: any) =>
+      t.IDTYPEDESCRIPTION?.toLowerCase() === normalized.toLowerCase()
+    );
+    return match?.IDTYPEDESCRIPTION || '';
   }
 
 }
