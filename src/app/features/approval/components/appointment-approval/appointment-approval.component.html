@@ -215,12 +215,6 @@
               <div><p class="detail-label">Phone</p><p class="detail-value">{{ appointmentData.TELEPHONE_NO }}</p></div>
             </article>
           }
-          @if (appointmentData?.VISITOR_IC) {
-            <article class="detail-item">
-              <div class="detail-icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h6M14 14h4"/></svg></div>
-              <div><p class="detail-label">{{ appointmentData?.ID_TYPE || 'ID' }}</p><p class="detail-value">{{ appointmentData.VISITOR_IC }}</p></div>
-            </article>
-          }
      
           @if (appointmentData?.WorkPermitRef) {
             <article class="detail-item">

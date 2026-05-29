@@ -271,6 +271,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.settings.AptEndTime = selfRegSettings.AptEndTime ?? this.settings.AptEndTime ?? '';
         this.settings.AllowMultipleBooking = selfRegSettings.AllowMultipleBooking ?? this.settings.AllowMultipleBooking;
         this.settings.EnableIDOCRScan = selfRegSettings.EnableIDOCRScan ?? this.settings.EnableIDOCRScan ?? false;
+        this.settings.MultipleVisitorEnabled = selfRegSettings.MultipleVisitorEnabled ?? this.settings.MultipleVisitorEnabled;
       }
       this.isSingaporePDPARequired = settings?.IsSingaporePDPARequired === true;
       this.loadUdfSettings();
@@ -300,6 +301,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
       if (sr.EnableIDOCRScan !== undefined) {
         this.settings = { ...this.settings, EnableIDOCRScan: sr.EnableIDOCRScan };
+      }
+      if (sr.MultipleVisitorEnabled !== undefined) {
+        this.settings = { ...this.settings, MultipleVisitorEnabled: sr.MultipleVisitorEnabled };
+        this.isMultipleVisitorMode = sr.MultipleVisitorEnabled;
       }
     });
 

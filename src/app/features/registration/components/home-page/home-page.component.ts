@@ -624,7 +624,8 @@ export class HomePageComponent implements AfterViewChecked {
             EnableWhitelistValidation: tcSettings.EnableWhitelistValidation ?? false,
             AptEndTime: tcSettings.AptEndTime || '',
             AllowMultipleBooking: tcSettings.AllowMultipleBooking ?? false,
-            EnableIDOCRScan: tcSettings.EnableIDOCRScan ?? false
+            EnableIDOCRScan: tcSettings.EnableIDOCRScan ?? false,
+            MultipleVisitorEnabled: tcSettings.MultipleVisitorEnabled ?? false
           });
          
           // Check AllowOnlywithVC flag
@@ -986,7 +987,8 @@ export class HomePageComponent implements AfterViewChecked {
               ...allSettings,
               SearchExistingVisitor: selfRegSettings.SearchExistingVisitor ?? allSettings.SearchExistingVisitor,
               EnableWhitelistValidation: selfRegSettings.EnableWhitelistValidation ?? allSettings.EnableWhitelistValidation,
-              AptEndTime: selfRegSettings.AptEndTime ?? allSettings.AptEndTime ?? ''
+              AptEndTime: selfRegSettings.AptEndTime ?? allSettings.AptEndTime ?? '',
+              MultipleVisitorEnabled: selfRegSettings.MultipleVisitorEnabled ?? allSettings.MultipleVisitorEnabled
             };
           }
           this.wizardService.setSettings(allSettings);
