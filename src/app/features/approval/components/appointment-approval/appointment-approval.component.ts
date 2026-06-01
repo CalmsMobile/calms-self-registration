@@ -34,6 +34,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   ndaUrl: SafeResourceUrl = '';
   itemCaptions = { desc: 'Equipment Detail', serial: 'Serial Number', type: 'Type' };
   approvalSteps: any[] = [];
+  udfCaptionMap: { [formControlName: string]: string } = {};
 
   createdBy: number | null = null;
   refApptApprovalLevelSeqId: number | null = null;
@@ -97,11 +98,29 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
         this.createdBy = this.appointmentData?.CreatedBy ?? null;
         this.refApptApprovalLevelSeqId = this.appointmentData?.RefApptApprovalLevelSeqId ?? null;
 
+        const branchConfig = res.detail?.Table4?.[0] || {};
+        const branchId = this.appointmentData?.RefBranchSeqId
+          || this.appointmentData?.BranchSeqId
+          || this.appointmentData?.Branch
+          || this.appointmentData?.BRANCH_ID
+          || branchConfig?.RefBranchSeqId
+          || branchConfig?.BranchSeqId
+          || branchConfig?.SeqId
+          || this.clientConfig?.BranchSeqId
+          || this.clientConfig?.RefBranchSeqId
+          || this.clientConfig?.SeqId
+          || '';
+        console.log('[UDF] branchId resolved:', branchId,
+          '\n  appointmentData keys:', Object.keys(this.appointmentData || {}),
+          '\n  clientConfig keys:', Object.keys(this.clientConfig || {}),
+          '\n  branchConfig keys:', Object.keys(branchConfig));
+
         return forkJoin({
           docs:  this.apiService.GetVisitorDocsBySeqId(this.seqId).pipe(catchError(() => of(null))),
           items: this.apiService.GetVisitorItemChecklistBySeqId(this.seqId).pipe(catchError(() => of(null))),
           qna:   this.apiService.GetVisitorQuestionariesByAppointmentId(this.seqId).pipe(catchError(() => of(null))),
-          nda:   this.apiService.GetVisitorNDABySeqId(this.seqId).pipe(catchError(() => of(null)))
+          nda:   this.apiService.GetVisitorNDABySeqId(this.seqId).pipe(catchError(() => of(null))),
+          udf:   branchId ? this.apiService.GetUDFDetails(branchId).pipe(catchError(() => of(null))) : of(null)
         });
       })
     ).subscribe({
@@ -109,6 +128,12 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
         this.questionnaireData = res.qna?.Table  || [];
         this.docsData        = res.docs?.Table1 || res.docs?.Table  || [];
         this.itemsData       = res.items?.Table || [];
+        this.udfCaptionMap = {};
+        (res.udf?.Table || []).forEach((udf: any) => {
+          if (udf.formControlName) {
+            this.udfCaptionMap[udf.formControlName] = udf.Caption || udf.UDFName;
+          }
+        });
         this.ndaDoc = res.nda?.Table?.[0]?.NDADocument || '';
         if (this.ndaDoc) {
           const base = environment.apiURL.replace(/\/api\/vims$/i, '');
@@ -381,9 +406,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     for (let i = 1; i <= 10; i++) {
       const val = this.appointmentData['VUDF' + i];
       if (val !== null && val !== undefined && val !== '') {
-        const label = this.appointmentData['VUDF' + i + 'Caption'] ||
-                      this.appointmentData['VUDF' + i + '_Caption'] ||
-                      `Visitor UDF ${i}`;
+        const label = this.udfCaptionMap['VUDF' + i] || `Visitor UDF ${i}`;
         fields.push({ label, value: this.formatUDFDisplayValue(val) });
       }
     }
@@ -396,9 +419,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     for (let i = 1; i <= 10; i++) {
       const val = this.appointmentData['UDF' + i];
       if (val !== null && val !== undefined && val !== '') {
-        const label = this.appointmentData['UDF' + i + 'Caption'] ||
-                      this.appointmentData['UDF' + i + '_Caption'] ||
-                      `Appointment UDF ${i}`;
+        const label = this.udfCaptionMap['AUDF' + i] || `Appointment UDF ${i}`;
         fields.push({ label, value: this.formatUDFDisplayValue(val) });
       }
     }

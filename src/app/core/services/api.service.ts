@@ -45,7 +45,13 @@ export class ApiService {
   GetUDFDetails(psBranch: string) {
     const loParam = { "RefBranchSeqId": psBranch };
     return this.apiBase.post(`${this.baseUrl}/GetUDFDetails`, loParam).pipe(
-      map((data: any) => {
+      map((rawData: any) => {
+        // Actual API: [{ Data: { AppointmentUDFSettings, VisitorUDFSettings } }]
+        // Mock/flat:  { AppointmentUDFSettings, VisitorUDFSettings }
+        const data = Array.isArray(rawData)
+          ? (rawData[0]?.Data || rawData[0] || {})
+          : rawData;
+
         const table: any[] = [];
         const table1: any[] = [];
         let globalIndex = 0;
