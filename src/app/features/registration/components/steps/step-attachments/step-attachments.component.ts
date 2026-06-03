@@ -7,9 +7,10 @@ import { LabelService } from '../../../../../core/services/label.service';
 import { MessageHelperService } from '../../../../../core/services/message-helper.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, switchMap, takeUntil } from 'rxjs';
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import { environment } from '../../../../../../environments/environment';
+import { FileUploadService } from '../../../../../core/services/file-upload.service';
 
 interface DocumentType {
   VisitorAttachSeqId: string;
@@ -59,6 +60,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
   constructor(
     private wizardService: WizardService,
     private http: HttpClient,
+    private fileUploadService: FileUploadService,
     private sharedService: SharedService,
     private messageHelper: MessageHelperService,
     private labelService: LabelService
@@ -232,20 +234,32 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     this.attachments[docId].trackerId = trackerId;
     this.attachments[docId].uploaded = false;
 
-    this.uploadFileToHandler(file, trackerId, docId);
+    this.uploadFileToHandler(file, docId);
     input.value = '';
   }
 
-  private uploadFileToHandler(file: File, trackerId: string, docId: string): void {
-    const formData = new FormData();
-    formData.append('trackerId', trackerId);
-    formData.append('temp', file, file.name);
+  private uploadFileToHandler(file: File, docId: string): void {
+    const imageExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+    const ext = '.' + (file.name.split('.').pop()?.toLowerCase() ?? '');
+    const isImage = imageExts.includes(ext) || file.type.startsWith('image/');
 
-    const uploadUrl = `${environment.proURL}Handler/ImageChunkHandler.ashx?op=profile&ac=upload&nologin=1&isResize=1`;
+    const validate$ = isImage
+      ? this.fileUploadService.uploadImage(file)
+      : this.fileUploadService.uploadDocument(file);
 
     this.attachments[docId].uploadProgress = 0;
 
-    this.http.post(uploadUrl, formData, { reportProgress: true, observe: 'events' }).pipe(takeUntil(this.destroy$)).subscribe({
+    validate$.pipe(
+      switchMap(() => {
+        const trackerId = this.attachments[docId].trackerId || '';
+        const formData = new FormData();
+        formData.append('trackerId', trackerId);
+        formData.append('temp', file, file.name);
+        const uploadUrl = `${environment.proURL}Handler/ImageChunkHandler.ashx?op=profile&ac=upload&nologin=1&isResize=1`;
+        return this.http.post(uploadUrl, formData, { reportProgress: true, observe: 'events' });
+      }),
+      takeUntil(this.destroy$)
+    ).subscribe({
       next: (event: any) => {
         if (event.type === HttpEventType.UploadProgress && event.total) {
           this.attachments[docId].uploadProgress = Math.round(100 * event.loaded / event.total);
@@ -256,8 +270,14 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {
+        this.attachments[docId].file = null;
+        this.attachments[docId].trackerId = undefined;
         this.attachments[docId].uploaded = false;
         this.attachments[docId].uploadProgress = undefined;
+        const msg = this.labelService.getLabel('documents_upload_file_invalid_alert', 'caption')
+          || 'Invalid file. Please upload a valid image or document.';
+        this.messageHelper.warn(msg, 4000);
+        this.saveFormData();
       }
     });
   }

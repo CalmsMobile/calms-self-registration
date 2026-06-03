@@ -20,6 +20,7 @@ import { filter, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../../core/services/api.service';
 import { LabelService } from '../../../../../core/services/label.service';
 import { OcrService } from '../../../../../core/services/ocr.service';
+import { FileUploadService } from '../../../../../core/services/file-upload.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { SharedService } from '../../../../../shared/shared.service';
@@ -233,7 +234,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     private labelService: LabelService,
     private sharedService: SharedService,
     private router: Router,
-    private ocrService: OcrService
+    private ocrService: OcrService,
+    private fileUploadService: FileUploadService
   ) {
     this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
     this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
@@ -3316,7 +3318,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       reader.onload = (e: any) => {
         if (closeDialog) {
           // Show uploaded image as preview in the dialog (same UX as camera capture).
-          // useCapture() will pick up pendingUploadFile to avoid re-encoding from base64.
+          // useCapture() will call uploadImage before committing.
           this.pendingUploadFile = file;
           this.capturedImage = e.target.result;
           this.stopCamera();
@@ -3324,15 +3326,23 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           return;
         }
 
-        const imageUrl = this.sanitizer.bypassSecurityTrustUrl(e.target.result);
-        if (this.isMultipleVisitorMode && visitorIndex !== undefined) {
-          this.visitorsArray.at(visitorIndex).get('profile')?.setValue(file);
-          this.profileImage = imageUrl;
-          this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
-        } else {
-          this.profileImage = imageUrl;
-          this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
-        }
+        this.fileUploadService.uploadImage(file).subscribe({
+          next: () => {
+            const imageUrl = this.sanitizer.bypassSecurityTrustUrl(e.target.result);
+            if (this.isMultipleVisitorMode && visitorIndex !== undefined) {
+              this.visitorsArray.at(visitorIndex).get('profile')?.setValue(file);
+              this.profileImage = imageUrl;
+              this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
+            } else {
+              this.profileImage = imageUrl;
+              this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
+            }
+          },
+          error: () => {
+            const alert = this.getAlert('registration_page_image_type_invalid');
+            this.showMessage({ severity: 'error', detail: alert.detail || 'Invalid image file.' });
+          }
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -3486,8 +3496,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   useCapture(): void {
     if (!this.capturedImage) return;
     const base64 = this.capturedImage;
-    const imageUrl = this.sanitizer.bypassSecurityTrustUrl(base64);
-    this.profileImage = imageUrl;
     // Use original uploaded File if available, otherwise convert from base64 (camera capture)
     let file: File;
     if (this.pendingUploadFile) {
@@ -3501,16 +3509,27 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
       file = new File([ab], 'photo.jpg', { type: mimeType });
     }
-    this.generalForm.patchValue({ profile: file, profilePreview: base64 });
-    // In multi-visitor mode, sync the captured photo back to the corresponding savedVisitor
-    // so back-navigation can restore it and show 'preview' mode in the dialog.
-    if (this.isMultipleVisitorMode && this.savedVisitors.length > 0) {
-      const targetIdx = this.savedVisitors.length - 1;
-      this.savedVisitors[targetIdx] = { ...this.savedVisitors[targetIdx], profile: file, profilePreview: base64 };
-      this.saveFormDataToWizard();
-    }
-    this.closePhotoCaptureDialog();
-    this.executePendingAction();
+
+    this.fileUploadService.uploadImage(file).subscribe({
+      next: () => {
+        const imageUrl = this.sanitizer.bypassSecurityTrustUrl(base64);
+        this.profileImage = imageUrl;
+        this.generalForm.patchValue({ profile: file, profilePreview: base64 });
+        // In multi-visitor mode, sync the captured photo back to the corresponding savedVisitor
+        // so back-navigation can restore it and show 'preview' mode in the dialog.
+        if (this.isMultipleVisitorMode && this.savedVisitors.length > 0) {
+          const targetIdx = this.savedVisitors.length - 1;
+          this.savedVisitors[targetIdx] = { ...this.savedVisitors[targetIdx], profile: file, profilePreview: base64 };
+          this.saveFormDataToWizard();
+        }
+        this.closePhotoCaptureDialog();
+        this.executePendingAction();
+      },
+      error: () => {
+        const alert = this.getAlert('registration_page_image_type_invalid');
+        this.showMessage({ severity: 'error', detail: alert.detail || 'Invalid image file.' });
+      }
+    });
   }
 
   skipPhoto(): void {
