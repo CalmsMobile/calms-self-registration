@@ -3038,9 +3038,45 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const countryValue = matchedCountry?.CountrySeqId ?? visitor.Country ?? '';
     const idExpired = visitor.IDExpired ? new Date(visitor.IDExpired) : null;
 
+    // Strip title prefix from VisitorName (e.g. "Puan. Sofea" → title="Puan.", name="Sofea")
+    let titleValue = visitor.Title || visitor.Title1 || '';
+    let fullNameValue = visitor.VisitorName || '';
+    if (fullNameValue && this.titleList.length > 0) {
+      const dotIndex = fullNameValue.indexOf('.');
+      if (dotIndex > 0) {
+        const prefix = fullNameValue.substring(0, dotIndex).trim();
+        const nameAfter = fullNameValue.substring(dotIndex + 1).trim();
+        const match = this.titleList.find((t: any) => {
+          const tVal: string = (t.Title || '').replace(/\.+$/, '').trim();
+          return tVal.toLowerCase() === prefix.toLowerCase();
+        });
+        if (match) {
+          titleValue = match.Title;
+          fullNameValue = nameAfter;
+        }
+      }
+    }
+
+    // Resolve ID type: API may return a description string instead of the code
+    let idTypeValue = visitor.IDType || '';
+    if (idTypeValue && this.idTypeList.length > 0) {
+      const codeMatch = this.idTypeList.find((t: any) => t.ID_TYPECODE === idTypeValue);
+      if (!codeMatch) {
+        const descMatch = this.idTypeList.find((t: any) =>
+          t.IDTYPEDESCRIPTION?.toLowerCase() === idTypeValue.toLowerCase() ||
+          t.IDTYPEDESCRIPTION?.toLowerCase().includes(idTypeValue.toLowerCase())
+        );
+        if (descMatch) idTypeValue = descMatch.ID_TYPECODE;
+      }
+    }
+
+    // Gender: API returns GenderId as a number (0=Female, 1=Male, 2=Others)
+    const genderValue = visitor.GenderId != null ? String(visitor.GenderId)
+      : visitor.Gender != null ? String(visitor.Gender) : null;
+
     this.generalForm.patchValue({
-      fullName: visitor.VisitorName || '',
-      title: visitor.Title || visitor.Title1 || '',
+      fullName: fullNameValue,
+      title: titleValue,
       visitor_id: visitor.att_visitor_id || '',
       visitor_company: visitor.VisitorCompany || '',
       email: visitor.Email || '',
@@ -3048,7 +3084,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       country: countryValue,
       vehicle_number: visitor.VehicleNo || '',
       id_expired_date: idExpired,
-      visitor_id_type: visitor.IDType || ''
+      visitor_id_type: idTypeValue,
+      gender: genderValue,
+      visitor_address: visitor.Address || ''
     });
 
     this.udfSettings.forEach((udf: any) => {
@@ -4378,16 +4416,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   private async runOcr(dataUrl: string): Promise<void> {
     this.ocrProcessing = true;
-    console.log('[OCR] Starting extraction...');
     try {
       const result = await this.ocrService.extractFromDataUrl(dataUrl);
-      const ocr = result.structuredData;
-      console.group('[OCR] Result');
-      console.log('Structured Data:', ocr);
-      console.log('Raw Text:', result.rawText);
-      console.log('Token Usage:', result.tokenUsage);
-      console.log('Processing Time:', result.processingTimeMs + 'ms');
-      console.groupEnd();
+      const ocr = result.data;
+      console.log('[OCR] Result:', ocr);
 
       if (!ocr) return;
 

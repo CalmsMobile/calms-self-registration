@@ -605,7 +605,7 @@ export class WizardService {
           MaterialDesc: item.description || item.MaterialDesc || '',
           SerialNo: item.serialNumber || item.SerialNo || '',
           MovementType: item.direction || item.MovementType || '',
-          ChecklistSeqId: item.ChecklistSeqId || ''
+          ChecklistSeqId: item.ChecklistSeqId ?? 0
         }))
       ),
       AttachmentList: this.formatAttachmentList(formData.attachments || {}),

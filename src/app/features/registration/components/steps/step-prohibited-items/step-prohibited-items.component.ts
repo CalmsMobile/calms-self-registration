@@ -93,7 +93,7 @@ export class StepProhibitedItemsComponent implements OnInit, OnDestroy {
         this.declaredItems = items.map((item: any) => ({
           description: item.MaterialDesc || '',
           serialNumber: item.SerialNo || '',
-          direction: item.MovementType || '',
+          direction: item.MovementType?.toLowerCase() === 'in' ? 'In' : item.MovementType?.toLowerCase() === 'out' ? 'Out' : (item.MovementType || ''),
           ChecklistSeqId: item.ChecklistSeqId
         }));
         this.saveFormData();
