@@ -692,7 +692,7 @@
 
      
       <!-- 20 & 21. Appointment Start / End Datetime — schedule dialog trigger -->
-      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
+      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot && !isDirectCheckIn) {
       <div class="form-field">
         <label class="field-label">
           {{'registration_page_date_and_time' | translate}}
@@ -714,7 +714,7 @@
       }
 
       <!-- Slot Date -->
-      @if (enableVimsApptTimeSlot) {
+      @if (enableVimsApptTimeSlot && !isDirectCheckIn) {
       <div class="form-field">
         <label class="field-label" for="appointmentDate">
           {{'registration_page_appointment_date' | translate}} <span class="required-star">*</span>
@@ -733,7 +733,7 @@
       </div>
       }
 
-      @if (enableVimsApptTimeSlot && timeSlotsLoaded) {
+      @if (enableVimsApptTimeSlot && timeSlotsLoaded && !isDirectCheckIn) {
       @if (timeSlotList.length > 0) {
       <div class="form-field">
         <label class="field-label">
@@ -758,7 +758,7 @@
 
       <!-- 22. Appointment UDF fields -->
       @for (udf of udfSettings; track udf) {
-      @if (udf.Enabled && udf.udfPrefix === 'a') {
+      @if (udf.Enabled && udf.udfPrefix === 'a' && !isDirectCheckIn) {
       @if (udf.UDFCtrlType === 10) {
       <div class="form-field">
         <label class="field-label" [for]="udf.formControlName">
@@ -1516,7 +1516,7 @@
      
 
       <!-- 20 & 21. Appointment Start / End — schedule dialog trigger (mobile) -->
-      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot) {
+      @if (settings?.StartEndDtEnabled && !enableVimsApptTimeSlot && !isDirectCheckIn) {
       <div class="m-form-field">
         <label class="m-field-label">{{'registration_page_date_and_time' | translate}} <span class="m-req">*</span></label>
         <div class="schedule-trigger m-schedule-trigger"
@@ -1535,7 +1535,7 @@
       }
 
       <!-- Slot Date -->
-      @if (enableVimsApptTimeSlot) {
+      @if (enableVimsApptTimeSlot && !isDirectCheckIn) {
       <div class="m-form-field">
         <label class="m-field-label">{{'registration_page_appointment_date' | translate}} <span class="m-req">*</span></label>
         <div class="m-input-wrap">
@@ -1552,7 +1552,7 @@
       </div>
       }
 
-      @if (enableVimsApptTimeSlot && timeSlotsLoaded) {
+      @if (enableVimsApptTimeSlot && timeSlotsLoaded && !isDirectCheckIn) {
       @if (timeSlotList.length > 0) {
       <div class="m-form-field">
         <label class="m-field-label">{{'registration_page_time_slot' | translate}} <span class="m-req">*</span></label>
@@ -1575,7 +1575,7 @@
 
       <!-- 22. Appointment UDF fields -->
       @for (udf of udfSettings; track udf) {
-      @if (udf.Enabled && udf.udfPrefix === 'a') {
+      @if (udf.Enabled && udf.udfPrefix === 'a' && !isDirectCheckIn) {
       @if (udf.UDFCtrlType === 10) {
       <div class="m-form-field">
         <label class="m-field-label">{{getTranslatedLabelWithFallback(udf.translateKey, udf.Caption)}} <span class="m-req">{{udf.Required ? '*' : ''}}</span></label>

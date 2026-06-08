@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { SharedService } from '../../shared/shared.service';
 import { LabelService } from './label.service';
 import { Router } from '@angular/router';
-import { VisitorAck, VisitorSelfData } from '../models/visitor-ack.model';
+import { VisitorAck } from '../models/visitor-ack.model';
 import { getEnabledSteps, StepConfig } from '../models/step-config.model';
 
 @Injectable({
@@ -69,6 +69,7 @@ export class WizardService {
   isHostFromQuery = false; // true when hc query param was used to pre-fill host
   /** True only when the wizard was reached via proceedToWizard() — reset on page refresh. */
   isNavigatedFromHome = false;
+  isDirectCheckIn = false;
   /** The original query string from the home page URL (e.g. "?bc=ABC&vc=XYZ"). */
   originalQueryString = '';
 
@@ -395,7 +396,11 @@ export class WizardService {
   updateEnabledSteps(settings: any): void {
     if (!settings) return;
 
-    const enabledConfigs: StepConfig[] = getEnabledSteps(settings);
+    const directCheckInExcluded = new Set(['prohibited-items', 'questionnaire']);
+    let enabledConfigs: StepConfig[] = getEnabledSteps(settings);
+    if (this.isDirectCheckIn) {
+      enabledConfigs = enabledConfigs.filter(s => !directCheckInExcluded.has(s.id));
+    }
 
     this.enabledSteps = enabledConfigs.map(step => ({
       label: step.defaultLabel,
@@ -639,6 +644,114 @@ export class WizardService {
     console.log('[getVisitorAckData] final payload:', JSON.parse(JSON.stringify(visitorAck)));
     return visitorAck;
   }
+  getDirectCheckInPayload(): any {
+    const formData = this.formDataStore.value;
+    const generalData = formData.general || {};
+    const master = this.getmasterData();
+    const settings = this.getSettings();
+
+    const stripBase64Prefix = (src: string): string => {
+      if (!src) return '';
+      const idx = src.indexOf(';base64,');
+      return idx >= 0 ? src.substring(idx + 8) : src;
+    };
+
+    const buildVisitorEntry = (data: any) => ({
+      TitleId: data.title || '',
+      Title: data.title || '',
+      VisitorName: this.buildFullName(data.title, data.fullName),
+      IdentityTypeId: this.resolveIdType(data.visitor_id_type || data.idType),
+      IdentityType: this.resolveIdTypeDescription(data.visitor_id_type || data.idType),
+      IDExpired: data.id_expired_date ? (() => {
+        const d = new Date(data.id_expired_date);
+        return isNaN(d.getTime()) ? '' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      })() : '',
+      IdentityNo: data.visitor_id || '',
+      Gender: (typeof data.gender === 'object' && data.gender !== null) ? (data.gender.Name || '') : (data.gender || ''),
+      Email: data.email || '',
+      VisitorProfileImage: stripBase64Prefix(data.profilePreview || (typeof data.profile === 'string' ? data.profile : '') || ''),
+      VisitorCategoryId: this.selectedVisitCategory || '',
+      VisitorCategory: this.selectedVisitCategoryName || this.getCategoryDescription(this.selectedVisitCategory),
+      ContactNo: data.phone || '',
+      Address: data.visitor_address || '',
+      VehicleNo: data.vehicle_number || '',
+      Country: (() => {
+        const cid = typeof data.country === 'object' ? (data.country?.CountrySeqId || '') : (data.country || '');
+        return master?.Table13?.find((c: any) => c.CountrySeqId?.toString() === cid?.toString())?.Name || '';
+      })(),
+      VisitorCompany: (typeof data.visitor_company === 'object' && data.visitor_company !== null)
+        ? (data.visitor_company.visitor_comp_name || '') : (data.visitor_company || ''),
+      UDF1: this.normalizeUDFValue(data.VUDF1),
+      UDF2: this.normalizeUDFValue(data.VUDF2),
+      UDF3: this.normalizeUDFValue(data.VUDF3),
+      UDF4: this.normalizeUDFValue(data.VUDF4),
+      UDF5: this.normalizeUDFValue(data.VUDF5),
+      UDF6: this.normalizeUDFValue(data.VUDF6),
+      UDF7: this.normalizeUDFValue(data.VUDF7),
+      UDF8: this.normalizeUDFValue(data.VUDF8),
+      UDF9: this.normalizeUDFValue(data.VUDF9),
+      UDF10: this.normalizeUDFValue(data.VUDF10),
+      PassNo: data.visitor_id || '',
+      SmartCardNo: null
+    });
+
+    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
+    let visitorList: any[];
+    if (isMultipleVisitor) {
+      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
+      visitorList = savedVisitors.length > 0 ? savedVisitors.map(buildVisitorEntry) : [buildVisitorEntry(generalData)];
+    } else {
+      visitorList = [buildVisitorEntry(generalData)];
+    }
+
+    const hostId = generalData.host?.toString() || '';
+    const hostRow = master?.Table?.find((h: any) => h.HOSTIC?.toString() === hostId);
+    const deptId = generalData.department?.toString() || '';
+    const deptRow = master?.Table5?.find((d: any) => (d.DepartmentSeqId ?? d.dept_id)?.toString() === deptId);
+    const roomId = (generalData.meeting_location || generalData.room)?.toString() || '';
+    const roomRow = master?.Table1?.find((r: any) => (r.MeetingRoomSeqId || r.SeqId)?.toString() === roomId);
+    const floorId = generalData.floor?.toString() || '';
+    const floorRow = master?.Table2?.find((f: any) => f.floor_id?.toString() === floorId);
+    const purposeId = generalData.purpose?.toString() || '';
+    const purposeRow = (master?.Purposes || master?.Table3)?.find((p: any) => (p.visitpurpose_id || p.SeqId)?.toString() === purposeId);
+
+    const branchInt = parseInt(this.currentBranchID, 10) || this.currentBranchID;
+
+    return {
+      VisitorList: visitorList,
+      PermittedTime: '',
+      HostCompany: this.currentBranchName || '',
+      HostCompanyId: branchInt,
+      HostName: hostRow?.HOSTNAME || '',
+      HostID: hostId ? parseInt(hostId, 10) || hostId : '',
+      HostExt: '',
+      DepartmentId: deptId,
+      Department: deptRow?.dept_desc || deptId,
+      HostSeqId: hostId ? parseInt(hostId, 10) || hostId : '',
+      MeetingLocationId: roomId ? parseInt(roomId, 10) || roomId : '',
+      MeetingLocation: roomRow?.MeetingRoomDesc || '',
+      FloorId: floorId,
+      Floor: floorRow?.floor_desc || floorId,
+      PurposeId: purposeId,
+      Purpose: purposeRow?.visitpurpose_desc || '',
+      Remarks: generalData.remarks || '',
+      EmailNotification: !!(settings?.allowEmail ?? false),
+      SMSNotification: !!(settings?.allowSMS ?? false),
+      PushNotification: false,
+      LabelPrint: !!(settings?.LabelPrintEnabled ?? false),
+      NewEquipments: [],
+      EnableCheckinWhitelistValidation: false,
+      AllowOnlyWhitelisted: 0,
+      Authorize: { AuDeviceUID: new Date().toISOString(), AuMAppDevSeqId: 0 },
+      Branch: branchInt,
+      RefBranchSeqId: branchInt,
+      userID: '',
+      UserName: '',
+      CheckDeviceValidation: 'N',
+      SafetyBriefViewed: formData.safetyBrief?.videoWatched || false
+    };
+  }
+
   /**
      * Parse a time_permit string like "18 Hours", "2 Days", "1 Month", "3 Months" and
      * return a Date offset from the given base date.

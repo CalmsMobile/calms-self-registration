@@ -31,6 +31,7 @@ export interface RegistrationData {
   DynamicQrIntervalSec?: number | string;  // Refresh interval in seconds (can be string from API)
   // legacy support
   isAutoApproved?: boolean;
+  isDirectCheckIn?: boolean;
 }
 
 @Component({
@@ -167,33 +168,33 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
     this.qrCodeLoading = true;
     this.qrCodeError = false;
 
-    if (this.registrationData?.isDynamicQR) {
-      // Dynamic QR: call GetVisitorDataForQRCodeDynamic with SeqIdEncrypted true
-      const loParam: any = { SEQ_ID: qrData, SeqIdEncrypted: false };
-      this.api.GetVisitorDataForQRCodeDynamic(loParam).subscribe({
-        next: (poReturn: any) => this.handleQrCodeResponse(poReturn),
-        error: () => {
-          this.messageHelper.error(
-            this.labelService.getLabel('thankyou_page_qr_load_error', 'caption') || 'Failed to generate QR code.'
-          );
-          this.qrCodeLoading = false;
-          this.qrCodeError = true;
-        }
+    if (this.registrationData?.isDirectCheckIn) {
+      import('qrcode').then(QRCode => {
+        QRCode.toDataURL(qrData, { width: 230, margin: 1 })
+          .then((url: string) => {
+            this.qrCodeBase64 = url;
+            this.qrCodeLoading = false;
+            this.qrCodeError = false;
+          })
+          .catch(() => {
+            this.qrCodeLoading = false;
+            this.qrCodeError = true;
+          });
       });
-    } else {
-      // Static QR: call GetVisitorDataForQRCode with SeqIdEncrypted false
-      const loParam: any = { SEQ_ID: qrData, SeqIdEncrypted: false };
-      this.api.GetVisitorDataForQRCode(loParam).subscribe({
-        next: (poReturn: any) => this.handleQrCodeResponse(poReturn),
-        error: () => {
-          this.messageHelper.error(
-            this.labelService.getLabel('thankyou_page_qr_load_error', 'caption') || 'Failed to generate QR code.'
-          );
-          this.qrCodeLoading = false;
-          this.qrCodeError = true;
-        }
-      });
+      return;
     }
+
+    const loParam: any = { SEQ_ID: qrData, SeqIdEncrypted: false };
+    this.api.GetVisitorDataForQRCodeDynamic(loParam).subscribe({
+      next: (poReturn: any) => this.handleQrCodeResponse(poReturn),
+      error: () => {
+        this.messageHelper.error(
+          this.labelService.getLabel('thankyou_page_qr_load_error', 'caption') || 'Failed to generate QR code.'
+        );
+        this.qrCodeLoading = false;
+        this.qrCodeError = true;
+      }
+    });
   }
 
   private handleQrCodeResponse(poData: any): void {

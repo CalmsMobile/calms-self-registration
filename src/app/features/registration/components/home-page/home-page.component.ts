@@ -628,6 +628,9 @@ export class HomePageComponent implements AfterViewChecked {
             MultipleVisitorEnabled: tcSettings.MultipleVisitorEnabled ?? false
           });
          
+          // Wire direct check-in flag from API
+          this.wizardService.isDirectCheckIn = tcSettings.EnableDVCheckIn === true || tcSettings.EnableDVCheckIn === 1 || tcSettings.EnableDVCheckIn === '1';
+
           // Check AllowOnlywithVC flag
           if (tcSettings.AllowOnlywithVC !== undefined) {
             this.allowOnlyWithVC = tcSettings.AllowOnlywithVC === '1' || tcSettings.AllowOnlywithVC === 1 || tcSettings.AllowOnlywithVC === true;

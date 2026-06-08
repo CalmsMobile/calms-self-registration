@@ -378,21 +378,45 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
         console.log('Form data before submission:', this.wizardService.getFormData());
         console.log('========================');
 
-        // Call the new VisitorAckSave API
         const catCodeEnc = this.wizardService.refCatCode || undefined;
-        this.api.VisitorAckSave(visitorAckData, catCodeEnc)
+        const isDirectCheckIn = this.wizardService.isDirectCheckIn;
+        const apiCall$ = isDirectCheckIn
+          ? this.api.VisitorCheckIn(this.wizardService.getDirectCheckInPayload())
+          : this.api.VisitorAckSave(visitorAckData, catCodeEnc);
+        apiCall$
           .subscribe({
             next: (response: any) => {
               this.isLoading = false;
 
               console.log('Registration successful:', response);
 
-              // api-base.service unwraps response[0].Data, so response = { Table: [...] }
-              const responseData = response?.Table?.[0];
-              const isAutoApproved = responseData?.AutoApprove === 1 || responseData?.AutoApprove === true;
-              const isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1 || responseData?.IsDynamicQR === 'true';
-              const dynamicQrIntervalSec = responseData?.DynamicQrIntervalSec ? Number(responseData.DynamicQrIntervalSec) : 0;
-              const approvalStatus: string = responseData?.Approval_Status || (isAutoApproved ? 'Approved' : 'Pending');
+              let qrCodeData: string;
+              let visitorId: string;
+              let isAutoApproved: boolean;
+              let isDynamicQR: boolean;
+              let dynamicQrIntervalSec: number;
+              let approvalStatus: string;
+
+              if (isDirectCheckIn) {
+                // VisitorCheckIn: api-base unwraps to { Table, Table1 }
+                // Table1[0] has Status, HexCode, att_id, VisitorName, IdentityNo
+                const checkInData = response?.Table1?.[0];
+                qrCodeData = checkInData?.HexCode?.toString() || '';
+                visitorId = qrCodeData;
+                isAutoApproved = checkInData?.Status === true;
+                isDynamicQR = false;
+                dynamicQrIntervalSec = 0;
+                approvalStatus = isAutoApproved ? 'Approved' : 'Pending';
+              } else {
+                // VisitorAckSave: api-base unwraps to { Table }
+                const responseData = response?.Table?.[0];
+                isAutoApproved = responseData?.AutoApprove === 1 || responseData?.AutoApprove === true;
+                isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1 || responseData?.IsDynamicQR === 'true';
+                dynamicQrIntervalSec = responseData?.DynamicQrIntervalSec ? Number(responseData.DynamicQrIntervalSec) : 0;
+                approvalStatus = responseData?.Approval_Status || (isAutoApproved ? 'Approved' : 'Pending');
+                qrCodeData = responseData?.HexCode || '';
+                visitorId = responseData?.SEQ_ID?.toString() || '';
+              }
 
               // Get branch info and start-mode BEFORE clearing session storage
               const branchName = this.wizardService.currentBranchName;
@@ -416,11 +440,12 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                     status: isAutoApproved ? 'success' : 'pending',
                     isAutoApproved: isAutoApproved,
                     approvalStatus: approvalStatus,
-                    visitorId: responseData?.SEQ_ID?.toString() || '',
-                    qrCodeData: responseData?.HexCode || '',
+                    visitorId: visitorId,
+                    qrCodeData: qrCodeData,
                     isDynamicQR: isDynamicQR,
                     DynamicQrIntervalSec: dynamicQrIntervalSec,
-                    registrationId: responseData?.appointment_group_id || responseData?.SEQ_ID?.toString() || '',
+                    registrationId: visitorId,
+                    isDirectCheckIn: isDirectCheckIn,
                     visitorName: summary.visitorName,
                     email: summary.email,
                     visitFrom: startDate,

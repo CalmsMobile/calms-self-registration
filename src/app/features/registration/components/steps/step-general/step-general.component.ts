@@ -64,6 +64,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return !!this.settings?.EnableIDOCRScan;
   }
 
+  get isDirectCheckIn(): boolean {
+    return this.wizardService.isDirectCheckIn;
+  }
+
   // Photo capture dialog
   showPhotoCaptureDialog = false;
   isCameraOn = false;
@@ -925,10 +929,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.setupConditionalControls();
       this.applyDefaultDateTimes();
 
-      // In appointment flow, hold the loader until branch data (titleList) is also ready
-      // so the form never flashes with concatenated "Mr.Name" in the fullName field.
+      // Hold loader until branch data (titleList) is also ready — prevents form
+      // flashing with empty title dropdown or concatenated "Mr.Name" in fullName.
       this._udfSettingsReady = true;
-      if (this._branchDataReady || !this.isAppointmentFlow) {
+      if (this._branchDataReady) {
         this.isLoading = false;
       }
     });

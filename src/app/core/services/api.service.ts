@@ -106,6 +106,10 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/SaveVisitorRegistration`, loParam);
   }
 
+  VisitorCheckIn(payload: any) {
+    return this.apiBase.post(`${environment.proURL}app/api/SecureEntry/VisitorCheckIn`, payload);
+  }
+
   // New method for VisitorAckSave API
   VisitorAckSave(visitorAckData: VisitorAck, catCodeEnc?: string) {
     const loParam: any = { ...this.deviceParams, ...visitorAckData };
