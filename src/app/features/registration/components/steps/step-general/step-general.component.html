@@ -1859,22 +1859,63 @@
         </div>
         }
 
-        <!-- Face guide ring -->
-        <div class="face-guide-ring"></div>
+        <!-- Face guide ring — green when face is stable, amber when issues exist -->
+        <div class="face-guide-ring"
+          [class.face-ring-ok]="isCameraOn && !capturedImage && isFaceStable"
+          [class.face-ring-warn]="isCameraOn && !capturedImage && !isFaceStable && faceValidationFeedback.length > 0"></div>
       </div>
     </div>
 
     <p class="camera-hint">{{ 'registration_page_camera_visible_label' | translate }}</p>
 
+    <!-- Live face validation feedback (camera preview only) -->
+    @if (isCameraOn && !capturedImage) {
+      @if (isFaceStable) {
+        <div class="face-validation-feedback face-ok">
+          <i class="pi pi-check-circle"></i>
+          <span>{{ 'registration_page_face_detected_ready' | translate }}</span>
+        </div>
+      } @else if (faceValidationFeedback.length > 0) {
+        <div class="face-validation-feedback face-warn">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>{{ resolveFaceFeedback(faceValidationFeedback[0]) }}</span>
+        </div>
+      }
+    }
+
+    <!-- Upload / REST validation feedback (shown after photo is selected/captured) -->
+    @if (capturedImage && !isFaceValidating && faceValidationFeedback.length > 0) {
+      <div class="face-validation-feedback" [class.face-error]="!isUploadPhotoValid" [class.face-warn]="isUploadPhotoValid">
+        <i [class]="!isUploadPhotoValid ? 'pi pi-times-circle' : 'pi pi-exclamation-triangle'"></i>
+        <span>{{ resolveFaceFeedback(faceValidationFeedback[0]) }}</span>
+      </div>
+    }
+
+    <!-- REST validation spinner -->
+    @if (isFaceValidating) {
+      <div class="face-validation-feedback face-loading">
+        <i class="pi pi-spin pi-spinner"></i>
+        <span>{{ 'registration_page_checking_photo' | translate }}</span>
+      </div>
+    }
+
     <div class="photo-actions">
       @if (!capturedImage) {
-      <button type="button" class="btn-capture" (click)="capturePhoto()" [disabled]="!isCameraOn">
+      <button type="button" class="btn-capture" (click)="capturePhoto()"
+        [disabled]="!isCameraOn || !isFaceStable"
+        [class.btn-ready]="isCameraOn && isFaceStable">
         <i class="pi pi-camera"></i>
         {{ 'registration_page_button_capture_photo' | translate }}
       </button>
       } @else {
-      <button type="button" class="btn-capture" (click)="useCapture()">
-        <i class="pi pi-check"></i>
+      <button type="button" class="btn-capture" (click)="useCapture()"
+        [disabled]="isFaceValidating || !isUploadPhotoValid"
+        [class.btn-ready]="isUploadPhotoValid && !isFaceValidating">
+        @if (isFaceValidating) {
+          <i class="pi pi-spin pi-spinner"></i>
+        } @else {
+          <i class="pi pi-check"></i>
+        }
         {{ 'registration_page_button_use_photo' | translate }}
       </button>
       <button type="button" class="btn-retake" (click)="retakePhoto()">

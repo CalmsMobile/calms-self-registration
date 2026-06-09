@@ -21,6 +21,7 @@ import { ApiService } from '../../../../../core/services/api.service';
 import { LabelService } from '../../../../../core/services/label.service';
 import { OcrService } from '../../../../../core/services/ocr.service';
 import { FileUploadService } from '../../../../../core/services/file-upload.service';
+import { FaceValidationService, FaceValidationResult } from '../../../../../core/services/face-validation.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { SharedService } from '../../../../../shared/shared.service';
@@ -200,6 +201,40 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Pending action after photo capture dialog resolves
   pendingAction: 'goNext' | 'addVisitor' | null = null;
 
+  // Face validation (live camera WebSocket + photo upload REST)
+  faceValidationFeedback: string[] = [];
+  isFaceStable = false;
+  isFaceInCircle = false;
+  isFaceValidating = false;
+  isUploadPhotoValid = true;
+  private faceValidationWs: WebSocket | null = null;
+  private frameIntervalId: any = null;
+
+  private readonly faceFeedbackMap: Record<string, string> = {
+    no_face_detected: 'No face detected. Ensure your face is visible and well-lit.',
+    no_face_detected_upload: 'No face detected. Please upload a clear portrait photo.',
+    multiple_faces: 'Multiple faces detected. Ensure only one person is visible.',
+    face_blurry: 'Keep still — frame is blurry.',
+    face_too_dark: 'Too dark — turn on a light.',
+    face_too_bright: 'Too bright — reduce direct light.',
+    face_glare: 'Glare on face — adjust lighting or position.',
+    face_not_centered: 'Center your face in the frame.',
+    face_too_small: 'Move closer to the camera.',
+    face_too_large: 'Move slightly back.',
+    face_partial: 'Ensure your full face is visible.',
+    face_eyes_closed: 'Open your eyes and look at the camera.',
+    face_occluded: 'Face may be partially covered or shadowed.',
+    face_head_yaw: 'Look directly at the camera.',
+    face_head_tilt: 'Keep your head straight and level.',
+    face_ready: 'Ready! Keep still to capture.',
+  };
+
+  resolveFaceFeedback(key: string): string {
+    return this.labelService.getLabel('registration_page_' + key, 'caption')
+      || this.faceFeedbackMap[key]
+      || key;
+  }
+
   // Multiple booking check
   multipleBookingConflict = false;
   isCheckingMultipleBooking = false;
@@ -239,7 +274,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     private sharedService: SharedService,
     private router: Router,
     private ocrService: OcrService,
-    private fileUploadService: FileUploadService
+    private fileUploadService: FileUploadService,
+    private faceValidationService: FaceValidationService
   ) {
     this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
     this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
@@ -3336,64 +3372,95 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   handleFileUpload(event: any, visitorIndex?: number, closeDialog = false): void {
     const file = event.target.files[0];
-    if (file) {
-      // Validate file
-      if (!file.type.match('image.*')) {
-        const alert = this.getAlert('registration_page_image_type_invalid');
-        this.showMessage({
-          severity: 'error',
-          detail: alert.detail || 'Only image files are allowed.',
-        });
-        return;
-      }
-      if (file.size > 2 * 1024 * 1024) {
-        const alert = this.getAlert('registration_page_image_size_invalid');
-        this.showMessage({
-          severity: 'error',
-          detail: alert.detail || 'Maximum file size is 2MB.',
-        });
-        return;
-      }
+    if (!file) return;
 
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        if (closeDialog) {
-          // Show uploaded image as preview in the dialog (same UX as camera capture).
-          // useCapture() will call uploadImage before committing.
-          this.pendingUploadFile = file;
-          this.capturedImage = e.target.result;
-          this.stopCamera();
-          this.dialogMode = 'camera';
+    // Basic client-side checks
+    if (!file.type.match('image.*')) {
+      const alert = this.getAlert('registration_page_image_type_invalid');
+      this.showMessage({ severity: 'error', detail: alert.detail || 'Only image files are allowed.' });
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      const alert = this.getAlert('registration_page_image_size_invalid');
+      this.showMessage({ severity: 'error', detail: alert.detail || 'Maximum file size is 2MB.' });
+      return;
+    }
+
+    this.isFaceValidating = true;
+    this.faceValidationFeedback = [];
+    this.isUploadPhotoValid = true;
+
+    this.faceValidationService.validatePhoto(file).subscribe({
+      next: (result: FaceValidationResult) => {
+        this.isFaceValidating = false;
+        if (!result.face_detected) {
+          this.faceValidationFeedback = ['no_face_detected_upload'];
+          if (!closeDialog) return; // outside dialog: block entirely
+          // Inside dialog: show preview with disabled button and inline error
+          this.isUploadPhotoValid = false;
+          this.proceedWithFileRead(file, visitorIndex, closeDialog);
           return;
         }
+        if (!result.stable) {
+          this.faceValidationFeedback = result.feedback;
+        }
+        this.isUploadPhotoValid = result.face_detected;
+        this.proceedWithFileRead(file, visitorIndex, closeDialog);
+      },
+      error: () => {
+        // Validation service unavailable — proceed without blocking
+        this.isFaceValidating = false;
+        this.faceValidationFeedback = [];
+        this.isUploadPhotoValid = true;
+        this.proceedWithFileRead(file, visitorIndex, closeDialog);
+      }
+    });
+  }
 
-        this.fileUploadService.uploadImage(file).subscribe({
-          next: () => {
-            const imageUrl = this.sanitizer.bypassSecurityTrustUrl(e.target.result);
-            if (this.isMultipleVisitorMode && visitorIndex !== undefined) {
-              this.visitorsArray.at(visitorIndex).get('profile')?.setValue(file);
-              this.profileImage = imageUrl;
-              this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
-            } else {
-              this.profileImage = imageUrl;
-              this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
-            }
-          },
-          error: () => {
-            const alert = this.getAlert('registration_page_image_type_invalid');
-            this.showMessage({ severity: 'error', detail: alert.detail || 'Invalid image file.' });
+  private proceedWithFileRead(file: File, visitorIndex: number | undefined, closeDialog: boolean): void {
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      if (closeDialog) {
+        this.pendingUploadFile = file;
+        this.capturedImage = e.target.result;
+        // stopCamera() → stopFaceValidationWs() clears faceValidationFeedback;
+        // preserve any REST validation feedback set before this call.
+        const savedFeedback = [...this.faceValidationFeedback];
+        const savedValid = this.isUploadPhotoValid;
+        this.stopCamera();
+        this.faceValidationFeedback = savedFeedback;
+        this.isUploadPhotoValid = savedValid;
+        this.dialogMode = 'camera';
+        return;
+      }
+
+      this.fileUploadService.uploadImage(file).subscribe({
+        next: () => {
+          const imageUrl = this.sanitizer.bypassSecurityTrustUrl(e.target.result);
+          if (this.isMultipleVisitorMode && visitorIndex !== undefined) {
+            this.visitorsArray.at(visitorIndex).get('profile')?.setValue(file);
+            this.profileImage = imageUrl;
+            this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
+          } else {
+            this.profileImage = imageUrl;
+            this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
           }
-        });
-      };
-      reader.readAsDataURL(file);
-    }
+        },
+        error: () => {
+          const alert = this.getAlert('registration_page_image_type_invalid');
+          this.showMessage({ severity: 'error', detail: alert.detail || 'Invalid image file.' });
+        }
+      });
+    };
+    reader.readAsDataURL(file);
   }
 
   // ─── Photo Capture Dialog ────────────────────────────────────────────────
 
   openPhotoCaptureDialog(): void {
     this.capturedImage = null;
+    this.isUploadPhotoValid = true;
+    this.faceValidationFeedback = [];
     const existingPreview = this.generalForm.get('profilePreview')?.value as string | null;
     this.dialogPreviousImage = existingPreview || null;
     // If there is an existing photo, show it first so user can decide to keep or change it
@@ -3473,6 +3540,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         videoEl.play();
       }
       this.isCameraOn = true;
+      this.startFaceValidationWs();
     } catch (err: any) {
       this.isCameraOn = false;
       const isPermissionDenied = err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError';
@@ -3494,6 +3562,69 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.cameraStream = null;
     }
     this.isCameraOn = false;
+    this.stopFaceValidationWs();
+  }
+
+  private startFaceValidationWs(): void {
+    this.stopFaceValidationWs();
+    try {
+      this.faceValidationWs = this.faceValidationService.createWebSocket();
+
+      this.faceValidationWs.onopen = () => {
+        // Send a frame every 250 ms while the camera is live
+        this.frameIntervalId = setInterval(() => this.sendFrameToValidation(), 250);
+      };
+
+      this.faceValidationWs.onmessage = (event) => {
+        try {
+          const raw = JSON.parse(event.data);
+          if (raw.error) return; // lightweight error packet from server
+          const result = raw as FaceValidationResult;
+          this.faceValidationFeedback = result.feedback ?? [];
+          this.isFaceStable = result.stable;
+        } catch { /* ignore parse errors */ }
+      };
+
+      // If service is unreachable, silently allow capture
+      this.faceValidationWs.onerror = () => {
+        this.faceValidationFeedback = [];
+        this.isFaceStable = true;
+        this.stopFaceValidationWs();
+      };
+    } catch {
+      this.isFaceStable = true;
+    }
+  }
+
+  private stopFaceValidationWs(): void {
+    if (this.frameIntervalId !== null) {
+      clearInterval(this.frameIntervalId);
+      this.frameIntervalId = null;
+    }
+    if (this.faceValidationWs) {
+      this.faceValidationWs.close();
+      this.faceValidationWs = null;
+    }
+    this.faceValidationFeedback = [];
+    this.isFaceStable = false;
+  }
+
+  private sendFrameToValidation(): void {
+    const video = this.cameraVideoRef?.nativeElement;
+    const canvas = this.captureCanvasRef?.nativeElement;
+    if (!video || !canvas || !this.isCameraOn || this.capturedImage) return;
+    if (this.faceValidationWs?.readyState !== WebSocket.OPEN) return;
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0);
+    canvas.toBlob(blob => {
+      if (blob && this.faceValidationWs?.readyState === WebSocket.OPEN) {
+        blob.arrayBuffer().then(buf => this.faceValidationWs!.send(buf));
+      }
+    }, 'image/jpeg', 0.7);
   }
 
   async flipCamera(): Promise<void> {
@@ -3526,32 +3657,72 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // but the saved photo should be the natural/correct orientation.
     ctx.drawImage(video, 0, 0);
     this.capturedImage = canvas.toDataURL('image/jpeg', 0.85);
+
+    // Stop frame polling — no longer need live validation once snapshot is taken
+    if (this.frameIntervalId !== null) {
+      clearInterval(this.frameIntervalId);
+      this.frameIntervalId = null;
+    }
     this.stopCamera();
   }
 
   retakePhoto(): void {
     this.capturedImage = null;
     this.pendingUploadFile = null;
+    this.isUploadPhotoValid = true;
+    this.faceValidationFeedback = [];
     setTimeout(() => this.startCamera(), 100);
   }
 
   useCapture(): void {
     if (!this.capturedImage) return;
     const base64 = this.capturedImage;
-    // Use original uploaded File if available, otherwise convert from base64 (camera capture)
-    let file: File;
+
     if (this.pendingUploadFile) {
-      file = this.pendingUploadFile;
+      // Upload path — face was already validated in handleFileUpload
+      const file = this.pendingUploadFile;
       this.pendingUploadFile = null;
-    } else {
-      const byteString = atob(base64.split(',')[1]);
-      const mimeType = base64.split(',')[0].split(':')[1].split(';')[0];
-      const ab = new ArrayBuffer(byteString.length);
-      const ia = new Uint8Array(ab);
-      for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-      file = new File([ab], 'photo.jpg', { type: mimeType });
+      this.proceedWithCapture(file, base64);
+      return;
     }
 
+    // Camera capture path — validate face before accepting
+    const byteString = atob(base64.split(',')[1]);
+    const mimeType = base64.split(',')[0].split(':')[1].split(';')[0];
+    const ab = new ArrayBuffer(byteString.length);
+    const ia = new Uint8Array(ab);
+    for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
+    const file = new File([ab], 'photo.jpg', { type: mimeType });
+
+    this.isFaceValidating = true;
+    this.faceValidationFeedback = [];
+
+    this.faceValidationService.validatePhoto(file).subscribe({
+      next: (result: FaceValidationResult) => {
+        this.isFaceValidating = false;
+        if (!result.face_detected) {
+          this.faceValidationFeedback = result.feedback.length
+            ? result.feedback
+            : ['no_face_detected'];
+          this.showMessage({ severity: 'warn', detail: this.resolveFaceFeedback(this.faceValidationFeedback[0]) });
+          return;
+        }
+        if (!result.stable && result.feedback.length) {
+          this.faceValidationFeedback = result.feedback;
+          this.showMessage({ severity: 'warn', detail: this.resolveFaceFeedback(result.feedback[0]) });
+        }
+        this.proceedWithCapture(file, base64);
+      },
+      error: () => {
+        // Face validation service unavailable — proceed without blocking
+        this.isFaceValidating = false;
+        this.faceValidationFeedback = [];
+        this.proceedWithCapture(file, base64);
+      }
+    });
+  }
+
+  private proceedWithCapture(file: File, base64: string): void {
     this.fileUploadService.uploadImage(file).subscribe({
       next: () => {
         const imageUrl = this.sanitizer.bypassSecurityTrustUrl(base64);

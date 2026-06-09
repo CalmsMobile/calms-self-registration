@@ -1455,6 +1455,49 @@ textarea {
   text-align: center;
 }
 
+.face-guide-ring {
+  &.face-ring-ok {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.12), 0 0 12px rgba(34, 197, 94, 0.5);
+  }
+  &.face-ring-warn {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 2000px rgba(0, 0, 0, 0.12), 0 0 12px rgba(245, 158, 11, 0.5);
+  }
+}
+
+.face-validation-feedback {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 6px 0 0;
+  padding: 6px 12px;
+  border-radius: 6px;
+  width: 100%;
+  box-sizing: border-box;
+
+  i { font-size: 14px; }
+
+  &.face-ok {
+    background: rgba(34, 197, 94, 0.12);
+    color: #16a34a;
+  }
+  &.face-warn {
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
+  }
+  &.face-error {
+    background: rgba(239, 68, 68, 0.10);
+    color: #dc2626;
+  }
+  &.face-loading {
+    background: rgba(99, 102, 241, 0.10);
+    color: #4f46e5;
+  }
+}
+
 /* Hide placeholder text when input is focused */
 ::ng-deep {
   .p-inputtext:focus::placeholder,
@@ -1496,6 +1539,17 @@ textarea {
     opacity: 0.45;
     cursor: not-allowed;
   }
+
+  &.btn-ready {
+    background: linear-gradient(180deg, #22c55e, #16a34a);
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.45);
+    animation: pulse-ready 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse-ready {
+  0%, 100% { box-shadow: 0 6px 20px rgba(34, 197, 94, 0.45); }
+  50%       { box-shadow: 0 6px 28px rgba(34, 197, 94, 0.75); }
 }
 
 .btn-retake {
