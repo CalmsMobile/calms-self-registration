@@ -100,8 +100,6 @@ export class HomePageComponent implements AfterViewChecked {
   allowOnlyWithVC = true; // Default: allow access without VC param
   allowOnlyWithVCBlockMessage = 'Access denied. Please use the proper registration link with visitor category code.';
 
-  // ShowWelcomeTitle flag
-  showWelcomeTitle = true;
 
   // Appointment data handling
   isAppointmentFlow = false;
@@ -115,7 +113,7 @@ export class HomePageComponent implements AfterViewChecked {
   }
 
   get formattedPageTitle(): { first: string, rest: string } {
-   
+
     // Ideally we rely on the same logic as template: pageTitle || translate pipe
     // But for splitting, we need the string. 
     // If pageTitle is set, use it. If not, we might display "Visitor Registration" as fallback for now or handle TranslateService. 
@@ -145,7 +143,7 @@ export class HomePageComponent implements AfterViewChecked {
   private destroy$ = new Subject<void>();
   title = 'Company Title';
   logo = 'assets/logo.png';
-  
+
   constructor(
     private router: Router,
     private route: ActivatedRoute,
@@ -517,7 +515,7 @@ export class HomePageComponent implements AfterViewChecked {
           if (seqId) {
             forkJoin({
               docs: this.api.GetVisitorDocsBySeqId(seqId).pipe(catchError(() => of(null))),
-              qna:  this.api.GetVisitorQuestionariesByAppointmentId(seqId).pipe(catchError(() => of(null)))
+              qna: this.api.GetVisitorQuestionariesByAppointmentId(seqId).pipe(catchError(() => of(null)))
             }).subscribe((res: any) => {
               storeAckData(
                 res?.docs?.Table1 || res?.docs?.Table || [],
@@ -627,7 +625,7 @@ export class HomePageComponent implements AfterViewChecked {
             EnableIDOCRScan: tcSettings.EnableIDOCRScan ?? false,
             MultipleVisitorEnabled: tcSettings.MultipleVisitorEnabled ?? false
           });
-         
+
           // Wire direct check-in flag from API
           this.wizardService.isDirectCheckIn = tcSettings.EnableDVCheckIn === true || tcSettings.EnableDVCheckIn === 1 || tcSettings.EnableDVCheckIn === '1';
 
@@ -776,7 +774,7 @@ export class HomePageComponent implements AfterViewChecked {
               this.logo = environment.proURL + logoUrl;
               this.sharedService.updateHeader(this.title, this.logo);
             }
-            if(this.initializePageSettings.OrgLogo){
+            if (this.initializePageSettings.OrgLogo) {
               this.logo = this.initializePageSettings.OrgLogo;
               this.sharedService.updateHeader(this.title, this.logo);
             }
@@ -786,14 +784,11 @@ export class HomePageComponent implements AfterViewChecked {
              } */
             // Branch selection caption and placeholder
             this.branchTranslation = {
-            caption: this.initializePageSettings.branchSelectionCaption || 'Branch',
-            placeholder: this.initializePageSettings.branchSelectionPlaceHolder || 'Select Branch'
-          };
+              caption: this.initializePageSettings.branchSelectionCaption || 'Branch',
+              placeholder: this.initializePageSettings.branchSelectionPlaceHolder || 'Select Branch'
+            };
 
-            // SRWelcomeTitle and ShowWelcomeTitle
-            if (settings.ShowWelcomeTitle !== undefined) {
-              this.showWelcomeTitle = settings.ShowWelcomeTitle === '1' || settings.ShowWelcomeTitle === 1 || settings.ShowWelcomeTitle === true;
-            }
+
             if (settings.SRWelcomeTitle) {
               this.pageTitle = settings.SRWelcomeTitle;
               this.wizardService.pageTitle = settings.SRWelcomeTitle;
@@ -922,10 +917,7 @@ export class HomePageComponent implements AfterViewChecked {
       setTimeout(() => {
         this.isLoading = false;
         if (this.selectedBranch == null && this.initializePageSettings) {
-          // SRWelcomeTitle and ShowWelcomeTitle
-          if (this.initializePageSettings.ShowWelcomeTitle !== undefined) {
-            this.showWelcomeTitle = this.initializePageSettings.ShowWelcomeTitle === '1' || this.initializePageSettings.ShowWelcomeTitle === 1 || this.initializePageSettings.ShowWelcomeTitle === true;
-          }
+
           if (this.initializePageSettings.SRWelcomeTitle) {
             this.pageTitle = this.initializePageSettings.SRWelcomeTitle;
             this.wizardService.pageTitle = this.initializePageSettings.SRWelcomeTitle;

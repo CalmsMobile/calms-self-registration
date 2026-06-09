@@ -30,19 +30,20 @@
 
     <!-- Right panel — content -->
     <div class="pre-right">
-      <footer class="app-footer">&copy; {{ currentYear }} CALMS Technologies. All rights reserved. v{{ appVersion }}</footer>
+      <footer class="app-footer">&copy; {{ currentYear }} CALMS Technologies. All rights reserved. v{{ appVersion }}
+      </footer>
       <div class="pre-right-scroll">
         <div class="pre-center">
           <!-- Logo -->
           <img [src]="logo" alt="Company Logo" class="pre-logo">
 
           <!-- Title -->
-          @if (showWelcomeTitle) {
+
           <h1 class="pre-title">
             <span class="accent">{{ formattedPageTitle.first }}</span><br>
             {{ formattedPageTitle.rest }}
           </h1>
-          }
+
 
           <!-- Subtitle / Welcome text -->
 
@@ -53,9 +54,8 @@
               <div class="pre-label">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
               <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
                 [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
-                optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
-                [autofocus]="false" appendTo="body" styleClass="home-select"
-                [class.select-empty]="!selectedBranch">
+                optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true" [autofocus]="false"
+                appendTo="body" styleClass="home-select" [class.select-empty]="!selectedBranch">
               </p-select>
             </div>
           </div>
@@ -84,12 +84,12 @@
   <div class="content">
     <!-- Left panel: title + illustration -->
     <div class="left">
-      @if (showWelcomeTitle) {
+
       <h2>
         <span class="accent">{{ formattedPageTitle.first }}</span>
         <span>{{ formattedPageTitle.rest }}</span>
       </h2>
-      }
+
       <div class="subtitle">{{ 'home_page_instruction' | translate }}</div>
       <img src="assets/visit.png" alt="Visitor illustration" />
     </div>
@@ -105,9 +105,8 @@
           <div class="label">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
           <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
             [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
-            optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
-            [autofocus]="false" appendTo="body" styleClass="home-select"
-            [class.select-empty]="!selectedBranch">
+            optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true" [autofocus]="false"
+            appendTo="body" styleClass="home-select" [class.select-empty]="!selectedBranch">
           </p-select>
         </div>
         }
@@ -117,10 +116,9 @@
         <div class="field field-visit">
           <div class="label">{{ categoryTranslation.caption || ('home_page_category' | translate) }}</div>
           <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
-            [placeholder]="categoryTranslation.placeholder || ('home_page_category' | translate:'placeholder')" optionLabel="visitor_ctg_desc"
-            optionValue="visitor_ctg_id" [showClear]="true"
-            [autofocus]="false" appendTo="body" styleClass="home-select"
-            [class.select-empty]="!selectedCategory">
+            [placeholder]="categoryTranslation.placeholder || ('home_page_category' | translate:'placeholder')"
+            optionLabel="visitor_ctg_desc" optionValue="visitor_ctg_id" [showClear]="true" [autofocus]="false"
+            appendTo="body" styleClass="home-select" [class.select-empty]="!selectedCategory">
           </p-select>
         </div>
         }
@@ -129,10 +127,7 @@
         @if (selectedBranch && selectedCategory && shouldShowTerms()) {
         <div class="terms">
           <h4>{{ 'home_page_terms_and_conditions_title' | translate }}</h4>
-          <div class="terms-body"
-               (scroll)="onTermsScroll($event)"
-               #termsBodyRef
-               [innerHTML]="getTermsHtml()">
+          <div class="terms-body" (scroll)="onTermsScroll($event)" #termsBodyRef [innerHTML]="getTermsHtml()">
           </div>
           <div style="display: none;">
             <app-step-terms (termsStatus)="onTermsStatusChange($event)"></app-step-terms>
@@ -142,7 +137,8 @@
           <div class="terms-checkbox-wrapper" [class.disabled]="!termsScrolledToBottom">
             <span class="terms-agree-label">{{ 'home_page_i_agree_to_the_terms_and_conditions' | translate }}</span>
             <div class="checkbox-container">
-              <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsScrolledToBottom && (termsAccepted = !termsAccepted)">
+              <div class="custom-checkbox" [class.checked]="termsAccepted"
+                (click)="termsScrolledToBottom && (termsAccepted = !termsAccepted)">
                 @if (termsAccepted) {
                 <i class="pi pi-check"></i>
                 }
@@ -155,8 +151,7 @@
         <!-- Continue Button -->
         @if (selectedBranch && selectedCategory) {
         <div class="actions">
-          <button class="btn" type="button"
-            [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
+          <button class="btn" type="button" [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
             (click)="proceedToWizard()">
             <span>{{ 'home_page_button_agree_and_proceed' | translate }}</span>
             <i class="pi pi-arrow-right btn-icon"></i>
@@ -164,7 +159,8 @@
         </div>
         }
       </div>
-      <footer class="app-footer">&copy; {{ currentYear }} CALMS Technologies. All rights reserved. v{{ appVersion }}</footer>
+      <footer class="app-footer">&copy; {{ currentYear }} CALMS Technologies. All rights reserved. v{{ appVersion }}
+      </footer>
     </div>
   </div>
   }
@@ -198,20 +194,20 @@
   </div>
   <div class="m-content">
     <img [src]="logo" alt="Company Logo" class="m-logo" />
-    @if (showWelcomeTitle) {
+
     <h1 class="m-welcome">
       <span class="m-welcome-accent">{{ formattedPageTitle.first}}</span><br>
       {{ formattedPageTitle.rest }}
     </h1>
-    }
+
     <div class="m-form">
       <div class="m-field-group">
-        <div class="m-label" style="text-align: center;">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
+        <div class="m-label" style="text-align: center;">{{ branchTranslation.caption || ('home_page_branch' |
+          translate) }}</div>
         <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
           [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
-          optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
-          [autofocus]="false" appendTo="body" styleClass="home-select"
-          [class.select-empty]="!selectedBranch">
+          optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true" [autofocus]="false" appendTo="body"
+          styleClass="home-select" [class.select-empty]="!selectedBranch">
         </p-select>
       </div>
     </div>
@@ -233,12 +229,12 @@
     </header>
 
     <!-- Page title -->
-    @if (showWelcomeTitle) {
+
     <div class="m-post-title">
       <span class="m-post-accent">{{ formattedPageTitle.first }}</span><br>
       <span class="m-post-rest">{{ formattedPageTitle.rest }}</span>
     </div>
-    }
+
 
     <!-- Form -->
     <div class="m-post-form">
@@ -249,9 +245,8 @@
         <div class="m-label">{{ branchTranslation.caption || ('home_page_branch' | translate) }}</div>
         <p-select [options]="branchList" [(ngModel)]="selectedBranch" (ngModelChange)="onBranchChange($event)"
           [placeholder]="branchTranslation.placeholder || ('home_page_branch' | translate:'placeholder')"
-          optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true"
-          [autofocus]="false" appendTo="body" styleClass="home-select"
-          [class.select-empty]="!selectedBranch">
+          optionLabel="Branch_Name" optionValue="RefBranchSeqID" [showClear]="true" [autofocus]="false" appendTo="body"
+          styleClass="home-select" [class.select-empty]="!selectedBranch">
         </p-select>
       </div>
       }
@@ -261,10 +256,9 @@
       <div class="m-field-group">
         <div class="m-label">{{ categoryTranslation.caption || ('home_page_category' | translate) }}</div>
         <p-select [options]="categories" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange($event)"
-          [placeholder]="categoryTranslation.placeholder || ('home_page_category' | translate:'placeholder')" optionLabel="visitor_ctg_desc"
-          optionValue="visitor_ctg_id" [showClear]="true"
-          [autofocus]="false" appendTo="body" styleClass="home-select"
-          [class.select-empty]="!selectedCategory">
+          [placeholder]="categoryTranslation.placeholder || ('home_page_category' | translate:'placeholder')"
+          optionLabel="visitor_ctg_desc" optionValue="visitor_ctg_id" [showClear]="true" [autofocus]="false"
+          appendTo="body" styleClass="home-select" [class.select-empty]="!selectedCategory">
         </p-select>
       </div>
       }
@@ -275,17 +269,15 @@
         <div class="m-terms-head">
           <h3>{{ 'home_page_terms_and_conditions_title' | translate }}</h3>
         </div>
-        <div class="m-terms-body"
-             #mTermsBodyRef
-             (scroll)="onTermsScroll($event)"
-             [innerHTML]="getTermsHtml()">
+        <div class="m-terms-body" #mTermsBodyRef (scroll)="onTermsScroll($event)" [innerHTML]="getTermsHtml()">
         </div>
 
         <!-- Checkbox at bottom right -->
         <div class="terms-checkbox-wrapper" [class.disabled]="!termsScrolledToBottom">
           <span class="terms-agree-label">{{ 'home_page_i_agree_to_the_terms_and_conditions' | translate }}</span>
           <div class="checkbox-container">
-            <div class="custom-checkbox" [class.checked]="termsAccepted" (click)="termsScrolledToBottom && (termsAccepted = !termsAccepted)">
+            <div class="custom-checkbox" [class.checked]="termsAccepted"
+              (click)="termsScrolledToBottom && (termsAccepted = !termsAccepted)">
               @if (termsAccepted) {
               <i class="pi pi-check"></i>
               }
@@ -297,8 +289,7 @@
 
       <!-- Continue Button -->
       @if (selectedBranch && selectedCategory) {
-      <button class="m-continue" type="button"
-        [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
+      <button class="m-continue" type="button" [disabled]="shouldShowTerms() && (!termsAccepted || !termsValid)"
         (click)="proceedToWizard()">
         <span>{{ 'home_page_button_agree_and_proceed' | translate }}</span>
         <i class="pi pi-arrow-right"></i>
@@ -311,7 +302,8 @@
 
   }
 
-  <footer class="m-fixed-footer">&copy; {{ currentYear }} CALMS Technologies. All rights reserved. v{{ appVersion }}</footer>
+  <footer class="m-fixed-footer">&copy; {{ currentYear }} CALMS Technologies. All rights reserved. v{{ appVersion }}
+  </footer>
 
 </div>
 }
