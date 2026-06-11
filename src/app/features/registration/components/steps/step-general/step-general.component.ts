@@ -3569,8 +3569,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.stopFaceValidationWs();
     try {
       this.faceValidationWs = this.faceValidationService.createWebSocket();
+      console.log('[FaceWS] Connecting to', this.faceValidationWs.url);
 
       this.faceValidationWs.onopen = () => {
+        console.log('[FaceWS] Connected');
         // Send a frame every 250 ms while the camera is live
         this.frameIntervalId = setInterval(() => this.sendFrameToValidation(), 250);
       };
@@ -3578,20 +3580,30 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.faceValidationWs.onmessage = (event) => {
         try {
           const raw = JSON.parse(event.data);
-          if (raw.error) return; // lightweight error packet from server
+          if (raw.error) {
+            console.warn('[FaceWS] Server error:', raw.error);
+            return;
+          }
           const result = raw as FaceValidationResult;
+          console.log('[FaceWS] Result — stable:', result.stable, '| feedback:', result.feedback);
           this.faceValidationFeedback = result.feedback ?? [];
           this.isFaceStable = result.stable;
         } catch { /* ignore parse errors */ }
       };
 
       // If service is unreachable, silently allow capture
-      this.faceValidationWs.onerror = () => {
+      this.faceValidationWs.onerror = (err) => {
+        console.error('[FaceWS] Connection error — face validation disabled', err);
         this.faceValidationFeedback = [];
         this.isFaceStable = true;
         this.stopFaceValidationWs();
       };
-    } catch {
+
+      this.faceValidationWs.onclose = (event) => {
+        console.log('[FaceWS] Disconnected — code:', event.code, 'reason:', event.reason || 'none');
+      };
+    } catch (err) {
+      console.error('[FaceWS] Failed to create WebSocket:', err);
       this.isFaceStable = true;
     }
   }
@@ -3602,6 +3614,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.frameIntervalId = null;
     }
     if (this.faceValidationWs) {
+      console.log('[FaceWS] Closing connection');
       this.faceValidationWs.close();
       this.faceValidationWs = null;
     }
@@ -3942,14 +3955,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         (host.DepartmentSeqId || '').toLowerCase() === deptLower;
     });
 
-    // If no hosts match the department, fall back to showing all hosts
-    // so the user can still select a host (and the previous selection is preserved)
-    if (filteredHosts.length === 0) {
-      console.log('No hosts found for department, showing all hosts');
-      this.hosts = [...this.hostNameList];
-      return;
-    }
-
     console.log('Filtered hosts by department:', filteredHosts.length, 'out of', this.originalHostData.length);
 
     // Map filtered hosts with proper formatting
@@ -3988,6 +3993,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         if (!hostStillAvailable) {
           console.log('Current host not in filtered department, clearing selection');
           this.generalForm.get('host')?.setValue(null);
+          this.generalForm.get('hostName')?.setValue('', { emitEvent: false });
         }
       }
     }
