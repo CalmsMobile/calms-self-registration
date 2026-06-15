@@ -163,8 +163,8 @@
         </div>
         @if (isFieldRequired('visitor_id')) {
         <small class="error-message">{{ getRequiredError('identity_no') }}</small>
-        } @else if (isVisitorIdTypeValidationError()) {
-        <small class="error-message">{{ getVisitorIdTypeValidationError() }}</small>
+        } @else if (isFieldMinLengthError('visitor_id')) {
+        <small class="error-message">{{ getMinLengthError(settings?.IdProofMinLength) }}</small>
         } @else if (isFieldMaxLengthError('visitor_id')) {
         <small class="error-message">{{ getMaxLengthError(visitorIdMaxLength) }}</small>
         }
@@ -1068,8 +1068,8 @@
         </div>
         @if (isFieldRequired('visitor_id')) {
         <small class="m-error">{{ getRequiredError('identity_no') }}</small>
-        } @else if (isVisitorIdTypeValidationError()) {
-        <small class="m-error">{{ getVisitorIdTypeValidationError() }}</small>
+        } @else if (isFieldMinLengthError('visitor_id')) {
+        <small class="m-error">{{ getMinLengthError(settings?.IdProofMinLength) }}</small>
         } @else if (isFieldMaxLengthError('visitor_id')) {
         <small class="m-error">{{ getMaxLengthError(visitorIdMaxLength) }}</small>
         }

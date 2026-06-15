@@ -1668,41 +1668,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     });
   }
 
-  private buildVisitorIdTypeValidator(idTypeData: any): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const rawValue = control.value;
-      const value = rawValue == null ? '' : String(rawValue).trim();
-      if (!value) {
-        return null;
-      }
-
-      const inputType = this.normalizeIdInputType(idTypeData?.INPUT_TYPE);
-      const minLength = this.toPositiveInt(idTypeData?.INPUT_MIN_LENGTH) || 0;
-      const typeLabel = this.getIdTypeInputLabel(inputType);
-
-      if (inputType === 'N' && !/^\d+$/.test(value)) {
-        return { idTypeInvalid: { type: typeLabel, minLength } };
-      }
-
-      if (inputType === 'AN') {
-        // AN type must be strictly alphanumeric and include at least one letter
-        // and one number so it doesn't pass on length-only checks.
-        const isAlphanumericOnly = /^[A-Za-z0-9]+$/.test(value);
-        const hasLetter = /[A-Za-z]/.test(value);
-        const hasDigit = /\d/.test(value);
-        if (!isAlphanumericOnly || !hasLetter || !hasDigit) {
-          return { idTypeInvalid: { type: typeLabel, minLength } };
-        }
-      }
-
-      if (minLength > 0 && value.length < minLength) {
-        return { idTypeInvalid: { type: typeLabel, minLength } };
-      }
-
-      return null;
-    };
-  }
-
   private applyVisitorIdValidationRules(idTypeData: any | null = null): void {
     const visitorIdControl = this.generalForm.get('visitor_id');
     if (!visitorIdControl) {
@@ -1711,34 +1676,24 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     const validators: ValidatorFn[] = [];
 
-    const hasSelectedIdType = !!(this.settings?.IdTypeEnabled && idTypeData);
-    if (this.settings?.IdProofEnabled && (this.settings?.IdProofRequired || hasSelectedIdType)) {
-      validators.push(Validators.required);
-    }
-
-    let maxLength: number | null = this.isSingaporePDPARequired ? 4 : null;
-
-    if (!this.isSingaporePDPARequired && idTypeData) {
-      const configuredMax = this.toPositiveInt(idTypeData.INPUT_MAX_LENGTH);
-      if (configuredMax) {
-        maxLength = configuredMax;
+    if (this.isSingaporePDPARequired) {
+      if (this.settings?.IdProofEnabled && this.settings?.IdProofRequired) {
+        validators.push(Validators.required);
       }
-    }
-
-    if (maxLength) {
-      validators.push(Validators.maxLength(maxLength));
-    }
-
-    if (!this.isSingaporePDPARequired && this.settings?.IdTypeEnabled && idTypeData) {
-      validators.push(this.buildVisitorIdTypeValidator(idTypeData));
-    } else if (!this.isSingaporePDPARequired) {
-      const fallbackMinLength = this.toPositiveInt(this.settings?.IdProofMinLength);
-      if (fallbackMinLength) {
-        validators.push(Validators.minLength(fallbackMinLength));
+      validators.push(Validators.maxLength(4));
+      this.visitorIdDynamicMaxLength = 4;
+    } else {
+      const hasSelectedIdType = !!(this.settings?.IdTypeEnabled && idTypeData);
+      if (this.settings?.IdProofEnabled && (this.settings?.IdProofRequired || hasSelectedIdType)) {
+        validators.push(Validators.required);
       }
+      const minLength = this.toPositiveInt(this.settings?.IdProofMinLength);
+      if (minLength) {
+        validators.push(Validators.minLength(minLength));
+      }
+      this.visitorIdDynamicMaxLength = null;
     }
 
-    this.visitorIdDynamicMaxLength = maxLength;
     visitorIdControl.setValidators(validators);
     visitorIdControl.updateValueAndValidity();
   }
