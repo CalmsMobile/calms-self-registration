@@ -450,6 +450,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
 
   openScheduleDialog(): void {
+    if (this.isFieldDisabled('startDate')) return;
     const startVal: Date | null = this.generalForm.get('startDate')?.value ?? null;
     const endVal: Date | null = this.generalForm.get('endDate')?.value ?? null;
     if (startVal) {
@@ -2139,6 +2140,18 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     this.generalForm = this.fb.group(formControls);
+
+    // Lock fields that were pre-filled by admin in appointment flow
+    if (this.isAppointmentFlow && visitorData) {
+      const locked: string[] = [];
+      if (visitorData.departmentId) locked.push('department');
+      if (visitorData.hostId) locked.push('host');
+      if (visitorData.roomId != null && visitorData.roomId !== '') locked.push('meeting_location');
+      if (visitorData.floorId) locked.push('floor');
+      if (visitorData.purposeId) locked.push('purpose');
+      if (visitorData.startTime) locked.push('startDate', 'endDate');
+      this.lockedFieldsInAppointmentFlow = locked;
+    }
 
     // Restore saved visitors for display in table
     if (this.isMultipleVisitorMode && savedData.savedVisitors) {
@@ -4295,7 +4308,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           );
           const hostDisplayName = matchedHost?.HOSTNAME || matchedHost?.Name || hostId || this.defaultHostId || '';
           const alertTemplate = this.labelService.getLabel('registration_page_appointment_already_exist_alert', 'caption') || 'Opps.. {Hostname} already have another appointment at same time. Please verify';
-          const alertDetail = alertTemplate.replace('{Hostname}', hostDisplayName);
+          const alertDetail = alertTemplate.replace(/\{HostName\}/gi, hostDisplayName);
           this.showMessage({
             severity: 'error',
             detail: alertDetail,

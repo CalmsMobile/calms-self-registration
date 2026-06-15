@@ -35,7 +35,6 @@ export class FaceValidationService {
 
   /** Returns a WebSocket connected to the real-time face validation endpoint. */
   createWebSocket(): WebSocket {
-    const wsBase = this.baseUrl.replace(/^https/, 'wss').replace(/^http/, 'ws');
-    return new WebSocket(`${wsBase}/face-validation/ws`);
+    return new WebSocket(environment.faceValidationWsUrl);
   }
 }

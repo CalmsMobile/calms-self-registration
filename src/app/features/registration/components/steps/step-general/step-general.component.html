@@ -616,7 +616,8 @@
           <p-select id="meeting_location" [options]="meetingLocList" formControlName="meeting_location"
             [placeholder]="'registration_page_meeting_location' | translate:'placeholder'" optionLabel="MeetingRoomDesc" optionValue="MeetingRoomSeqId"
             (onChange)="onRoomChange($event)"
-            [class]="{'ng-invalid': isFieldInvalidRequired('meeting_location')}" [showClear]="true" appendTo="body">
+            [class]="{'ng-invalid': isFieldInvalidRequired('meeting_location')}"
+            [disabled]="isFieldDisabled('meeting_location')" [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('meeting_location')) {
@@ -636,7 +637,8 @@
           <span class="field-icon"><i class="pi pi-building"></i></span>
           <p-select id="floor" [options]="meetingFloorList" formControlName="floor"
             [placeholder]="'registration_page_floor' | translate:'placeholder'" optionLabel="floor_desc" optionValue="floor_id"
-            [class]="{'ng-invalid': isFieldInvalidRequired('floor')}" [showClear]="true" appendTo="body">
+            [class]="{'ng-invalid': isFieldInvalidRequired('floor')}"
+            [disabled]="isFieldDisabled('floor')" [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('floor')) {
@@ -657,6 +659,7 @@
           <p-select id="purpose" [options]="purposeList" formControlName="purpose"
             [placeholder]="'registration_page_purpose_of_visit' | translate:'placeholder'" optionLabel="visitpurpose_desc"
             optionValue="visitpurpose_id" [class]="{'ng-invalid': isFieldInvalidRequired('purpose')}"
+            [disabled]="isFieldDisabled('purpose')"
             (onChange)="onPurposeChange($event)" [showClear]="true" (onClear)="onPurposeChange({value: null})"
             appendTo="body">
           </p-select>
@@ -700,6 +703,7 @@
         </label>
         <div class="schedule-trigger"
           [class.ng-invalid]="isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate') || endBeforeStartError"
+          [class.p-disabled]="isFieldDisabled('startDate')"
           (click)="openScheduleDialog()">
           <i class="pi pi-calendar"></i>
           <span>{{ getScheduleDisplayText() }}</span>
@@ -1449,7 +1453,8 @@
           <span class="m-field-icon"><i class="pi pi-map-marker"></i></span>
           <p-select [options]="meetingLocList" formControlName="meeting_location"
             [placeholder]="'registration_page_meeting_location' | translate:'placeholder'" optionLabel="MeetingRoomDesc" optionValue="MeetingRoomSeqId"
-            [class]="{'ng-invalid': isFieldInvalidRequired('meeting_location')}" [showClear]="true" appendTo="body">
+            [class]="{'ng-invalid': isFieldInvalidRequired('meeting_location')}"
+            [disabled]="isFieldDisabled('meeting_location')" [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('meeting_location')) {
@@ -1466,7 +1471,8 @@
           <span class="m-field-icon"><i class="pi pi-building"></i></span>
           <p-select [options]="meetingFloorList" formControlName="floor"
             [placeholder]="'registration_page_floor' | translate:'placeholder'" optionLabel="floor_desc" optionValue="floor_id"
-            [class]="{'ng-invalid': isFieldInvalidRequired('floor')}" [showClear]="true" appendTo="body">
+            [class]="{'ng-invalid': isFieldInvalidRequired('floor')}"
+            [disabled]="isFieldDisabled('floor')" [showClear]="true" appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('floor')) {
@@ -1484,6 +1490,7 @@
           <p-select [options]="purposeList" formControlName="purpose"
             [placeholder]="'registration_page_purpose_of_visit' | translate:'placeholder'" optionLabel="visitpurpose_desc"
             optionValue="visitpurpose_id" [class]="{'ng-invalid': isFieldInvalidRequired('purpose')}"
+            [disabled]="isFieldDisabled('purpose')"
             (onChange)="onPurposeChange($event)" [showClear]="true" (onClear)="onPurposeChange({value: null})" appendTo="body">
           </p-select>
         </div>
@@ -1521,6 +1528,7 @@
         <label class="m-field-label">{{'registration_page_date_and_time' | translate}} <span class="m-req">*</span></label>
         <div class="schedule-trigger m-schedule-trigger"
           [class.ng-invalid]="isFieldInvalidRequired('startDate') || isFieldInvalidRequired('endDate') || endBeforeStartError"
+          [class.p-disabled]="isFieldDisabled('startDate')"
           (click)="openScheduleDialog()">
           <i class="pi pi-calendar"></i>
           <span>{{ getScheduleDisplayText() }}</span>
