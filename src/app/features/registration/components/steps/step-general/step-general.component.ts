@@ -201,14 +201,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Pending action after photo capture dialog resolves
   pendingAction: 'goNext' | 'addVisitor' | null = null;
 
-  // Face validation (live camera WebSocket + photo upload REST)
+  // Face validation (live camera polling + photo upload REST)
   faceValidationFeedback: string[] = [];
   isFaceStable = false;
   isFaceInCircle = false;
   isFaceValidating = false;
   isUploadPhotoValid = true;
-  private faceValidationWs: WebSocket | null = null;
   private frameIntervalId: any = null;
+  private isFaceValidationInFlight = false;
 
   private readonly faceFeedbackMap: Record<string, string> = {
     no_face_detected: 'No face detected. Ensure your face is visible and well-lit.',
@@ -3531,56 +3531,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   private startFaceValidationWs(): void {
     this.stopFaceValidationWs();
-    try {
-      this.faceValidationWs = this.faceValidationService.createWebSocket();
-      console.log('[FaceWS] Connecting to', this.faceValidationWs.url);
-
-      this.faceValidationWs.onopen = () => {
-        console.log('[FaceWS] Connected');
-        // Send a frame every 250 ms while the camera is live
-        this.frameIntervalId = setInterval(() => this.sendFrameToValidation(), 250);
-      };
-
-      this.faceValidationWs.onmessage = (event) => {
-        try {
-          const raw = JSON.parse(event.data);
-          if (raw.error) {
-            console.warn('[FaceWS] Server error:', raw.error);
-            return;
-          }
-          const result = raw as FaceValidationResult;
-          console.log('[FaceWS] Result — stable:', result.stable, '| feedback:', result.feedback);
-          this.faceValidationFeedback = result.feedback ?? [];
-          this.isFaceStable = result.stable;
-        } catch { /* ignore parse errors */ }
-      };
-
-      // If service is unreachable, silently allow capture
-      this.faceValidationWs.onerror = (err) => {
-        console.error('[FaceWS] Connection error — face validation disabled', err);
-        this.faceValidationFeedback = [];
-        this.isFaceStable = true;
-        this.stopFaceValidationWs();
-      };
-
-      this.faceValidationWs.onclose = (event) => {
-        console.log('[FaceWS] Disconnected — code:', event.code, 'reason:', event.reason || 'none');
-      };
-    } catch (err) {
-      console.error('[FaceWS] Failed to create WebSocket:', err);
-      this.isFaceStable = true;
-    }
+    // Poll via REST every 500 ms instead of WebSocket
+    this.frameIntervalId = setInterval(() => this.sendFrameToValidation(), 500);
   }
 
   private stopFaceValidationWs(): void {
     if (this.frameIntervalId !== null) {
       clearInterval(this.frameIntervalId);
       this.frameIntervalId = null;
-    }
-    if (this.faceValidationWs) {
-      console.log('[FaceWS] Closing connection');
-      this.faceValidationWs.close();
-      this.faceValidationWs = null;
     }
     this.faceValidationFeedback = [];
     this.isFaceStable = false;
@@ -3590,7 +3548,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const video = this.cameraVideoRef?.nativeElement;
     const canvas = this.captureCanvasRef?.nativeElement;
     if (!video || !canvas || !this.isCameraOn || this.capturedImage) return;
-    if (this.faceValidationWs?.readyState !== WebSocket.OPEN) return;
+    if (this.isFaceValidationInFlight) return;
 
     canvas.width = video.videoWidth || 640;
     canvas.height = video.videoHeight || 480;
@@ -3598,9 +3556,22 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!ctx) return;
     ctx.drawImage(video, 0, 0);
     canvas.toBlob(blob => {
-      if (blob && this.faceValidationWs?.readyState === WebSocket.OPEN) {
-        blob.arrayBuffer().then(buf => this.faceValidationWs!.send(buf));
-      }
+      if (!blob) return;
+      const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' });
+      this.isFaceValidationInFlight = true;
+      this.faceValidationService.validatePhoto(file).subscribe({
+        next: result => {
+          this.faceValidationFeedback = result.feedback ?? [];
+          this.isFaceStable = result.stable;
+          this.isFaceValidationInFlight = false;
+        },
+        error: () => {
+          // If service is unreachable, silently allow capture
+          this.faceValidationFeedback = [];
+          this.isFaceStable = true;
+          this.isFaceValidationInFlight = false;
+        },
+      });
     }, 'image/jpeg', 0.7);
   }
 

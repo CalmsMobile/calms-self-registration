@@ -33,8 +33,4 @@ export class FaceValidationService {
     return this.http.post<FaceValidationResult>(`${this.baseUrl}/face-validation/validate`, formData);
   }
 
-  /** Returns a WebSocket connected to the real-time face validation endpoint. */
-  createWebSocket(): WebSocket {
-    return new WebSocket(environment.faceValidationWsUrl);
-  }
 }
