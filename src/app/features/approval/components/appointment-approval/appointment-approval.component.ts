@@ -31,6 +31,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   docsData: any[] = [];
   itemsData: any[] = [];
   ndaDoc: string = '';
+  ndaFileName: string = '';
   ndaUrl: SafeResourceUrl = '';
   itemCaptions = { desc: 'Equipment Detail', serial: 'Serial Number', type: 'Type' };
   approvalSteps: any[] = [];
@@ -134,7 +135,9 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
             this.udfCaptionMap[udf.formControlName] = udf.Caption || udf.UDFName;
           }
         });
-        this.ndaDoc = res.nda?.Table?.[0]?.NDADocument || '';
+        const ndaRecord = res.nda?.Table?.[0] || null;
+        this.ndaDoc = ndaRecord?.NDADocument || '';
+        this.ndaFileName = ndaRecord?.Caption || ndaRecord?.FileName || ndaRecord?.DocumentName || ndaRecord?.NDAFileName || this.getDocFileName(this.ndaDoc);
         if (this.ndaDoc) {
           const base = environment.apiURL.replace(/\/api\/vims$/i, '');
           const url = base + '/' + this.ndaDoc.replace(/\\/g, '/');
@@ -310,6 +313,35 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     this.docsData.forEach((doc: any, i: number) => {
       setTimeout(() => this.downloadDoc(doc), i * 300);
     });
+  }
+
+  downloadNda(): void {
+    if (!this.ndaBlobUrl && !this.ndaDoc) return;
+    const fileName = this.ndaFileName || 'NDA Agreement.pdf';
+    if (this.ndaBlobUrl) {
+      const a = document.createElement('a');
+      a.href = this.ndaBlobUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else {
+      const base = environment.apiURL.replace(/\/api\/vims$/i, '');
+      const url = base + '/' + this.ndaDoc.replace(/\\/g, '/');
+      this.http.get(url, { responseType: 'blob' }).subscribe({
+        next: (blob) => {
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = fileName;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        },
+        error: () => { window.open(url, '_blank'); }
+      });
+    }
   }
 
   getInitials(name: string): string {
