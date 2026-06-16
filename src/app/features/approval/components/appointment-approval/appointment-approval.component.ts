@@ -141,15 +141,13 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
         if (this.ndaDoc) {
           const base = environment.apiURL.replace(/\/api\/vims$/i, '');
           const url = base + '/' + this.ndaDoc.replace(/\\/g, '/');
+          this.ndaUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
           this.http.get(url, { responseType: 'blob' }).subscribe({
             next: (blob) => {
               if (this.ndaBlobUrl) { URL.revokeObjectURL(this.ndaBlobUrl); }
               this.ndaBlobUrl = URL.createObjectURL(blob);
-              this.ndaUrl = this.sanitizer.bypassSecurityTrustResourceUrl(this.ndaBlobUrl);
             },
-            error: () => {
-              this.ndaUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-            }
+            error: () => { this.ndaBlobUrl = ''; }
           });
         }
         const settingRaw = res.items?.Table1?.[0]?.SettingDetail;

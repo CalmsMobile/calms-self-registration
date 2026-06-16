@@ -3513,13 +3513,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.isCameraOn = false;
       const isPermissionDenied = err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError';
       const key = isPermissionDenied ? 'registration_page_camera_permission_denied' : 'registration_page_camera_error';
-      const alert = this.getAlert(key);
       this.showMessage({
         severity: 'error',
-        summary: alert.summary || (isPermissionDenied ? 'Camera Access Denied' : 'Camera Error'),
-        detail: alert.detail || (isPermissionDenied
-          ? 'Camera permission was denied. Please allow camera access or use "Upload from Device".'
-          : 'Could not access camera. Please use "Upload from Device".'),
+        detail: this.labelService.getLabel(key, 'caption'),
       });
     }
   }
@@ -4256,7 +4252,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           return;
         }
 
-        if (code === 20) {
+        if (code === 20 && !this.isAppointmentFlow) {
           this.multipleBookingConflict = true;
           const matchedHost = this.hosts.find((h: any) =>
             (h.HOSTIC || h.HostIC || h.SeqId)?.toString() === hostId?.toString()
@@ -4269,7 +4265,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             detail: alertDetail,
             life: 5000
           });
-        } else if (code === 10) {
+        } else if (code === 10 || (code === 20 && this.isAppointmentFlow)) {
           this.multipleBookingConflict = false;
           onSuccess();
         } else {
@@ -4513,12 +4509,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     } catch (err: any) {
       this.ocrIsCameraOn = false;
       const isPermissionDenied = err?.name === 'NotAllowedError' || err?.name === 'PermissionDeniedError';
+      const key = isPermissionDenied ? 'registration_page_camera_permission_denied' : 'registration_page_camera_error';
       this.showMessage({
         severity: 'error',
-        summary: isPermissionDenied ? 'Camera Access Denied' : 'Camera Error',
-        detail: isPermissionDenied
-          ? 'Camera permission was denied. Please allow camera access.'
-          : 'Could not access camera.'
+        detail: this.labelService.getLabel(key, 'caption'),
       });
     }
   }
