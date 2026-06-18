@@ -28,7 +28,7 @@
       </svg>
     </div>
     <h1 class="title">{{ 'thankyou_page_server_error' | translate }}</h1>
-    <p class="subtitle">{{ 'thankyou_page_server_error_message' | translate }}</p>
+    <p class="subtitle">{{ registrationData.errorMessage || ('thankyou_page_server_error_message' | translate) }}</p>
   }
 
   <!-- Pass Card -->
@@ -202,7 +202,7 @@
     </div>
   }
 
-  @if (status === 'pending' && showNewRegistration) {
+  @if (status === 'pending') {
     <button class="action-btn pending-btn" type="button" (click)="onNewRegistration()">
       <span class="btn-icon">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.3 4h2.2A5 5 0 1 0 12 7V4l4 3-4 3V7Z"/></svg>

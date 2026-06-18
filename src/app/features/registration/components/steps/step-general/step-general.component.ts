@@ -209,6 +209,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   isUploadPhotoValid = true;
   private frameIntervalId: any = null;
   private isFaceValidationInFlight = false;
+  private capturedValidationBlob: Blob | null = null;
+  // Must match .camera-frame-wrapper / .face-guide-ring dimensions in the SCSS
+  private readonly CAMERA_BOX_SIZE = 240;
+  private readonly FACE_CIRCLE_SIZE = 180;
 
   private readonly faceFeedbackMap: Record<string, string> = {
     no_face_detected: 'No face detected. Ensure your face is visible and well-lit.',
@@ -224,6 +228,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     face_partial: 'Ensure your full face is visible.',
     face_eyes_closed: 'Open your eyes and look at the camera.',
     face_occluded: 'Face may be partially covered or shadowed.',
+    face_mouth_covered: 'Uncover your mouth — remove hand or mask.',
+    face_eye_covered: 'Uncover your eyes — remove hand or hair.',
     face_head_yaw: 'Look directly at the camera.',
     face_head_tilt: 'Keep your head straight and level.',
     face_ready: 'Ready! Keep still to capture.',
@@ -3078,8 +3084,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Gender: API returns GenderId as a number (0=Female, 1=Male, 2=Others)
-    const genderValue = visitor.GenderId != null ? String(visitor.GenderId)
+    // Gender: API returns visitor_gender as a number (0=Female, 1=Male, 2=Others)
+    const genderValue = visitor.visitor_gender != null ? String(visitor.visitor_gender)
+      : visitor.GenderId != null ? String(visitor.GenderId)
       : visitor.Gender != null ? String(visitor.Gender) : null;
 
     this.generalForm.patchValue({
@@ -3094,7 +3101,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       id_expired_date: idExpired,
       visitor_id_type: idTypeValue,
       gender: genderValue,
-      visitor_address: visitor.Address || ''
+      visitor_address: visitor.visitor_address_1 || visitor.Address || ''
     });
 
     this.udfSettings.forEach((udf: any) => {
@@ -3544,17 +3551,41 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.isFaceStable = false;
   }
 
+  /**
+   * Maps the on-screen face-guide circle (centered, fixed size within the
+   * camera-frame-wrapper box) back to the video's native pixel coordinates,
+   * accounting for the `object-fit: cover` scaling applied to the <video>.
+   * Used so validation only ever looks at what the user sees inside the ring.
+   */
+  private getCircleCropRect(video: HTMLVideoElement): { sx: number; sy: number; sSize: number } {
+    const vw = video.videoWidth || 640;
+    const vh = video.videoHeight || 480;
+    const box = this.CAMERA_BOX_SIZE;
+    const circle = this.FACE_CIRCLE_SIZE;
+    const scale = Math.max(box / vw, box / vh);
+    const offsetXd = (vw * scale - box) / 2;
+    const offsetYd = (vh * scale - box) / 2;
+    const circleOffset = (box - circle) / 2;
+    return {
+      sx: (offsetXd + circleOffset) / scale,
+      sy: (offsetYd + circleOffset) / scale,
+      sSize: circle / scale,
+    };
+  }
+
   private sendFrameToValidation(): void {
     const video = this.cameraVideoRef?.nativeElement;
     const canvas = this.captureCanvasRef?.nativeElement;
     if (!video || !canvas || !this.isCameraOn || this.capturedImage) return;
     if (this.isFaceValidationInFlight) return;
 
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
+    const { sx, sy, sSize } = this.getCircleCropRect(video);
+    const outSize = 320;
+    canvas.width = outSize;
+    canvas.height = outSize;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    ctx.drawImage(video, 0, 0);
+    ctx.drawImage(video, sx, sy, sSize, sSize, 0, 0, outSize, outSize);
     canvas.toBlob(blob => {
       if (!blob) return;
       const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' });
@@ -3606,6 +3637,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     ctx.drawImage(video, 0, 0);
     this.capturedImage = canvas.toDataURL('image/jpeg', 0.85);
 
+    // Crop to the face-guide circle for the final validation call, so anything
+    // outside the ring (chest, background, etc.) is never considered — the
+    // saved profile photo above stays the full uncropped frame.
+    this.capturedValidationBlob = null;
+    const { sx, sy, sSize } = this.getCircleCropRect(video);
+    const cropCanvas = document.createElement('canvas');
+    cropCanvas.width = cropCanvas.height = 320;
+    const cropCtx = cropCanvas.getContext('2d');
+    if (cropCtx) {
+      cropCtx.drawImage(video, sx, sy, sSize, sSize, 0, 0, 320, 320);
+      cropCanvas.toBlob(blob => { this.capturedValidationBlob = blob; }, 'image/jpeg', 0.85);
+    }
+
     // Stop frame polling — no longer need live validation once snapshot is taken
     if (this.frameIntervalId !== null) {
       clearInterval(this.frameIntervalId);
@@ -3617,6 +3661,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   retakePhoto(): void {
     this.capturedImage = null;
     this.pendingUploadFile = null;
+    this.capturedValidationBlob = null;
     this.isUploadPhotoValid = true;
     this.faceValidationFeedback = [];
     setTimeout(() => this.startCamera(), 100);
@@ -3642,10 +3687,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
     const file = new File([ab], 'photo.jpg', { type: mimeType });
 
+    // Validate only the circle-cropped frame; upload the full frame as the profile photo.
+    const validationFile = this.capturedValidationBlob
+      ? new File([this.capturedValidationBlob], 'photo-crop.jpg', { type: 'image/jpeg' })
+      : file;
+
     this.isFaceValidating = true;
     this.faceValidationFeedback = [];
 
-    this.faceValidationService.validatePhoto(file).subscribe({
+    this.faceValidationService.validatePhoto(validationFile).subscribe({
       next: (result: FaceValidationResult) => {
         this.isFaceValidating = false;
         if (!result.face_detected) {

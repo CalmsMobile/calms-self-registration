@@ -410,6 +410,43 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               } else {
                 // VisitorAckSave: api-base unwraps to { Table }
                 const responseData = response?.Table?.[0];
+
+                // Table[0].code is the business-logic result ('S' = success).
+                // A 200 HTTP response can still carry a save failure (e.g. 'B' = bad data) —
+                // without this check the form would show "Waiting for approval" even though nothing was saved.
+                if (responseData?.code !== undefined && responseData.code !== 'S') {
+                  this.isLoading = false;
+                  const branchName = this.wizardService.currentBranchName;
+                  const branchID = this.wizardService.currentBranchID;
+                  const summary = this.wizardService.buildRegistrationSummary();
+                  const errStartMode = this.wizardService.appointmentCode
+                    ? 'ac'
+                    : this.wizardService.refCode ? 'bc' : 'plain';
+                  const errRefCode = this.wizardService.refCode;
+                  const errRefCatCode = this.wizardService.refCatCode;
+                  const errHcParam = this.wizardService.hcParam;
+                  const errAllowMultipleBooking = this.wizardService.getSettings()?.AllowMultipleBooking ?? true;
+
+                  sessionStorage.setItem('navigatingToStatus', 'true');
+                  this.router.navigate(['/registration-status'], {
+                    state: {
+                      registrationData: {
+                        status: 'error',
+                        errorMessage: responseData.description || undefined,
+                        ...summary
+                      },
+                      branchName: branchName,
+                      branchID: branchID,
+                      startMode: errStartMode,
+                      refCode: errRefCode,
+                      refCatCode: errRefCatCode,
+                      hcParam: errHcParam,
+                      allowMultipleBooking: errAllowMultipleBooking
+                    }
+                  });
+                  return;
+                }
+
                 isAutoApproved = responseData?.AutoApprove === 1 || responseData?.AutoApprove === true;
                 isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1 || responseData?.IsDynamicQR === 'true';
                 dynamicQrIntervalSec = responseData?.DynamicQrIntervalSec ? Number(responseData.DynamicQrIntervalSec) : 0;

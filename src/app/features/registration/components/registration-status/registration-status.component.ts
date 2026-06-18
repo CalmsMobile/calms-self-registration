@@ -32,6 +32,7 @@ export interface RegistrationData {
   // legacy support
   isAutoApproved?: boolean;
   isDirectCheckIn?: boolean;
+  errorMessage?: string;
 }
 
 @Component({
