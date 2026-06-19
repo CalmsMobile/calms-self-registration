@@ -1,4 +1,4 @@
-﻿import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef } from '@angular/core';
+﻿import { Component, OnDestroy, OnInit, Sanitizer, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { stripForbiddenChars } from '../../../../../shared/utils/sanitize.utils';
 import { Router } from '@angular/router';
 import { AbstractControl, FormBuilder, FormGroup, ReactiveFormsModule, ValidationErrors, Validators, ValidatorFn, FormArray, FormsModule } from '@angular/forms';
@@ -210,6 +210,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   private frameIntervalId: any = null;
   private isFaceValidationInFlight = false;
   private capturedValidationBlob: Blob | null = null;
+  captureValidationPassed = false;
   // Must match .camera-frame-wrapper / .face-guide-ring dimensions in the SCSS
   private readonly CAMERA_BOX_SIZE = 240;
   private readonly FACE_CIRCLE_SIZE = 180;
@@ -233,6 +234,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     face_head_yaw: 'Look directly at the camera.',
     face_head_tilt: 'Keep your head straight and level.',
     face_ready: 'Ready! Keep still to capture.',
+    face_not_fully_visible: 'Ensure your face is fully visible — remove anything covering it.',
   };
 
   resolveFaceFeedback(key: string): string {
@@ -281,7 +283,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     private router: Router,
     private ocrService: OcrService,
     private fileUploadService: FileUploadService,
-    private faceValidationService: FaceValidationService
+    private faceValidationService: FaceValidationService,
+    private ngZone: NgZone
   ) {
     this.sharedService.currentLogo.subscribe(logo => this.logo = logo);
     this.sharedService.currentTitle.subscribe(title => this.companyTitle = title);
@@ -3398,6 +3401,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (closeDialog) {
         this.pendingUploadFile = file;
         this.capturedImage = e.target.result;
+        this.captureValidationPassed = true;
         // stopCamera() → stopFaceValidationWs() clears faceValidationFeedback;
         // preserve any REST validation feedback set before this call.
         const savedFeedback = [...this.faceValidationFeedback];
@@ -3588,20 +3592,24 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     ctx.drawImage(video, sx, sy, sSize, sSize, 0, 0, outSize, outSize);
     canvas.toBlob(blob => {
       if (!blob) return;
-      const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' });
-      this.isFaceValidationInFlight = true;
-      this.faceValidationService.validatePhoto(file).subscribe({
-        next: result => {
-          this.faceValidationFeedback = result.feedback ?? [];
-          this.isFaceStable = result.stable;
-          this.isFaceValidationInFlight = false;
-        },
-        error: () => {
-          // If service is unreachable, silently allow capture
-          this.faceValidationFeedback = [];
-          this.isFaceStable = true;
-          this.isFaceValidationInFlight = false;
-        },
+      // toBlob's callback runs outside Angular's zone — without this, the
+      // feedback/isFaceStable updates below wouldn't trigger change detection.
+      this.ngZone.run(() => {
+        const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' });
+        this.isFaceValidationInFlight = true;
+        this.faceValidationService.validatePhoto(file).subscribe({
+          next: result => {
+            this.faceValidationFeedback = result.feedback ?? [];
+            this.isFaceStable = result.stable;
+            this.isFaceValidationInFlight = false;
+          },
+          error: () => {
+            // If service is unreachable, silently allow capture
+            this.faceValidationFeedback = [];
+            this.isFaceStable = true;
+            this.isFaceValidationInFlight = false;
+          },
+        });
       });
     }, 'image/jpeg', 0.7);
   }
@@ -3636,6 +3644,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // but the saved photo should be the natural/correct orientation.
     ctx.drawImage(video, 0, 0);
     this.capturedImage = canvas.toDataURL('image/jpeg', 0.85);
+    this.captureValidationPassed = false;
 
     // Crop to the face-guide circle for the final validation call, so anything
     // outside the ring (chest, background, etc.) is never considered — the
@@ -3647,21 +3656,71 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const cropCtx = cropCanvas.getContext('2d');
     if (cropCtx) {
       cropCtx.drawImage(video, sx, sy, sSize, sSize, 0, 0, 320, 320);
-      cropCanvas.toBlob(blob => { this.capturedValidationBlob = blob; }, 'image/jpeg', 0.85);
     }
 
-    // Stop frame polling — no longer need live validation once snapshot is taken
+    // Stop frame polling — no longer need live validation once snapshot is taken.
+    // Done after drawing from the video element, since stopping the stream first
+    // can blank/invalidate the video frame before it's copied to the crop canvas.
     if (this.frameIntervalId !== null) {
       clearInterval(this.frameIntervalId);
       this.frameIntervalId = null;
     }
     this.stopCamera();
+
+    if (cropCtx) {
+      cropCanvas.toBlob(blob => {
+        // toBlob's callback runs outside Angular's zone, so updates made from
+        // here (and from the HTTP call kicked off inside) wouldn't otherwise
+        // trigger change detection — the button would stay visually stuck.
+        this.ngZone.run(() => {
+          this.capturedValidationBlob = blob;
+          this.validateCapturedPhoto(blob);
+        });
+      }, 'image/jpeg', 0.85);
+    } else {
+      this.validateCapturedPhoto(null);
+    }
+  }
+
+  /** Re-validate the just-captured frame. Pass → keep the photo for "Use this photo".
+   *  Fail → discard it and drop straight back to the live camera. */
+  private validateCapturedPhoto(blob: Blob | null): void {
+    const validationFile = blob ? new File([blob], 'photo-crop.jpg', { type: 'image/jpeg' }) : null;
+    if (!validationFile) {
+      this.captureValidationPassed = true;
+      return;
+    }
+
+    this.isFaceValidating = true;
+    this.faceValidationFeedback = [];
+
+    this.faceValidationService.validatePhoto(validationFile).subscribe({
+      next: (result: FaceValidationResult) => {
+        this.isFaceValidating = false;
+        if (!result.face_detected || !result.stable) {
+          this.faceValidationFeedback = result.feedback.length
+            ? result.feedback
+            : ['no_face_detected'];
+          this.showMessage({ severity: 'warn', detail: this.resolveFaceFeedback(this.faceValidationFeedback[0]) });
+          this.retakePhoto();
+          return;
+        }
+        this.captureValidationPassed = true;
+      },
+      error: () => {
+        // Face validation service unavailable — proceed without blocking
+        this.isFaceValidating = false;
+        this.faceValidationFeedback = [];
+        this.captureValidationPassed = true;
+      }
+    });
   }
 
   retakePhoto(): void {
     this.capturedImage = null;
     this.pendingUploadFile = null;
     this.capturedValidationBlob = null;
+    this.captureValidationPassed = false;
     this.isUploadPhotoValid = true;
     this.faceValidationFeedback = [];
     setTimeout(() => this.startCamera(), 100);
@@ -3679,7 +3738,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Camera capture path — validate face before accepting
+    // Camera capture path — already validated right after capturePhoto().
+    if (!this.captureValidationPassed) return;
+
     const byteString = atob(base64.split(',')[1]);
     const mimeType = base64.split(',')[0].split(':')[1].split(';')[0];
     const ab = new ArrayBuffer(byteString.length);
@@ -3687,37 +3748,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
     const file = new File([ab], 'photo.jpg', { type: mimeType });
 
-    // Validate only the circle-cropped frame; upload the full frame as the profile photo.
-    const validationFile = this.capturedValidationBlob
-      ? new File([this.capturedValidationBlob], 'photo-crop.jpg', { type: 'image/jpeg' })
-      : file;
-
-    this.isFaceValidating = true;
-    this.faceValidationFeedback = [];
-
-    this.faceValidationService.validatePhoto(validationFile).subscribe({
-      next: (result: FaceValidationResult) => {
-        this.isFaceValidating = false;
-        if (!result.face_detected) {
-          this.faceValidationFeedback = result.feedback.length
-            ? result.feedback
-            : ['no_face_detected'];
-          this.showMessage({ severity: 'warn', detail: this.resolveFaceFeedback(this.faceValidationFeedback[0]) });
-          return;
-        }
-        if (!result.stable && result.feedback.length) {
-          this.faceValidationFeedback = result.feedback;
-          this.showMessage({ severity: 'warn', detail: this.resolveFaceFeedback(result.feedback[0]) });
-        }
-        this.proceedWithCapture(file, base64);
-      },
-      error: () => {
-        // Face validation service unavailable — proceed without blocking
-        this.isFaceValidating = false;
-        this.faceValidationFeedback = [];
-        this.proceedWithCapture(file, base64);
-      }
-    });
+    this.proceedWithCapture(file, base64);
   }
 
   private proceedWithCapture(file: File, base64: string): void {

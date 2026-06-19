@@ -1917,8 +1917,8 @@
       </button>
       } @else {
       <button type="button" class="btn-capture" (click)="useCapture()"
-        [disabled]="isFaceValidating || !isUploadPhotoValid"
-        [class.btn-ready]="isUploadPhotoValid && !isFaceValidating">
+        [disabled]="isFaceValidating || !isUploadPhotoValid || !captureValidationPassed"
+        [class.btn-ready]="isUploadPhotoValid && !isFaceValidating && captureValidationPassed">
         @if (isFaceValidating) {
           <i class="pi pi-spin pi-spinner"></i>
         } @else {
