@@ -695,14 +695,11 @@ export class WizardService {
       SmartCardNo: null
     });
 
-    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
-    let visitorList: any[];
-    if (isMultipleVisitor) {
-      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-      visitorList = savedVisitors.length > 0 ? savedVisitors.map(buildVisitorEntry) : [buildVisitorEntry(generalData)];
-    } else {
-      visitorList = [buildVisitorEntry(generalData)];
-    }
+    // Prefer savedVisitors when present (don't gate on MultipleVisitorEnabled — see getVisitorsList note).
+    const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
+    const visitorList: any[] = savedVisitors.length > 0
+      ? savedVisitors.map(buildVisitorEntry)
+      : [buildVisitorEntry(generalData)];
 
     const hostId = generalData.host?.toString() || '';
     const hostRow = master?.Table?.find((h: any) => h.HOSTIC?.toString() === hostId);
@@ -820,7 +817,6 @@ export class WizardService {
   }
 
   private getVisitorsList(formData: any): any[] {
-    const settings = this.getSettings();
     const generalData = formData.general || {};
 
     console.log('getVisitorsList - generalData:', generalData);
@@ -907,22 +903,21 @@ export class WizardService {
       };
     };
 
-    // Check MultipleVisitorEnabled from both top-level and nested path
-    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
-    if (isMultipleVisitor) {
-      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-      console.log('getVisitorsList - MultipleVisitor mode, savedVisitors count:', savedVisitors.length);
-      if (savedVisitors.length > 0) {
-        return savedVisitors.map((visitor: any, index: number) =>
-          buildVisitorEntry(visitor, visitor.myself ?? (index === 0))
-        );
-      }
-      // No saved visitors — fall through to use current form data
-      console.log('getVisitorsList - no saved visitors, using form data');
+    // Use savedVisitors whenever they exist — they are the source of truth once the
+    // step has committed a visitor. We must NOT gate this on MultipleVisitorEnabled:
+    // step-general applies that flag (from self-registration settings) only to its own
+    // local settings, so getSettings() here can still report single-visitor and would
+    // wrongly read the now-reset (empty) general form data instead of savedVisitors.
+    const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
+    if (savedVisitors.length > 0) {
+      console.log('getVisitorsList - using savedVisitors, count:', savedVisitors.length);
+      return savedVisitors.map((visitor: any, index: number) =>
+        buildVisitorEntry(visitor, visitor.myself ?? (index === 0))
+      );
     }
 
-    // Single visitor or multi-visitor with no explicitly saved visitors
-    console.log('getVisitorsList - using form data as single visitor');
+    // No saved visitors — use current form data as single visitor
+    console.log('getVisitorsList - no saved visitors, using form data as single visitor');
     return [buildVisitorEntry(generalData, true)];
   }
 
@@ -1265,38 +1260,28 @@ export class WizardService {
   }
 
   private getPrimaryVisitorFullName(formData: any): string {
-    const settings = this.getSettings();
     const generalData = formData.general || {};
-    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
-    if (isMultipleVisitor) {
-      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-      if (savedVisitors.length > 0) return this.buildFullName(savedVisitors[0].title, savedVisitors[0].fullName);
-    }
+    // Prefer savedVisitors when present (don't gate on MultipleVisitorEnabled —
+    // getSettings() can wrongly report single-visitor; see getVisitorsList note).
+    const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
+    if (savedVisitors.length > 0) return this.buildFullName(savedVisitors[0].title, savedVisitors[0].fullName);
     return this.buildFullName(generalData.title, generalData.fullName);
   }
 
   private getPrimaryVisitorIdentityNo(formData: any): string {
-    const settings = this.getSettings();
     const generalData = formData.general || {};
-    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
-    if (isMultipleVisitor) {
-      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-      if (savedVisitors.length > 0) return savedVisitors[0].visitor_id || '';
-    }
+    const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
+    if (savedVisitors.length > 0) return savedVisitors[0].visitor_id || '';
     return generalData.visitor_id || '';
   }
 
   getPrimaryVisitorNdaData(): { fullName: string; visitorId: string; email: string; phone: string; company: string } {
     const formData = this.formDataStore.value;
     const generalData = formData.general || {};
-    const settings = this.getSettings();
-    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
 
-    let data = generalData;
-    if (isMultipleVisitor) {
-      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-      if (savedVisitors.length > 0) data = savedVisitors[0];
-    }
+    // Prefer savedVisitors when present (don't gate on MultipleVisitorEnabled — see getVisitorsList note).
+    const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
+    const data = savedVisitors.length > 0 ? savedVisitors[0] : generalData;
 
     const company = typeof data.visitor_company === 'object'
       ? (data.visitor_company?.visitor_comp_name || '')
@@ -1312,30 +1297,19 @@ export class WizardService {
   }
 
   private getPrimaryVisitorIdType(formData: any): string {
-    const settings = this.getSettings();
     const generalData = formData.general || {};
-    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
-    let idType = '';
-    if (isMultipleVisitor) {
-      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-      if (savedVisitors.length > 0) {
-        idType = savedVisitors[0].visitor_id_type || savedVisitors[0].idType || '';
-      }
-    } else {
-      idType = generalData.visitor_id_type || '';
-    }
+    const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
+    const idType = savedVisitors.length > 0
+      ? (savedVisitors[0].visitor_id_type || savedVisitors[0].idType || '')
+      : (generalData.visitor_id_type || '');
     return this.resolveIdType(idType);
   }
 
   private getPrimaryVisitorIdExpiredDate(formData: any): any {
-    const settings = this.getSettings();
     const generalData = formData.general || {};
-    const isMultipleVisitor = settings?.MultipleVisitorEnabled || settings?.Visitor?.[0]?.MultipleVisitorEnabled;
-    if (isMultipleVisitor) {
-      const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-      if (savedVisitors.length > 0) {
-        return savedVisitors[0].id_expired_date || savedVisitors[0].expired_date || null;
-      }
+    const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
+    if (savedVisitors.length > 0) {
+      return savedVisitors[0].id_expired_date || savedVisitors[0].expired_date || null;
     }
     return generalData.id_expired_date || generalData.expired_date || null;
   }

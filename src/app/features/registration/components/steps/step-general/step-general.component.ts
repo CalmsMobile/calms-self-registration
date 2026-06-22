@@ -2333,8 +2333,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!this.isMultipleVisitorMode) return;
     const currentForm = this.getCurrentVisitorForm();
 
-    // Save to savedVisitors array for multiple visitor functionality
-    const visitorData = { ...currentForm.value };
+    // Save to savedVisitors array for multiple visitor functionality.
+    // Use getRawValue() so disabled controls (e.g. appointment-locked fullName)
+    // are captured — .value silently drops them, leaving an empty name in the payload.
+    const visitorData = { ...currentForm.getRawValue() };
 
     // Initialize Visitor_IC and IdentityNo fields
     visitorData.Visitor_IC = visitorData.visitor_id || '';
