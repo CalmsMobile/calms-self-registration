@@ -1883,19 +1883,19 @@
           <i class="pi pi-check-circle"></i>
           <span>{{ 'registration_page_face_detected_ready' | translate }}</span>
         </div>
-      } @else if (faceValidationFeedback.length > 0) {
+      } @else if (firstFaceFeedback) {
         <div class="face-validation-feedback face-warn">
           <i class="pi pi-exclamation-triangle"></i>
-          <span>{{ resolveFaceFeedback(faceValidationFeedback[0]) }}</span>
+          <span>{{ firstFaceFeedback }}</span>
         </div>
       }
     }
 
     <!-- Upload / REST validation feedback (shown after photo is selected/captured) -->
-    @if (capturedImage && !isFaceValidating && faceValidationFeedback.length > 0) {
+    @if (capturedImage && !isFaceValidating && firstFaceFeedback) {
       <div class="face-validation-feedback" [class.face-error]="!isUploadPhotoValid" [class.face-warn]="isUploadPhotoValid">
         <i [class]="!isUploadPhotoValid ? 'pi pi-times-circle' : 'pi pi-exclamation-triangle'"></i>
-        <span>{{ resolveFaceFeedback(faceValidationFeedback[0]) }}</span>
+        <span>{{ firstFaceFeedback }}</span>
       </div>
     }
 

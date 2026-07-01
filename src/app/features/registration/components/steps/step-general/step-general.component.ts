@@ -215,32 +215,40 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   private readonly CAMERA_BOX_SIZE = 240;
   private readonly FACE_CIRCLE_SIZE = 180;
 
-  private readonly faceFeedbackMap: Record<string, string> = {
-    no_face_detected: 'No face detected. Ensure your face is visible and well-lit.',
-    no_face_detected_upload: 'No face detected. Please upload a clear portrait photo.',
-    multiple_faces: 'Multiple faces detected. Ensure only one person is visible.',
-    face_blurry: 'Keep still — frame is blurry.',
-    face_too_dark: 'Too dark — turn on a light.',
-    face_too_bright: 'Too bright — reduce direct light.',
-    face_glare: 'Glare on face — adjust lighting or position.',
-    face_not_centered: 'Center your face in the frame.',
-    face_too_small: 'Move closer to the camera.',
-    face_too_large: 'Move slightly back.',
-    face_partial: 'Ensure your full face is visible.',
-    face_eyes_closed: 'Open your eyes and look at the camera.',
-    face_occluded: 'Face may be partially covered or shadowed.',
-    face_mouth_covered: 'Uncover your mouth — remove hand or mask.',
-    face_eye_covered: 'Uncover your eyes — remove hand or hair.',
-    face_head_yaw: 'Look directly at the camera.',
-    face_head_tilt: 'Keep your head straight and level.',
-    face_ready: 'Ready! Keep still to capture.',
-    face_not_fully_visible: 'Ensure your face is fully visible — remove anything covering it.',
+  /**
+   * The face-validation service emits feedback keys that don't match the
+   * admin-configured label titles. This maps each service key to the
+   * title-derived label key (screenName_title, lowercased) so the configured
+   * caption + its per-language translation is shown. Keys already matching
+   * their label are omitted.
+   */
+  private readonly faceLabelKeyAlias: Record<string, string> = {
+    face_blurry: 'face_is_blurry',
+    face_glare: 'face_glare_detected',
+    face_too_small: 'face_too_far_away',
+    face_too_large: 'face_too_close',
+    face_eyes_closed: 'eyes_closed_detected',
+    face_eye_covered: 'eyes_covered',
+    face_occluded: 'face_obstructed',
+    face_head_yaw: 'face_turned_sideways',
+    face_head_tilt: 'head_tilt_detected',
+    face_partial: 'face_not_fully_visible',
   };
 
   resolveFaceFeedback(key: string): string {
-    return this.labelService.getLabel('registration_page_' + key, 'caption')
-      || this.faceFeedbackMap[key]
-      || key;
+    const labelKey = this.faceLabelKeyAlias[key] ?? key;
+    // Language label only — no hardcoded fallback. Keys without a configured
+    // label resolve to '' so nothing untranslated is ever shown.
+    return this.labelService.getLabel('registration_page_' + labelKey, 'caption') || '';
+  }
+
+  /** First feedback message that resolves to a displayable (translatable) caption; '' if none. */
+  get firstFaceFeedback(): string {
+    for (const key of this.faceValidationFeedback) {
+      const msg = this.resolveFaceFeedback(key);
+      if (msg) return msg;
+    }
+    return '';
   }
 
   // Multiple booking check
@@ -3703,7 +3711,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.faceValidationFeedback = result.feedback.length
             ? result.feedback
             : ['no_face_detected'];
-          this.showMessage({ severity: 'warn', detail: this.resolveFaceFeedback(this.faceValidationFeedback[0]) });
+          const msg = this.firstFaceFeedback;
+          if (msg) this.showMessage({ severity: 'warn', detail: msg });
           this.retakePhoto();
           return;
         }
@@ -4718,15 +4727,22 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     set('fullName', ocr.full_name);
     const rawId = ocr.id_number || ocr.document_number;
     set('visitor_id', rawId ? rawId.replace(/[^a-zA-Z0-9]/g, '') : null);
-    set('email', ocr.email);
-    set('phone', ocr.phone_number);
-    const companyName = ocr.company_name || ocr.company || null;
-    if (companyName && !existing['visitor_company']) {
-      // visitor_company is an autocomplete — check if a matching entry exists in companyList
-      const match = this.companyList?.find((c: any) =>
-        c.visitor_comp_name?.toLowerCase() === companyName.toLowerCase()
+
+    // Document type → visitor_id_type (resolve to ID_TYPECODE)
+    if (!existing['visitor_id_type'] && ocr.document_type && this.idTypeList.length > 0) {
+      const dt = String(ocr.document_type);
+      const codeMatch = this.idTypeList.find((t: any) => t.ID_TYPECODE === dt);
+      const descMatch = codeMatch || this.idTypeList.find((t: any) =>
+        t.IDTYPEDESCRIPTION?.toLowerCase() === dt.toLowerCase() ||
+        t.IDTYPEDESCRIPTION?.toLowerCase().includes(dt.toLowerCase())
       );
-      patch['visitor_company'] = match ?? { visitor_comp_name: companyName };
+      if (descMatch) patch['visitor_id_type'] = descMatch.ID_TYPECODE;
+    }
+
+    // Expiry date → id_expired_date
+    if (!existing['id_expired_date'] && ocr.expiry_date) {
+      const exp = new Date(ocr.expiry_date);
+      if (!isNaN(exp.getTime())) patch['id_expired_date'] = exp;
     }
 
     // Gender: map text to form value "0"=Female "1"=Male "2"=Others
@@ -4737,10 +4753,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       else patch['gender'] = '2';
     }
 
-    set('country', ocr.country);
+    if (!existing['country'] && ocr.country) {
+      patch['country'] = this.resolveCountrySeqId(ocr.country);
+    }
 
     if (ocr.address?.full) {
-      set('address', ocr.address.full);
+      set('visitor_address', ocr.address.full);
     }
 
     if (Object.keys(patch).length) {
