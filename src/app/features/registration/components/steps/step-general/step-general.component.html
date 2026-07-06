@@ -104,7 +104,7 @@
       <div class="form-field">
         <label class="field-label" for="fullName">
           {{'registration_page_full_name' | translate}}
-          <span class="required-star">{{settings?.NameRequired ? '*' : ''}}</span>
+          <span class="required-star">{{settings?.NameEnabled ? '*' : ''}}</span>
         </label>
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-user"></i></span>
@@ -1018,7 +1018,7 @@
       <!-- 3. Full Name -->
       @if (settings?.NameEnabled) {
       <div class="m-form-field">
-        <label class="m-field-label">{{'registration_page_full_name' | translate}} <span class="m-req">{{settings?.NameRequired ? '*' : ''}}</span></label>
+        <label class="m-field-label">{{'registration_page_full_name' | translate}} <span class="m-req">{{settings?.NameEnabled ? '*' : ''}}</span></label>
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-user"></i></span>
           <input pInputText [placeholder]="'registration_page_full_name' | translate:'placeholder'" formControlName="fullName"

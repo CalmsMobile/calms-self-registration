@@ -108,7 +108,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   genderOptions = GENDER_OPTIONS;
 
   settings: any = {};
-  minDate = new Date();
+  // Start of today (00:00). Must NOT carry the current time — a date-only picker
+  // value of today is stored at midnight, and a minDate of "now" (e.g. 15:30) would
+  // treat today's value as out-of-range and render the field empty.
+  minDate = (() => { const d = new Date(); d.setHours(0, 0, 0, 0); return d; })();
   minVisitTime: Date | undefined = undefined;
   minEndTime: Date | undefined = undefined;
   endBeforeStartError = false;
@@ -1787,6 +1790,24 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Parse a UDF date value into a local Date for p-datepicker.
+   * Handles the API/appointment "DD/MM/YYYY" (day-first) format explicitly —
+   * `new Date("06/07/2026")` would wrongly read it as month-first (US) and shift
+   * the day. Already-Date values and ISO strings pass through parseDate().
+   */
+  private parseUdfDate(value: any): Date | null {
+    if (!value) return null;
+    if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+    if (typeof value === 'string') {
+      const s = value.trim();
+      const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/); // DD/MM/YYYY or DD-MM-YYYY
+      if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+      return this.parseDate(s); // ISO / other recognizable formats
+    }
+    return null;
+  }
+
+  /**
    * Apply default start (now) and end datetime based on AptEndTime setting.
    * startDate always defaults to now when StartEndDtEnabled is true.
    * endDate default depends on AptEndTime:
@@ -2010,9 +2031,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
           // Get value from saved data, fall back to visitorData in appointment flow
           const appointmentValue = isPreFilledData ? (visitorData[controlName] ?? null) : null;
-          let controlValue = udf.UDFCtrlType === 10
-            ? (savedData[controlName] || appointmentValue || '')
-            : (savedData[controlName] ?? appointmentValue ?? null);
+          let controlValue: any;
+          if (udf.UDFCtrlType === 10) {
+            controlValue = savedData[controlName] || appointmentValue || '';
+          } else if (udf.UDFCtrlType === 40) {
+            // Date: an empty-string saved value means "unset" — a real saved date is a
+            // Date object or non-empty string. Use '||' so '' falls through to the
+            // appointment value; '??' would wrongly keep '' and blank the field.
+            controlValue = savedData[controlName] || appointmentValue || null;
+          } else {
+            controlValue = savedData[controlName] ?? appointmentValue ?? null;
+          }
 
           // p-multiSelect requires an array — coerce any value coming from the API/saved data
           // p-multiSelect requires an array — coerce any value coming from the API/saved data
@@ -2053,6 +2082,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
                   return isNaN(num) ? String(v).trim() : String(num);
               }) : null;
             }
+          }
+
+          // p-datepicker needs a Date object. Appointment/API values arrive as
+          // "DD/MM/YYYY" strings — parse day-first so the day isn't shifted.
+          if (udf.UDFCtrlType === 40) {
+            console.log('[UDF date]', controlName, '| saved:', savedData[controlName], '| appt:', appointmentValue, '| isPreFilled:', isPreFilledData, '| parsed:', this.parseUdfDate(controlValue));
+            controlValue = this.parseUdfDate(controlValue);
           }
 
           const validators = [];
@@ -2429,7 +2465,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const hasSelectedIdType = selectedIdType !== null && selectedIdType !== undefined && String(selectedIdType).trim() !== '';
 
     if (this.settings) {
-      if (this.settings.NameEnabled && this.settings.NameRequired) requiredFields.push('fullName');
+      // Name is always mandatory (not gated on NameRequired).
+      if (this.settings.NameEnabled) requiredFields.push('fullName');
       if (this.settings.EmailEnabled && this.settings.EmailRequired) requiredFields.push('email');
       if (this.settings.ContactNumberEnabled && this.settings.ContactNumberRequired) requiredFields.push('phone');
       if (this.settings.IdProofEnabled && (this.settings.IdProofRequired || hasSelectedIdType)) requiredFields.push('visitor_id');
@@ -2572,7 +2609,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     // Setup each control based on settings
     this.setupControl('title', this.settings.TitleEnabled, this.settings.TitleRequired);
-    this.setupControl('fullName', this.settings.NameEnabled, this.settings.NameRequired, this.settings.NameMinLength);
+    // Name is ALWAYS mandatory regardless of the NameRequired setting, and must not
+    // be blank/whitespace-only (see nonBlankValidator).
+    this.setupControl('fullName', this.settings.NameEnabled, true, this.settings.NameMinLength);
+    if (this.settings.NameEnabled) {
+      const nameCtrl = this.generalForm.get('fullName');
+      nameCtrl?.addValidators(this.nonBlankValidator);
+      nameCtrl?.updateValueAndValidity();
+    }
     this.setupControl('email', this.settings.EmailEnabled, this.settings.EmailRequired);
     if (this.settings.EmailEnabled) {
       this.generalForm.get('email')?.addValidators(Validators.email);
@@ -3199,6 +3243,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!value || !Array.isArray(value)) return null;
     if (value[0] && !value[1]) {
       return { dateRange: true };
+    }
+    return null;
+  };
+
+  /** Rejects whitespace-only text as empty. Surfaces the standard 'required' error
+   *  so existing "… is required" messages/gating apply (Validators.required alone
+   *  passes a string of spaces). */
+  private readonly nonBlankValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (typeof value === 'string' && value.length > 0 && value.trim().length === 0) {
+      return { required: true };
     }
     return null;
   };
