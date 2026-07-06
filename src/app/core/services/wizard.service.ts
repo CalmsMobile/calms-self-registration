@@ -858,6 +858,7 @@ export class WizardService {
       return {
         MySelf: isSelf,
         Photo: stripPhotoPrefix(rawPhoto),
+        FaceVector: Array.isArray(data.faceVector) ? data.faceVector : null,
         TitleId: data.title || '',
         TitleDesc: data.title || '',
         FullName: this.buildFullName(data.title, data.fullName),

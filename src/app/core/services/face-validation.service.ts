@@ -20,6 +20,12 @@ export interface FaceValidationResult {
   face_bbox: number[] | null;
 }
 
+export interface FaceEmbeddingResult {
+  face_detected: boolean;
+  embedding: number[] | null;
+  dimensions: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FaceValidationService {
   private readonly baseUrl = environment.faceValidationUrl;
@@ -31,6 +37,13 @@ export class FaceValidationService {
     const formData = new FormData();
     formData.append('image', file, file.name);
     return this.http.post<FaceValidationResult>(`${this.baseUrl}/face-validation/validate`, formData);
+  }
+
+  /** REST call — extract the InsightFace embedding (feature vector) for a photo. */
+  extractEmbedding(file: File): Observable<FaceEmbeddingResult> {
+    const formData = new FormData();
+    formData.append('photo', file, file.name);
+    return this.http.post<FaceEmbeddingResult>(`${this.baseUrl}/extract-embedding`, formData);
   }
 
 }

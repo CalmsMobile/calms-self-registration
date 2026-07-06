@@ -593,6 +593,8 @@
             [placeholder]="'registration_page_whom_you_would_like_to_visit' | translate:'placeholder'" (onChange)="onHostChange($event)"
             optionLabel="HOSTNAME" optionValue="HOSTIC" [class]="{'ng-invalid': isFieldInvalidRequired('host')}"
             [disabled]="isFieldDisabled('host')" [showClear]="true" (onClear)="onHostChange({value: null})"
+            [filter]="true" (onFilter)="onHostSearch($event.filter)"
+            [emptyMessage]="hostEmptyFilterMessage" [emptyFilterMessage]="hostEmptyFilterMessage"
             appendTo="body">
           </p-select>
         </div>
@@ -1436,7 +1438,10 @@
           <p-select [options]="hosts" formControlName="host"
             [placeholder]="'registration_page_whom_you_would_like_to_visit' | translate:'placeholder'" (onChange)="onHostChange($event)"
             optionLabel="HOSTNAME" optionValue="HOSTIC" [class]="{'ng-invalid': isFieldInvalidRequired('host')}"
-            [disabled]="isFieldDisabled('host')" [showClear]="true" (onClear)="onHostChange({value: null})" appendTo="body">
+            [disabled]="isFieldDisabled('host')" [showClear]="true" (onClear)="onHostChange({value: null})"
+            [filter]="true" (onFilter)="onHostSearch($event.filter)"
+            [emptyMessage]="hostEmptyFilterMessage" [emptyFilterMessage]="hostEmptyFilterMessage"
+            appendTo="body">
           </p-select>
         </div>
         @if (isFieldInvalidRequired('host')) {

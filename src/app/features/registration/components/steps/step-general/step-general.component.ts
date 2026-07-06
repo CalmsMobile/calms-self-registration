@@ -16,12 +16,12 @@ import { DividerModule } from 'primeng/divider';
 import { CheckboxModule } from 'primeng/checkbox';
 import { ButtonModule } from 'primeng/button';
 import { ProgressBarModule } from 'primeng/progressbar';
-import { filter, Subject, takeUntil } from 'rxjs';
+import { filter, firstValueFrom, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../../core/services/api.service';
 import { LabelService } from '../../../../../core/services/label.service';
 import { OcrService } from '../../../../../core/services/ocr.service';
 import { FileUploadService } from '../../../../../core/services/file-upload.service';
-import { FaceValidationService, FaceValidationResult } from '../../../../../core/services/face-validation.service';
+import { FaceValidationService, FaceValidationResult, FaceEmbeddingResult } from '../../../../../core/services/face-validation.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
 import { SharedService } from '../../../../../shared/shared.service';
@@ -90,6 +90,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   ocrNoDataFound = false;
 
   hosts: any[] = [];
+  // Full host list, always loaded locally. When EnableSelfRegistrationHostPreload is
+  // true the dropdown (`hosts`) stays empty until the user searches; matches are then
+  // filtered locally out of this master list. When false, `hosts` mirrors this list.
+  allHosts: any[] = [];
   departmentList: any[] = [];
   hostNameList: any[] = [];
   hostDepartmentList: any[] = [];
@@ -179,6 +183,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   bookedSlotIds: string = ''; // Track selected slot IDs
 
   // Host search functionality
+  // Minimum characters a user must type before the host dropdown reveals any
+  // matches. When EnableSelfRegistrationHostPreload is true the full host list
+  // is NOT preloaded (privacy), so nothing is shown until this many chars.
+  private readonly HOST_SEARCH_MIN_CHARS = 3;
   hostSearchText: string = '';
   showReturningVisitorPopup = false;
   searchQuery = '';
@@ -211,6 +219,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   private isFaceValidationInFlight = false;
   private capturedValidationBlob: Blob | null = null;
   captureValidationPassed = false;
+  // InsightFace embedding (feature vector) of the current photo. Fetched during the
+  // final verification / upload validation and saved with the visitor so it can be
+  // sent in the VisitorAck VisitorsList payload (buildVisitorEntry → FaceVector).
+  capturedFaceVector: number[] | null = null;
+  private faceVectorPending: Promise<number[] | null> | null = null;
   // Must match .camera-frame-wrapper / .face-guide-ring dimensions in the SCSS
   private readonly CAMERA_BOX_SIZE = 240;
   private readonly FACE_CIRCLE_SIZE = 180;
@@ -1101,42 +1114,30 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Only skip host loading in appointment flow when host preload is enabled
-    // In normal flow, always load hosts regardless of the preload setting
-    if (this.enableSelfRegistrationHostPreload && this.isAppointmentFlow) {
-      // Don't preload hosts - they will be loaded via search (only for appointment flow)
-      console.log('Host preload enabled for appointment flow, hosts will be loaded via search');
+    // Always load the complete host list locally (PreloadHostData = true) regardless of
+    // the EnableSelfRegistrationHostPreload flag. The flag only controls DISPLAY:
+    // when true, processBranchHostData keeps the dropdown empty until the user searches
+    // (see onHostSearch), filtering matches locally out of the preloaded list.
+    if (branchId) {
+      console.log('Calling GetBranchHostData API for branch:', branchId);
+      this.api.GetBranchHostData(branchId, true).subscribe({
+        next: (response: any) => {
+          this.processBranchHostData(response);
+        },
+        error: (error) => {
+          console.error('Error loading GetBranchHostData:', error);
+          this.allHosts = [];
+          this.hosts = [];
+          this.hostNameList = [];
+          this.originalHostData = [];
+        }
+      });
+    } else {
+      console.log('No branch ID available');
+      this.allHosts = [];
       this.hosts = [];
       this.hostNameList = [];
-      // Still load other data like titles and rooms
-      this.loadOtherBranchData();
-    } else {
-      // Load complete branch data from GetBranchHostData API (for normal flow or when preload is disabled)
-      if (branchId) {
-        console.log('Calling GetBranchHostData API for branch:', branchId);
-
-        // Pass the inverse of enableSelfRegistrationHostPreload as PreloadHostData
-        // If enableSelfRegistrationHostPreload is true, we DON'T want to preload (PreloadHostData = false)
-        // If enableSelfRegistrationHostPreload is false, we DO want to preload (PreloadHostData = true)
-        const preloadHostData = !this.enableSelfRegistrationHostPreload;
-
-        this.api.GetBranchHostData(branchId, preloadHostData).subscribe({
-          next: (response: any) => {
-            this.processBranchHostData(response);
-          },
-          error: (error) => {
-            console.error('Error loading GetBranchHostData:', error);
-            this.hosts = [];
-            this.hostNameList = [];
-            this.originalHostData = [];
-          }
-        });
-      } else {
-        console.log('No branch ID available');
-        this.hosts = [];
-        this.hostNameList = [];
-        this.originalHostData = [];
-      }
+      this.originalHostData = [];
     }
   }
 
@@ -1154,7 +1155,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.originalHostData = [...response.Table];
 
       // Map hosts with proper field names (use HOSTNAME and HOSTIC like JavaScript)
-      this.hosts = response.Table.map((host: any) => {
+      const mappedHosts = response.Table.map((host: any) => {
         let formattedHost = { ...host };
 
         // Ensure HOSTNAME field exists for dropdown display
@@ -1177,9 +1178,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         return formattedHost;
       });
 
+      // Master list is always fully populated (loaded locally).
+      this.allHosts = mappedHosts;
+
+      // When preload is enabled, keep the dropdown empty until the user searches
+      // (>= HOST_SEARCH_MIN_CHARS) — matches are filtered locally in onHostSearch.
+      // When disabled, show the full list as usual.
+      this.hosts = this.enableSelfRegistrationHostPreload ? [] : [...mappedHosts];
+
       this.hostNameList = [...this.hosts];
-      console.log('Hosts processed successfully, count:', this.hosts.length);
-      console.log('Sample host data:', this.hosts[0]);
+      console.log('Hosts processed successfully, master count:', this.allHosts.length, '| displayed:', this.hosts.length);
+      console.log('Sample host data:', this.allHosts[0]);
 
       // Create department list from host data for bidirectional filtering
       const uniqueDepartments = [...new Set(response.Table
@@ -1219,6 +1228,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
     } else {
       console.log('No hosts found in GetBranchHostData response Table');
+      this.allHosts = [];
       this.hosts = [];
       this.hostNameList = [];
       this.originalHostData = [];
@@ -1450,88 +1460,48 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
   }
 
-  searchExistHost(searchText: string): void {
-    if (!this.enableSelfRegistrationHostPreload || !searchText || searchText.trim().length < 2) {
-      return;
-    }
-
-    const branchId = this.wizardService.currentBranchID;
-    if (!branchId) {
-      return;
-    }
-
-    this.isHostSearching = true;
-
-    const loParams = {
-      "SearchString": searchText.trim(),
-      "OffSet": "0",
-      "Rows": "10",
-      "Branch": branchId
-    };
-
-    // Add device parameters if available
-    // Object.assign(loParams, DeviveParam); // Uncomment when DeviveParam is available
-
-    this.api.SearchExistHost(loParams).subscribe({
-      next: (response: any) => {
-        this.isHostSearching = false;
-        if (response?.Table?.length) {
-          // Map search results with proper field names for consistency
-          this.hosts = response.Table.map((host: any) => {
-            let formattedHost = { ...host };
-
-            // Ensure HOSTNAME field exists for dropdown display
-            if (!host.HOSTNAME && host.Name) {
-              formattedHost.HOSTNAME = host.Name;
-            }
-
-            // Ensure HOSTIC field exists for dropdown value
-            if (!host.HOSTIC && host.HostIC) {
-              formattedHost.HOSTIC = host.HostIC;
-            } else if (!host.HOSTIC && host.SeqId) {
-              formattedHost.HOSTIC = host.SeqId;
-            }
-
-            // Format with member ID if enabled
-            if (this.gbShowMemberId && host.MemberID) {
-              formattedHost.HOSTNAME = `${host.Name || host.HOSTNAME || ''} (${host.MemberID})`.trim();
-            }
-
-            return formattedHost;
-          });
-
-          this.hostNameList = [...this.hosts];
-
-          // Apply query parameter host filtering for appointment flow even on search results
-          this.applyQueryParamHostFiltering();
-        } else {
-          this.hosts = [];
-          this.hostNameList = [];
-        }
-      },
-      error: (error: any) => {
-        this.isHostSearching = false;
-        console.error('Error searching hosts:', error);
-        this.hosts = [];
-        this.hostNameList = [];
-      }
-    });
-  }
-
+  /**
+   * Host dropdown search. No backend call — the full host list is already loaded
+   * locally in `allHosts`. When EnableSelfRegistrationHostPreload is true the
+   * dropdown stays empty until the user types at least HOST_SEARCH_MIN_CHARS, then
+   * matches are filtered locally. When false, PrimeNG's own client-side filter
+   * handles the already-populated list, so this is a no-op.
+   */
   onHostSearch(searchText: string): void {
-    this.hostSearchText = searchText;
-    if (this.enableSelfRegistrationHostPreload) {
-      // Debounce the search to avoid too many API calls
-      if (this.hostSearchTimeout) {
-        clearTimeout(this.hostSearchTimeout);
-      }
-      this.hostSearchTimeout = setTimeout(() => {
-        this.searchExistHost(searchText);
-      }, 500);
+    this.hostSearchText = searchText ?? '';
+
+    // Preload disabled → full list is shown; let PrimeNG filter it client-side.
+    if (!this.enableSelfRegistrationHostPreload) {
+      return;
     }
+
+    const query = this.hostSearchText.trim().toLowerCase();
+
+    // Privacy: reveal nothing until the minimum characters are typed.
+    // Shortening the query below the threshold hides results again.
+    if (query.length < this.HOST_SEARCH_MIN_CHARS) {
+      this.hosts = [];
+      this.hostNameList = [];
+      return;
+    }
+
+    // Filter the locally-loaded master list by host name.
+    this.hosts = this.allHosts.filter((h: any) =>
+      (h.HOSTNAME || h.Name || '').toLowerCase().includes(query)
+    );
+    this.hostNameList = [...this.hosts];
   }
 
-  private hostSearchTimeout: any;
+  /** Message shown inside the host dropdown when no options are listed. */
+  get hostEmptyFilterMessage(): string {
+    if (this.enableSelfRegistrationHostPreload && this.hostSearchText.trim().length < this.HOST_SEARCH_MIN_CHARS) {
+      // Tolerate the trailing-space variant of the Title (…_host_) as well as the clean one.
+      return this.labelService.getLabel('registration_page_type_to_least_search_host', 'caption')
+        || this.labelService.getLabel('registration_page_type_to_least_search_host_', 'caption')
+        || `Type at least ${this.HOST_SEARCH_MIN_CHARS} characters to search`;
+    }
+    return this.labelService.getLabel('registration_page_no_results_found', 'caption') || 'No results found';
+  }
 
   private formatVisitorIdForPDPA(visitorId: string, fullName: string): string {
     if (!this.isSingaporePDPARequired || !visitorId || !fullName) {
@@ -1991,6 +1961,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const formControls: any = {
       profile: [savedData.profile || appointmentPhotoDataUrl || null],
       profilePreview: [savedData.profilePreview || appointmentPhotoDataUrl || ''],
+      faceVector: [savedData.faceVector || null],
       title: [resolvedTitle],
       fullName: [resolvedFullName],
       email: [isPreFilledData ? (visitorData.email || savedData.email || '') : (savedData.email || '')],
@@ -2394,7 +2365,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     // Clear visitor identification fields including the profile preview so the next
     // visitor doesn't accidentally inherit the previous visitor's photo.
-    const fieldsToReset = ['fullName', 'visitor_id', 'profile', 'profilePreview'];
+    const fieldsToReset = ['fullName', 'visitor_id', 'profile', 'profilePreview', 'faceVector'];
 
     fieldsToReset.forEach(field => {
       if (currentForm.get(field)) {
@@ -2896,7 +2867,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
         // Clear the form so that back-navigation shows the chip without also
         // pre-filling the form with the same visitor's data (which looks like a duplicate).
-        ['fullName', 'visitor_id', 'profile', 'profilePreview'].forEach(f => {
+        ['fullName', 'visitor_id', 'profile', 'profilePreview', 'faceVector'].forEach(f => {
           this.generalForm.get(f)?.reset();
           this.generalForm.get(f)?.markAsUntouched();
           this.generalForm.get(f)?.markAsPristine();
@@ -2921,7 +2892,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         visitorData.IdentityNo = visitorData.visitor_id || '';
         this.savedVisitors[this.editingVisitorIndex] = visitorData;
         this.editingVisitorIndex = -1;
-        ['fullName', 'visitor_id', 'profile', 'profilePreview'].forEach(f => {
+        ['fullName', 'visitor_id', 'profile', 'profilePreview', 'faceVector'].forEach(f => {
           this.generalForm.get(f)?.reset();
           this.generalForm.get(f)?.markAsUntouched();
           this.generalForm.get(f)?.markAsPristine();
@@ -2958,7 +2929,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       );
       if (!isDuplicate) {
         this.savedVisitors.push(visitorData);
-        ['fullName', 'visitor_id', 'profile', 'profilePreview'].forEach(f => {
+        ['fullName', 'visitor_id', 'profile', 'profilePreview', 'faceVector'].forEach(f => {
           this.generalForm.get(f)?.reset();
           this.generalForm.get(f)?.markAsUntouched();
           this.generalForm.get(f)?.markAsPristine();
@@ -3393,6 +3364,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.faceValidationFeedback = result.feedback;
         }
         this.isUploadPhotoValid = result.face_detected;
+        // Face present → grab the feature vector for the payload.
+        this.extractFaceVector(file);
         this.proceedWithFileRead(file, visitorIndex, closeDialog);
       },
       error: () => {
@@ -3424,15 +3397,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
 
       this.fileUploadService.uploadImage(file).subscribe({
-        next: () => {
+        next: async () => {
           const imageUrl = this.sanitizer.bypassSecurityTrustUrl(e.target.result);
+          // Ensure the face-vector request has resolved before saving.
+          await this.ensureFaceVector();
           if (this.isMultipleVisitorMode && visitorIndex !== undefined) {
             this.visitorsArray.at(visitorIndex).get('profile')?.setValue(file);
             this.profileImage = imageUrl;
-            this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
+            this.generalForm.patchValue({ profile: file, profilePreview: e.target.result, faceVector: this.capturedFaceVector });
           } else {
             this.profileImage = imageUrl;
-            this.generalForm.patchValue({ profile: file, profilePreview: e.target.result });
+            this.generalForm.patchValue({ profile: file, profilePreview: e.target.result, faceVector: this.capturedFaceVector });
           }
         },
         error: () => {
@@ -3471,7 +3446,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   clearPhoto(): void {
     this.profileImage = '';
-    this.generalForm.patchValue({ profile: null, profilePreview: '' });
+    this.capturedFaceVector = null;
+    this.faceVectorPending = null;
+    this.generalForm.patchValue({ profile: null, profilePreview: '', faceVector: null });
     // Mark touched+dirty so the required error border shows immediately after removal
     const ctrl = this.generalForm.get('profile');
     ctrl?.markAsTouched();
@@ -3717,6 +3694,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           return;
         }
         this.captureValidationPassed = true;
+        // Final verification passed → grab the face feature vector for the payload.
+        this.extractFaceVector(validationFile);
       },
       error: () => {
         // Face validation service unavailable — proceed without blocking
@@ -3727,12 +3706,44 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Fetch the InsightFace embedding (feature vector) for a photo and stash it in
+   * `capturedFaceVector`. It is later written to the form (proceedWithCapture /
+   * proceedWithFileRead) so it flows into the VisitorAck VisitorsList payload.
+   * Best-effort: a failure never blocks capture — the vector is just left null.
+   */
+  private extractFaceVector(file: File): void {
+    this.capturedFaceVector = null;
+    // Keep the in-flight promise so the save paths (proceedWithCapture /
+    // proceedWithFileRead) can await it — otherwise a fast "Use this photo"
+    // click patches the form before the embedding response arrives (race → null).
+    this.faceVectorPending = firstValueFrom(this.faceValidationService.extractEmbedding(file))
+      .then((res: FaceEmbeddingResult) => {
+        const vec = res?.embedding ?? null;
+        this.capturedFaceVector = vec;
+        return vec;
+      })
+      .catch(() => {
+        this.capturedFaceVector = null;
+        return null;
+      });
+  }
+
+  /** Resolve the in-flight face-vector request (if any) so it's ready before saving. */
+  private async ensureFaceVector(): Promise<void> {
+    if (this.faceVectorPending) {
+      this.capturedFaceVector = await this.faceVectorPending;
+    }
+  }
+
   retakePhoto(): void {
     this.capturedImage = null;
     this.pendingUploadFile = null;
     this.capturedValidationBlob = null;
     this.captureValidationPassed = false;
     this.isUploadPhotoValid = true;
+    this.capturedFaceVector = null;
+    this.faceVectorPending = null;
     this.faceValidationFeedback = [];
     setTimeout(() => this.startCamera(), 100);
   }
@@ -3762,17 +3773,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.proceedWithCapture(file, base64);
   }
 
-  private proceedWithCapture(file: File, base64: string): void {
+  private async proceedWithCapture(file: File, base64: string): Promise<void> {
+    // Make sure the face-vector request has resolved before we save the visitor.
+    await this.ensureFaceVector();
     this.fileUploadService.uploadImage(file).subscribe({
       next: () => {
         const imageUrl = this.sanitizer.bypassSecurityTrustUrl(base64);
         this.profileImage = imageUrl;
-        this.generalForm.patchValue({ profile: file, profilePreview: base64 });
+        this.generalForm.patchValue({ profile: file, profilePreview: base64, faceVector: this.capturedFaceVector });
         // In multi-visitor mode, sync the captured photo back to the corresponding savedVisitor
         // so back-navigation can restore it and show 'preview' mode in the dialog.
         if (this.isMultipleVisitorMode && this.savedVisitors.length > 0) {
           const targetIdx = this.savedVisitors.length - 1;
-          this.savedVisitors[targetIdx] = { ...this.savedVisitors[targetIdx], profile: file, profilePreview: base64 };
+          this.savedVisitors[targetIdx] = { ...this.savedVisitors[targetIdx], profile: file, profilePreview: base64, faceVector: this.capturedFaceVector };
           this.saveFormDataToWizard();
         }
         this.closePhotoCaptureDialog();
@@ -3812,11 +3825,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.stopOcrCamera();
     if (this.wizardService.currentBranchID) {
       this.saveFormDataToWizard();
-    }
-
-    // Clear host search timeout
-    if (this.hostSearchTimeout) {
-      clearTimeout(this.hostSearchTimeout);
     }
 
     this.destroy$.next();
