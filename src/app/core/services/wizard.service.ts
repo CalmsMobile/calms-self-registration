@@ -858,7 +858,8 @@ export class WizardService {
       return {
         MySelf: isSelf,
         Photo: stripPhotoPrefix(rawPhoto),
-        FaceVector: Array.isArray(data.faceVector) ? data.faceVector : null,
+        // Send as a JSON array string for DB storage (e.g. "[0.0421,-0.0817,...]").
+        FaceVector: Array.isArray(data.faceVector) ? JSON.stringify(data.faceVector) : '',
         TitleId: data.title || '',
         TitleDesc: data.title || '',
         FullName: this.buildFullName(data.title, data.fullName),

@@ -199,6 +199,7 @@
 }
 
 .pending {
+  margin: 0;
   display: inline-flex;
   align-items: center;
   gap: 16px;
@@ -246,7 +247,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 24px;
-  margin-bottom: 34px;
+
 }
 
 .declaration-card {
@@ -1307,7 +1308,7 @@
 /* ─── Responsive ─────────────────────────────────────── */
 @media (max-width: 1500px) {
   .topbar { padding: 18px 28px; }
-  .content { padding: 34px 26px 48px; }
+  .content { padding: 26px 26px 48px; }
   .declarations { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
   .main-panel { grid-template-columns: 30% 70%; }
   .brand-left strong { font-size: 28px; }
@@ -1345,7 +1346,7 @@
   .content { padding: 20px 14px 10px; }
   .pending { font-size: 18px; gap: 10px; letter-spacing: 2px; }
   .pending::before { width: 9px; height: 9px; }
-  .title { margin-top: 7px; margin-bottom: 16px; font-size: clamp(27px, 5.6vw, 40px); }
+  .title { margin-top: 0; margin-bottom: 0; font-size: clamp(27px, 5.6vw, 40px); }
   .declarations { grid-template-columns: 1fr; gap: 12px; }
   .declaration-card { min-height: 90px; border-radius: 26px; padding: 12px 14px; }
   .icon-chip { width: 56px; height: 56px; border-radius: 18px; svg { width: 28px; height: 28px; } }
