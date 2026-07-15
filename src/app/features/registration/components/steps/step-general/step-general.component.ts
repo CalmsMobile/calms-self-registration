@@ -3341,17 +3341,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
    * If translation doesn't exist, returns the caption instead of formatted key
    */
   getTranslatedLabelWithFallback(translateKey: string | undefined, fallback: string): string {
-    if (!translateKey || !fallback) {
+    if (!translateKey) {
       return fallback;
     }
 
-    const translation = this.labelService.getLabel(translateKey.toLowerCase().trim(), 'caption');
-    // If translation exists (not the formatted-key fallback), return it
-    if (translation && translation !== this.formatKeyAsReadable(translateKey)) {
-      return translation;
+    const key = translateKey.toLowerCase().trim();
+    // If the translation API returned this key, honor its value exactly — even if empty.
+    if (this.labelService.hasLabel(key)) {
+      return this.labelService.getLabel(key, 'caption');
     }
 
-    // Otherwise, return the fallback
+    // Key not returned by the translation API — fall back to the UDF's own value.
     return fallback;
   }
 
@@ -3360,17 +3360,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
    * If translation doesn't exist, returns the placeholder instead of formatted key
    */
   getTranslatedPlaceholderWithFallback(translateKey: string | undefined, fallback: string): string {
-    if (!translateKey || !fallback) {
+    if (!translateKey) {
       return fallback;
     }
 
-    const translation = this.labelService.getLabel(translateKey.toLowerCase().trim(), 'placeholder');
-    // If translation exists (not the formatted-key fallback), return it
-    if (translation && translation !== this.formatKeyAsReadable(translateKey)) {
-      return translation;
+    const key = translateKey.toLowerCase().trim();
+    // If the translation API returned this key, honor its placeholder exactly — even if empty.
+    if (this.labelService.hasLabel(key)) {
+      return this.labelService.getLabel(key, 'placeholder');
     }
 
-    // Otherwise, return the fallback
+    // Key not returned by the translation API — fall back to the UDF's own value.
     return fallback;
   }
 

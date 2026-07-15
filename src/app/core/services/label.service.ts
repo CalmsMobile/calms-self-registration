@@ -56,6 +56,11 @@ export class LabelService {
     return this.labels$.value[key]?.[type] || '';
   }
 
+  /** True when the translation API returned an entry for this key (even if its value is empty). */
+  hasLabel(key: string): boolean {
+    return this.labels$.value[key] !== undefined;
+  }
+
   getLabels$(): Observable<LabelConfig> {
     return this.labels$.asObservable();
   }
