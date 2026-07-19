@@ -116,5 +116,18 @@
       height: 100%;
       overflow: hidden;
     }
+
+    // Mobile: the .mobile-page grows past the viewport (terms card + continue
+    // button), so the container must scroll instead of clipping at 100vh.
+    @media (max-width: 768px) {
+      height: auto;
+      max-height: none;
+      overflow-y: auto;
+
+      .app-content {
+        height: auto;
+        overflow: visible;
+      }
+    }
   }
 }

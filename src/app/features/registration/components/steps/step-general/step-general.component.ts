@@ -1808,12 +1808,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Apply default start (now) and end datetime based on AptEndTime setting.
+   * Apply default start (now) and end datetime based on the selected visitor category's
+   * DefaultWIPermitTime (from GetBranchHostDataForSelf Table2).
    * startDate always defaults to now when StartEndDtEnabled is true.
-   * endDate default depends on AptEndTime:
-   *   AptEndTime = 'Category'    → end = now + time_permit parsed from CategoryTimePermit
-   *   AptEndTime = 'DefaultEOD'  → end = today at 23:59:59
-   *   AptEndTime = '' / unset    → end = now + 1 hour (safe fallback)
+   * endDate default depends on DefaultWIPermitTime:
+   *   'PT'         → end = now + time_permit (full permit)
+   *   'EOD' / null → end = today at 23:59:59
    */
   private applyDefaultDateTimes(): void {
     // Skip if in appointment flow — dates are pre-filled from visitor ack
@@ -1833,83 +1833,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     if (savedData.endDate) return; // already saved — don't overwrite
 
-    const aptEndTime = this.settings?.AptEndTime;
-    const allowApptDays = this.getAllowApptDays();
-    const allowApptEndDays = this.getAllowApptEndDays();
-    const startDate = this.generalForm.get('startDate')?.value
-      ? new Date(this.generalForm.get('startDate')?.value)
-      : now;
-    let endDate: Date | null = null;
-
-    if (aptEndTime === 'DefaultEOD') {
-      endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-    } else if (aptEndTime === 'Category') {
-      const timePermit: string = this.settings?.CategoryTimePermit || '';
-      endDate = this.parseTimePermit(timePermit, now);
-
-      // Keep existing behavior when both limits are not configured.
-      if (endDate && !(allowApptDays === 0 && allowApptEndDays === 0)) {
-        endDate = this.clampCategoryEndDateBySettings(endDate, startDate, now, allowApptDays, allowApptEndDays);
-      }
-    }
-
-    // Fallback: default end to 1 hour after start when AptEndTime is not configured
-    if (!endDate) {
-      endDate = new Date(now.getTime() + 60 * 60 * 1000);
-    }
+    // End datetime derives entirely from the selected category's DefaultWIPermitTime (Table2):
+    //   'PT'         → now + time_permit (full permit, not capped by AllowApptDays limits)
+    //   'EOD' / null → today at 23:59:59
+    const endDate = this.wizardService.getCategoryEndDateTime(now);
 
     this.generalForm.get('endDate')?.setValue(endDate);
-  }
-
-  private clampCategoryEndDateBySettings(
-    categoryEndDate: Date,
-    startDate: Date,
-    now: Date,
-    allowApptDays: number,
-    allowApptEndDays: number
-  ): Date {
-    const maxCandidates: Date[] = [];
-
-    if (allowApptDays > 0) {
-      maxCandidates.push(this.endOfDay(this.addDays(now, allowApptDays)));
-    }
-
-    if (allowApptEndDays > 0) {
-      maxCandidates.push(this.endOfDay(this.addDays(startDate, allowApptEndDays)));
-    }
-
-    if (maxCandidates.length === 0) {
-      return categoryEndDate;
-    }
-
-    const maxAllowed = new Date(Math.min(...maxCandidates.map((d) => d.getTime())));
-    return categoryEndDate.getTime() > maxAllowed.getTime() ? maxAllowed : categoryEndDate;
-  }
-
-  /**
-   * Parse a time_permit string like "18 Hours", "2 Days", "1 Month", "3 Months" and
-   * return a Date offset from the given base date.
-   */
-  private parseTimePermit(timePermit: string, base: Date): Date | null {
-    if (!timePermit) return null;
-    const match = timePermit.trim().match(/^(\d+)\s*(hour|hours|day|days|week|weeks|month|months)$/i);
-    if (!match) return null;
-
-    const amount = parseInt(match[1], 10);
-    const unit = match[2].toLowerCase();
-    const result = new Date(base);
-
-    if (unit.startsWith('hour')) {
-      result.setHours(result.getHours() + amount);
-    } else if (unit.startsWith('day')) {
-      result.setDate(result.getDate() + amount);
-    } else if (unit.startsWith('week')) {
-      result.setDate(result.getDate() + amount * 7);
-    } else if (unit.startsWith('month')) {
-      result.setMonth(result.getMonth() + amount);
-    }
-
-    return result;
   }
 
   private initializeForm(): void {
@@ -4321,17 +4250,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       start = now;
     }
 
-    // Mirror wizard.service AptEndTime logic: if end equals start (or is missing), compute end
+    // Mirror wizard.service logic: if end equals start (or is missing), compute end from
+    // the selected category's DefaultWIPermitTime (Table2): PT → start + time_permit, else EOD.
     if (!end || end.getTime() === start.getTime()) {
-      const aptEndTime = this.wizardService.getSelfRegistrationSettings()?.AptEndTime || 'DefaultEOD';
-      if (aptEndTime === 'DefaultEOD') {
-        end = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 23, 59, 59);
-      } else if (aptEndTime === 'Category') {
-        end = this.wizardService.parseTimePermit(this.settings?.CategoryTimePermit || '', start) ?? start;
-      } else {
-        end = start;
-      }
-      console.log('[MultipleApt] end time computed via AptEndTime(' + aptEndTime + '):', end);
+      end = this.wizardService.getCategoryEndDateTime(start);
+      console.log('[MultipleApt] end time computed from category DefaultWIPermitTime:', end);
     }
 
     const branchId = this.wizardService.currentBranchID;

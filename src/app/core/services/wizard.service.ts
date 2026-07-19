@@ -303,10 +303,9 @@ export class WizardService {
       settingsData.VideoUrl = allSettings.Table5[0]?.VideoUrl;
     }
 
-    // Store time_permit from Table8 for AptEndTime=Category mode
-    if (allSettings.Table8?.length) {
-      settingsData.CategoryTimePermit = allSettings.Table8[0]?.time_permit || '';
-    }
+    // NOTE: appointment end time is no longer derived from the settings API's Table8.time_permit.
+    // It now comes from the selected visitor category in GetBranchHostDataForSelf (Table2:
+    // DefaultWIPermitTime / time_permit) — see WizardService.getCategoryEndDateTime().
     /* debugger
     if (allSettings.Table6?.length) {
       
@@ -630,16 +629,10 @@ export class WizardService {
     console.log('[getVisitorAckData] payload before submit:', JSON.parse(JSON.stringify(visitorAck)));
   
     if (visitorAck.StartDateTime == visitorAck.EndDateTime) {
+      // End datetime derives from the selected category's DefaultWIPermitTime (Table2):
+      //   'PT' → now + time_permit, 'EOD' / null → today 23:59:59
       const now = new Date();
-      const aptEndTime = this.getSelfRegistrationSettings().AptEndTime || 'DefaultEOD';
-      let endDate: Date | null = null;
-      if (aptEndTime === 'DefaultEOD') {
-        endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-      } else if (aptEndTime === 'Category') {
-       const timePermit: string = this.getSettings().CategoryTimePermit || '';
-        endDate = this.parseTimePermit(timePermit, now);
-      }
-      visitorAck.EndDateTime = endDate ? formatDateForAPI(endDate) : formatDateForAPI(now);
+      visitorAck.EndDateTime = formatDateForAPI(this.getCategoryEndDateTime(now));
     }
     console.log('[getVisitorAckData] final payload:', JSON.parse(JSON.stringify(visitorAck)));
     return visitorAck;
@@ -774,6 +767,37 @@ export class WizardService {
 
     return result;
   }
+
+  /**
+   * Resolve the currently selected visitor category row from the branch host data
+   * (GetBranchHostDataForSelf → Table2, aliased to masterData.Categories).
+   */
+  getSelectedCategoryRow(): any {
+    const master = this.getmasterData();
+    const categories = master?.Categories || master?.Table2 || this.getBranchHostData()?.Table2 || [];
+    const catId = this.selectedVisitCategory;
+    return categories.find(
+      (c: any) => (c.visitor_ctg_id ?? c.VCategorySeqId)?.toString() === catId?.toString()
+    ) || null;
+  }
+
+  /**
+   * Compute the appointment end datetime for the selected visitor category based on its
+   * DefaultWIPermitTime field (from GetBranchHostDataForSelf Table2):
+   *   'PT'          → base + time_permit (parsed via parseTimePermit)
+   *   'EOD' / null  → end of the base day (23:59:59)
+   * Falls back to end-of-day when DefaultWIPermitTime is 'PT' but time_permit is unparseable.
+   */
+  getCategoryEndDateTime(base: Date): Date {
+    const eod = new Date(base.getFullYear(), base.getMonth(), base.getDate(), 23, 59, 59);
+    const row = this.getSelectedCategoryRow();
+    const permitTime = (row?.DefaultWIPermitTime || '').toString().trim().toUpperCase();
+    if (permitTime === 'PT') {
+      return this.parseTimePermit(row?.time_permit || '', base) ?? eod;
+    }
+    return eod;
+  }
+
   private getDefaultDateTimeForAPI(): string {
     const now = new Date();
     const month = String(now.getMonth() + 1).padStart(2, '0');
