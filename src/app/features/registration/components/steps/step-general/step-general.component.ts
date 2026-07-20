@@ -267,6 +267,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return '';
   }
 
+  /** "Face detected / ready" caption — '' when not configured for this language. */
+  get faceReadyMessage(): string {
+    return this.labelService.getLabel('registration_page_face_detected_ready', 'caption') || '';
+  }
+
   // Multiple booking check
   multipleBookingConflict = false;
   isCheckingMultipleBooking = false;

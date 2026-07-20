@@ -1879,15 +1879,19 @@
       </div>
     </div>
 
-    <p class="camera-hint">{{ 'registration_page_camera_visible_label' | translate }}</p>
+    @if (('registration_page_camera_visible_label' | translate); as camHint) {
+    <p class="camera-hint">{{ camHint }}</p>
+    }
 
     <!-- Live face validation feedback (camera preview only) -->
     @if (isCameraOn && !capturedImage) {
       @if (isFaceStable) {
+        @if (faceReadyMessage) {
         <div class="face-validation-feedback face-ok">
           <i class="pi pi-check-circle"></i>
-          <span>{{ 'registration_page_face_detected_ready' | translate }}</span>
+          <span>{{ faceReadyMessage }}</span>
         </div>
+        }
       } @else if (firstFaceFeedback) {
         <div class="face-validation-feedback face-warn">
           <i class="pi pi-exclamation-triangle"></i>
