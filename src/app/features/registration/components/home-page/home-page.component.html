@@ -29,7 +29,7 @@
     <div class="pre-left"></div>
 
     <!-- Right panel — content -->
-    <div class="pre-right">
+    <div class="pre-right" [style.background]="preRightBg || null">
       <footer class="app-footer">&copy; {{ currentYear }} CALMS Technologies. All rights reserved. v{{ appVersion }}
       </footer>
       <div class="pre-right-scroll">
@@ -40,7 +40,7 @@
           <!-- Title -->
 
           <h1 class="pre-title">
-            <span class="accent">{{ formattedPageTitle.first }}</span><br>
+            <span class="accent" [style.color]="titleFirstColor || null">{{ formattedPageTitle.first }}</span><br>
             {{ formattedPageTitle.rest }}
           </h1>
 
@@ -86,7 +86,7 @@
     <div class="left">
 
       <h2>
-        <span class="accent">{{ formattedPageTitle.first }}</span>
+        <span class="accent" [style.color]="titleFirstColor || null">{{ formattedPageTitle.first }}</span>
         <span>{{ formattedPageTitle.rest }}</span>
       </h2>
 
@@ -196,7 +196,7 @@
     <img [src]="logo" alt="Company Logo" class="m-logo" />
 
     <h1 class="m-welcome">
-      <span class="m-welcome-accent">{{ formattedPageTitle.first}}</span><br>
+      <span class="m-welcome-accent" [style.color]="titleFirstColor || null">{{ formattedPageTitle.first}}</span><br>
       {{ formattedPageTitle.rest }}
     </h1>
 
@@ -231,7 +231,7 @@
     <!-- Page title -->
 
     <div class="m-post-title">
-      <span class="m-post-accent">{{ formattedPageTitle.first }}</span><br>
+      <span class="m-post-accent" [style.color]="titleFirstColor || null">{{ formattedPageTitle.first }}</span><br>
       <span class="m-post-rest">{{ formattedPageTitle.rest }}</span>
     </div>
 

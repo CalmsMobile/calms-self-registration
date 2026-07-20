@@ -83,6 +83,60 @@
   }
 }
 
+/* Wrap long option text (e.g. "New NAIA Infrastructure Corporation (NNIC)")
+   so it never runs into the panel's right edge. Extra right padding leaves
+   room for the selected-option check mark. */
+.p-select-option,
+.p-multiselect-option {
+  white-space: normal !important;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+  padding-right: 34px !important;
+}
+
+/* Autocomplete-only overrides. PrimeNG sets the overlay's inline
+   min-width = the input's width (target="@parent" resolves to the .p-autocomplete
+   root), so we DON'T override min-width/width — that lets the panel match the
+   input. Only guard against an absurd max width. */
+.p-autocomplete-overlay {
+  max-width: 92vw !important;
+
+  /* Wrap long option text (e.g. long company names) instead of forcing width */
+  .p-autocomplete-option {
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+  }
+
+  /* "No results found" empty message — pad it like an option and keep it on
+     one line. Panel width comes from the input, so it lines up with the control. */
+  .p-autocomplete-empty-message {
+    padding: 11px 18px;
+    font-size: 15px;
+    color: #6b6b6b;
+    white-space: nowrap;
+  }
+}
+
+/* On small screens every dropdown input is full-width. PrimeNG's select /
+   multiselect / autocomplete overlays all use target="@parent" + appendTo="body",
+   which makes their inline min-width over-wide so the panel spills past the
+   padded input. The mobile form has 22px side padding and the body-appended
+   panel is positioned at the input's left edge, so pin the width to
+   (100vw - 44px) — this aligns every dropdown panel with its input on both
+   edges instead of overflowing or shrinking to content. */
+@media (max-width: 768px) {
+  .p-select-overlay,
+  .p-multiselect-overlay,
+  .p-autocomplete-overlay {
+    min-width: calc(100vw - 44px) !important;
+    max-width: calc(100vw - 44px) !important;
+    width: calc(100vw - 44px) !important;
+  }
+}
+
 // Global PrimeNG overrides for focus rings and highlights
 ::ng-deep {
 

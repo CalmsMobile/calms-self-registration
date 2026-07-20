@@ -302,7 +302,7 @@
             (onSelect)="onCompanySelect($event)" field="visitor_comp_name" optionLabel="visitor_comp_name"
             dataKey="visitor_comp_name" formControlName="visitor_company"
             [placeholder]="'registration_page_company_name' | translate:'placeholder'" [forceSelection]="false"
-            [completeOnFocus]="true" [minLength]="0"
+            [completeOnFocus]="false" [minLength]="3" [emptyMessage]="companyEmptyMessage"
             [class]="{'ng-invalid': isFieldInvalidRequired('visitor_company')}"
             [disabled]="isFieldDisabled('visitor_company')" appendTo="body">
           </p-autoComplete>
@@ -1189,7 +1189,7 @@
             (onSelect)="onCompanySelect($event)" field="visitor_comp_name" optionLabel="visitor_comp_name"
             dataKey="visitor_comp_name" formControlName="visitor_company"
             [placeholder]="'registration_page_company_name' | translate:'placeholder'" [forceSelection]="false"
-            [completeOnFocus]="true" [minLength]="0"
+            [completeOnFocus]="false" [minLength]="3" [emptyMessage]="companyEmptyMessage"
             [class]="{'ng-invalid': isFieldInvalidRequired('visitor_company')}"
             [disabled]="isFieldDisabled('visitor_company')" appendTo="body">
           </p-autoComplete>

@@ -1496,6 +1496,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   /** Message shown inside the host dropdown when no options are listed. */
+  /** Empty message for the company autocomplete — uses the shared translate label. */
+  get companyEmptyMessage(): string {
+    return this.labelService.getLabel('registration_page_no_results_found', 'caption') || 'No results found';
+  }
+
   get hostEmptyFilterMessage(): string {
     if (this.enableSelfRegistrationHostPreload && this.hostSearchText.trim().length < this.HOST_SEARCH_MIN_CHARS) {
       // Tolerate the trailing-space variant of the Title (…_host_) as well as the clean one.
@@ -2269,7 +2274,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         currentForm.get(field)?.markAsTouched();
       });
       this.scrollToFirstError();
-      this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_fields_required') });
+      // Surface the specific ID/expiry reason instead of the generic message.
+      const idValidation = this.validateVisitorIdAndExpiry();
+      if (!idValidation.isValid) {
+        this.showMessage({ severity: 'error', summary: 'Validation Error', detail: idValidation.errorMessage });
+      } else {
+        this.showRequiredFieldsError();
+      }
     }
   }
 
@@ -2825,7 +2836,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (this.savedVisitors.length === 0) {
         if (!isValid) {
           this.scrollToFirstError();
-          this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_fields_required') });
+          this.showRequiredFieldsError();
           this.wizardService.setStepValid(false);
           return false;
         }
@@ -2856,7 +2867,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (this.editingVisitorIndex >= 0) {
         if (!isValid) {
           this.scrollToFirstError();
-          this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_fields_required') });
+          this.showRequiredFieldsError();
           this.wizardService.setStepValid(false);
           return false;
         }
@@ -2887,7 +2898,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Current form has partial/complete data — require it to be fully valid before proceeding
       if (!isValid) {
         this.scrollToFirstError();
-        this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_fields_required') });
+        this.showRequiredFieldsError();
         this.wizardService.setStepValid(false);
         return false;
       }
@@ -2924,10 +2935,55 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     if (!isValid) {
       this.scrollToFirstError();
-      this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_fields_required') });
+      this.showRequiredFieldsError();
     }
 
     return isValid;
+  }
+
+  /**
+   * Human-readable labels of every enabled control that is currently invalid.
+   * Used to tell the user exactly which field is blocking submission instead of
+   * a vague "all required fields" message (which hides phantom/hidden controls).
+   */
+  private getFailingFieldLabels(): string[] {
+    const labelMap: { [k: string]: string } = {
+      title: 'Title', fullName: 'Full Name', email: 'Email Address',
+      phone: 'Contact Number', visitor_id: 'Identification No.',
+      visitor_id_type: 'Identification Type', id_expired_date: 'ID Expiry Date',
+      gender: 'Gender', department: 'Department', floor: 'Floor',
+      purpose: 'Purpose of Visit', visitor_company: 'Company Name',
+      vehicle_number: 'Vehicle Number', vehicle_brand: 'Vehicle Brand',
+      vehicle_model: 'Vehicle Model', vehicle_color: 'Vehicle Colour',
+      visitor_address: 'Address', country: 'Country',
+      meeting_location: 'Meeting Room', work_permit_ref: 'Work Permit Ref',
+      event_name: 'Event', remarks: 'Remarks', host: 'Host',
+      startDate: 'Appointment Start', endDate: 'Appointment End',
+      appointmentDate: 'Appointment Date & Time', timeSlot: 'Time Slot',
+      facilityPurpose: 'Facility Purpose', facilitySelection: 'Facility',
+      sharedDate: 'Date',
+    };
+
+    const labels: string[] = [];
+    Object.keys(this.generalForm.controls).forEach(name => {
+      const c = this.generalForm.get(name);
+      if (!c || c instanceof FormArray) return;
+      if (name === 'profile') return; // captured by the photo dialog, not here
+      if (!c.enabled || c.valid) return;
+      const udf = this.udfSettings?.find((u: any) => u.formControlName === name);
+      labels.push(labelMap[name] || udf?.Caption || name);
+    });
+    return labels;
+  }
+
+  /** Show the "required fields" error, naming the specific failing field(s). */
+  private showRequiredFieldsError(): void {
+    const base = this.getAlert('registration_page_all_fields_required');
+    const labels = this.getFailingFieldLabels();
+    const detail = labels.length
+      ? `${base.detail} (${labels.join(', ')})`
+      : base.detail;
+    this.showMessage({ severity: 'error', summary: base.summary, detail });
   }
 
   private saveFormDataToWizard(): void {
@@ -4150,22 +4206,23 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   searchCompany(event: any): void {
-    const query = event.query.toLowerCase();
-    if (query.length === 0) {
-      // Show all companies when dropdown is opened without typing
-      this.companyList = [...this.masterData?.Table7?.filter((item: any) => {
-        return item.visitor_comp_name !== undefined && item.visitor_comp_name !== null && item.visitor_comp_name !== "";
-      }) || []];
-    } else {
-      // Filter companies based on typed text
-      const allCompanies = this.masterData?.Table7?.filter((item: any) => {
-        return item.visitor_comp_name !== undefined && item.visitor_comp_name !== null && item.visitor_comp_name !== "";
-      }) || [];
+    const query = (event.query || '').toLowerCase();
 
-      this.companyList = allCompanies.filter((company: any) =>
-        company.visitor_comp_name.toLowerCase().includes(query)
-      );
+    // Only render suggestions once the user has typed at least 3 characters
+    // (the company list can be large, so avoid showing everything).
+    if (query.length < 3) {
+      this.companyList = [];
+      return;
     }
+
+    // Filter companies based on typed text
+    const allCompanies = this.masterData?.Table7?.filter((item: any) => {
+      return item.visitor_comp_name !== undefined && item.visitor_comp_name !== null && item.visitor_comp_name !== "";
+    }) || [];
+
+    this.companyList = allCompanies.filter((company: any) =>
+      company.visitor_comp_name.toLowerCase().includes(query)
+    );
   }
 
   onCompanySelect(event: any): void {
@@ -4500,7 +4557,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.generalForm.get(f)?.markAsDirty();
         });
         this.scrollToFirstError();
-        this.showMessage({ severity: 'error', ...this.getAlert('registration_page_all_fields_required') });
+        // Surface the specific ID/expiry reason (e.g. expiry before appointment
+        // end) instead of the generic message, since isCurrentVisitorFormValid()
+        // collapses that check to a boolean.
+        const idValidation = this.validateVisitorIdAndExpiry();
+        if (!idValidation.isValid) {
+          this.showMessage({ severity: 'error', summary: 'Validation Error', detail: idValidation.errorMessage });
+        } else {
+          this.showRequiredFieldsError();
+        }
       }
       return;
     }

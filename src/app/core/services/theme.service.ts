@@ -24,40 +24,7 @@ export class ThemeService {
 
     // --- Primary Color (button bg + all PrimeNG primary vars) ---
     if (themeData.ColorPrimary) {
-      const primary = themeData.ColorPrimary;
-      
-      // Convert hex to RGB for use in rgba() functions
-      const rgb = this.hexToRgb(primary);
-      const rgbString = rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '245, 185, 66'; // fallback to default yellow RGB
-      
-      // Derive hover/active shades by using the same color at lower opacity via CSS
-      // (server controls the exact color; we keep hover/active slightly dimmer)
-      root.style.setProperty('--theme-primary-yellow', primary);
-      root.style.setProperty('--theme-primary-yellow-rgb', rgbString);
-      root.style.setProperty('--p-primary-color', primary);
-      root.style.setProperty('--p-primary-hover-color', primary);
-      root.style.setProperty('--p-primary-active-color', primary);
-      root.style.setProperty('--p-primary-500', primary);
-      root.style.setProperty('--p-primary-400', primary);
-      root.style.setProperty('--p-primary-600', primary);
-
-      // Form control highlights
-      root.style.setProperty('--p-inputtext-focus-border-color', primary);
-      root.style.setProperty('--p-select-focus-border-color', primary);
-      root.style.setProperty('--p-datepicker-focus-border-color', primary);
-      root.style.setProperty('--p-checkbox-checked-background', primary);
-      root.style.setProperty('--p-checkbox-checked-border-color', primary);
-      root.style.setProperty('--p-radiobutton-checked-background', primary);
-      root.style.setProperty('--p-radiobutton-checked-border-color', primary);
-
-      root.style.setProperty('--p-multiselect-option-selected-focus-background', `rgba(var(--theme-primary-yellow-rgb), 0.12)`);
-      root.style.setProperty('--p-multiselect-option-selected-background', `rgba(var(--theme-primary-yellow-rgb), 0.12)`);
-      root.style.setProperty('--p-multiselect-option-selected-focus-color', primary);
-      root.style.setProperty('--p-multiselect-option-selected-color', primary);
-      root.style.setProperty('--p-select-option-selected-focus-background', `rgba(var(--theme-primary-yellow-rgb), 0.12)`);
-      root.style.setProperty('--p-select-option-selected-background', `rgba(var(--theme-primary-yellow-rgb), 0.12)`);
-      root.style.setProperty('--p-select-option-selected-focus-color', primary);
-      root.style.setProperty('--p-select-option-selected-color', primary);
+      this.applyPrimaryColor(themeData.ColorPrimary);
     }
 
     // --- Foreground Color (button text for primary buttons) ---
@@ -88,6 +55,49 @@ export class ThemeService {
       const opacity = Math.min(1, Math.max(0, Number(themeData.BgImageOpacity)));
       root.style.setProperty('--app-bg-opacity', String(opacity));
     }
+  }
+
+  /**
+   * Apply just the primary color (--theme-primary-yellow + all derived PrimeNG
+   * primary vars). Safe to call on its own — unlike applyTheme it has no side
+   * effects on the background image / other theme vars.
+   */
+  applyPrimaryColor(primary: string): void {
+    if (!primary) return;
+    const root = document.documentElement;
+
+    // Convert hex to RGB for use in rgba() functions
+    const rgb = this.hexToRgb(primary);
+    const rgbString = rgb ? `${rgb.r}, ${rgb.g}, ${rgb.b}` : '245, 185, 66'; // fallback to default yellow RGB
+
+    // Derive hover/active shades by using the same color at lower opacity via CSS
+    // (server controls the exact color; we keep hover/active slightly dimmer)
+    root.style.setProperty('--theme-primary-yellow', primary);
+    root.style.setProperty('--theme-primary-yellow-rgb', rgbString);
+    root.style.setProperty('--p-primary-color', primary);
+    root.style.setProperty('--p-primary-hover-color', primary);
+    root.style.setProperty('--p-primary-active-color', primary);
+    root.style.setProperty('--p-primary-500', primary);
+    root.style.setProperty('--p-primary-400', primary);
+    root.style.setProperty('--p-primary-600', primary);
+
+    // Form control highlights
+    root.style.setProperty('--p-inputtext-focus-border-color', primary);
+    root.style.setProperty('--p-select-focus-border-color', primary);
+    root.style.setProperty('--p-datepicker-focus-border-color', primary);
+    root.style.setProperty('--p-checkbox-checked-background', primary);
+    root.style.setProperty('--p-checkbox-checked-border-color', primary);
+    root.style.setProperty('--p-radiobutton-checked-background', primary);
+    root.style.setProperty('--p-radiobutton-checked-border-color', primary);
+
+    root.style.setProperty('--p-multiselect-option-selected-focus-background', `rgba(var(--theme-primary-yellow-rgb), 0.12)`);
+    root.style.setProperty('--p-multiselect-option-selected-background', `rgba(var(--theme-primary-yellow-rgb), 0.12)`);
+    root.style.setProperty('--p-multiselect-option-selected-focus-color', primary);
+    root.style.setProperty('--p-multiselect-option-selected-color', primary);
+    root.style.setProperty('--p-select-option-selected-focus-background', `rgba(var(--theme-primary-yellow-rgb), 0.12)`);
+    root.style.setProperty('--p-select-option-selected-background', `rgba(var(--theme-primary-yellow-rgb), 0.12)`);
+    root.style.setProperty('--p-select-option-selected-focus-color', primary);
+    root.style.setProperty('--p-select-option-selected-color', primary);
   }
 
   /** Clear all dynamic theme overrides (useful on logout/reset). */

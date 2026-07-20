@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
 import { ApiService } from '../../../../core/services/api.service';
 import { WizardService } from '../../../../core/services/wizard.service';
+import { ThemeService } from '../../../../core/services/theme.service';
 import { filter, forkJoin, of, Subject, takeUntil } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { SharedService } from '../../../../shared/shared.service';
@@ -84,6 +85,14 @@ export class HomePageComponent implements AfterViewChecked {
   categoryTranslation: any = {};
   pageTitle = '';
 
+  // STATE-1 right panel background, built from API "SRWelcomePageBG"
+  // (empty = fall back to the CSS gradient)
+  preRightBg = '';
+
+  // Accent color for the title's first text, from API "SRWelcomeTitleFC"
+  // (empty = fall back to the CSS accent color)
+  titleFirstColor = '';
+
   // Welcome page data from API
   welcomeText = '';
 
@@ -153,7 +162,8 @@ export class HomePageComponent implements AfterViewChecked {
     private languageService: LanguageService,
     private labelService: LabelService,
     private sanitizer: DomSanitizer,
-    private messageHelper: MessageHelperService
+    private messageHelper: MessageHelperService,
+    private themeService: ThemeService
   ) {
     this.wizardService.clearSessionStorage();
   }
@@ -778,6 +788,13 @@ export class HomePageComponent implements AfterViewChecked {
               this.logo = this.initializePageSettings.OrgLogo;
               this.sharedService.updateHeader(this.title, this.logo);
             }
+            // Welcome page background (comma-separated hex stops)
+            this.preRightBg = this.buildWelcomePageBg(settings.SRWelcomePageBG);
+            // Title first-text accent color — also drives --theme-primary-yellow
+            this.titleFirstColor = (settings.SRWelcomeTitleFC || '').trim();
+            if (this.titleFirstColor) {
+              this.themeService.applyPrimaryColor(this.titleFirstColor);
+            }
             // Welcome text
             /*  if (settings.WelcomeText) {
                this.welcomeText = settings.WelcomeText ? settings.WelcomeText : '';
@@ -933,9 +950,46 @@ export class HomePageComponent implements AfterViewChecked {
             this.sharedService.updateHeader(this.title, this.logo);
           }
 
+          this.preRightBg = this.buildWelcomePageBg(this.initializePageSettings.SRWelcomePageBG);
+          this.titleFirstColor = (this.initializePageSettings.SRWelcomeTitleFC || '').trim();
+          if (this.titleFirstColor) {
+            this.themeService.applyPrimaryColor(this.titleFirstColor);
+          }
+
         }
       }, 300);
     }
+  }
+
+  /**
+   * Build the STATE-1 right panel background from the API "SRWelcomePageBG"
+   * value — a comma-separated list of hex stops, e.g. "#fff8e8,#f5f0e6,#ede4d4".
+   * Returns a radial-gradient matching the design; empty string when no colors
+   * are provided (the CSS gradient then applies as fallback).
+   */
+  private buildWelcomePageBg(value: string): string {
+    const colors = (value || '')
+      .split(',')
+      .map(c => c.trim())
+      .filter(Boolean);
+
+    if (colors.length === 0) {
+      return '';
+    }
+    if (colors.length === 1) {
+      return colors[0];
+    }
+
+    // Match the original design exactly for the common 3-stop case (0/40/100);
+    // otherwise distribute stops evenly.
+    const positions = colors.length === 3
+      ? [0, 40, 100]
+      : colors.map((_, i) => Math.round((i / (colors.length - 1)) * 100));
+
+    const stops = colors
+      .map((c, i) => `${c} ${positions[i]}%`)
+      .join(', ');
+    return `radial-gradient(circle at 70% 30%, ${stops})`;
   }
 
   onCategoryChange(newValue: any) {
