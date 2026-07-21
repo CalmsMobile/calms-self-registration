@@ -1,4 +1,4 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, APP_INITIALIZER } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
 
@@ -10,6 +10,7 @@ import { provideClientHydration } from '@angular/platform-browser';
 import { ApiService } from './core/services/api.service';
 import { SettingsService } from './core/services/settings.service';
 import { WizardService } from './core/services/wizard.service';
+import { AppConfigService } from './core/services/app-config.service';
 import { MessageService } from 'primeng/api';
 
 export const appConfig: ApplicationConfig = {
@@ -34,6 +35,15 @@ export const appConfig: ApplicationConfig = {
     ApiService,
     SettingsService,
     WizardService,
-    MessageService
+    MessageService,
+
+    // Load assets/config.json before the app starts
+    AppConfigService,
+    {
+      provide: APP_INITIALIZER,
+      multi: true,
+      deps: [AppConfigService],
+      useFactory: (cfg: AppConfigService) => () => cfg.load()
+    }
   ]
 };

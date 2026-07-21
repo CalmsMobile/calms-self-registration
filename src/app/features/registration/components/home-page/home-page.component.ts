@@ -11,6 +11,7 @@ import { SelectModule } from 'primeng/select';
 import { ApiService } from '../../../../core/services/api.service';
 import { WizardService } from '../../../../core/services/wizard.service';
 import { ThemeService } from '../../../../core/services/theme.service';
+import { AppConfigService } from '../../../../core/services/app-config.service';
 import { filter, forkJoin, of, Subject, takeUntil } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { SharedService } from '../../../../shared/shared.service';
@@ -85,11 +86,11 @@ export class HomePageComponent implements AfterViewChecked {
   categoryTranslation: any = {};
   pageTitle = '';
 
-  // STATE-1 right panel background, built from API "SRWelcomePageBG"
+  // STATE-1 right panel background, built from config.json "SRWelcomePageBG"
   // (empty = fall back to the CSS gradient)
   preRightBg = '';
 
-  // Accent color for the title's first text, from API "SRWelcomeTitleFC"
+  // Accent color for the title's first text, from config.json "SRWelcomeTitleFC"
   // (empty = fall back to the CSS accent color)
   titleFirstColor = '';
 
@@ -163,9 +164,21 @@ export class HomePageComponent implements AfterViewChecked {
     private labelService: LabelService,
     private sanitizer: DomSanitizer,
     private messageHelper: MessageHelperService,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private appConfig: AppConfigService
   ) {
     this.wizardService.clearSessionStorage();
+    // SRWelcomeTitleFC / SRWelcomePageBG come from assets/config.json, not the API.
+    this.applyLocalWelcomeConfig();
+  }
+
+  /** Apply the welcome-page title colour + background from assets/config.json. */
+  private applyLocalWelcomeConfig(): void {
+    this.preRightBg = this.buildWelcomePageBg(this.appConfig.get('SRWelcomePageBG'));
+    this.titleFirstColor = (this.appConfig.get('SRWelcomeTitleFC') || '').trim();
+    if (this.titleFirstColor) {
+      this.themeService.applyPrimaryColor(this.titleFirstColor);
+    }
   }
 
   ngOnInit() {
@@ -788,13 +801,8 @@ export class HomePageComponent implements AfterViewChecked {
               this.logo = this.initializePageSettings.OrgLogo;
               this.sharedService.updateHeader(this.title, this.logo);
             }
-            // Welcome page background (comma-separated hex stops)
-            this.preRightBg = this.buildWelcomePageBg(settings.SRWelcomePageBG);
-            // Title first-text accent color — also drives --theme-primary-yellow
-            this.titleFirstColor = (settings.SRWelcomeTitleFC || '').trim();
-            if (this.titleFirstColor) {
-              this.themeService.applyPrimaryColor(this.titleFirstColor);
-            }
+            // preRightBg / titleFirstColor come from assets/config.json
+            // (set in applyLocalWelcomeConfig), not from this API response.
             // Welcome text
             /*  if (settings.WelcomeText) {
                this.welcomeText = settings.WelcomeText ? settings.WelcomeText : '';
@@ -950,11 +958,8 @@ export class HomePageComponent implements AfterViewChecked {
             this.sharedService.updateHeader(this.title, this.logo);
           }
 
-          this.preRightBg = this.buildWelcomePageBg(this.initializePageSettings.SRWelcomePageBG);
-          this.titleFirstColor = (this.initializePageSettings.SRWelcomeTitleFC || '').trim();
-          if (this.titleFirstColor) {
-            this.themeService.applyPrimaryColor(this.titleFirstColor);
-          }
+          // preRightBg / titleFirstColor come from assets/config.json
+          // (applyLocalWelcomeConfig), not from the API.
 
         }
       }, 300);
