@@ -4544,15 +4544,33 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   goNext(): void {
     console.log('[goNext] isImageCaptureEnabled:', this.isImageCaptureEnabled, '| ImageUploadRequired:', this.settings?.ImageUploadRequired);
-    // When image capture is required, open the photo dialog first using the same lightweight
-    // check as "Save and Add" (isCurrentVisitorFormValid). Full validateForm() runs after the
-    // dialog in executePendingAction, so non-visitor controls (startDate, endDate, etc.) cannot
-    // block the dialog from appearing.
-    if (this.isImageCaptureEnabled && this.settings?.ImageUploadRequired) {
+    // Whenever image capture is enabled — mandatory OR optional — open the photo
+    // dialog using the lightweight check used by "Save and Add"
+    // (isCurrentVisitorFormValid). Full validateForm() runs after the dialog in
+    // executePendingAction, so non-visitor controls (startDate, endDate, etc.)
+    // cannot block the dialog from appearing. When the photo is optional the
+    // dialog renders a "Skip" button (see skipPhoto()).
+    if (this.isImageCaptureEnabled) {
+      // Multi-visitor: every visitor is already saved and the current form is
+      // blank — there is nothing to photograph, so validate and navigate.
+      if (this.isMultipleVisitorMode && this.savedVisitors.length > 0 && !this.hasFormData()) {
+        if (!this.validateForm()) return;
+        this.checkAndNavigate(() => this.wizardService.navigateToNextStep());
+        return;
+      }
+
       if (this.isCurrentVisitorFormValid()) {
         // Run booking check BEFORE opening the photo dialog
         this.checkAndNavigate(() => {
           this.pendingAction = 'goNext';
+          // Carry the previous visitor's photo over as the default preview
+          if (this.isMultipleVisitorMode && !this.generalForm.get('profilePreview')?.value && this.savedVisitors.length > 0) {
+            const lastVisitor = this.savedVisitors[this.savedVisitors.length - 1];
+            if (lastVisitor?.profilePreview) {
+              this.generalForm.patchValue({ profilePreview: lastVisitor.profilePreview }, { emitEvent: false });
+              this.profileImage = this.sanitizer.bypassSecurityTrustUrl(lastVisitor.profilePreview);
+            }
+          }
           this.openPhotoCaptureDialog();
         });
       } else {
@@ -4575,30 +4593,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Standard flow: full validation first, then open dialog (optional photo) or navigate.
-    const formHadActiveVisitor = this.isMultipleVisitorMode ? this.hasFormData() : false;
+    // Image capture disabled entirely — full validation, then navigate.
     const isValid = this.validateForm();
     if (!isValid) return;
-
-    if (this.isImageCaptureEnabled) {
-      // Image enabled but not required — skip dialog when all visitors already saved.
-      if (this.isMultipleVisitorMode && this.savedVisitors.length > 0 && !formHadActiveVisitor) {
-        this.checkAndNavigate(() => this.wizardService.navigateToNextStep());
-        return;
-      }
-      this.checkAndNavigate(() => {
-        this.pendingAction = 'goNext';
-        if (this.isMultipleVisitorMode && !this.generalForm.get('profilePreview')?.value && this.savedVisitors.length > 0) {
-          const lastVisitor = this.savedVisitors[this.savedVisitors.length - 1];
-          if (lastVisitor?.profilePreview) {
-            this.generalForm.patchValue({ profilePreview: lastVisitor.profilePreview }, { emitEvent: false });
-            this.profileImage = this.sanitizer.bypassSecurityTrustUrl(lastVisitor.profilePreview);
-          }
-        }
-        this.openPhotoCaptureDialog();
-      });
-      return;
-    }
 
     this.checkAndNavigate(() => this.wizardService.navigateToNextStep());
   }

@@ -42,7 +42,7 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
   documentTypes: DocumentType[] = [];
 
   attachments: { [key: string]: Attachment } = {};
-  maxSize = 2000000;
+  maxSize = 5000000;
   acceptedTypes = '.pdf,.jpg,.jpeg,.png';
 
   attachmentUploadEnabled = false;
