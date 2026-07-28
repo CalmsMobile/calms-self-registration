@@ -1687,15 +1687,55 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       if (this.settings?.IdProofEnabled && (this.settings?.IdProofRequired || hasSelectedIdType)) {
         validators.push(Validators.required);
       }
-      const minLength = this.toPositiveInt(this.settings?.IdProofMinLength);
-      if (minLength) {
-        validators.push(Validators.minLength(minLength));
+
+      if (hasSelectedIdType) {
+        // ID type selected → enforce the type's INPUT_TYPE (numeric/alphanumeric)
+        // and its own min/max length via the idTypeInvalid validator.
+        validators.push(this.idTypeInputValidator(idTypeData));
+        const maxLen = this.toPositiveInt(idTypeData?.INPUT_MAX_LENGTH);
+        validators.push(Validators.maxLength(maxLen && maxLen > 0 ? maxLen : 50));
+        this.visitorIdDynamicMaxLength = maxLen && maxLen > 0 ? maxLen : null;
+      } else {
+        // No ID type → fall back to the generic field-level min length.
+        const minLength = this.toPositiveInt(this.settings?.IdProofMinLength);
+        if (minLength) {
+          validators.push(Validators.minLength(minLength));
+        }
+        this.visitorIdDynamicMaxLength = null;
       }
-      this.visitorIdDynamicMaxLength = null;
     }
 
     visitorIdControl.setValidators(validators);
     visitorIdControl.updateValueAndValidity();
+  }
+
+  /**
+   * Validator for the selected ID type: enforces INPUT_TYPE (numeric = digits
+   * only; alphanumeric = letters and/or digits) and the type's INPUT_MIN_LENGTH.
+   * Emits an `idTypeInvalid` error carrying { type, minLength } so
+   * getVisitorIdTypeValidationError() can render the configured message.
+   * (Empty is left to Validators.required; max length to Validators.maxLength.)
+   */
+  private idTypeInputValidator(idTypeData: any): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const raw = control.value;
+      if (raw === null || raw === undefined || String(raw).trim() === '') return null;
+      const value = String(raw).trim();
+
+      const type = this.normalizeIdInputType(idTypeData?.INPUT_TYPE); // 'N' | 'AN' | ''
+      const typeLabel = this.getIdTypeInputLabel(idTypeData?.INPUT_TYPE); // 'numeric' | 'alphanumeric'
+      const minLength = this.toPositiveInt(idTypeData?.INPUT_MIN_LENGTH) ?? 0;
+
+      const formatOk =
+        type === 'N' ? /^[0-9]+$/.test(value) :
+        type === 'AN' ? /^[A-Za-z0-9]+$/.test(value) :
+        true;
+
+      if (!formatOk || (minLength > 0 && value.length < minLength)) {
+        return { idTypeInvalid: { type: typeLabel, minLength } };
+      }
+      return null;
+    };
   }
 
   private processPageSettings(pageSettings: any[]): void {
