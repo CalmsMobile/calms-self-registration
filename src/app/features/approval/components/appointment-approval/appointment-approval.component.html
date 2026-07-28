@@ -472,6 +472,8 @@
           <h3 class="modal-copy-title">Request Resubmission?</h3>
           <p class="modal-copy">The visitor will be asked to resubmit their registration details.</p>
         </div>
+        <p class="modal-section-label">Remarks</p>
+        <textarea class="modal-textarea" placeholder="Enter remarks here..." [(ngModel)]="resubmitRemarks"></textarea>
         <div class="modal-actions">
           <button class="modal-btn ghost" type="button" (click)="closeModal()" [disabled]="isSubmitting">Cancel</button>
           <button class="modal-btn approve" type="button" (click)="resubmit()" [disabled]="isSubmitting">

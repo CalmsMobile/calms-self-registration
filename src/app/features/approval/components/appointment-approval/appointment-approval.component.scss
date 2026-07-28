@@ -897,6 +897,16 @@
   svg { stroke: #ff2f63; }
 }
 
+.status-success {
+  background: #bfeeda;
+  svg { stroke: #03b47f; }
+}
+
+.status-warning {
+  background: #fdecc8;
+  svg { stroke: #e2900a; }
+}
+
 .modal-copy-title {
   margin: 0;
   color: #24324a;

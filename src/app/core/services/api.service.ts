@@ -301,9 +301,11 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/AppointmentApprovalByVisitor`, loParam);
   }
 
-  RequestResubmitAppointmentData(seqId: string, hostSeqId: string | number) {
+  RequestResubmitAppointmentData(seqId: string, hostSeqId: string | number, remarks?: string) {
     const loParam = {
-      "CancelRemarks": "Request for Resubmitting your Appointment details",
+      // Keep exactly what the user typed as CancelRemarks; fall back to the
+      // default message only when no remarks argument is supplied at all.
+      "CancelRemarks": remarks ?? "Request for Resubmitting your Appointment details",
       "SEQ_ID": seqId,
       "Authorize": { "AuDeviceUID": "WEB", "AuHostSeqId": hostSeqId }
     };

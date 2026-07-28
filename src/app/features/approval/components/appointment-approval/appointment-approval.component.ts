@@ -47,6 +47,8 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   rejectRemarks = '';
   showRejectError = false;
 
+  resubmitRemarks = '';
+
   /** 'approved' | 'rejected' | 'resubmit' | '' */
   actionResult = '';
 
@@ -255,7 +257,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   resubmit() {
     if (this.isSubmitting) return;
     this.isSubmitting = true;
-    this.apiService.RequestResubmitAppointmentData(this.seqId, this.hostSeqId).subscribe({
+    this.apiService.RequestResubmitAppointmentData(this.seqId, this.hostSeqId, this.resubmitRemarks).subscribe({
       next: () => {
         this.isSubmitting = false;
         this.actionResult = 'resubmit';
