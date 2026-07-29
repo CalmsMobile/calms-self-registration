@@ -2283,7 +2283,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.visitorsArray.push(newVisitor);
   }
 
-  addVisitorToTable(): void {
+  async addVisitorToTable(): Promise<void> {
     // Only allow adding visitors to table if multi-visitor setting is enabled
     if (!this.isMultipleVisitorMode) {
       return;
@@ -2294,8 +2294,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.isVisitorNotWhitelisted) {
-      this.showMessage({ severity: 'error', summary: this.labelService.getLabel('registration_page_not_whitelisted_alert_title', 'caption') || 'Not Whitelisted', detail: this.labelService.getLabel('registration_page_not_whitelisted_alert_description', 'caption') || 'Visitor not whitelisted. Please contact admin.', life: 5000 });
+    // Enforce whitelist on the save button (re-checks even if the user never
+    // blurred the ID field).
+    if (!(await this.ensureWhitelistValidated())) {
       return;
     }
 
@@ -4197,6 +4198,41 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Re-run the whitelist check against the backend and wait for the result.
+   * Used by the save buttons so the check is enforced even when the user never
+   * blurred the ID field (the blur-triggered check may not have run/completed).
+   * Returns true when the visitor may proceed. No-op (true) when the setting is
+   * off or no ID is entered; fails open on API error (matches existing behavior).
+   */
+  private async ensureWhitelistValidated(): Promise<boolean> {
+    if (!this.settings?.EnableWhitelistValidation) return true;
+    const visitorId = this.generalForm.get('visitor_id')?.value?.trim();
+    if (!visitorId) return true; // empty is handled by required validation
+    const branchId = this.wizardService.currentBranchID;
+    try {
+      const response: any = await firstValueFrom(this.api.SearchVisitorWhitelist(visitorId, branchId));
+      const result = Array.isArray(response) ? response[0] : response;
+      const code = result?.Table?.[0]?.Code;
+      const whitelisted = code === 10;
+      this.isVisitorNotWhitelisted = !whitelisted;
+      if (!whitelisted) {
+        this.showMessage({
+          severity: 'error',
+          summary: this.labelService.getLabel('registration_page_not_whitelisted_alert_title', 'caption') || 'Not Whitelisted',
+          detail: this.labelService.getLabel('registration_page_not_whitelisted_alert_description', 'caption')
+            || result?.Table?.[0]?.Description
+            || 'Visitor not whitelisted. Please contact admin.',
+          life: 5000
+        });
+      }
+      return whitelisted;
+    } catch {
+      this.isVisitorNotWhitelisted = false;
+      return true; // fail open
+    }
+  }
+
   onStartDateChange(event: any): void {
     const startDate = event;
     // Handle start date change logic here
@@ -4582,8 +4618,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.router.navigate(['/'], Object.keys(queryParams).length > 0 ? { queryParams } : {});
   }
 
-  goNext(): void {
+  async goNext(): Promise<void> {
     console.log('[goNext] isImageCaptureEnabled:', this.isImageCaptureEnabled, '| ImageUploadRequired:', this.settings?.ImageUploadRequired);
+    // Enforce whitelist on the save button (not only on blur).
+    if (!(await this.ensureWhitelistValidated())) return;
     // Whenever image capture is enabled — mandatory OR optional — open the photo
     // dialog using the lightweight check used by "Save and Add"
     // (isCurrentVisitorFormValid). Full validateForm() runs after the dialog in
