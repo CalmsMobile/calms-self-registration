@@ -126,6 +126,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   scheduleStartTime = '09:00';
   scheduleEndTime = '10:00';
   scheduleActiveField: 'start' | 'end' = 'start';
+  // The schedule dialog's inline p-datepicker binds [minDate]/[maxDate] to the
+  // getters below. PrimeNG's setters call createMonths() whenever the binding
+  // identity changes, and its calendar *ngFor has no trackBy — so returning a
+  // fresh Date each change-detection tick rebuilds the whole calendar DOM and
+  // makes the prev/next buttons unclickable (the node is replaced between
+  // mousedown and mouseup). Cache by timestamp so the reference stays stable.
+  private scheduleBoundCache: { [key: string]: Date | undefined } = {};
   selectedIdTypeData: any = null;
   visitorIdDynamicMaxLength: number | null = null;
   gbShowMemberId = false;
@@ -601,25 +608,43 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   get scheduleStartMinDate(): Date {
     const d = new Date(this.minDate);
     d.setHours(0, 0, 0, 0);
-    return d;
+    return this.stableScheduleBound('startMin', d) as Date;
   }
 
   get scheduleStartMaxDate(): Date | undefined {
     const allowApptDays = this.getAllowApptDays();
     if (allowApptDays <= 0) {
-      return undefined;
+      return this.stableScheduleBound('startMax', undefined);
     }
 
-    return this.endOfDay(this.addDays(this.scheduleStartMinDate, allowApptDays));
+    return this.stableScheduleBound('startMax', this.endOfDay(this.addDays(this.scheduleStartMinDate, allowApptDays)));
   }
 
   get scheduleEndMaxDate(): Date | undefined {
     if (!this.scheduleStartDate) {
-      return undefined;
+      return this.stableScheduleBound('endMax', undefined);
     }
 
     const maxEndDate = this.getEndDateMaxByStart(this.scheduleStartDate);
-    return maxEndDate || undefined;
+    return this.stableScheduleBound('endMax', maxEndDate || undefined);
+  }
+
+  /**
+   * Returns the previously handed-out Date instance when the newly computed
+   * bound represents the same moment, so the p-datepicker input binding does
+   * not register a change on every change-detection cycle.
+   */
+  private stableScheduleBound(key: string, value: Date | undefined): Date | undefined {
+    const cached = this.scheduleBoundCache[key];
+    if (!value) {
+      this.scheduleBoundCache[key] = undefined;
+      return undefined;
+    }
+    if (cached && cached.getTime() === value.getTime()) {
+      return cached;
+    }
+    this.scheduleBoundCache[key] = value;
+    return value;
   }
 
   get scheduleStartMaxDateStr(): string {
