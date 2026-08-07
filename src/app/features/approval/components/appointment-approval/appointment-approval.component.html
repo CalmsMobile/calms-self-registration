@@ -259,10 +259,16 @@
               <div><p class="detail-label">Address</p><p class="detail-value">{{ appointmentData?.Address }}{{ appointmentData?.Address && appointmentData?.CountryName ? ', ' : '' }}{{ appointmentData?.CountryName }}</p></div>
             </article>
           }
-          @if (appointmentData?.Room_Name) {
+          @if (appointmentData?.Floor) {
             <article class="detail-item">
               <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-7h6v7"/></svg></div>
-              <div><p class="detail-label">Floor</p><p class="detail-value">{{ appointmentData.Room_Name }}</p></div>
+              <div><p class="detail-label">Floor</p><p class="detail-value">{{ appointmentData.Floor }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.Room_Name) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M6 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17"/><circle cx="14" cy="12" r="1"/></svg></div>
+              <div><p class="detail-label">Meeting Location</p><p class="detail-value">{{ appointmentData.Room_Name }}</p></div>
             </article>
           }
           @if (appointmentData?.SEQ_ID || seqId) {
