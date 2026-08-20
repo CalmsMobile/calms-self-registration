@@ -732,6 +732,7 @@
           <p-datepicker id="appointmentDate" formControlName="appointmentDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('appointmentDate')}" [minDate]="minDate"
             [placeholder]="'registration_page_appointment_date' | translate:'placeholder'" [showTime]="false" (onSelect)="onAppointmentDateSelect($event)"
+            [disabled]="isFieldDisabled('appointmentDate')"
             [showClear]="true" appendTo="body" dateFormat="dd/mm/yy">
           </p-datepicker>
         </div>
@@ -754,6 +755,7 @@
             optionLabel="Name" optionValue="Code"
             (onChange)="onTimeSlotDropdownChange($event.value)"
             [class]="{'ng-invalid': isFieldInvalidRequired('timeSlot')}"
+            [disabled]="isFieldDisabled('timeSlot')"
             [showClear]="true" appendTo="body">
           </p-select>
         </div>
@@ -1558,6 +1560,7 @@
           <p-datepicker formControlName="appointmentDate"
             [class]="{'ng-invalid': isFieldInvalidRequired('appointmentDate')}" [minDate]="minDate"
             [placeholder]="'registration_page_appointment_date' | translate:'placeholder'" [showTime]="false" (onSelect)="onAppointmentDateSelect($event)"
+            [disabled]="isFieldDisabled('appointmentDate')"
             appendTo="body" dateFormat="dd/mm/yy" [showClear]="true">
           </p-datepicker>
         </div>
@@ -1578,6 +1581,7 @@
             optionLabel="Name" optionValue="Code"
             (onChange)="onTimeSlotDropdownChange($event.value)"
             [class]="{'ng-invalid': isFieldInvalidRequired('timeSlot')}"
+            [disabled]="isFieldDisabled('timeSlot')"
             [showClear]="true" appendTo="body">
           </p-select>
         </div>

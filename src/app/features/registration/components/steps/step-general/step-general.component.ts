@@ -28,6 +28,54 @@ import { SharedService } from '../../../../../shared/shared.service';
 import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
 import { environment } from '../../../../../../environments/environment';
 
+/**
+ * The only controls "Save and Add New" keeps: the appointment window and the
+ * facility booking, which describe one visit shared by every guest on the form.
+ *
+ * Everything else is cleared, including the visit dropdowns (department, host,
+ * meeting location, floor, purpose) — each guest re-selects their own.
+ * Appointment UDFs (AUDF*) are booking-level and preserved by prefix; visitor
+ * UDFs (VUDF*) are cleared with the rest.
+ *
+ * Fields locked by the appointment flow are preserved separately (see
+ * APPOINTMENT_LOCKED_FIELDS): they are admin-owned and disabled, so clearing
+ * them would destroy the booking with no way for the visitor to put it back.
+ */
+const SHARED_VISIT_FIELDS: readonly string[] = [
+  'startDate',
+  'endDate',
+  'appointmentDate',
+  'timeSlot',
+  'sharedDate',
+  'facilityBooking',
+  'facilityPurpose',
+  'facilitySelection',
+];
+
+/**
+ * Fields the admin/host fills in when creating an appointment. In the appointment
+ * flow the visitor may review them but never change them.
+ *
+ * Both scheduling modes are covered: startDate/endDate when appointment time
+ * slots are off, appointmentDate/timeSlot when they are on.
+ *
+ * Anything NOT listed here stays editable for the visitor — title, visitor name,
+ * visitor id, id type, id expiry, gender, email, contact, vehicle number,
+ * company, address, country, remarks, and every VUDF/AUDF control.
+ */
+
+const APPOINTMENT_LOCKED_FIELDS: readonly string[] = [
+  'department',
+  'host',
+  'meeting_location',
+  'floor',
+  'purpose',
+  'startDate',
+  'endDate',
+  'appointmentDate',
+  'timeSlot',
+];
+
 
 @Component({
   selector: 'app-step-general',
@@ -2124,16 +2172,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     this.generalForm = this.fb.group(formControls);
 
-    // Lock fields that were pre-filled by admin in appointment flow
+    // Lock the fields the admin/host owns when they created the appointment.
+    // These are locked for the whole appointment flow regardless of what the ack
+    // payload carried: gating each one on its own id (departmentId, floorId, …)
+    // meant a null id from the API silently left the field fully editable, with
+    // no error to signal it. Everything not listed here stays editable — see
+    // APPOINTMENT_LOCKED_FIELDS for the full list.
     if (this.isAppointmentFlow && visitorData) {
-      const locked: string[] = [];
-      if (visitorData.departmentId) locked.push('department');
-      if (visitorData.hostId) locked.push('host');
-      if (visitorData.roomId != null && visitorData.roomId !== '') locked.push('meeting_location');
-      if (visitorData.floorId) locked.push('floor');
-      if (visitorData.purposeId) locked.push('purpose');
-      if (visitorData.startTime) locked.push('startDate', 'endDate');
-      this.lockedFieldsInAppointmentFlow = locked;
+      this.lockedFieldsInAppointmentFlow = [...APPOINTMENT_LOCKED_FIELDS];
     }
 
     // Restore saved visitors for display in table
@@ -2410,26 +2456,68 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Save form data immediately after visitor modification
     this.saveFormDataToWizard();
 
-    // Clear visitor identification fields including the profile preview so the next
-    // visitor doesn't accidentally inherit the previous visitor's photo.
-    const fieldsToReset = ['fullName', 'visitor_id', 'profile', 'profilePreview', 'faceVector'];
+    // Hand the next guest a blank visitor form. Only the booking-level fields
+    // survive — clearing just name/id left the previous guest's gender, email,
+    // phone, company, address, vehicle and VUDF values sitting in the form, which
+    // were then saved onto the next visitor unless they were noticed and edited.
+    this.resetVisitorFieldsForNextGuest(currentForm);
+  }
 
-    fieldsToReset.forEach(field => {
-      if (currentForm.get(field)) {
-        currentForm.get(field)?.reset();
-      }
+  /**
+   * Clear every visitor-specific control, keeping the booking-level ones listed in
+   * SHARED_VISIT_FIELDS (plus appointment UDFs) so the next guest stays on the
+   * same visit.
+   */
+  private resetVisitorFieldsForNextGuest(form: FormGroup): void {
+    Object.keys(form.controls).forEach(name => {
+      // 'visitors' is a FormArray of legacy per-visitor groups, not a field.
+      if (name === 'visitors') return;
+      if (SHARED_VISIT_FIELDS.includes(name)) return;
+      if (name.startsWith('AUDF')) return;
+      // Admin-owned and disabled in the appointment flow — clearing these would
+      // wipe the booking and the visitor could not re-enter them.
+      if (this.lockedFieldsInAppointmentFlow.includes(name)) return;
+
+      const control = form.get(name);
+      if (!control) return;
+
+      // reset() preserves the control's enabled/disabled state, so fields
+      // disabled by branch settings or the appointment flow stay that way.
+      control.reset();
+      control.markAsUntouched();
+      control.markAsPristine();
     });
 
-    // Reset profile image display
+    // Clearing a dropdown's value is not the same as clearing its selection.
+    // The ID-type select drives component state that reset() cannot reach —
+    // selectedIdTypeData, showIdExpiryField, the visitor_id length/format rules
+    // and the id_expired_date validators — so without this the next guest keeps
+    // the previous guest's ID rules and a stranded "ID Expiry" field. Replay the
+    // same cleared-selection handler that clearField() uses.
+    this.onIdTypeChange({ value: null });
+
+    // Same for the visit selects: clearing host leaves hostName set, and clearing
+    // department leaves the host list still filtered to the old department, so the
+    // next guest would see a short host list with no department to explain it.
+    // onHostChange(null) also restores the unfiltered list via onDepartmentChange.
+    this.onHostChange({ value: null });
+    this.onPurposeChange({ value: null });
+
+    // A host the visitor cannot pick — a hidden default host, or ?hc= in the URL —
+    // has to be put back, or the next guest is left with no host and no control.
+    const forcedHost = this.shouldHideHostControl
+      ? this.defaultHostId
+      : (this.wizardService.isHostFromQuery ? this.wizardService.hostCodeFromQuery : null);
+    if (forcedHost) {
+      form.get('host')?.setValue(forcedHost, { emitEvent: false });
+      this.onHostChange({ value: forcedHost });
+    }
+
+    // Blacklist/whitelist verdicts belong to the ID we just cleared.
+    this.isVisitorBlacklisted = false;
+    this.isVisitorNotWhitelisted = false;
+
     this.profileImage = '';
-
-    // Reset form touched state for the cleared fields only
-    fieldsToReset.forEach(field => {
-      if (currentForm.get(field)) {
-        currentForm.get(field)?.markAsUntouched();
-        currentForm.get(field)?.markAsPristine();
-      }
-    });
   }
 
   removeVisitor(index: number): void {
@@ -3892,10 +3980,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         const imageUrl = this.sanitizer.bypassSecurityTrustUrl(base64);
         this.profileImage = imageUrl;
         this.generalForm.patchValue({ profile: file, profilePreview: base64, faceVector: this.capturedFaceVector });
-        // In multi-visitor mode, sync the captured photo back to the corresponding savedVisitor
-        // so back-navigation can restore it and show 'preview' mode in the dialog.
-        if (this.isMultipleVisitorMode && this.savedVisitors.length > 0) {
-          const targetIdx = this.savedVisitors.length - 1;
+        // In multi-visitor mode, sync the captured photo back to the visitor being
+        // edited so back-navigation can restore it and show 'preview' mode in the
+        // dialog. Only ever write to the visitor actually under edit: when ADDING,
+        // the photo dialog opens before executePendingAction() pushes the new
+        // visitor, so targeting savedVisitors.length - 1 stamped this photo onto
+        // the PREVIOUS visitor instead. The visitor being added already carries
+        // the photo via the profilePreview patch above.
+        if (this.isMultipleVisitorMode && this.editingVisitorIndex >= 0 && this.savedVisitors[this.editingVisitorIndex]) {
+          const targetIdx = this.editingVisitorIndex;
           this.savedVisitors[targetIdx] = { ...this.savedVisitors[targetIdx], profile: file, profilePreview: base64, faceVector: this.capturedFaceVector };
           this.saveFormDataToWizard();
         }
@@ -4666,14 +4759,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         // Run booking check BEFORE opening the photo dialog
         this.checkAndNavigate(() => {
           this.pendingAction = 'goNext';
-          // Carry the previous visitor's photo over as the default preview
-          if (this.isMultipleVisitorMode && !this.generalForm.get('profilePreview')?.value && this.savedVisitors.length > 0) {
-            const lastVisitor = this.savedVisitors[this.savedVisitors.length - 1];
-            if (lastVisitor?.profilePreview) {
-              this.generalForm.patchValue({ profilePreview: lastVisitor.profilePreview }, { emitEvent: false });
-              this.profileImage = this.sanitizer.bypassSecurityTrustUrl(lastVisitor.profilePreview);
-            }
-          }
+          // Deliberately do NOT seed the preview from the previous visitor: a
+          // carried-over default that the visitor never retakes gets saved as
+          // their own photo, so two visitors end up sharing one image.
+          // saveCurrentVisitor() clears profilePreview between visitors for the
+          // same reason.
           this.openPhotoCaptureDialog();
         });
       } else {

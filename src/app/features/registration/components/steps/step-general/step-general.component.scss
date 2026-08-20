@@ -3990,3 +3990,64 @@ textarea {
 :host ::ng-deep .search-profile-dialog .p-dialog-content {
   border-radius: 15px !important;
 }
+/* ── Sign in with Google ─────────────────────────────────────────────
+   Optional shortcut above the form; prefills name/email. Spans the full
+   grid width so it reads as a header action, not as one of the fields. */
+.google-auth-field {
+  grid-column: 1 / -1;
+  padding-bottom: 8px;
+}
+
+.google-auth-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Google renders its own iframe/button in here; keep it from stretching. */
+.google-auth-btn {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.google-auth-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #2e7d32;
+  word-break: break-all;
+
+  i {
+    font-size: 14px;
+  }
+}
+
+.google-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  color: #9a9a9a;
+  font-size: 12px;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e3e3e3;
+  }
+}
+
+@media (max-width: 768px) {
+  .google-auth-row {
+    justify-content: center;
+  }
+
+  .google-auth-divider {
+    margin-top: 10px;
+  }
+}
