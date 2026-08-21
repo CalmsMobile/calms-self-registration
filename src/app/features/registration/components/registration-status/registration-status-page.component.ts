@@ -148,56 +148,66 @@ export class RegistrationStatusPageComponent implements OnInit {
         next: (response: any) => {
           this.isRetrying = false;
           const responseData = response?.Table?.[0];
+
+          // A 200 can still carry a business-logic failure ('S' = saved). Without
+          // this the page would flip to "pending" on a response that saved nothing.
+          if (responseData?.code !== undefined && responseData.code !== 'S') {
+            this.registrationData = {
+              ...this.registrationData,
+              status: 'error',
+              errorMessage: responseData.description || undefined,
+            };
+            return;
+          }
+
           const isAutoApproved = responseData?.AutoApprove === 1 || responseData?.AutoApprove === true;
           const isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1 || responseData?.IsDynamicQR === 'true';
           const dynamicQrIntervalSec = responseData?.DynamicQrIntervalSec ? Number(responseData.DynamicQrIntervalSec) : 0;
           const approvalStatus: string = responseData?.Approval_Status || (isAutoApproved ? 'Approved' : 'Pending');
 
           const summary = this.wizardService.buildRegistrationSummary();
-          const branchName = this.wizardService.currentBranchName;
-          const branchID = this.wizardService.currentBranchID;
-          const startMode = this.wizardService.appointmentCode
+          this.branchName = this.wizardService.currentBranchName || this.branchName;
+          this.branchID = this.wizardService.currentBranchID || this.branchID;
+          this.startMode = (this.wizardService.appointmentCode
             ? 'ac'
-            : this.wizardService.refCode ? 'bc' : 'plain';
-          const savedRefCode = this.wizardService.refCode;
-          const savedRefCatCode = this.wizardService.refCatCode;
-          const savedHcParam = this.wizardService.hcParam;
+            : this.wizardService.refCode ? 'bc' : 'plain') as StartMode;
+          this.refCode = this.wizardService.refCode || '';
+          this.refCatCode = this.wizardService.refCatCode || '';
+          this.hcParam = this.wizardService.hcParam || '';
 
           this.wizardService.clearSessionStorage();
 
-          sessionStorage.setItem('navigatingToStatus', 'true');
-          this.router.navigate(['/registration-status'], {
-            state: {
-              registrationData: {
-                status: isAutoApproved ? 'success' : 'pending',
-                isAutoApproved,
-                approvalStatus,
-                visitorId: responseData?.SEQ_ID?.toString() || '',
-                qrCodeData: responseData?.HexCode || '',
-                isDynamicQR,
-                DynamicQrIntervalSec: dynamicQrIntervalSec,
-                registrationId: responseData?.appointment_group_id || responseData?.SEQ_ID?.toString() || '',
-                visitorName: summary.visitorName,
-                email: summary.email,
-                visitFrom: summary.visitFrom,
-                visitTo: summary.visitTo,
-                meetingWith: summary.meetingWith,
-                meetingLocation: summary.meetingLocation,
-                visitType: summary.visitType,
-                visitPurpose: summary.visitPurpose,
-                branch: summary.branch,
-              },
-              branchName,
-              branchID,
-              startMode,
-              refCode: savedRefCode,
-              refCatCode: savedRefCatCode,
-              hcParam: savedHcParam
-            }
-          });
+          // Update state in place rather than re-navigating to this same route.
+          // router.navigate(['/registration-status']) from /registration-status is
+          // cancelled by the default onSameUrlNavigation: 'ignore', so the component
+          // was never re-created and registrationData — read only in the constructor —
+          // kept its old status: 'error'. The retry succeeded while the page still
+          // showed "Server Error", so visitors pressed Submit Again and booked
+          // duplicate appointments.
+          this.registrationData = {
+            status: isAutoApproved ? 'success' : 'pending',
+            isAutoApproved,
+            approvalStatus,
+            visitorId: responseData?.SEQ_ID?.toString() || '',
+            qrCodeData: responseData?.HexCode || '',
+            isDynamicQR,
+            DynamicQrIntervalSec: dynamicQrIntervalSec,
+            registrationId: responseData?.appointment_group_id || responseData?.SEQ_ID?.toString() || '',
+            visitorName: summary.visitorName,
+            email: summary.email,
+            visitFrom: summary.visitFrom,
+            visitTo: summary.visitTo,
+            meetingWith: summary.meetingWith,
+            meetingLocation: summary.meetingLocation,
+            visitType: summary.visitType,
+            visitPurpose: summary.visitPurpose,
+            branch: summary.branch,
+          };
         },
         error: () => {
           this.isRetrying = false;
+          // ApiBaseService already surfaces a toast; keep the error card on screen
+          // so the visitor still has the Submit Again button.
         }
       });
   }

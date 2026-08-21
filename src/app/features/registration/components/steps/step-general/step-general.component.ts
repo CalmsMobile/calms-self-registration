@@ -29,19 +29,35 @@ import { GENDER_OPTIONS } from '../../../../../shared/app.constants';
 import { environment } from '../../../../../../environments/environment';
 
 /**
- * The only controls "Save and Add New" keeps: the appointment window and the
- * facility booking, which describe one visit shared by every guest on the form.
+ * Controls "Save and Add New" keeps, because the submit payload has exactly ONE
+ * slot for each of them per submission — see getDirectCheckInPayload() /
+ * getVisitorAckData() in WizardService, where HostID, DepartmentId,
+ * MeetingLocationId, FloorId, PurposeId and Remarks are read from the CURRENT
+ * form (formData.general), not from the per-guest savedVisitors rows.
  *
- * Everything else is cleared, including the visit dropdowns (department, host,
- * meeting location, floor, purpose) — each guest re-selects their own.
- * Appointment UDFs (AUDF*) are booking-level and preserved by prefix; visitor
- * UDFs (VUDF*) are cleared with the rest.
+ * Clearing them per guest therefore does not make them per-guest — it just sends
+ * the booking with no host, which the API rejects. They can only become
+ * per-visitor if the payload grows per-visitor fields for them.
  *
- * Fields locked by the appointment flow are preserved separately (see
- * APPOINTMENT_LOCKED_FIELDS): they are admin-owned and disabled, so clearing
- * them would destroy the booking with no way for the visitor to put it back.
+ * Everything genuinely per-visitor is cleared: name, id, id type/expiry, gender,
+ * email, contact, company, address, country, vehicle, work permit, photo and all
+ * VUDF controls. Appointment UDFs (AUDF*) are booking-level, preserved by prefix.
  */
 const SHARED_VISIT_FIELDS: readonly string[] = [
+  // Who/where/why — one per submission in the payload.
+  'host',
+  'hostName',
+  'department',
+  'meeting_location',
+  'roomDesc',
+  'floor',
+  'purpose',
+  'purposeDesc',
+  'remarks',
+  'Reason',
+  'event_name',
+  'visitType',
+  // When — one appointment window per submission.
   'startDate',
   'endDate',
   'appointmentDate',
@@ -51,7 +67,6 @@ const SHARED_VISIT_FIELDS: readonly string[] = [
   'facilityPurpose',
   'facilitySelection',
 ];
-
 /**
  * Fields the admin/host fills in when creating an appointment. In the appointment
  * flow the visitor may review them but never change them.
@@ -2495,23 +2510,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // the previous guest's ID rules and a stranded "ID Expiry" field. Replay the
     // same cleared-selection handler that clearField() uses.
     this.onIdTypeChange({ value: null });
-
-    // Same for the visit selects: clearing host leaves hostName set, and clearing
-    // department leaves the host list still filtered to the old department, so the
-    // next guest would see a short host list with no department to explain it.
-    // onHostChange(null) also restores the unfiltered list via onDepartmentChange.
-    this.onHostChange({ value: null });
-    this.onPurposeChange({ value: null });
-
-    // A host the visitor cannot pick — a hidden default host, or ?hc= in the URL —
-    // has to be put back, or the next guest is left with no host and no control.
-    const forcedHost = this.shouldHideHostControl
-      ? this.defaultHostId
-      : (this.wizardService.isHostFromQuery ? this.wizardService.hostCodeFromQuery : null);
-    if (forcedHost) {
-      form.get('host')?.setValue(forcedHost, { emitEvent: false });
-      this.onHostChange({ value: forcedHost });
-    }
 
     // Blacklist/whitelist verdicts belong to the ID we just cleared.
     this.isVisitorBlacklisted = false;
