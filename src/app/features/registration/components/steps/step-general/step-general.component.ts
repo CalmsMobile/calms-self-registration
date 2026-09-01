@@ -132,6 +132,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return this.wizardService.isDirectCheckIn;
   }
 
+  /**
+   * Direct check-in happens now — the backend stamps the time, the visitor has no
+   * schedule to pick. These controls stay visible (they show the actual check-in
+   * window) but are always disabled, which also keeps them out of validation.
+   */
+  private static readonly DIRECT_CHECKIN_READONLY_FIELDS = ['startDate', 'endDate', 'appointmentDate', 'timeSlot'];
+
   // Photo capture dialog
   showPhotoCaptureDialog = false;
   isCameraOn = false;
@@ -1055,6 +1062,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     if (restoreSlotCode) {
       slot = this.timeSlotList.find((s: any) => s.Code === restoreSlotCode);
+    } else if (this.isDirectCheckIn) {
+      slot = this.findSlotForNow();
     } else if (this.isAppointmentFlow) {
       const startTime = this.visitorAckData?.visitorData?.startTime;
       if (startTime) {
@@ -1070,6 +1079,30 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.timeSlotStartTime = parts[0]?.trim() || null;
       this.timeSlotEndTime = parts[1]?.trim() || null;
     }
+  }
+
+  /**
+   * Direct check-in happens now, so the read-only slot dropdown should show the slot
+   * the visitor is actually arriving in: the one whose window contains the current
+   * time, else the next one starting later today. Slot Code is "HH:mm-HH:mm".
+   */
+  private findSlotForNow(): any {
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+    const toMinutes = (hhmm: string): number | null => {
+      const m = (hhmm || '').trim().match(/^(\d{1,2}):(\d{2})/);
+      return m ? (+m[1] * 60) + (+m[2]) : null;
+    };
+    const ranges = this.timeSlotList
+      .map((s: any) => {
+        const [from, to] = ((s.Code as string) || '').split('-');
+        return { slot: s, from: toMinutes(from), to: toMinutes(to) };
+      })
+      .filter((r: any) => r.from !== null && r.to !== null) as { slot: any; from: number; to: number }[];
+
+    return ranges.find(r => nowMinutes >= r.from && nowMinutes < r.to)?.slot
+      ?? ranges.filter(r => r.from >= nowMinutes).sort((a, b) => a.from - b.from)[0]?.slot
+      ?? null;
   }
 
   private loadUdfSettings() {
@@ -1141,7 +1174,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           // In appointment flow with time slots enabled, the appointmentDate is pre-filled
           // programmatically so the date picker's ngModelChange never fires. Trigger slot
           // loading manually here so the time slot dropdown becomes visible.
-          if (this.enableVimsApptTimeSlot && this.isAppointmentFlow) {
+          // Direct check-in reaches here the same way: appointmentDate is seeded with
+          // today by applyDefaultDateTimes(), so the picker's onSelect never fires.
+          if (this.enableVimsApptTimeSlot && (this.isAppointmentFlow || this.isDirectCheckIn)) {
             const prefilledDate = this.generalForm.get('appointmentDate')?.value;
             // Pass restoreSlotCode so autoSelectSlot runs inside the async callback
             // after timeSlotList is populated. When AppTimeSlotSeqID is null, autoSelectSlot
@@ -1720,22 +1755,41 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return this.normalizeIdInputType(inputType) === 'N' ? 'numeric' : 'alphanumeric';
   }
 
-  private stripForbiddenChars(value: string): string {
-    return value.replace(/[<>"'`&\\]/g, '');
+  /** Free-text controls whose values must never carry HTML into the API payload. */
+  private static readonly TEXT_FIELDS = [
+    'fullName', 'email', 'phone', 'visitor_id', 'visitor_company', 'visitor_address',
+    'vehicle_number', 'vehicle_brand', 'vehicle_model', 'vehicle_color',
+    'work_permit_ref', 'remarks', 'event_name'
+  ];
+
+  /**
+   * Strip HTML-significant characters from every free-text value on `data`.
+   * The valueChanges subscriptions below cover what the user types; this covers
+   * values patched in programmatically (appointment prefill, session restore)
+   * and is the last gate before a visitor object reaches the API payload.
+   */
+  private sanitizeTextValues(data: any): any {
+    for (const field of StepGeneralComponent.TEXT_FIELDS) {
+      if (typeof data[field] === 'string') {
+        data[field] = stripForbiddenChars(data[field]);
+      }
+    }
+    for (const udf of this.udfSettings || []) {
+      const key = udf?.formControlName;
+      if (udf?.Enabled && udf.UDFCtrlType === 10 && key && typeof data[key] === 'string') {
+        data[key] = stripForbiddenChars(data[key]);
+      }
+    }
+    return data;
   }
 
   private applyForbiddenCharStripping(): void {
-    const textFields = [
-      'fullName', 'phone', 'visitor_id', 'visitor_company', 'visitor_address',
-      'vehicle_number', 'vehicle_brand', 'vehicle_model', 'vehicle_color',
-      'work_permit_ref', 'remarks', 'event_name'
-    ];
-    textFields.forEach(name => {
+    StepGeneralComponent.TEXT_FIELDS.forEach(name => {
       const ctrl = this.generalForm.get(name);
       if (ctrl) {
         ctrl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => {
           if (val && typeof val === 'string') {
-            const stripped = this.stripForbiddenChars(val);
+            const stripped = stripForbiddenChars(val);
             if (stripped !== val) ctrl.setValue(stripped, { emitEvent: false });
           }
         });
@@ -1747,7 +1801,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         if (ctrl) {
           ctrl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(val => {
             if (val && typeof val === 'string') {
-              const stripped = this.stripForbiddenChars(val);
+              const stripped = stripForbiddenChars(val);
               if (stripped !== val) ctrl.setValue(stripped, { emitEvent: false });
             }
           });
@@ -1863,6 +1917,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return true;
     }
 
+    // Direct check-in: schedule fields are shown for context only, never editable.
+    if (this.isDirectCheckIn && StepGeneralComponent.DIRECT_CHECKIN_READONLY_FIELDS.includes(fieldName)) {
+      return true;
+    }
+
     if (!this.isAppointmentFlow) {
       return false; // In normal flow, no fields are disabled
     }
@@ -1957,12 +2016,26 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Skip if in appointment flow — dates are pre-filled from visitor ack
     if (this.isAppointmentFlow) return;
 
+    const savedData = this.wizardService.getFormData('general') || {};
+    const now = new Date();
+
+    // Direct check-in with slot mode: the appointment date is today by definition.
+    // Seed it before the showStartEnd gate below, which skips slot mode entirely.
+    if (this.isDirectCheckIn && this.enableVimsApptTimeSlot) {
+      const apptCtrl = this.generalForm.get('appointmentDate');
+      if (apptCtrl && !apptCtrl.value) {
+        apptCtrl.setValue(savedData.appointmentDate || now, { emitEvent: false });
+      }
+      // A late udfSettings emission rebuilds the form, which drops the slot picked
+      // when slots loaded. Re-pick it here — onAppointmentDateSelect won't run again.
+      if (this.timeSlotList.length && !this.generalForm.get('timeSlot')?.value) {
+        this.autoSelectSlot();
+      }
+    }
+
     // Only apply when start/end date fields are actually shown
     const showStartEnd = this.settings?.StartEndDtEnabled && !this.enableVimsApptTimeSlot;
     if (!showStartEnd) return;
-
-    const savedData = this.wizardService.getFormData('general') || {};
-    const now = new Date();
 
     // Always default start to now if not already saved
     if (!savedData.startDate) {
@@ -2423,7 +2496,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Save to savedVisitors array for multiple visitor functionality.
     // Use getRawValue() so disabled controls (e.g. appointment-locked fullName)
     // are captured — .value silently drops them, leaving an empty name in the payload.
-    const visitorData = { ...currentForm.getRawValue() };
+    const visitorData = this.sanitizeTextValues({ ...currentForm.getRawValue() });
 
     // Initialize Visitor_IC and IdentityNo fields
     visitorData.Visitor_IC = visitorData.visitor_id || '';
@@ -2863,6 +2936,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const control = this.generalForm.get(controlName);
     if (!control) return;
 
+    // Direct check-in overrides the settings-driven state for schedule fields: keep
+    // them disabled and unvalidated no matter who calls setupControl (loadTimeSlots
+    // re-runs this whenever slots arrive). Value is left alone so the read-only field
+    // keeps showing the check-in window.
+    if (this.isDirectCheckIn && StepGeneralComponent.DIRECT_CHECKIN_READONLY_FIELDS.includes(controlName)) {
+      control.clearValidators();
+      control.disable({ emitEvent: false });
+      control.updateValueAndValidity({ emitEvent: false });
+      return;
+    }
+
     const validators = [];
     if (enabled && required) {
       validators.push(Validators.required);
@@ -2998,7 +3082,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           return false;
         }
         // Auto-save current form as the first (single) visitor
-        const visitorData = { ...this.generalForm.getRawValue() };
+        const visitorData = this.sanitizeTextValues({ ...this.generalForm.getRawValue() });
         visitorData.Visitor_IC = visitorData.visitor_id || '';
         visitorData.IdentityNo = visitorData.visitor_id || '';
         if (this.settings?.Visitor?.[0]?.SafetyBriefingEnabled) {
@@ -3028,7 +3112,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.wizardService.setStepValid(false);
           return false;
         }
-        const visitorData = { ...this.generalForm.getRawValue() };
+        const visitorData = this.sanitizeTextValues({ ...this.generalForm.getRawValue() });
         visitorData.Visitor_IC = visitorData.visitor_id || '';
         visitorData.IdentityNo = visitorData.visitor_id || '';
         this.savedVisitors[this.editingVisitorIndex] = visitorData;
@@ -3061,7 +3145,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       }
 
       // Form is valid — auto-save as an additional visitor before proceeding
-      const visitorData = { ...this.generalForm.getRawValue() };
+      const visitorData = this.sanitizeTextValues({ ...this.generalForm.getRawValue() });
       visitorData.Visitor_IC = visitorData.visitor_id || '';
       visitorData.IdentityNo = visitorData.visitor_id || '';
       const isDuplicate = this.savedVisitors.some(v =>
@@ -3144,28 +3228,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   private saveFormDataToWizard(): void {
-    const formData = { ...this.generalForm.getRawValue() };
-
-    const textFields = [
-      'fullName', 'email', 'visitor_id', 'visitor_company', 'visitor_address',
-      'vehicle_number', 'vehicle_brand', 'vehicle_model', 'vehicle_color',
-      'work_permit_ref', 'remarks',
-    ];
-    for (const field of textFields) {
-      if (typeof formData[field] === 'string') {
-        formData[field] = stripForbiddenChars(formData[field]);
-      }
-    }
-    if (this.udfSettings) {
-      for (const udf of this.udfSettings) {
-        if (udf.Enabled && udf.UDFCtrlType === 10) {
-          const key = udf.formControlName;
-          if (typeof formData[key] === 'string') {
-            formData[key] = stripForbiddenChars(formData[key]);
-          }
-        }
-      }
-    }
+    const formData = this.sanitizeTextValues({ ...this.generalForm.getRawValue() });
 
     // Always persist savedVisitors so they survive back navigation
     if (this.isMultipleVisitorMode) {

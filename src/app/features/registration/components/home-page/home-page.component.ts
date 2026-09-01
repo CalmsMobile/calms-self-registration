@@ -20,7 +20,6 @@ import { ToastModule } from 'primeng/toast';
 import { StepTermsComponent } from '../steps/step-terms/step-terms.component';
 import { RouterLink } from '@angular/router';
 import { CheckboxModule } from 'primeng/checkbox';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { LanguageSelectorComponent } from '../../../../shared/components/language-selector/language-selector.component';
 
 interface Branch {
@@ -61,8 +60,6 @@ export class HomePageComponent implements AfterViewChecked {
   readonly appVersion = environment.appVersion;
   termsScrolledToBottom = false;
   private termsAutoChecked = false;
-  private _cachedTermsHtml: SafeHtml | string = '';
-  private _cachedTermsTemplate = '';
   /** Holds the category to restore on back-navigation (see goBack() in step-general). */
   private _backNavRestoreCategory: any = null;
   /** When true, onCategoryChange will load settings but will NOT auto-proceed to wizard. */
@@ -162,7 +159,6 @@ export class HomePageComponent implements AfterViewChecked {
     private sharedService: SharedService,
     private languageService: LanguageService,
     private labelService: LabelService,
-    private sanitizer: DomSanitizer,
     private messageHelper: MessageHelperService,
     private themeService: ThemeService,
     private appConfig: AppConfigService
@@ -1140,15 +1136,14 @@ export class HomePageComponent implements AfterViewChecked {
     return selfRegSettings?.TermsnCondEnabled ?? false;
   }
 
-  getTermsHtml(): SafeHtml {
-    const template = this.labelService.getLabel('terms_and_conditions_tc', 'caption') || '';
-    if (template !== this._cachedTermsTemplate) {
-      this._cachedTermsTemplate = template;
-      this._cachedTermsHtml = template
-        ? this.sanitizer.bypassSecurityTrustHtml(template)
-        : '';
-    }
-    return this._cachedTermsHtml;
+  /**
+   * The terms template is API-supplied markup, i.e. untrusted. Return it as a
+   * plain string so Angular's [innerHTML] sanitizer strips <script>, inline
+   * event handlers and javascript: URLs. Never wrap this in
+   * bypassSecurityTrustHtml — that would re-open a stored-XSS hole.
+   */
+  getTermsHtml(): string {
+    return this.labelService.getLabel('terms_and_conditions_tc', 'caption') || '';
   }
   // shouldShowTerms(): boolean {
   //   const settings = this.wizardService.getSettings();

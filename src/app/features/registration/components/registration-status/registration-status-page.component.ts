@@ -140,30 +140,61 @@ export class RegistrationStatusPageComponent implements OnInit {
     if (this.isRetrying) return;
     this.isRetrying = true;
 
-    const visitorAckData = this.wizardService.getVisitorAckData();
     const catCodeEnc = this.wizardService.refCatCode || undefined;
+    // Submit Again must hit the same endpoint the first attempt used: direct check-in
+    // visitors are checked in, not booked as an appointment. Keep this in step with
+    // wizard-container.submitRegistration().
+    const isDirectCheckIn = this.wizardService.isDirectCheckIn;
+    const apiCall$ = isDirectCheckIn
+      ? this.api.VisitorCheckIn(this.wizardService.getDirectCheckInPayload())
+      : this.api.VisitorAckSave(this.wizardService.getVisitorAckData(), catCodeEnc);
 
-    this.api.VisitorAckSave(visitorAckData, catCodeEnc)
+    apiCall$
       .subscribe({
         next: (response: any) => {
           this.isRetrying = false;
-          const responseData = response?.Table?.[0];
 
-          // A 200 can still carry a business-logic failure ('S' = saved). Without
-          // this the page would flip to "pending" on a response that saved nothing.
-          if (responseData?.code !== undefined && responseData.code !== 'S') {
-            this.registrationData = {
-              ...this.registrationData,
-              status: 'error',
-              errorMessage: responseData.description || undefined,
-            };
-            return;
+          let isAutoApproved: boolean;
+          let isDynamicQR: boolean;
+          let dynamicQrIntervalSec: number;
+          let approvalStatus: string;
+          let qrCodeData: string;
+          let visitorId: string;
+          let registrationId: string;
+
+          if (isDirectCheckIn) {
+            // VisitorCheckIn: api-base unwraps to { Table, Table1 }, and Table1[0]
+            // carries Status / HexCode — there is no 'code' field to check.
+            const checkInData = response?.Table1?.[0];
+            qrCodeData = checkInData?.HexCode?.toString() || '';
+            visitorId = qrCodeData;
+            registrationId = qrCodeData;
+            isAutoApproved = checkInData?.Status === true;
+            isDynamicQR = false;
+            dynamicQrIntervalSec = 0;
+            approvalStatus = isAutoApproved ? 'Approved' : 'Pending';
+          } else {
+            const responseData = response?.Table?.[0];
+
+            // A 200 can still carry a business-logic failure ('S' = saved). Without
+            // this the page would flip to "pending" on a response that saved nothing.
+            if (responseData?.code !== undefined && responseData.code !== 'S') {
+              this.registrationData = {
+                ...this.registrationData,
+                status: 'error',
+                errorMessage: responseData.description || undefined,
+              };
+              return;
+            }
+
+            isAutoApproved = responseData?.AutoApprove === 1 || responseData?.AutoApprove === true;
+            isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1 || responseData?.IsDynamicQR === 'true';
+            dynamicQrIntervalSec = responseData?.DynamicQrIntervalSec ? Number(responseData.DynamicQrIntervalSec) : 0;
+            approvalStatus = responseData?.Approval_Status || (isAutoApproved ? 'Approved' : 'Pending');
+            qrCodeData = responseData?.HexCode || '';
+            visitorId = responseData?.SEQ_ID?.toString() || '';
+            registrationId = responseData?.appointment_group_id || visitorId;
           }
-
-          const isAutoApproved = responseData?.AutoApprove === 1 || responseData?.AutoApprove === true;
-          const isDynamicQR = responseData?.IsDynamicQR === true || responseData?.IsDynamicQR === 1 || responseData?.IsDynamicQR === 'true';
-          const dynamicQrIntervalSec = responseData?.DynamicQrIntervalSec ? Number(responseData.DynamicQrIntervalSec) : 0;
-          const approvalStatus: string = responseData?.Approval_Status || (isAutoApproved ? 'Approved' : 'Pending');
 
           const summary = this.wizardService.buildRegistrationSummary();
           this.branchName = this.wizardService.currentBranchName || this.branchName;
@@ -188,11 +219,13 @@ export class RegistrationStatusPageComponent implements OnInit {
             status: isAutoApproved ? 'success' : 'pending',
             isAutoApproved,
             approvalStatus,
-            visitorId: responseData?.SEQ_ID?.toString() || '',
-            qrCodeData: responseData?.HexCode || '',
+            visitorId,
+            qrCodeData,
             isDynamicQR,
             DynamicQrIntervalSec: dynamicQrIntervalSec,
-            registrationId: responseData?.appointment_group_id || responseData?.SEQ_ID?.toString() || '',
+            registrationId,
+            // Drives local QR generation on the status card — must survive the retry.
+            isDirectCheckIn,
             visitorName: summary.visitorName,
             email: summary.email,
             visitFrom: summary.visitFrom,
