@@ -12,7 +12,7 @@ import { ApiService } from '../../../../core/services/api.service';
 import { WizardService } from '../../../../core/services/wizard.service';
 import { ThemeService } from '../../../../core/services/theme.service';
 import { AppConfigService } from '../../../../core/services/app-config.service';
-import { filter, forkJoin, of, Subject, takeUntil } from 'rxjs';
+import { filter, firstValueFrom, forkJoin, of, Subject, take, takeUntil, timeout } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { SharedService } from '../../../../shared/shared.service';
 import { environment } from '../../../../../environments/environment';
@@ -244,25 +244,7 @@ export class HomePageComponent implements AfterViewChecked {
           this.wizardService.hcParam = hcParam;
           this.wizardService.isHostFromQuery = true;
           this.api.GetSelfRegShareURLData(hcParam, vcParam || undefined).subscribe({
-            next: (response: any) => {
-              const responseArray = Array.isArray(response) ? response : [response];
-              const tableData = responseArray[0]?.Table?.[0];
-              const hostic = tableData?.HOSTIC;
-              if (hostic) {
-                this.wizardService.hostCodeFromQuery = hostic;
-              }
-              // Use server-resolved CategoryCode when vc was passed alongside hc
-              const categoryCode = tableData?.CategoryCode;
-              if (categoryCode) {
-                this.wizardService.categoryCodeFromQuery = categoryCode;
-                this.selectedCategory = categoryCode;
-                this.isCategoryFromQuery = true;
-                // Re-apply selection if categories are already loaded
-                if (this.categories.length > 0) {
-                  this.loadCategories();
-                }
-              }
-            },
+            next: (response: any) => this.applyShareUrlResponse(response),
             error: (err) => {
               console.error('Error fetching host code from hc param:', err);
             }
@@ -312,25 +294,7 @@ export class HomePageComponent implements AfterViewChecked {
           this.wizardService.hcParam = hcParam;
           this.wizardService.isHostFromQuery = true;
           this.api.GetSelfRegShareURLData(hcParam, vcParam || undefined).subscribe({
-            next: (response: any) => {
-              const responseArray = Array.isArray(response) ? response : [response];
-              const tableData = responseArray[0]?.Data?.Table?.[0];
-              const hostic = tableData?.HOSTIC;
-              if (hostic) {
-                this.wizardService.hostCodeFromQuery = hostic;
-              }
-              // Use server-resolved CategoryCode when vc was passed alongside hc
-              const categoryCode = tableData?.CategoryCode;
-              if (categoryCode) {
-                this.wizardService.categoryCodeFromQuery = categoryCode;
-                this.selectedCategory = categoryCode;
-                this.isCategoryFromQuery = true;
-                // Re-apply selection if categories are already loaded
-                if (this.categories.length > 0) {
-                  this.loadCategories();
-                }
-              }
-            },
+            next: (response: any) => this.applyShareUrlResponse(response),
             error: (err) => {
               console.error('Error fetching host code from hc param:', err);
             }
@@ -611,6 +575,95 @@ export class HomePageComponent implements AfterViewChecked {
       this.isAccessDenied = false;
       // Notify shared service to show UI elements
       this.sharedService.setAccessDenied(false);
+    }
+  }
+
+  /**
+   * Consume the GetSelfRegShareURLData response for the hc (shared registration URL) flow.
+   *
+   * Both hc call sites previously inlined this, and they unwrapped the response differently
+   * (`.Table` vs `.Data.Table`). ApiBaseService.post already returns response[0].Data, so the
+   * `.Data.Table` variant never matched and the standalone-hc path resolved nothing. Accepting
+   * both shapes here keeps the working path identical and repairs the broken one.
+   */
+  private applyShareUrlResponse(response: any): void {
+    const responseArray = Array.isArray(response) ? response : [response];
+    const root = responseArray[0] ?? {};
+    const tableData = (root.Table ?? root.Data?.Table)?.[0];
+    if (!tableData) return;
+
+    const hostic = tableData.HOSTIC;
+    if (hostic) {
+      this.wizardService.hostCodeFromQuery = hostic;
+    }
+
+    // Use server-resolved CategoryCode when vc was passed alongside hc
+    const categoryCode = tableData.CategoryCode;
+    if (categoryCode) {
+      this.wizardService.categoryCodeFromQuery = categoryCode;
+      this.selectedCategory = categoryCode;
+      this.isCategoryFromQuery = true;
+      // Re-apply selection if categories are already loaded
+      if (this.categories.length > 0) {
+        this.loadCategories();
+      }
+    }
+
+    this.captureShareUrlPrefill(tableData);
+  }
+
+  /**
+   * Pull the visitor details the admin entered when sharing the URL out of the share response.
+   *
+   * Key names are read defensively because this payload is not modelled anywhere in the repo.
+   * When none of them are present the prefill store stays null and every form control keeps the
+   * empty default it has today, so a share response without these fields behaves as before.
+   */
+  private captureShareUrlPrefill(tableData: any): void {
+    const firstNonEmpty = (...values: any[]): string => {
+      for (const value of values) {
+        if (value !== null && value !== undefined && String(value).trim() !== '') {
+          return String(value).trim();
+        }
+      }
+      return '';
+    };
+
+    const prefill = {
+      fullName: firstNonEmpty(tableData.VisitorName, tableData.FullName),
+      email: firstNonEmpty(tableData.VisitorEmail, tableData.Email),
+      phone: firstNonEmpty(tableData.VisitorContact, tableData.ContactNo, tableData.Contact, tableData.MobileNo),
+      departmentId: firstNonEmpty(tableData.HostDeptId, tableData.DepartmentSeqId, tableData.HostDeptDesc)
+    };
+
+    const hasAny = Object.values(prefill).some(v => v !== '');
+    this.wizardService.shareUrlPrefill = hasAny ? prefill : null;
+
+    // Surfaces the real key names when the payload uses ones not listed above.
+    console.log('[ShareURL] response fields:', Object.keys(tableData), '| captured prefill:', prefill);
+  }
+
+  /**
+   * Resolve the active language before anything reads settings that depend on it.
+   *
+   * LanguageService only seeds itself from localStorage, so on a first-ever visit its
+   * BehaviorSubject holds null and the currentLanguage$ subscription (filtered on !!language)
+   * never fires until GetLanguages returns. getSelfRegistrationSettings() silently no-ops in
+   * that window, leaving TermsnCondEnabled unset — which shouldShowTerms() reads as false and
+   * the bc flow then skips the T&C screen. Waiting here closes that gap.
+   */
+  private async ensureLanguageReady(): Promise<void> {
+    if (this.currentLanguage) return;
+    try {
+      this.currentLanguage = await firstValueFrom(
+        this.languageService.currentLanguage$.pipe(
+          filter(language => !!language),
+          take(1),
+          timeout(5000)
+        )
+      );
+    } catch {
+      console.warn('Language not resolved before settings load; continuing without it');
     }
   }
 
@@ -1045,7 +1098,10 @@ export class HomePageComponent implements AfterViewChecked {
 
           // Check if terms are disabled - if so, auto-proceed to wizard
           // _suppressAutoProceed is set during back-nav category restore to prevent jumping.
-          if (!this.shouldShowTerms() && !this._suppressAutoProceed) {
+          // Only auto-proceed once the T&C settings have actually loaded — an unset store
+          // reads as "disabled" and would silently skip the consent screen.
+          const tcSettingsLoaded = !!this.wizardService.getSelfRegistrationSettings();
+          if (tcSettingsLoaded && !this.shouldShowTerms() && !this._suppressAutoProceed) {
             console.log('Terms disabled - auto-proceeding to wizard');
             setTimeout(() => {
               this.proceedToWizard();
@@ -1090,6 +1146,9 @@ export class HomePageComponent implements AfterViewChecked {
           if (this.isBranchFromQuery) {
             // Await so that TermsnCondEnabled is populated before onCategoryChange
             // checks shouldShowTerms() — otherwise the race causes terms to be skipped.
+            // getSelfRegistrationSettings() no-ops until a language is resolved, so the
+            // language has to land first or the await above proves nothing.
+            await this.ensureLanguageReady();
             await this.getSelfRegistrationSettings();
 
             // Categories are loaded by loadBranchHostDataAsync via Table2

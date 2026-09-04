@@ -57,6 +57,8 @@ export class WizardService {
   private masterData: any | null = null;
   private visitorAckData: any | null = null;
   private branchHostData: any | null = null;
+  /** Full host list as returned by GetBranchHostDataForSelf.Table, published by step-general. */
+  private hostList: any[] = [];
   currentBranchName = '';
 
   // Raw encrypted query params from the URL
@@ -67,6 +69,12 @@ export class WizardService {
   hostCodeFromQuery = ''; // host IC resolved from hc param (GetSelfRegShareURLData response)
   categoryCodeFromQuery = ''; // category code resolved from vc+hc params (GetSelfRegShareURLData response)
   isHostFromQuery = false; // true when hc query param was used to pre-fill host
+  /**
+   * Visitor details the admin/host entered when sharing the registration URL, as returned by
+   * GetSelfRegShareURLData alongside HOSTIC/CategoryCode. Null when the share response carried
+   * none of them, in which case the form falls back to its normal empty defaults.
+   */
+  shareUrlPrefill: { fullName: string; email: string; phone: string; departmentId: string } | null = null;
   /** True only when the wizard was reached via proceedToWizard() — reset on page refresh. */
   isNavigatedFromHome = false;
   isDirectCheckIn = false;
@@ -153,6 +161,7 @@ export class WizardService {
     this.hostCodeFromQuery = '';
     this.categoryCodeFromQuery = '';
     this.isHostFromQuery = false;
+    this.shareUrlPrefill = null;
     this.isNavigatedFromHome = false;
     this.originalQueryString = '';
     this.canViewSafetyBriefVideo = true;
@@ -170,6 +179,7 @@ export class WizardService {
     this.visitorAckData = null;
     this.masterData = null;
     this.branchHostData = null;
+    this.hostList = [];
     this.updateHeader();
   }
 
@@ -288,6 +298,18 @@ export class WizardService {
 
   getBranchHostData() {
     return this.branchHostData;
+  }
+
+  /**
+   * step-general publishes the host rows it loaded so payload builders can resolve a host
+   * by HOSTIC without depending on which code path selected it.
+   */
+  setHostList(hosts: any[]) {
+    this.hostList = Array.isArray(hosts) ? hosts : [];
+  }
+
+  getHostList(): any[] {
+    return this.hostList;
   }
 
   setSettings(allSettings: any): void {
@@ -694,8 +716,27 @@ export class WizardService {
       ? savedVisitors.map(buildVisitorEntry)
       : [buildVisitorEntry(generalData)];
 
+    // The host dropdown binds HOSTIC (a string login id, e.g. "User4"); the check-in API
+    // wants the numeric SEQID off the host row. Resolve the row from the published host
+    // list first — it survives every selection path (manual, hc query param, restore from
+    // saved data) — then fall back to master.Table.
     const hostId = generalData.host?.toString() || '';
-    const hostRow = master?.Table?.find((h: any) => h.HOSTIC?.toString() === hostId);
+    const matchHost = (h: any) => (h?.HOSTIC ?? h?.HostIC)?.toString() === hostId;
+    const hostRow = this.hostList.find(matchHost) || master?.Table?.find(matchHost);
+
+    const rawHostSeq = hostRow?.SEQID ?? hostRow?.SeqId ?? generalData.hostSeqId;
+    const hostSeqNum = rawHostSeq === null || rawHostSeq === undefined || rawHostSeq === ''
+      ? NaN
+      : Number(rawHostSeq);
+    const hostSeqId = !isNaN(hostSeqNum)
+      ? hostSeqNum
+      : (hostId ? parseInt(hostId, 10) || hostId : '');
+
+    if (isNaN(hostSeqNum)) {
+      console.warn('[getDirectCheckInPayload] no numeric SEQID for host', hostId,
+        '| hostList rows:', this.hostList.length,
+        '| resolved row keys:', hostRow ? Object.keys(hostRow) : null);
+    }
     const deptId = generalData.department?.toString() || '';
     const deptRow = master?.Table5?.find((d: any) => (d.DepartmentSeqId ?? d.dept_id)?.toString() === deptId);
     const roomId = (generalData.meeting_location || generalData.room)?.toString() || '';
@@ -713,11 +754,11 @@ export class WizardService {
       HostCompany: this.currentBranchName || '',
       HostCompanyId: branchInt,
       HostName: hostRow?.HOSTNAME || '',
-      HostID: hostId ? parseInt(hostId, 10) || hostId : '',
-      HostExt: '',
+      HostID: hostSeqId,
+      HostExt: hostRow?.HostExt || '',
       DepartmentId: deptId,
       Department: deptRow?.dept_desc || deptId,
-      HostSeqId: hostId ? parseInt(hostId, 10) || hostId : '',
+      HostSeqId: hostSeqId,
       MeetingLocationId: roomId ? parseInt(roomId, 10) || roomId : '',
       MeetingLocation: roomRow?.MeetingRoomDesc || '',
       FloorId: floorId,
@@ -1340,17 +1381,18 @@ export class WizardService {
     return generalData.id_expired_date || generalData.expired_date || null;
   }
 
+  /**
+   * Map an ID type value onto its ID_TYPECODE for submission.
+   *
+   * An empty value stays empty. step-general already seeds the control with the flagged default
+   * whenever IdTypeEnabled is set (see resolvedIdType in initializeForm), so a blank value here
+   * means the field was disabled or the visitor genuinely chose nothing. Substituting a default
+   * at submit time recorded an ID type the visitor never selected — and, with no row flagged
+   * IS_DEFAULT, whichever row happened to be first — which then surfaced as a stray code on the
+   * appointment approval page. Portal-created appointments send nothing in that case.
+   */
   resolveIdType(idTypeVal: any): string {
     if (!idTypeVal) {
-      const master = this.getmasterData();
-      const idTypes = master?.Table12 || master?.Table4 || [];
-      if (idTypes.length > 0) {
-        const defaultType = idTypes.find((t: any) => t.IS_DEFAULT === true || t.IS_DEFAULT_TYPE === true);
-        if (defaultType) {
-          return defaultType.ID_TYPECODE || defaultType.SEQ_ID?.toString() || '';
-        }
-        return idTypes[0].ID_TYPECODE || idTypes[0].SEQ_ID?.toString() || '';
-      }
       return '';
     }
 
@@ -1381,9 +1423,9 @@ export class WizardService {
     const idTypes = master?.Table12 || master?.Table4 || [];
     if (!idTypes.length) return '';
 
+    // No selection => no description, for the same reason resolveIdType() returns ''.
     if (!idTypeVal) {
-      const defaultType = idTypes.find((t: any) => t.IS_DEFAULT === true || t.IS_DEFAULT_TYPE === true);
-      return (defaultType || idTypes[0])?.IDTYPEDESCRIPTION || '';
+      return '';
     }
 
     const normalized = String(idTypeVal).trim();

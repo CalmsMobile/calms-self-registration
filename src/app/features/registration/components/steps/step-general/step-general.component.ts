@@ -47,6 +47,7 @@ const SHARED_VISIT_FIELDS: readonly string[] = [
   // Who/where/why — one per submission in the payload.
   'host',
   'hostName',
+  'hostSeqId',
   'department',
   'meeting_location',
   'roomDesc',
@@ -230,6 +231,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   isVisitorBlacklisted = false;
   isVisitorNotWhitelisted = false;
   shouldFilterHostByQueryParam = false; // Flag to indicate if host should be filtered for query param flow
+  departmentLockedByShareUrl = false; // true when department came from the shared URL's host, which the visitor may not edit
   // Fields that are LOCKED (non-editable) in appointment flow — everything else remains editable
   lockedFieldsInAppointmentFlow: string[] = [];
   // Keep allowedEditableFields for backward compat with isFieldDisabled() references
@@ -1284,6 +1286,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
       // Store original host data for filtering
       this.originalHostData = [...response.Table];
+      // Publish to the wizard so payload builders can resolve SEQID by HOSTIC.
+      this.wizardService.setHostList(this.originalHostData);
 
       // Map hosts with proper field names (use HOSTNAME and HOSTIC like JavaScript)
       const mappedHosts = response.Table.map((host: any) => {
@@ -1523,6 +1527,80 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Map a raw department value (a name like "RND team", or an id) onto the DepartmentSeqId the
+   * department dropdown uses as its option value. Falls back to the raw value when no option
+   * matches, mirroring the lookup onHostChange already performs.
+   */
+  private resolveDepartmentValue(raw: any): any {
+    if (raw === null || raw === undefined || String(raw).trim() === '') return null;
+    const needle = String(raw).trim().toLowerCase();
+    const match = this.departmentList.find((d: any) =>
+      String(d.DepartmentSeqId).toLowerCase() === needle ||
+      (d.DName || '').toLowerCase() === needle ||
+      (d.Department || '').toLowerCase() === needle
+    );
+    return match?.DepartmentSeqId ?? raw;
+  }
+
+  /**
+   * Department for the hc (shared URL) flow: the value shared by the admin when present,
+   * otherwise the department of the single pinned host.
+   *
+   * initializeForm() re-runs whenever UDF settings or local settings arrive, so this must be
+   * recomputable rather than relying on a one-off setValue() surviving a rebuild. Returns null
+   * outside the hc flow, leaving the department control exactly as it was.
+   */
+  private getShareUrlDepartment(sharedDepartmentId: string): any {
+    if (!this.wizardService.isHostFromQuery) return null;
+
+    let raw: any = sharedDepartmentId || null;
+
+    if (!raw && this.wizardService.hostCodeFromQuery) {
+      const hostCode = String(this.wizardService.hostCodeFromQuery);
+      const pool = (this.originalHostData?.length ? this.originalHostData : this.hosts) || [];
+      const host = pool.find((h: any) =>
+        String(h.HOSTIC) === hostCode || String(h.HostIC) === hostCode || String(h.SeqId) === hostCode
+      );
+      raw = host ? (host.Department || host.DName || host.DEPARTMENT_REFID || host.DepartmentSeqId) : null;
+    }
+
+    const resolved = this.resolveDepartmentValue(raw);
+    if (resolved !== null) {
+      this.departmentLockedByShareUrl = true;
+    }
+    return resolved;
+  }
+
+  /**
+   * Set the department that belongs to an auto-selected host, without touching the host list.
+   *
+   * Deliberately narrower than onHostChange: it skips the onDepartmentChange() call that
+   * re-filters hosts by department, because in the hc flow the host list is already pinned to
+   * the single shared host and re-filtering it could empty the dropdown.
+   */
+  private applyDepartmentFromHost(selectedHost: any): void {
+    if (!selectedHost) return;
+
+    this.generalForm.get('hostName')?.setValue(selectedHost.HOSTNAME || selectedHost.Name || '', { emitEvent: false });
+    this.generalForm.get('hostSeqId')?.setValue(this.resolveHostSeqId(selectedHost), { emitEvent: false });
+
+    if (this.generalForm.get('department')?.value) return; // never override an existing value
+
+    const hostDepartmentRaw = selectedHost.Department ||
+      selectedHost.DName ||
+      selectedHost.DEPARTMENT_REFID ||
+      selectedHost.DepartmentSeqId;
+    if (!hostDepartmentRaw) return;
+
+    const deptValue = this.resolveDepartmentValue(hostDepartmentRaw);
+    if (deptValue === null) return;
+
+    this.generalForm.get('department')?.setValue(deptValue, { emitEvent: false });
+    this.departmentAutoSetByHost = true;
+    this.departmentLockedByShareUrl = true;
+  }
+
   // Apply query parameter host filtering for appointment flow or hc query param
   private applyQueryParamHostFiltering() {
     // Handle isHostFromQuery: auto-select and disable host from hc query param
@@ -1542,6 +1620,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.hostNameList = [matchingHost];
         this.shouldFilterHostByQueryParam = true;
         this.generalForm.get('host')?.setValue(matchingHost.HOSTIC || matchingHost.HostIC || matchingHost.SeqId);
+        // setValue() does not fire p-select's (onChange), so onHostChange never runs for this
+        // programmatic selection and the department it would have derived stayed empty.
+        this.applyDepartmentFromHost(matchingHost);
         console.log('Host auto-selected and disabled for hc query param flow');
         return;
       } else {
@@ -1917,6 +1998,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       return true;
     }
 
+    // Host Department is dictated by the shared host, so it is display-only in the hc flow.
+    if (fieldName === 'department' && this.departmentLockedByShareUrl) {
+      return true;
+    }
+
     // Direct check-in: schedule fields are shown for context only, never editable.
     if (this.isDirectCheckIn && StepGeneralComponent.DIRECT_CHECKIN_READONLY_FIELDS.includes(fieldName)) {
       return true;
@@ -2085,7 +2171,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // If the appointment fullName contains a title prefix (e.g. "Mr.Aravind"), extract and
     // resolve it against titleList so the title dropdown gets pre-selected correctly.
     let resolvedTitle: string | null = savedData.title || null;
-    let resolvedFullName: string = isPreFilledData ? (visitorData.fullName || savedData.fullName || '') : (savedData.fullName || '');
+    // Details entered by the admin/host when sharing the registration URL (hc flow). Empty
+    // object when absent, so every fallback below collapses to the pre-existing default.
+    const sharePrefill = (this.wizardService.isHostFromQuery && this.wizardService.shareUrlPrefill)
+      ? this.wizardService.shareUrlPrefill
+      : { fullName: '', email: '', phone: '', departmentId: '' };
+    let resolvedFullName: string = isPreFilledData ? (visitorData.fullName || savedData.fullName || '') : (savedData.fullName || sharePrefill.fullName || '');
     if (isPreFilledData && visitorData.fullName && this.titleList.length > 0) {
       const dotIndex = visitorData.fullName.indexOf('.');
       if (dotIndex > 0) {
@@ -2125,8 +2216,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       faceVector: [savedData.faceVector || null],
       title: [resolvedTitle],
       fullName: [resolvedFullName],
-      email: [isPreFilledData ? (visitorData.email || savedData.email || '') : (savedData.email || '')],
-      phone: [isPreFilledData ? (visitorData.phone || savedData.phone || '') : (savedData.phone || '')],
+      email: [isPreFilledData ? (visitorData.email || savedData.email || '') : (savedData.email || sharePrefill.email || '')],
+      phone: [isPreFilledData ? (visitorData.phone || savedData.phone || '') : (savedData.phone || sharePrefill.phone || '')],
       visitor_id_type: [resolvedIdType],
       visitor_id: [isPreFilledData ? (visitorData.identityNo || savedData.visitor_id || '') : (savedData.visitor_id || '')],
       id_expired_date: [isPreFilledData ? (visitorData.expiredDate ? new Date(visitorData.expiredDate) : (savedData.id_expired_date || null)) : (savedData.id_expired_date || null)],
@@ -2148,7 +2239,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       host: [savedData.host || (isPreFilledData ? (visitorData.hostId || null) : null) || (this.shouldHideHostControl ? this.defaultHostId : null) || (this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery ? this.wizardService.hostCodeFromQuery : null)],
       startDate: [isPreFilledData ? (this.parseDate(visitorData.startTime) || '') : (savedData.startDate || '')],
       endDate: [isPreFilledData ? (this.parseDate(visitorData.endTime) || '') : (savedData.endDate || '')],
-      department: [savedData.department || (isPreFilledData ? (visitorData.departmentId || null) : null)],
+      department: [savedData.department || (isPreFilledData ? (visitorData.departmentId || null) : null) || this.getShareUrlDepartment(sharePrefill.departmentId)],
       appointmentDate: [savedData.appointmentDate || (isPreFilledData ? (this.parseDate(visitorData.startTime) || null) : null)],
       timeSlot: [savedData.timeSlot || (isPreFilledData ? (visitorData.appTimeSlotSeqID || null) : null)],
       facilityBooking: [savedData.facilityBooking || false],
@@ -2158,6 +2249,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       purpose: [resolvedPurpose],
       purposeDesc: [savedData.purposeDesc || (isPreFilledData && resolvedPurpose ? (this.purposeList.find((p: any) => p.visitpurpose_id === resolvedPurpose)?.visitpurpose_desc || '') : '')],
       hostName: [savedData.hostName || ''],
+      hostSeqId: [savedData.hostSeqId ?? ''],
       roomDesc: [savedData.roomDesc || ''],
       visitType: [savedData.visitType || '']
     };
@@ -4150,6 +4242,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return this.settings?.[fieldName + 'Required'] || false;
   }*/
 
+  /**
+   * Pull the numeric primary key off a host row from GetBranchHostData.
+   * The API returns it as a float (e.g. 107748.0), so coerce with Number().
+   */
+  private resolveHostSeqId(host: any): number | string {
+    const raw = host?.SEQID ?? host?.SeqId ?? host?.SEQ_ID;
+    if (raw === null || raw === undefined || raw === '') return '';
+    const n = Number(raw);
+    return isNaN(n) ? '' : n;
+  }
+
   // Event handler methods for form controls
   onHostChange(event: any): void {
     const selectedHostId = event.value;
@@ -4157,6 +4260,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     if (!selectedHostId) {
       this.generalForm.get('hostName')?.setValue('', { emitEvent: false });
+      this.generalForm.get('hostSeqId')?.setValue('', { emitEvent: false });
       if (this.departmentAutoSetByHost) {
         this.generalForm.get('department')?.setValue(null, { emitEvent: false });
         this.departmentAutoSetByHost = false;
@@ -4182,6 +4286,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (selectedHost) {
       // Save host name for summary
       this.generalForm.get('hostName')?.setValue(selectedHost.HOSTNAME || selectedHost.Name || '', { emitEvent: false });
+      // Save the numeric SEQID — the check-in payload needs it, and the `host` control
+      // only carries HOSTIC (a string login id).
+      this.generalForm.get('hostSeqId')?.setValue(this.resolveHostSeqId(selectedHost), { emitEvent: false });
 
       // Get department value from various possible fields on the host object
       const hostDepartmentRaw = selectedHost.Department ||
@@ -4294,6 +4401,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           console.log('Current host not in filtered department, clearing selection');
           this.generalForm.get('host')?.setValue(null);
           this.generalForm.get('hostName')?.setValue('', { emitEvent: false });
+          this.generalForm.get('hostSeqId')?.setValue('', { emitEvent: false });
         }
       }
     }
