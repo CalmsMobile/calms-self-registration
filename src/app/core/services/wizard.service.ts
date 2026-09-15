@@ -81,8 +81,10 @@ export class WizardService {
   /** The original query string from the home page URL (e.g. "?bc=ABC&vc=XYZ"). */
   originalQueryString = '';
 
-  // Static variables for safety brief - will be replaced with dynamic data later
-  SafetyBriefing_Date = "2026-03-03T14:02:43.957";
+  // Safety-brief state. SafetyBriefing_Date / SafetyBriefVideoViewed come from the
+  // visitor lookup (SearchVisitor); canViewSafetyBriefVideo from GetAllowBookingANDSBView.
+  // All three default to "show the briefing" so a missing or failed lookup never skips it.
+  SafetyBriefing_Date = '';
   SafetyBriefVideoViewed = false;
   canViewSafetyBriefVideo = true;
 
@@ -164,7 +166,7 @@ export class WizardService {
     this.shareUrlPrefill = null;
     this.isNavigatedFromHome = false;
     this.originalQueryString = '';
-    this.canViewSafetyBriefVideo = true;
+    this.resetSafetyBriefState();
     this.formDataStore.next({});
     this.settings$.next(null);
     this.attachmentSetting$.next(null);
@@ -671,6 +673,22 @@ export class WizardService {
       return idx >= 0 ? src.substring(idx + 8) : src;
     };
 
+    // VisitorCheckIn expects a letter code, not the GENDER_OPTIONS id the form control holds
+    // ("0" Female / "1" Male / "2" Others). Every other API keeps using the id, so this
+    // mapping stays local to the check-in payload.
+    const mapGender = (raw: any): string => {
+      const value = (typeof raw === 'object' && raw !== null)
+        ? (raw.Value ?? raw.Name ?? '')
+        : raw;
+      if (value === null || value === undefined) return '';
+      switch (String(value).trim().toLowerCase()) {
+        case '0': case 'f': case 'female': return 'F';
+        case '1': case 'm': case 'male': return 'M';
+        case '2': case 'o': case 'other': case 'others': return 'O';
+        default: return '';
+      }
+    };
+
     const buildVisitorEntry = (data: any) => ({
       TitleId: data.title || '',
       Title: data.title || '',
@@ -682,7 +700,7 @@ export class WizardService {
         return isNaN(d.getTime()) ? '' : `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       })() : '',
       IdentityNo: data.visitor_id || '',
-      Gender: (typeof data.gender === 'object' && data.gender !== null) ? (data.gender.Name || '') : (data.gender || ''),
+      Gender: mapGender(data.gender),
       Email: data.email || '',
       VisitorProfileImage: stripBase64Prefix(data.profilePreview || (typeof data.profile === 'string' ? data.profile : '') || ''),
       VisitorCategoryId: this.selectedVisitCategory || '',
@@ -1166,7 +1184,27 @@ export class WizardService {
   resetWizard(): void {
     this.currentStep$.next(0);
     this.stepValidity$.next(false);
+    this.resetSafetyBriefState();
+  }
+
+  /**
+   * Clear every input to shouldSkipSafetyBrief(). Previously only
+   * canViewSafetyBriefVideo was reset, so a prior visitor's briefing status leaked
+   * into the next registration and could skip the video for someone who never watched it.
+   */
+  resetSafetyBriefState(): void {
     this.canViewSafetyBriefVideo = true;
+    this.SafetyBriefVideoViewed = false;
+    this.SafetyBriefing_Date = '';
+  }
+
+  /**
+   * Apply a visitor record's briefing status. Always assigns both fields — a record
+   * missing them must clear the previous visitor's values, not inherit them.
+   */
+  setSafetyBriefFromVisitor(visitor: any): void {
+    this.SafetyBriefing_Date = visitor?.SafetyBriefing_Date ?? '';
+    this.SafetyBriefVideoViewed = visitor?.SafetyBriefVideoViewed ?? false;
   }
 
   canNavigateToStep(requestedStep: number): boolean {
@@ -1184,6 +1222,9 @@ export class WizardService {
    */
   private isSafetyBriefingExpired(): boolean {
     const briefingDate = new Date(this.SafetyBriefing_Date);
+    // No date, or an unparseable one, cannot prove the briefing is still valid —
+    // treat it as expired so the video is shown rather than silently skipped.
+    if (isNaN(briefingDate.getTime())) return true;
     const currentDate = new Date();
     return briefingDate < currentDate;
   }

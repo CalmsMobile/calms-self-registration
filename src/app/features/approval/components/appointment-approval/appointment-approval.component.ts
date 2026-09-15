@@ -37,7 +37,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   approvalSteps: any[] = [];
   udfCaptionMap: { [formControlName: string]: string } = {};
 
-  createdBy: number | null = null;
+  xyzBy: string | number | null = null;
   refApptApprovalLevelSeqId: number | null = null;
 
   isLoading = true;
@@ -97,8 +97,10 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
           : '';
         this.approvalSteps = res.detail?.Table5 || res.detail?.Table2 || [];
         this.seqId  = String(this.appointmentData?.SEQ_ID || '');
-        this.hostIc = this.appointmentData?.STAFF_IC      || this.hostIc;
-        this.createdBy = this.appointmentData?.CreatedBy ?? null;
+        // No fallback: XYZHo must carry the encrypted IC, never the plaintext
+        // `ic`/`token` query param.
+        this.hostIc = this.appointmentData?.EnSTAFF_IC || '';
+        this.xyzBy = this.appointmentData?.EnCreatedBy ?? null;
         this.refApptApprovalLevelSeqId = this.appointmentData?.RefApptApprovalLevelSeqId ?? null;
 
         const branchConfig = res.detail?.Table4?.[0] || {};
@@ -220,7 +222,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     if (this.isSubmitting) return;
     this.isSubmitting = true;
     this.apiService.AppointmentApprovalByVisitor(
-      this.seqId, 'Approved', this.hostIc, '', '', this.hostSeqId, this.createdBy, this.refApptApprovalLevelSeqId
+      this.seqId, 'Approved', this.hostIc, '', '', this.hostSeqId, this.xyzBy, this.refApptApprovalLevelSeqId
     ).subscribe({
       next: () => {
         this.isSubmitting = false;
@@ -240,7 +242,7 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     this.showRejectError = false;
     this.isSubmitting = true;
     this.apiService.AppointmentApprovalByVisitor(
-      this.seqId, 'Cancelled', this.hostIc, this.rejectRemarks, 'Rejected', this.hostSeqId, this.createdBy, this.refApptApprovalLevelSeqId
+      this.seqId, 'Cancelled', this.hostIc, this.rejectRemarks, 'Rejected', this.hostSeqId, this.xyzBy, this.refApptApprovalLevelSeqId
     ).subscribe({
       next: () => {
         this.isSubmitting = false;

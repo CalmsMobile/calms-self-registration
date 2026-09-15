@@ -3475,21 +3475,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           return;
         }
 
-        // Extract and store safety briefing data from API response
-        if (visitor.SafetyBriefing_Date !== undefined) {
-          this.wizardService.SafetyBriefing_Date = visitor.SafetyBriefing_Date;
-        }
-        if (visitor.SafetyBriefVideoViewed !== undefined) {
-          this.wizardService.SafetyBriefVideoViewed = visitor.SafetyBriefVideoViewed;
-        }
-
         console.log('Safety briefing data from visitor:', {
           SafetyBriefing_Date: visitor.SafetyBriefing_Date,
           SafetyBriefVideoViewed: visitor.SafetyBriefVideoViewed
         });
 
         this.visitorNotFound = false;
-        this.applyVisitorToForm(visitor);
+        // Stores safety-briefing data and auto-fills the form
+        this.applyVisitorRecord(visitor);
         this.showReturningVisitorPopup = false;
       },
       error: () => {
@@ -4412,29 +4405,25 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!visitorId) { this.isVisitorBlacklisted = false; this.isVisitorNotWhitelisted = false; return; }
 
     const branchId = this.wizardService.currentBranchID;
-    this.api.SearchVisitor(visitorId, branchId).subscribe({
-      next: (response: any) => {
-        const visitor = response?.Table1?.[0];
-        if (!visitor) return;
+    this.trackVisitorLookup(done => {
+      this.api.SearchVisitor(visitorId, branchId).subscribe({
+        next: (response: any) => {
+          const visitor = response?.Table1?.[0];
+          if (!visitor) { done(); return; }
 
-        this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
-        if (this.isVisitorBlacklisted) {
-          this.showMessage({ severity: 'error', ...this.getAlert('registration_page_blacklisted_alert'), life: 5000 });
-          return;
-        }
+          this.isVisitorBlacklisted = visitor.visitor_blacklist === 1;
+          if (this.isVisitorBlacklisted) {
+            this.showMessage({ severity: 'error', ...this.getAlert('registration_page_blacklisted_alert'), life: 5000 });
+            done();
+            return;
+          }
 
-        // Extract and store safety briefing data from API response
-        if (visitor.SafetyBriefing_Date !== undefined) {
-          this.wizardService.SafetyBriefing_Date = visitor.SafetyBriefing_Date;
-        }
-        if (visitor.SafetyBriefVideoViewed !== undefined) {
-          this.wizardService.SafetyBriefVideoViewed = visitor.SafetyBriefVideoViewed;
-        }
-
-        // Auto-fill all visitor fields from the returning visitor record
-        this.applyVisitorToForm(visitor);
-      },
-      error: () => { }
+          // Stores safety-briefing data and auto-fills the returning visitor's fields
+          this.applyVisitorRecord(visitor);
+          done();
+        },
+        error: () => { done(); }
+      });
     });
 
     // Trigger whitelist check when both name and ID are present
@@ -4452,6 +4441,17 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Absorb a returning-visitor record from SearchVisitor / SearchVisitorWhitelist:
+   * stash the safety-briefing fields on the wizard, then auto-fill the form.
+   */
+  private applyVisitorRecord(visitor: any): void {
+    if (!visitor) return;
+
+    this.wizardService.setSafetyBriefFromVisitor(visitor);
+    this.applyVisitorToForm(visitor);
+  }
+
   private checkWhitelistValidation(visitorId: string): void {
     if (!this.settings?.EnableWhitelistValidation) {
       this.isVisitorNotWhitelisted = false;
@@ -4459,29 +4459,35 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
 
     const branchId = this.wizardService.currentBranchID;
-    this.api.SearchVisitorWhitelist(visitorId, branchId).subscribe({
-      next: (response: any) => {
-        // Response: [ { Data: { Table: [ { Code: 10|20, Description: '...' } ] }, Status: true } ]
-        const result = Array.isArray(response) ? response[0] : response;
-        const code = result?.Table?.[0]?.Code;
-        if (code === 10) {
-          // Whitelisted — allow to proceed
-          this.isVisitorNotWhitelisted = false;
-        } else {
-          // Code 20 or unexpected — not whitelisted
-          this.isVisitorNotWhitelisted = true;
-          const description = this.labelService.getLabel('registration_page_not_whitelisted_alert_description', 'caption')
-            || result?.Table?.[0]?.Description
-            || 'Visitor not whitelisted. Please contact admin.';
-          this.showMessage({
-            severity: 'error',
-            summary: this.labelService.getLabel('registration_page_not_whitelisted_alert_title', 'caption') || 'Not Whitelisted',
-            detail: description,
-            life: 5000
-          });
-        }
-      },
-      error: () => { this.isVisitorNotWhitelisted = false; }
+    this.trackVisitorLookup(done => {
+      this.api.SearchVisitorWhitelist(visitorId, branchId).subscribe({
+        next: (response: any) => {
+          // Response: [ { Data: { Table: [ { Code: 10|20, Description: '...' } ] }, Status: true } ]
+          const result = Array.isArray(response) ? response[0] : response;
+          const code = result?.Table?.[0]?.Code;
+          if (code === 10) {
+            // Whitelisted — allow to proceed. The response also carries the visitor
+            // record in Table1, so auto-fill from it exactly as the blacklist
+            // SearchVisitor path does.
+            this.isVisitorNotWhitelisted = false;
+            this.applyVisitorRecord(result?.Table1?.[0]);
+          } else {
+            // Code 20 or unexpected — not whitelisted
+            this.isVisitorNotWhitelisted = true;
+            const description = this.labelService.getLabel('registration_page_not_whitelisted_alert_description', 'caption')
+              || result?.Table?.[0]?.Description
+              || 'Visitor not whitelisted. Please contact admin.';
+            this.showMessage({
+              severity: 'error',
+              summary: this.labelService.getLabel('registration_page_not_whitelisted_alert_title', 'caption') || 'Not Whitelisted',
+              detail: description,
+              life: 5000
+            });
+          }
+          done();
+        },
+        error: () => { this.isVisitorNotWhitelisted = false; done(); }
+      });
     });
   }
 
@@ -4667,7 +4673,36 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     };
   }
 
-  private checkAndNavigate(onSuccess: () => void): void {
+  /**
+   * Visitor lookups (SearchVisitor / SearchVisitorWhitelist) write the safety-brief
+   * fields that shouldSkipSafetyBrief() reads. They are kicked off by field blur, which
+   * happens in the same interaction as clicking Next — so without this the two requests
+   * raced and the skip decision depended on which response landed first (and therefore
+   * on the browser). Track them here and let checkAndNavigate drain them first.
+   */
+  private pendingVisitorLookups: Promise<void>[] = [];
+
+  private trackVisitorLookup(start: (done: () => void) => void): void {
+    let settle: () => void = () => {};
+    const p = new Promise<void>(resolve => { settle = resolve; });
+    this.pendingVisitorLookups.push(p);
+    p.then(() => {
+      this.pendingVisitorLookups = this.pendingVisitorLookups.filter(x => x !== p);
+    });
+    start(settle);
+  }
+
+  private async awaitVisitorLookups(): Promise<void> {
+    // A lookup can start another (ID blur → search → whitelist check), so drain
+    // repeatedly. Bounded so a never-settling promise cannot hang navigation.
+    for (let i = 0; i < 5 && this.pendingVisitorLookups.length; i++) {
+      await Promise.all([...this.pendingVisitorLookups]);
+    }
+  }
+
+  private async checkAndNavigate(onSuccess: () => void): Promise<void> {
+    await this.awaitVisitorLookups();
+
     let { start, end } = this.getBookingDateTimes();
   
     const now = new Date();
@@ -4687,6 +4722,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     console.log('[MultipleApt] branchId:', branchId, '| hostId:', hostId, '(raw host:', this.generalForm.get('host')?.value, '| DefaultHostId:', this.settings?.DefaultHostId, ')');
     if (!branchId) {
       console.log('[MultipleApt] SKIP — branchId is falsy');
+      // The API never runs, so clear any previous ViewSB decision instead of
+      // letting it carry over (undefined fail-opens to "show the briefing").
+      this.wizardService.setSafetyBriefViewFromApi(undefined);
       onSuccess();
       return;
     }
@@ -4751,6 +4789,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       error: (err) => {
         console.error('Error checking multiple booking:', err);
         this.isCheckingMultipleBooking = false;
+        // Includes Status:false responses, which apiBase turns into errors. Reset
+        // rather than reuse the last host/date's ViewSB.
+        this.wizardService.setSafetyBriefViewFromApi(undefined);
         onSuccess();
       }
     });
