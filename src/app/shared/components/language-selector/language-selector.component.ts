@@ -122,8 +122,9 @@ export class LanguageSelectorComponent implements OnInit {
   }
 
   getFlagImageUrl(languageCode?: string | null): string {
-    const countryCode = this.resolveCountryCode(languageCode);
-    return countryCode ? `https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png` : this.flagFallbackPath;
+    //const countryCode = this.resolveCountryCode(languageCode);
+    //return countryCode ? `https://flagcdn.com/24x18/${countryCode.toLowerCase()}.png` : this.flagFallbackPath;
+    return `assets/flags/${languageCode}.png`;
   }
 
   onFlagImageError(event: Event): void {
