@@ -7,7 +7,7 @@ import { LabelService } from '../../../../../core/services/label.service';
 import { MessageHelperService } from '../../../../../core/services/message-helper.service';
 import { TranslatePipe } from '../../../../../shared/pipes/translate.pipe';
 import { LanguageSelectorComponent } from '../../../../../shared/components/language-selector/language-selector.component';
-import { Subject, switchMap, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import { environment } from '../../../../../../environments/environment';
 import { FileUploadService } from '../../../../../core/services/file-upload.service';
@@ -243,21 +243,33 @@ export class StepAttachmentsComponent implements OnInit, OnDestroy {
     const ext = '.' + (file.name.split('.').pop()?.toLowerCase() ?? '');
     const isImage = imageExts.includes(ext) || file.type.startsWith('image/');
 
-    const validate$ = isImage
-      ? this.fileUploadService.uploadImage(file)
-      : this.fileUploadService.uploadDocument(file);
+    // Type/size are checked locally; content validation is done by ImageChunkHandler
+    // itself. The separate POST to /api/Common/UploadImage that used to run first sent
+    // the whole file a second time for no extra safety — on mobile that doubled the
+    // transfer and the window in which navigating away aborts it mid-flight.
+    const validationError = isImage
+      ? this.fileUploadService.validateImage(file)
+      : this.fileUploadService.validateDocument(file);
+
+    if (validationError) {
+      this.messageHelper.warn(validationError.message, 4000);
+      this.attachments[docId].file = null;
+      this.attachments[docId].trackerId = undefined;
+      this.attachments[docId].uploaded = false;
+      this.attachments[docId].uploadProgress = undefined;
+      this.saveFormData();
+      return;
+    }
 
     this.attachments[docId].uploadProgress = 0;
 
-    validate$.pipe(
-      switchMap(() => {
-        const trackerId = this.attachments[docId].trackerId || '';
-        const formData = new FormData();
-        formData.append('trackerId', trackerId);
-        formData.append('temp', file, file.name);
-        const uploadUrl = `${environment.proURL}Handler/ImageChunkHandler.ashx?op=profile&ac=upload&nologin=1&isResize=1`;
-        return this.http.post(uploadUrl, formData, { reportProgress: true, observe: 'events' });
-      }),
+    const trackerId = this.attachments[docId].trackerId || '';
+    const formData = new FormData();
+    formData.append('trackerId', trackerId);
+    formData.append('temp', file, file.name);
+    const uploadUrl = `${environment.proURL}Handler/ImageChunkHandler.ashx?op=profile&ac=upload&nologin=1&isResize=1`;
+
+    this.http.post(uploadUrl, formData, { reportProgress: true, observe: 'events' }).pipe(
       takeUntil(this.destroy$)
     ).subscribe({
       next: (event: any) => {

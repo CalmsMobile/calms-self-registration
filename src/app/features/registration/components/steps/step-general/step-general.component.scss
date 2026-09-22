@@ -12,6 +12,9 @@
   display: block;
   width: 100vw;
   height: 100vh;
+  // dvh tracks Safari's dynamic toolbars; 100vh is the toolbar-hidden height, so
+  // on iOS it overshoots the visible area and exposes whatever sits behind it.
+  height: 100dvh;
   font-family: var(--font-family);
   color: var(--text-dark);
   overflow: hidden;
@@ -44,6 +47,7 @@
 .page {
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   background: #f6f6f6;
   display: flex;
   flex-direction: column;
