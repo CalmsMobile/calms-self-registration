@@ -278,6 +278,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Original host data for filtering
   originalHostData: any[] = [];
   private departmentAutoSetByHost = false;
+  private floorAutoSetByHost = false;
 
   // Multiple visitors functionality
   visitors: any[] = [];
@@ -1420,6 +1421,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             visitpurpose_desc: p.PurposeName
           }));
           console.log('Visit purposes loaded from VimsAppFacilityPurposeList:', this.purposeList.length);
+          this.autoSelectSingleOptions();
           if (this.isAppointmentFlow && this.generalForm && this.visitorAckData?.visitorData) {
             const apptData = this.visitorAckData.visitorData;
             if (!this.generalForm.get('purpose')?.value && apptData.purposeId) {
@@ -1471,6 +1473,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Apply query parameter host filtering for appointment flow
     this.applyQueryParamHostFiltering();
 
+    this.autoSelectSingleOptions();
+
     // Signal that branch data (including titleList) is ready.
     // In appointment flow the loader is held until both UDF settings and branch data arrive.
     this._branchDataReady = true;
@@ -1500,6 +1504,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.titleList = [...response.Table9];
       console.log('Titles loaded for host preload mode (Table9):', this.titleList.length);
     }
+
+    this.autoSelectSingleOptions();
   }
 
   private loadOtherBranchData() {
@@ -1544,6 +1550,39 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Map a host row's HostFloor onto the floor_id the floor dropdown uses as its option
+   * value. The host carries a raw string that may be either the id or the description,
+   * so match on both. Returns null when nothing matches — unlike the department
+   * resolver we do not fall back to the raw value, because an unmatched floor would
+   * show blank in the dropdown and still reach FloorId in the payload.
+   */
+  private resolveFloorValue(raw: any): any {
+    if (raw === null || raw === undefined || String(raw).trim() === '') return null;
+    const needle = String(raw).trim().toLowerCase();
+    const match = this.meetingFloorList.find((f: any) =>
+      String(f.floor_id).toLowerCase() === needle ||
+      (f.floor_desc || '').toLowerCase() === needle
+    );
+    return match ? match.floor_id : null;
+  }
+
+  /**
+   * Set the floor that belongs to a host, mirroring the department rule: only when the
+   * field is still empty, so a floor the user picked is never overwritten.
+   */
+  private applyFloorFromHost(selectedHost: any): void {
+    const floorCtrl = this.generalForm?.get('floor');
+    if (!floorCtrl || floorCtrl.disabled || floorCtrl.value) return;
+
+    const floorValue = this.resolveFloorValue(selectedHost?.HostFloor ?? selectedHost?.floor_id);
+    if (floorValue === null) return;
+
+    console.log('Setting floor from host:', floorValue);
+    floorCtrl.setValue(floorValue, { emitEvent: false });
+    this.floorAutoSetByHost = true;
+  }
+
+  /**
    * Department for the hc (shared URL) flow: the value shared by the admin when present,
    * otherwise the department of the single pinned host.
    *
@@ -1584,6 +1623,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     this.generalForm.get('hostName')?.setValue(selectedHost.HOSTNAME || selectedHost.Name || '', { emitEvent: false });
     this.generalForm.get('hostSeqId')?.setValue(this.resolveHostSeqId(selectedHost), { emitEvent: false });
+    this.applyFloorFromHost(selectedHost);
 
     if (this.generalForm.get('department')?.value) return; // never override an existing value
 
@@ -2410,6 +2450,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.generalForm.get('endDate')?.valueChanges.subscribe(() => {
       this.checkEndBeforeStart();
     });
+
+    // Lists may already have loaded before the form existed.
+    this.autoSelectSingleOptions();
   }
 
   private checkEndBeforeStart(): void {
@@ -4254,6 +4297,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!selectedHostId) {
       this.generalForm.get('hostName')?.setValue('', { emitEvent: false });
       this.generalForm.get('hostSeqId')?.setValue('', { emitEvent: false });
+      if (this.floorAutoSetByHost) {
+        this.generalForm.get('floor')?.setValue(null, { emitEvent: false });
+        this.floorAutoSetByHost = false;
+      }
       if (this.departmentAutoSetByHost) {
         this.generalForm.get('department')?.setValue(null, { emitEvent: false });
         this.departmentAutoSetByHost = false;
@@ -4282,6 +4329,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Save the numeric SEQID — the check-in payload needs it, and the `host` control
       // only carries HOSTIC (a string login id).
       this.generalForm.get('hostSeqId')?.setValue(this.resolveHostSeqId(selectedHost), { emitEvent: false });
+
+      this.applyFloorFromHost(selectedHost);
 
       // Get department value from various possible fields on the host object
       const hostDepartmentRaw = selectedHost.Department ||
@@ -4317,6 +4366,91 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.onDepartmentChange({ value: deptValue }, true);
       }
     }
+  }
+
+  /**
+   * Dropdowns that should pick their only option automatically.
+   *
+   * `options` is read lazily because these lists arrive from several async calls, and
+   * `after` runs the same handler the template wires to (onChange), so the dependent
+   * state a manual pick would produce — host name/SEQID, ID expiry rules, room and
+   * purpose descriptions — is set identically.
+   */
+  private get singleOptionFields(): ReadonlyArray<{
+    control: string;
+    valueField: string;
+    options: () => any[];
+    after?: (value: any, option: any) => void;
+  }> {
+    return [
+      { control: 'title', valueField: 'Title', options: () => this.titleList },
+      {
+        control: 'visitor_id_type', valueField: 'ID_TYPECODE',
+        options: () => this.idTypeList,
+        after: value => this.onIdTypeChange({ value })
+      },
+      {
+        control: 'department', valueField: 'DepartmentSeqId',
+        options: () => this.departmentList,
+        after: value => this.onDepartmentChange({ value })
+      },
+      {
+        control: 'host', valueField: 'HOSTIC',
+        // Preload mode deliberately keeps `hosts` empty until the user searches; with a
+        // single host there is nothing to search for, so fall back to the master list.
+        options: () => (this.hosts.length ? this.hosts : this.allHosts),
+        after: (value, option) => {
+          if (!this.hosts.length) {
+            this.hosts = [option];
+            this.hostNameList = [option];
+          }
+          this.onHostChange({ value });
+        }
+      },
+      {
+        control: 'meeting_location', valueField: 'MeetingRoomSeqId',
+        options: () => this.meetingLocList,
+        after: value => this.onRoomChange({ value })
+      },
+      { control: 'floor', valueField: 'floor_id', options: () => this.meetingFloorList },
+      {
+        control: 'purpose', valueField: 'visitpurpose_id',
+        options: () => this.purposeList,
+        after: value => this.onPurposeChange({ value })
+      }
+    ];
+  }
+
+  /**
+   * Select the sole option for any of the above dropdowns that has exactly one.
+   * Safe to call repeatedly: it skips controls that are disabled or already set, so a
+   * restored draft, an appointment prefill or the user's own choice is never overwritten.
+   */
+  private autoSelectSingleOptions(): void {
+    if (!this.generalForm) return;
+
+    let changed = false;
+
+    this.singleOptionFields.forEach(({ control, valueField, options, after }) => {
+      const ctrl = this.generalForm.get(control);
+      if (!ctrl || ctrl.disabled) return;
+
+      const current = ctrl.value;
+      if (current !== null && current !== undefined && current !== '') return;
+
+      const list = options() || [];
+      if (list.length !== 1) return;
+
+      const option = list[0];
+      const value = option?.[valueField];
+      if (value === null || value === undefined || value === '') return;
+
+      ctrl.setValue(value);
+      after?.(value, option);
+      changed = true;
+    });
+
+    if (changed) this.saveFormDataToWizard();
   }
 
   onPurposeChange(event: any): void {

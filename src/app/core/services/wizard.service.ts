@@ -498,8 +498,14 @@ export class WizardService {
       loFinalData.PurposeId = generalSettings.PurposeEnabled ? (formData.general?.purpose || '') : '';
       loFinalData.PurposeDesc = generalSettings.PurposeEnabled ? (formData.general?.purposeDesc || '') : '';
 
+      const floorId = formData.general?.floor?.toString() || '';
+      // There is no floorDesc form control, so this was always ''. Resolve the
+      // description from the floor list instead, the way RoomDesc below already does
+      // (and getDirectCheckInPayload does for Floor).
+      const floorDesc = masterData?.Table2?.find((f: any) => f.floor_id?.toString() === floorId)?.floor_desc
+        || formData.general?.floorDesc || '';
       loFinalData.FloorId = generalSettings.FloorEnabled ? (formData.general?.floor || '') : '';
-      loFinalData.FloorDesc = generalSettings.FloorEnabled ? (formData.general?.floorDesc || '') : '';
+      loFinalData.FloorDesc = generalSettings.FloorEnabled ? floorDesc : '';
 
       const roomId = formData.general?.meeting_location?.toString() || formData.general?.room?.toString() || '';
       const roomDesc = masterData?.Table1?.find((r: any) => (r.MeetingRoomSeqId || r.SeqId)?.toString() === roomId)?.MeetingRoomDesc || formData.general?.roomDesc || '';
