@@ -300,6 +300,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   isUploadPhotoValid = true;
   private frameIntervalId: any = null;
   private isFaceValidationInFlight = false;
+  isCroppingPhoto = false;
   private capturedValidationBlob: Blob | null = null;
   captureValidationPassed = false;
   // InsightFace embedding (feature vector) of the current photo. Fetched during the
@@ -3773,6 +3774,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.pendingUploadFile = file;
         this.capturedImage = e.target.result;
         this.captureValidationPassed = true;
+        this.applyPassportCrop();
         // stopCamera() → stopFaceValidationWs() clears faceValidationFeedback;
         // preserve any REST validation feedback set before this call.
         const savedFeedback = [...this.faceValidationFeedback];
@@ -4084,6 +4086,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.captureValidationPassed = true;
         // Final verification passed → grab the face feature vector for the payload.
         this.extractFaceVector(validationFile);
+        // …and re-frame the preview to passport proportions, so what the user
+        // approves in the dialog is exactly what gets saved.
+        this.applyPassportCrop();
       },
       error: () => {
         // Face validation service unavailable — proceed without blocking
@@ -4141,24 +4146,57 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const base64 = this.capturedImage;
 
     if (this.pendingUploadFile) {
-      // Upload path — face was already validated in handleFileUpload
-      const file = this.pendingUploadFile;
+      // Upload path — face was already validated in handleFileUpload, and the
+      // passport crop was applied when the preview was shown.
       this.pendingUploadFile = null;
-      this.proceedWithCapture(file, base64);
+      this.proceedWithCapture(this.base64ToFile(base64, 'photo.jpg'), base64);
       return;
     }
 
-    // Camera capture path — already validated right after capturePhoto().
+    // Camera capture path — already validated and cropped right after capturePhoto().
     if (!this.captureValidationPassed) return;
 
+    this.proceedWithCapture(this.base64ToFile(base64, 'photo.jpg'), base64);
+  }
+
+  private base64ToFile(base64: string, name: string): File {
     const byteString = atob(base64.split(',')[1]);
     const mimeType = base64.split(',')[0].split(':')[1].split(';')[0];
     const ab = new ArrayBuffer(byteString.length);
     const ia = new Uint8Array(ab);
     for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-    const file = new File([ab], 'photo.jpg', { type: mimeType });
+    return new File([ab], name, { type: mimeType });
+  }
 
-    this.proceedWithCapture(file, base64);
+  /**
+   * Re-frame `capturedImage` to passport proportions (120x150) in place.
+   *
+   * Runs as soon as validation passes — before the user approves the shot —
+   * because capturePhoto() keeps the whole video frame (the circular guide is
+   * only an on-screen aid). Cropping here means the dialog preview, the Retake
+   * comparison and the saved photo are all the same image.
+   *
+   * Fails open: if the crop service is down or finds no subject, the original
+   * frame stays as-is rather than blocking a registration over framing.
+   */
+  private applyPassportCrop(): void {
+    const original = this.capturedImage;
+    if (!original) return;
+
+    this.isCroppingPhoto = true;
+    this.faceValidationService.passportCrop(this.base64ToFile(original, 'photo.jpg')).subscribe({
+      next: (result) => {
+        this.isCroppingPhoto = false;
+        // Ignore a stale response if the user hit Retake while it was in flight.
+        if (result?.image_base64 && this.capturedImage === original) {
+          this.capturedImage = `data:image/jpeg;base64,${result.image_base64}`;
+        }
+      },
+      error: (err) => {
+        this.isCroppingPhoto = false;
+        console.warn('[PassportCrop] keeping the uncropped photo:', err);
+      }
+    });
   }
 
   private async proceedWithCapture(file: File, base64: string): Promise<void> {

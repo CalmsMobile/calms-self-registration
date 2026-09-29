@@ -1915,7 +1915,7 @@
     }
 
     <!-- REST validation spinner -->
-    @if (isFaceValidating) {
+    @if (isFaceValidating || isCroppingPhoto) {
       <div class="face-validation-feedback face-loading">
         <i class="pi pi-spin pi-spinner"></i>
         <span>{{ 'registration_page_checking_photo' | translate }}</span>
@@ -1932,9 +1932,9 @@
       </button>
       } @else {
       <button type="button" class="btn-capture" (click)="useCapture()"
-        [disabled]="isFaceValidating || !isUploadPhotoValid || !captureValidationPassed"
-        [class.btn-ready]="isUploadPhotoValid && !isFaceValidating && captureValidationPassed">
-        @if (isFaceValidating) {
+        [disabled]="isFaceValidating || isCroppingPhoto || !isUploadPhotoValid || !captureValidationPassed"
+        [class.btn-ready]="isUploadPhotoValid && !isFaceValidating && !isCroppingPhoto && captureValidationPassed">
+        @if (isFaceValidating || isCroppingPhoto) {
           <i class="pi pi-spin pi-spinner"></i>
         } @else {
           <i class="pi pi-check"></i>

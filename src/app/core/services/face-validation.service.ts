@@ -20,6 +20,17 @@ export interface FaceValidationResult {
   face_bbox: number[] | null;
 }
 
+export interface PassportCropResult {
+  method: 'face' | 'person';
+  face_detected: boolean;
+  head_ratio: number | null;
+  crop_box: { x: number; y: number; width: number; height: number };
+  output_width: number;
+  output_height: number;
+  frame_aspect: number;
+  image_base64: string;
+}
+
 export interface FaceEmbeddingResult {
   face_detected: boolean;
   embedding: number[] | null;
@@ -37,6 +48,22 @@ export class FaceValidationService {
     const formData = new FormData();
     formData.append('image', file, file.name);
     return this.http.post<FaceValidationResult>(`${this.baseUrl}/face-validation/validate`, formData);
+  }
+
+  /**
+   * REST call — crop a photo to passport proportions (head centred and scaled).
+   *
+   * Defaults to the 120x150 portrait frame (4:5). `validate` is deliberately not
+   * sent: the capture flow has already validated the frame, and re-running
+   * detection server-side would only double the round-trip.
+   */
+  passportCrop(file: File, frameWidth = 120, frameHeight = 150): Observable<PassportCropResult> {
+    const formData = new FormData();
+    formData.append('photo', file, file.name);
+    formData.append('frame_width', String(frameWidth));
+    formData.append('frame_height', String(frameHeight));
+    formData.append('as_json', 'true');
+    return this.http.post<PassportCropResult>(`${this.baseUrl}/passportimagecrop`, formData);
   }
 
   /** REST call — extract the InsightFace embedding (feature vector) for a photo. */
