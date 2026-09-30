@@ -98,7 +98,7 @@ const APPOINTMENT_LOCKED_FIELDS: readonly string[] = [
   standalone: true,
   imports: [DatePickerModule, SelectModule, ReactiveFormsModule, FormsModule, InputTextModule, AutoCompleteModule, TranslatePipe, MultiSelectModule, DividerModule, CheckboxModule, ButtonModule, TableModule, DialogModule, LanguageSelectorComponent, ProgressBarModule],
   templateUrl: './step-general.component.html',
-  styleUrls: ['./step-general.component.scss']
+  styleUrls: ['./step-general.component.scss', './step-general.mobile.scss']
 })
 export class StepGeneralComponent implements OnInit, OnDestroy {
   @ViewChild('cameraVideo') cameraVideoRef!: ElementRef<HTMLVideoElement>;

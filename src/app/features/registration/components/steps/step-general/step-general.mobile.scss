@@ -1,0 +1,594 @@
+/* Mobile layout for the general step — split out of
+   step-general.component.scss purely for size: that file was ~0.2 kB under the
+   60 kB anyComponentStyle error budget, and each component stylesheet is
+   measured separately.
+
+   This block originally sat mid-file, ahead of the OCR-dialog styles that now
+   trail step-general.component.scss, so moving it here puts it last in the
+   cascade instead of before them. Safe because the two sets are disjoint: this
+   file declares only .m-* / .mobile-page, and that tail references none of
+   them. Keep it that way — if OCR or mobile rules ever need to override each
+   other, they must live in the same file.
+   ========================================================================= */
+
+
+/* ============================================
+   MOBILE PAGE — Full layout at ≤768px
+   ============================================ */
+@media (max-width: 768px) {
+  :host {
+    overflow: hidden;
+    height: 100dvh;
+  }
+
+  .page {
+    display: none;
+  }
+
+  .mobile-page {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+    background: #ffffff;
+    font-family: var(--font-family);
+  }
+
+  /* Header */
+  .m-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 16px 16px 12px;
+    background: #fff;
+    border-bottom: 1px solid #ebebeb;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .m-btn-back-top {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #f0f0f0;
+    color: #4a4a4a;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+
+    &:hover { background: #e0e0e0; }
+  }
+
+  .m-header-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .m-header-lang {
+    flex-shrink: 0;
+  }
+
+  .m-logo {
+    width: 108px;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .m-brand {
+    font-size: 15px;
+    font-weight: 600;
+    color: #3c3c3c;
+  }
+
+  /* Top section */
+  .m-top-section {
+    display: flex;
+    flex-direction: column;
+    padding: 16px 22px 0;
+  }
+
+  .m-top-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .m-hero-title {
+    display: flex;
+    flex-direction: column;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.15;
+    margin: 0;
+  }
+
+  .m-accent {
+    color: var(--primary);
+  }
+
+  .m-normal {
+    color: #4f4f4f;
+  }
+
+  .m-hero-subtext {
+    margin-top: 6px;
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .m-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .m-btn-saved {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(var(--primary), 0.12);
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .m-count {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 16px;
+      height: 16px;
+      background: #e53935;
+      color: #fff;
+      border-radius: 50%;
+      font-size: 9px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .m-returning-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px dotted #bdbdbd;
+    background: #f9f9f9;
+    font-size: 0; /* hide text, show icon only */
+    color: #595959;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    i {
+      font-size: 16px;
+      color: #707070;
+    }
+  }
+
+
+
+
+  /* Form shell — single scrollable area below the sticky header */
+  .m-form-shell {
+    flex: 1;
+    overflow: hidden;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #f3f4f7;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
+  }
+
+  .m-form-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 0 22px 18px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Form field */
+  .m-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+  }
+
+  .m-field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a4a4a;
+  }
+
+  .m-req {
+    color: #ff3b3b !important;
+    margin-left: 2px;
+  }
+
+  /* Input wrap with icon */
+  .m-input-wrap {
+    position: relative;
+
+    .m-field-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 5;
+      color: #7b7b7b;
+      font-size: 15px;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      overflow: hidden;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+
+      svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+    }
+
+    &.m-textarea-wrap .m-field-icon {
+      top: 14px;
+      transform: none;
+    }
+
+    & > input.p-inputtext,
+    & > textarea.p-inputtext {
+      padding-left: 46px !important;
+      padding-right: 44px;
+      width: 100%;
+      height: 54px;
+      border-radius: 0;
+      border: 1px solid #e5e7ef;
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+      font-size: 14px;
+      font-family: var(--font-family);
+      color: #4a4a4a;
+    }
+
+    & > textarea.p-inputtext {
+      height: auto !important;
+      min-height: 54px;
+      padding-top: 14px;
+      resize: none;
+    }
+
+    &.m-textarea-wrap .field-clear-btn {
+      top: 14px;
+      transform: none;
+    }
+
+    ::ng-deep .p-select {
+      width: 100%;
+      height: 54px !important;
+      border-radius: 0 !important;
+      border: 1px solid #e5e7ef !important;
+      background: #fff !important;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+
+      .p-select-label {
+        flex: 1 !important;
+        display: block !important;
+        padding-left: 46px !important;
+        font-size: 14px !important;
+        font-family: 'Poppins', sans-serif !important;
+        color: #4a4a4a !important;
+        text-align: left !important;
+      }
+    }
+
+    ::ng-deep .p-datepicker {
+      width: 100%;
+      height: 54px !important;
+      border-radius: 0 !important;
+      border: 1px solid #e5e7ef !important;
+      background: #fff !important;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+
+      .p-datepicker-input,
+      .p-inputtext {
+        padding-left: 46px !important;
+        font-size: 14px !important;
+        font-family: 'Poppins', sans-serif !important;
+      }
+    }
+
+    ::ng-deep .p-autocomplete {
+      width: 100%;
+
+      .p-inputtext {
+        /* leave room for the left icon and the clear (X) + chevron on the right
+           so a long selected value doesn't overlap them */
+        padding-left: 46px !important;
+        padding-right: 68px !important;
+        font-size: 14px !important;
+        text-overflow: ellipsis;
+        background: #fff !important;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+      }
+    }
+
+    ::ng-deep .p-multiselect {
+      width: 100%;
+      height: 54px !important;
+      border-radius: 0 !important;
+      border: 1px solid #e5e7ef !important;
+      background: #fff !important;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+
+      .p-multiselect-label {
+        flex: 1 !important;
+        display: block !important;
+        padding-left: 46px !important;
+        font-size: 14px !important;
+        text-align: left !important;
+      }
+    }
+  }
+
+  /* Standalone p-select / p-datepicker / p-multiselect not inside m-input-wrap (UDF fields) */
+  .m-form-field > ::ng-deep .p-select,
+  .m-form-field > ::ng-deep .p-multiselect,
+  .m-form-field > ::ng-deep .p-datepicker {
+    width: 100%;
+    height: 54px !important;
+    border-radius: 0 !important;
+    border: 1px solid #e5e7ef !important;
+    background: #fff !important;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    font-size: 14px !important;
+    font-family: 'Poppins', sans-serif !important;
+  }
+
+  .m-form-field > input.p-inputtext {
+    width: 100%;
+    height: 54px;
+    border-radius: 0;
+    border: 1px solid #e5e7ef;
+    background: #fff;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    font-size: 14px;
+    font-family: var(--font-family);
+    color: #4a4a4a;
+    padding: 0 18px;
+  }
+
+  .m-error {
+    color: #ff3b3b;
+    font-size: 11px;
+    line-height: 1.3;
+  }
+
+  /* Profile avatar */
+  .m-profile-field {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    &.invalid .m-avatar-circle {
+      border-color: #ff3b3b;
+    }
+  }
+
+  .m-avatar-empty {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+  }
+
+  .m-avatar-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px dashed #d1d5db;
+    background: #f9fafb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    i {
+      font-size: 24px;
+      color: #aaa;
+    }
+  }
+
+  .m-avatar-wrap {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+  }
+
+  .m-avatar-img {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary);
+    display: block;
+  }
+
+  .m-avatar-actions {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    display: flex;
+    gap: 3px;
+  }
+
+  .m-avatar-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+
+    i {
+      font-size: 10px;
+    }
+
+    &.m-change-btn {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    &.m-delete-btn {
+      background: #fff;
+      color: #e53935;
+    }
+  }
+
+  .m-avatar-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .m-avatar-label {
+    font-size: 13px;
+    color: #4a4a4a;
+    font-weight: 500;
+  }
+
+  .m-avatar-hint {
+    font-size: 12px;
+    color: #6b7280;
+  }
+
+  /* Actions bar */
+  .m-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 22px calc(14px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid #e5e7ef;
+    flex-shrink: 0;
+    background: #ffffff;
+    position: relative;
+    z-index: 20;
+  }
+
+  .m-actions-row {
+    display: flex;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .m-actions .step-copyright {
+    position: static;
+    transform: none;
+    left: auto;
+    text-align: center;
+    font-size: 11px;
+    color: #9ca3af;
+    line-height: 1.2;
+    white-space: normal;
+    //padding: 4px 0 0;
+    pointer-events: none;
+  }
+
+  .m-actions-right {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .m-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    height: 40px;
+    padding: 9px 12px;
+    border-radius: 999px;
+    border: none;
+    font-family: var(--font-family);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .m-btn-back {
+    display: none;
+  }
+
+  .m-btn-save-add,
+  .m-btn-continue {
+    flex: 1 1 0;
+    width: auto;
+    background: var(--primary);
+    color: var(--theme-primary-fg-color);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.15);
+
+    &:hover:not(:disabled) {
+      background: var(--p-primary-hover-color);
+    }
+  }
+
+  @media (max-width: 420px) {
+    .m-actions {
+      padding-left: 14px;
+      padding-right: 14px;
+      padding-top: 15px;
+    }
+
+    .m-actions-row {
+      flex-direction: row;
+      gap: 8px;
+    }
+
+    .m-btn {
+      font-size: 12px;
+      gap: 5px;
+      padding: 9px 8px;
+    }
+  }
+}

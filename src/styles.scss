@@ -410,3 +410,95 @@ body {
 @font-face { font-family: "Manrope-ExtraLight"; src: url("assets/fonts/Manrope/Manrope-ExtraLight.ttf"); }
 @font-face { font-family: "Manrope-Medium"; src: url("assets/fonts/Manrope/Manrope-Medium.ttf"); }
 @font-face { font-family: "GothamBook"; font-style: normal; font-weight: normal; src: url("assets/fonts/Gotham/GothamBook.woff2"); }
+
+/* ── Pac-Man loader ───────────────────────────────────────────────────────
+   One indicator shared by both photo checks — face validation and the
+   passport crop — so the dialog shows a single continuous animation instead
+   of swapping spinners mid-flow. Size is driven by --pac-size so the same
+   rules serve the full-dialog overlay and any inline use. */
+.pacman-loader {
+  --pac-size: 20px;
+  position: relative;
+  flex: 0 0 auto;
+  width: calc(var(--pac-size) * 2.3);
+  height: var(--pac-size);
+  color: inherit;
+}
+
+.pacman-loader .pac {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--pac-size);
+  height: var(--pac-size);
+  border-radius: 50%;
+  background: currentColor;
+  animation: pac-chomp 0.6s infinite;
+}
+
+.pacman-loader .dot {
+  position: absolute;
+  top: 50%;
+  width: calc(var(--pac-size) * 0.3);
+  height: calc(var(--pac-size) * 0.3);
+  margin-top: calc(var(--pac-size) * -0.15);
+  border-radius: 50%;
+  background: currentColor;
+  animation: pac-dot 1.2s linear infinite;
+}
+
+.pacman-loader .dot:nth-child(2) { animation-delay: 0s; }
+.pacman-loader .dot:nth-child(3) { animation-delay: 0.4s; }
+.pacman-loader .dot:nth-child(4) { animation-delay: 0.8s; }
+
+/* The wedge is cut out of the circle with clip-path — one element, no
+   half-disc stacking, and the mouth angle is what animates. */
+@keyframes pac-chomp {
+  0%, 100% { clip-path: polygon(100% 74%, 44% 48%, 100% 21%, 100% 0, 0 0, 0 100%, 100% 100%); }
+  50%      { clip-path: polygon(100% 58%, 44% 48%, 100% 38%, 100% 0, 0 0, 0 100%, 100% 100%); }
+}
+
+@keyframes pac-dot {
+  0%   { left: calc(var(--pac-size) * 2.2); opacity: 1; }
+  80%  { left: calc(var(--pac-size) * 1.1); opacity: 1; }
+  100% { left: var(--pac-size); opacity: 0; }
+}
+
+/* Full-dialog cover while the photo is being checked and cropped. Covering the
+   whole card stops a second click landing on Use/Retake mid-request; the close
+   button is deliberately lifted above it so a stalled call can still be escaped. */
+.photo-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.93);
+  backdrop-filter: blur(2px);
+  // Follows the branch theme (ThemeService sets --theme-primary-yellow at runtime);
+  // the indigo is only the fallback for before settings land.
+  color: var(--primary, #4f46e5);
+  text-align: center;
+}
+
+.photo-loading-overlay .pacman-loader { --pac-size: 44px; }
+
+.photo-loading-overlay .loading-text {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .pacman-loader .pac,
+  .pacman-loader .dot { animation: none; }
+  .pacman-loader .pac { clip-path: polygon(100% 74%, 44% 48%, 100% 21%, 100% 0, 0 0, 0 100%, 100% 100%); }
+  .pacman-loader .dot:nth-child(2) { left: calc(var(--pac-size) * 2.2); }
+  .pacman-loader .dot:nth-child(3) { left: calc(var(--pac-size) * 1.7); }
+  .pacman-loader .dot:nth-child(4) { left: calc(var(--pac-size) * 1.2); }
+}
