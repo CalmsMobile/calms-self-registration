@@ -1,14 +1,8 @@
 /* Mobile layout for the general step — split out of
-   step-general.component.scss purely for size: that file was ~0.2 kB under the
-   60 kB anyComponentStyle error budget, and each component stylesheet is
-   measured separately.
-
-   This block originally sat mid-file, ahead of the OCR-dialog styles that now
-   trail step-general.component.scss, so moving it here puts it last in the
-   cascade instead of before them. Safe because the two sets are disjoint: this
-   file declares only .m-* / .mobile-page, and that tail references none of
-   them. Keep it that way — if OCR or mobile rules ever need to override each
-   other, they must live in the same file.
+   step-general.component.scss purely for size: that file sits a few hundred
+   bytes under the 60 kB anyComponentStyle error budget, and each component
+   stylesheet is measured separately. Listed AFTER the main sheet in
+   styleUrls so cascade order is unchanged.
    ========================================================================= */
 
 
