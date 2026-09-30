@@ -3728,9 +3728,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.showMessage({ severity: 'error', detail: alert.detail || 'Only image files are allowed.' });
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
+    // Matches MAX_IMAGE_SIZE_MB in FileUploadService — this path had its own
+    // 2MB cap, which rejected photos the rest of the app accepts.
+    if (file.size > 7 * 1024 * 1024) {
       const alert = this.getAlert('registration_page_image_size_invalid');
-      this.showMessage({ severity: 'error', detail: alert.detail || 'Maximum file size is 2MB.' });
+      this.showMessage({ severity: 'error', detail: alert.detail || 'Maximum file size is 7MB.' });
       return;
     }
 
@@ -3744,9 +3746,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         if (!result.face_detected) {
           this.faceValidationFeedback = ['no_face_detected_upload'];
           if (!closeDialog) return; // outside dialog: block entirely
-          // Inside dialog: show preview with disabled button and inline error
-          this.isUploadPhotoValid = false;
-          this.proceedWithFileRead(file, visitorIndex, closeDialog);
+          // Inside the dialog: don't render a preview the user cannot act on.
+          // Showing it left "Use this photo" permanently disabled with no way
+          // forward, so surface the reason and drop back to the live camera —
+          // the same recovery the camera path already does on a failed check.
+          this.isUploadPhotoValid = true;
+          const msg = this.firstFaceFeedback;
+          if (msg) this.showMessage({ severity: 'warn', detail: msg });
+          this.retakePhoto();
           return;
         }
         if (!result.stable) {
