@@ -1809,19 +1809,6 @@
   styleClass="photo-capture-dialog" [showHeader]="false" (onHide)="stopCamera()">
   <div class="photo-capture-container">
 
-    <!-- Covers the whole dialog while the photo is validated and cropped -->
-    @if (isFaceValidating || isCroppingPhoto) {
-      <div class="photo-loading-overlay" role="status" aria-live="polite">
-        <span class="pacman-loader" aria-hidden="true">
-          <span class="pac"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
-          <span class="dot"></span>
-        </span>
-        <span class="loading-text">{{ 'registration_page_checking_photo' | translate }}</span>
-      </div>
-    }
-
 
     <!-- Close button -->
     <button type="button" class="photo-close-btn" (click)="cancelPhotoCaptureDialog()">

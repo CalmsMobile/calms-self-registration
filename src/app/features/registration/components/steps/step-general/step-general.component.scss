@@ -3474,8 +3474,3 @@ textarea {
     margin-top: 10px;
   }
 }
-
-/* Keep the dialog's close button above .photo-loading-overlay (z-index 20) so a
-   stalled validate/crop call can always be escaped. Loader styles themselves are
-   global — see styles.scss — to keep this file under the component-style budget. */
-.photo-close-btn { z-index: 25; }
