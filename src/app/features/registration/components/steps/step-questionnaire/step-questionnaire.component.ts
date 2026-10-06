@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, FormArray, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { LabelService } from '../../../../../core/services/label.service';
@@ -32,10 +33,35 @@ interface Question {
   templateUrl: './step-questionnaire.component.html',
   styleUrls: ['./step-questionnaire.component.scss'],
   standalone: true,
-  imports: [FormsModule, ToastModule, ReactiveFormsModule, TranslatePipe, LanguageSelectorComponent]
+  imports: [FormsModule, ToastModule, ReactiveFormsModule, TranslatePipe, LanguageSelectorComponent, NgTemplateOutlet]
 })
 export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   questions: Question[] = [];
+
+  /**
+   * GetVisitorDeclarationSettings.Table3 splits into two groups via
+   * IsSafetyBriefQuest. Computed once in ngOnInit rather than as getters so the
+   * arrays stay referentially stable across change detection.
+   * A group with no questions renders nothing — not an empty titled section.
+   */
+  safetyBriefQuestions: Question[] = [];
+  generalQuestions: Question[] = [];
+
+  /** Section headings. Fall back to English — the pipe returns '' for a missing key. */
+  get safetyBriefSectionTitle(): string {
+    return this.labelService.getLabel('questionnaires_safety_brief_section_title', 'caption')
+      || 'Safety Briefing Assessment';
+  }
+
+  get generalSectionTitle(): string {
+    // The label row's Title repeats the ScreenName ("Questionnaires General
+    // Section Title"), and getLabelKey() prefixes ScreenName again — so the live
+    // key is doubled. Accept both spellings: the clean one wins if the row is
+    // ever corrected, and no code change is needed either way.
+    return this.labelService.getLabel('questionnaires_general_section_title', 'caption')
+      || this.labelService.getLabel('questionnaires_questionnaires_general_section_title', 'caption')
+      || 'General Visitor Questions';
+  }
 
   questionnaireForm: FormGroup;
   validationErrors: { [key: number]: boolean } = {};
@@ -97,6 +123,11 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
       this.wizardService.navigateToNextStep();
       return;
     }
+    // IsSafetyBriefQuest may be absent on a row — anything not explicitly true
+    // belongs to the general group.
+    this.safetyBriefQuestions = this.questions.filter(q => q.IsSafetyBriefQuest === true);
+    this.generalQuestions = this.questions.filter(q => q.IsSafetyBriefQuest !== true);
+
     this.buildFormControls();
     this.restoreFormData(); // Restore saved data
     this.isLoading = false;

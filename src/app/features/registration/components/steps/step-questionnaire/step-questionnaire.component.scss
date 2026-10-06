@@ -177,6 +177,68 @@
   &::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
 }
 
+/* ===== SECTION TITLES =====
+   Headings for the two Table3 groups (IsSafetyBriefQuest true / false).
+   Only rendered when the group has questions, so no empty headings appear. */
+.section-title,
+.m-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+
+  // Colour-coded bar on the left, drawn from the heading's own colour — so a
+  // section is re-themed by changing the `color` + `background` pair below.
+  &::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 4px;
+    align-self: stretch;
+    min-height: 16px;
+    border-radius: 2px;
+    background: currentColor;
+  }
+
+  // Tinted block. --theme-primary-yellow-rgb is the branch colour in r,g,b form,
+  // set at runtime by ThemeService for exactly this kind of rgba() dilution, so
+  // the fill follows the branch instead of being a fixed colour.
+  &.safety {
+    color: var(--primary, #c62828);
+    background: rgba(var(--theme-primary-yellow-rgb, 198, 40, 40), 0.12);
+  }
+
+  // Neutral tint keeps the two groups distinguishable without inventing a second
+  // brand colour that could clash on some branches.
+  &.general {
+    color: #5a6472;
+    background: rgba(90, 100, 114, 0.08);
+  }
+}
+
+.section-title {
+  margin: 20px 0 10px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+
+  // The ng-template above renders a comment node, not an element, so the first
+  // heading is still :first-of-type here.
+  &:first-of-type { margin-top: 2px; }
+}
+
+.section-title + .question-card { margin-top: 0; }
+
+.m-section-title {
+  margin: 18px 0 8px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+
+  &:first-of-type { margin-top: 4px; }
+}
+
 /* ===== QUESTIONS ===== */
 .questions {
   display: flex;
