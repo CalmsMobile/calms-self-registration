@@ -314,8 +314,31 @@ export class WizardService {
     return this.hostList;
   }
 
+  /**
+   * Merge a few resolved values into the ALREADY-PROCESSED settings.
+   *
+   * Use this instead of setSettings() when you only have the flat settings object.
+   * setSettings() expects the RAW GetVisitorDeclarationSettings response and rebuilds
+   * everything from Table/Table1/Table2/Table5 — handing it a processed object
+   * silently resets every API flag to the hardcoded defaults and wipes the
+   * questionnaire and attachment settings along with it.
+   */
+  patchSettings(partial: any): void {
+    const current = this.settings$.value;
+    if (!current || !partial) return;
+    this.settings$.next({ ...current, ...partial });
+  }
+
   setSettings(allSettings: any): void {
-    console.log(allSettings);
+    // Explicit reset: clear everything this method owns, rather than throwing on
+    // `null.Table` the way the old unguarded read did.
+    if (!allSettings) {
+      this.settings$.next(null);
+      this.attachmentSetting$.next(null);
+      this.questionsSetting$.next(null);
+      return;
+    }
+
     let settingsData: any = {};
     if (allSettings.Table?.length) {
       const table1 = allSettings.Table1[0] || {};
@@ -369,9 +392,15 @@ export class WizardService {
     this.settings$.next(settingsData);
     console.log(settingsData);
 
-    this.attachmentSetting$.next(allSettings.Table4);
-
-    this.questionsSetting$.next(allSettings.Table3);
+    // Only overwrite when the raw table is actually present. A caller passing a
+    // payload without them must not blank the questionnaire (which would make
+    // shouldSkipQuestionnaire() auto-skip the step) or the attachment doc types.
+    if (allSettings.Table4 !== undefined) {
+      this.attachmentSetting$.next(allSettings.Table4);
+    }
+    if (allSettings.Table3 !== undefined) {
+      this.questionsSetting$.next(allSettings.Table3);
+    }
   }
 
   getSettings(): any {

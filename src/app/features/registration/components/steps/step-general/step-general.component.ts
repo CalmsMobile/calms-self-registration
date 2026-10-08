@@ -301,6 +301,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   private frameIntervalId: any = null;
   private isFaceValidationInFlight = false;
   isCroppingPhoto = false;
+
   private capturedValidationBlob: Blob | null = null;
   captureValidationPassed = false;
   // InsightFace embedding (feature vector) of the current photo. Fetched during the
@@ -3988,7 +3989,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             this.isFaceValidationInFlight = false;
           },
           error: () => {
-            // If service is unreachable, silently allow capture
+            // Unreachable or timed out — fail open and allow capture.
             this.faceValidationFeedback = [];
             this.isFaceStable = true;
             this.isFaceValidationInFlight = false;
@@ -4098,7 +4099,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.applyPassportCrop();
       },
       error: () => {
-        // Face validation service unavailable — proceed without blocking
+        // Unavailable or timed out — proceed without blocking.
         this.isFaceValidating = false;
         this.faceValidationFeedback = [];
         this.captureValidationPassed = true;

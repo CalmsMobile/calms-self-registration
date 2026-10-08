@@ -342,8 +342,12 @@ export class HomePageComponent implements AfterViewChecked {
           const currentSettings = this.wizardService.getSettings();
           const selfRegSettings = this.wizardService.getSelfRegistrationSettings();
           if (currentSettings && selfRegSettings) {
-            this.wizardService.setSettings({
-              ...currentSettings,
+            // patchSettings, NOT setSettings: setSettings expects the raw API
+            // response and rebuilds from Table/Table1/Table2. Passing it this
+            // processed object reset every *Enabled flag to the defaults and
+            // blanked Table3/Table4 — so switching language on the T&C screen
+            // changed which fields and which steps the wizard showed.
+            this.wizardService.patchSettings({
               SearchExistingVisitor: selfRegSettings.SearchExistingVisitor ?? currentSettings.SearchExistingVisitor,
               EnableWhitelistValidation: selfRegSettings.EnableWhitelistValidation ?? currentSettings.EnableWhitelistValidation,
               AptEndTime: selfRegSettings.AptEndTime ?? currentSettings.AptEndTime ?? ''
