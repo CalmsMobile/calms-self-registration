@@ -20,11 +20,14 @@ import { ToastModule } from 'primeng/toast';
 import { StepTermsComponent } from '../steps/step-terms/step-terms.component';
 import { RouterLink } from '@angular/router';
 import { CheckboxModule } from 'primeng/checkbox';
+import { DialogModule } from 'primeng/dialog';
 import { LanguageSelectorComponent } from '../../../../shared/components/language-selector/language-selector.component';
 
 interface Branch {
   RefBranchSeqID: number;
   Branch_Name: string;
+  /** Branch row flag: false means self-registration via kiosk/URL is not allowed here. */
+  IsCheckInAllowedInKiosknURL?: boolean;
 }
 
 interface Category {
@@ -42,6 +45,7 @@ interface Category {
     FormsModule,
     SelectModule,
     ButtonModule, CheckboxModule,
+    DialogModule,
     ToastModule,
     StepTermsComponent,
     TranslatePipe,
@@ -821,19 +825,35 @@ export class HomePageComponent implements AfterViewChecked {
     return new Promise((resolve, reject) => {
       this.api.GetSelfRegistrationWelcomePageData().subscribe({
         next: async (data: any) => {
+          // Raised only after Table1 is read, so the dialog shows the configured
+          // BranchnotAllowDefaultText rather than the hardcoded fallback.
+          let blockedSingleBranch = false;
+
           // Map branches from Table
           if (data?.Table?.length) {
             this.branchList = data.Table.map((b: any) => ({
               RefBranchSeqID: b.BranchSeqId,
-              Branch_Name: b.Name
+              Branch_Name: b.Name,
+              // Carried through so branch selection can be blocked — the map
+              // previously dropped every field but the id and name.
+              IsCheckInAllowedInKiosknURL: b.IsCheckInAllowedInKiosknURL
             }));
 
             // Auto-select when only one branch and not from query
             if (this.branchList.length === 1 && !this.isBranchFromQuery) {
-              this.selectedBranch = this.branchList[0].RefBranchSeqID;
-              this.wizardService.currentBranchID = this.selectedBranch;
-              // Trigger full branch-selection flow (loads categories, settings, host data)
-              await this.onBranchChange(this.selectedBranch);
+              const onlyBranch = this.branchList[0];
+              if (!this.isCheckInAllowedForBranch(onlyBranch.RefBranchSeqID)) {
+                // Do not auto-select a branch the visitor cannot register at —
+                // entering it would load its settings, categories and host data
+                // only to be refused. Deferred rather than shown here because
+                // BranchnotAllowDefaultText lives in Table1, processed below.
+                blockedSingleBranch = true;
+              } else {
+                this.selectedBranch = onlyBranch.RefBranchSeqID;
+                this.wizardService.currentBranchID = this.selectedBranch;
+                // Trigger full branch-selection flow (loads categories, settings, host data)
+                await this.onBranchChange(this.selectedBranch);
+              }
             } else if (this.currentLanguage) {
               // Multi-branch: just load labels for the current language
               await this.getSelfRegistrationSettings();
@@ -888,6 +908,10 @@ export class HomePageComponent implements AfterViewChecked {
             }
 
 
+          }
+
+          if (blockedSingleBranch) {
+            this.branchNotAllowedVisible = true;
           }
 
           // Only set loading to false if not from query (query flow handles it separately)
@@ -964,6 +988,10 @@ export class HomePageComponent implements AfterViewChecked {
   }
 
   async onBranchChange(newValue: any) {
+    // Refuse before any branch data loads, so a blocked branch never partially
+    // initialises the wizard behind the dialog.
+    if (this.blockBranchIfNotAllowed(newValue)) return;
+
     this.isLoading = true;
     let lsBranchName = this.getBranchName(newValue);
 
@@ -1299,6 +1327,62 @@ export class HomePageComponent implements AfterViewChecked {
     this.sharedService.setAccessDenied(false);
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * A branch may be configured to refuse self-registration from the kiosk/URL
+   * flow (branch row flag IsCheckInAllowedInKiosknURL === false). Selecting one
+   * shows BranchnotAllowDefaultText from the welcome settings; acknowledging it
+   * returns to the branch-selection screen.
+   *
+   * Only an explicit `false` blocks — a branch whose row omits the flag keeps
+   * working, so a partially-configured backend can't lock everyone out.
+   */
+  branchNotAllowedVisible = false;
+
+  get branchNotAllowedMessage(): string {
+    return this.initializePageSettings?.BranchnotAllowDefaultText
+      || 'Please proceed to the Concierge Desk for registration.';
+  }
+
+  private isCheckInAllowedForBranch(branchSeqId: any): boolean {
+    const branch = this.branchList.find(
+      (b: any) => String(b.RefBranchSeqID) === String(branchSeqId)
+    );
+    return branch?.IsCheckInAllowedInKiosknURL !== false;
+  }
+
+  /** True when the branch is blocked — caller should stop and not load it. */
+  private blockBranchIfNotAllowed(branchSeqId: any): boolean {
+    if (this.isCheckInAllowedForBranch(branchSeqId)) return false;
+    this.branchNotAllowedVisible = true;
+    this.isLoading = false;
+    return true;
+  }
+
+  /** OK on the blocked-branch dialog: back to the initial branch-selection screen. */
+  dismissBranchNotAllowed(): void {
+    this.branchNotAllowedVisible = false;
+    this.selectedBranch = null;
+    this.selectedCategory = null;
+    this.categories = [];
+    this.termsValid = false;
+    this.termsAccepted = false;
+    this.termsScrolledToBottom = false;
+    this.termsAutoChecked = false;
+    this.wizardService.currentBranchID = '';
+    this.wizardService.setSettings(null);
+
+    // With a single branch the selector is hidden (see the branchList.length !== 1
+    // guard in the template), so clearing the selection would leave a welcome
+    // screen with nothing to act on. There is genuinely nowhere to go back to —
+    // keep the reason on screen instead of a dead end.
+    if (this.branchList.length === 1) {
+      this.isAccessDenied = true;
+      this.hasInvalidUrl = true;
+      this.errorMessage = this.branchNotAllowedMessage;
+      this.sharedService.setAccessDenied(true);
+    }
   }
 
   goBack(): void {
