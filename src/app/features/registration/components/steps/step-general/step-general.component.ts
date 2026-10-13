@@ -69,6 +69,26 @@ const SHARED_VISIT_FIELDS: readonly string[] = [
   'facilitySelection',
 ];
 /**
+ * Booking-level fields that "Save & Add" still clears, so each guest picks their
+ * own host, location and purpose. The appointment date/time is kept for the next
+ * guest (it stays in SHARED_VISIT_FIELDS). AUDF* controls are cleared
+ * too (by prefix). Fields locked by the appointment flow, the hc share URL or
+ * direct check-in are left alone — see resetVisitorFieldsForNextGuest().
+ */
+const CLEARED_ON_NEXT_GUEST_FIELDS: readonly string[] = [
+  'host',
+  'hostName',
+  'hostSeqId',
+  'department',
+  'meeting_location',
+  'roomDesc',
+  'floor',
+  'purpose',
+  'purposeDesc',
+  'remarks',
+];
+
+/**
  * Fields the admin/host fills in when creating an appointment. In the appointment
  * flow the visitor may review them but never change them.
  *
@@ -2694,19 +2714,27 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Clear every visitor-specific control, keeping the booking-level ones listed in
-   * SHARED_VISIT_FIELDS (plus appointment UDFs) so the next guest stays on the
-   * same visit.
+   * Clear every visitor-specific control plus the booking fields in
+   * CLEARED_ON_NEXT_GUEST_FIELDS and all appointment UDFs. The remaining
+   * SHARED_VISIT_FIELDS (visit type, event, facility booking, ...) are kept.
    */
   private resetVisitorFieldsForNextGuest(form: FormGroup): void {
+    const clearedBookingFields: string[] = [];
+
     Object.keys(form.controls).forEach(name => {
       // 'visitors' is a FormArray of legacy per-visitor groups, not a field.
       if (name === 'visitors') return;
-      if (SHARED_VISIT_FIELDS.includes(name)) return;
-      if (name.startsWith('AUDF')) return;
+      const isClearedBookingField = CLEARED_ON_NEXT_GUEST_FIELDS.includes(name) || name.startsWith('AUDF');
+      if (SHARED_VISIT_FIELDS.includes(name) && !isClearedBookingField) return;
       // Admin-owned and disabled in the appointment flow — clearing these would
       // wipe the booking and the visitor could not re-enter them.
       if (this.lockedFieldsInAppointmentFlow.includes(name)) return;
+      // Read-only booking fields (host from the hc share URL, its department,
+      // direct check-in schedule) can't be re-entered by the visitor either.
+      if (isClearedBookingField && this.isFieldDisabled(name)) return;
+      // A hidden host control carries the branch default host — nothing to re-pick.
+      if (this.shouldHideHostControl && ['host', 'hostName', 'hostSeqId'].includes(name)) return;
+      if (isClearedBookingField) clearedBookingFields.push(name);
 
       const control = form.get(name);
       if (!control) return;
@@ -2725,6 +2753,16 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // the previous guest's ID rules and a stranded "ID Expiry" field. Replay the
     // same cleared-selection handler that clearField() uses.
     this.onIdTypeChange({ value: null });
+
+    // Same idea for the booking dropdowns: host/department drive the filtered
+    // host list and the auto-filled floor/department.
+    if (clearedBookingFields.includes('host')) this.onHostChange({ value: null });
+    if (clearedBookingFields.includes('department')) this.onDepartmentChange({ value: null });
+    if (clearedBookingFields.length) {
+      this.hostSearchText = '';
+      // Lists with a single option are pre-selected on load — do it again.
+      this.autoSelectSingleOptions();
+    }
 
     // Blacklist/whitelist verdicts belong to the ID we just cleared.
     this.isVisitorBlacklisted = false;
