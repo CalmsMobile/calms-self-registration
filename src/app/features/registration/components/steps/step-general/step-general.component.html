@@ -2198,7 +2198,11 @@
       <div class="m-sd-card-inputs">
         <div class="m-sd-input-wrap">
           <i class="pi pi-calendar m-sd-input-icon"></i>
-          <input type="date" class="m-sd-input" [(ngModel)]="scheduleStartDateStr" [min]="minDateStr" [max]="scheduleStartMaxDateStr" />
+          <p-datepicker [(ngModel)]="scheduleStartDate" (ngModelChange)="onMobileScheduleDateChange()"
+            [minDate]="scheduleStartMinDate" [maxDate]="scheduleStartMaxDate"
+            dateFormat="dd M yy" [readonlyInput]="true" appendTo="body" panelStyleClass="m-sd-datepicker-panel"
+            styleClass="m-sd-datepicker" inputStyleClass="m-sd-input">
+          </p-datepicker>
         </div>
         <div class="m-sd-input-wrap">
           <i class="pi pi-clock m-sd-input-icon"></i>
@@ -2223,7 +2227,11 @@
       <div class="m-sd-card-inputs">
         <div class="m-sd-input-wrap">
           <i class="pi pi-calendar m-sd-input-icon"></i>
-          <input type="date" class="m-sd-input" [(ngModel)]="scheduleEndDateStr" [min]="scheduleStartDateStr || minDateStr" [max]="scheduleEndMaxDateStr" />
+          <p-datepicker [(ngModel)]="scheduleEndDate" (ngModelChange)="onMobileScheduleDateChange()"
+            [minDate]="scheduleStartDate || scheduleStartMinDate" [maxDate]="scheduleEndMaxDate"
+            dateFormat="dd M yy" [readonlyInput]="true" appendTo="body" panelStyleClass="m-sd-datepicker-panel"
+            styleClass="m-sd-datepicker" inputStyleClass="m-sd-input">
+          </p-datepicker>
         </div>
         <div class="m-sd-input-wrap">
           <i class="pi pi-clock m-sd-input-icon"></i>

@@ -616,6 +616,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.checkScheduleTimes();
   }
 
+  onMobileScheduleDateChange(): void {
+    this.enforceScheduleDateBounds();
+    this.checkScheduleTimes();
+  }
+
   applySchedule(): void {
     this.enforceScheduleDateBounds();
     if (!this.scheduleStartDate || !this.scheduleEndDate) return;

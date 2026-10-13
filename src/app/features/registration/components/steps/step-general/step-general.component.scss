@@ -2292,6 +2292,31 @@ textarea {
     }
   }
 
+  /* p-datepicker renders its own input, so the .m-sd-input styles need ::ng-deep */
+  .m-sd-input-wrap ::ng-deep .m-sd-datepicker {
+    width: 100%;
+
+    .m-sd-input {
+      width: 100%;
+      height: 44px !important;
+      padding: 0 10px 0 30px !important;
+      border: 1.5px solid #e0e0e0 !important;
+      border-radius: 10px !important;
+      background: white !important;
+      font-family: 'Poppins', sans-serif !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      color: #3b3b3b !important;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+
+      &:focus {
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 3px rgba(245, 179, 1, 0.12) !important;
+      }
+    }
+  }
+
   /* Connector between start and end */
   .m-sd-connector {
     display: flex;
