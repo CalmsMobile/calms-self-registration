@@ -312,6 +312,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Pending action after photo capture dialog resolves
   pendingAction: 'goNext' | 'addVisitor' | null = null;
 
+  // CheckVehicleBlacklist result for the vehicle number in the form
+  isVehicleBlacklisted = false;
+
   // Face validation (live camera polling + photo upload REST)
   faceValidationFeedback: string[] = [];
   isFaceStable = false;
@@ -2121,6 +2124,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       case 'purpose': this.onPurposeChange({ value: null }); break;
       case 'facilitySelection': this.onFacilitySelectionChange(''); break;
       case 'visitor_id': this.isVisitorBlacklisted = false; this.isVisitorNotWhitelisted = false; break;
+      case 'vehicle_number': this.isVehicleBlacklisted = false; break;
     }
   }
 
@@ -2764,7 +2768,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.autoSelectSingleOptions();
     }
 
-    // Blacklist/whitelist verdicts belong to the ID we just cleared.
+    // Blacklist/whitelist verdicts belong to the ID/vehicle we just cleared.
+    this.isVehicleBlacklisted = false;
     this.isVisitorBlacklisted = false;
     this.isVisitorNotWhitelisted = false;
 
@@ -4749,6 +4754,50 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Check every entered vehicle number (current form + saved guests) against
+   * CheckVehicleBlacklist. Code 10 = allowed; anything else blocks Next and shows
+   * the API's description. No-op (true) when no vehicle number is entered; fails
+   * open on API error, like the whitelist check.
+   */
+  private async ensureVehicleValidated(): Promise<boolean> {
+    const currentVehicle = (this.generalForm.get('vehicle_number')?.value || '').toString().trim();
+    const savedVehicles = this.isMultipleVisitorMode
+      ? this.savedVisitors.map(v => (v?.vehicle_number || '').toString().trim())
+      : [];
+    const vehicles = [...new Set([currentVehicle, ...savedVehicles].filter(Boolean))];
+    if (!vehicles.length) return true;
+
+    const branchId = this.wizardService.currentBranchID;
+    for (const vehicle of vehicles) {
+      try {
+        const result: any = await firstValueFrom(this.api.CheckVehicleBlacklist(vehicle, branchId));
+        const row = result?.Table?.[0];
+        if (row?.Code === 10) continue;
+
+        this.isVehicleBlacklisted = vehicle === currentVehicle;
+        const message = row?.description || row?.Description
+          || this.labelService.getLabel('registration_page_vehicle_blacklisted_alert', 'caption')
+          || 'The vehicle number entered is not authorized for check-in. Please contact the security officer for further assistance.';
+        this.showMessage({
+          severity: 'error',
+          summary: this.labelService.getLabel('registration_page_vehicle_blacklisted_alert_title', 'caption') || 'Vehicle Not Authorized',
+          detail: `${vehicle}: ${message}`,
+          life: 5000
+        });
+        if (this.isVehicleBlacklisted) {
+          this.generalForm.get('vehicle_number')?.markAsTouched();
+          this.scrollToFirstError();
+        }
+        return false;
+      } catch {
+        // fail open — API errors must not block registration
+      }
+    }
+    this.isVehicleBlacklisted = false;
+    return true;
+  }
+
   onStartDateChange(event: any): void {
     const startDate = event;
     // Handle start date change logic here
@@ -5173,6 +5222,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     console.log('[goNext] isImageCaptureEnabled:', this.isImageCaptureEnabled, '| ImageUploadRequired:', this.settings?.ImageUploadRequired);
     // Enforce whitelist on the save button (not only on blur).
     if (!(await this.ensureWhitelistValidated())) return;
+    if (!(await this.ensureVehicleValidated())) return;
     // Whenever image capture is enabled — mandatory OR optional — open the photo
     // dialog using the lightweight check used by "Save and Add"
     // (isCurrentVisitorFormValid). Full validateForm() runs after the dialog in
