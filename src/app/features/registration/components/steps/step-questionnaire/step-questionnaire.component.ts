@@ -335,9 +335,9 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Settings Table1.SafetyPassingScore — the % of safety brief questions that must
-   * be answered correctly. null when not configured (or not a positive number), in
-   * which case every required safety brief question must be correct, as before.
+   * Settings Table1.SafetyPassingScore — the % of ValidationRequired questions that
+   * must be answered correctly. null when not configured (or not a positive number),
+   * in which case every ValidationRequired question must be correct, as before.
    */
   private get safetyPassingScore(): number | null {
     const raw = Number(this.wizardService.getSettings()?.SafetyPassingScore);
@@ -366,61 +366,49 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   validateQuestionnaire(): void {
     this.validationErrors = {};
     let hasUnanswered = false;
-    let hasWrongAnswer = false;
     let hasSafetyBriefError = false;
 
+    // Required questions that have correct answers to check against.
+    const gradable = this.questions.filter(q => q.ValidationRequired && this.getCorrectAnswers(q).length > 0);
     const passingScore = this.safetyPassingScore;
-    // Scored safety brief questions are judged as a group (below), not one by one.
-    const scoreSafetyBrief = passingScore !== null;
 
     this.questions.forEach(question => {
-      const userAnswers = this.getUserAnswers(question);
-      const isScoredSafety = scoreSafetyBrief && question.IsSafetyBriefQuest === true;
-
-      if (question.ValidationRequired && userAnswers.length === 0) {
+      if (question.ValidationRequired && this.getUserAnswers(question).length === 0) {
         this.validationErrors[question.QuestionariesSeqId] = true;
         hasUnanswered = true;
-        if (question.IsSafetyBriefQuest && !isScoredSafety) hasSafetyBriefError = true;
-        return;
-      }
-
-      if (isScoredSafety) return;
-
-      if (question.ValidationRequired && !this.isAnswerCorrect(question, userAnswers)) {
-        this.validationErrors[question.QuestionariesSeqId] = true;
-        hasWrongAnswer = true;
-        if (question.IsSafetyBriefQuest) hasSafetyBriefError = true;
       }
     });
 
-    // Safety brief score: % of gradable safety questions (those with CrtAnswers)
-    // answered correctly must reach SafetyPassingScore. Below it, every wrong
-    // safety answer is flagged so the visitor can review them.
-    if (!scoreSafetyBrief && this.safetyBriefQuestions.length) {
-      console.log('SafetyPassingScore not set — every required safety question must be correct. Raw value:', this.wizardService.getSettings()?.SafetyPassingScore);
+    // Scoring: % of gradable questions answered correctly must reach
+    // SafetyPassingScore (or 100% when it isn't set). Below it, every wrong
+    // answer is flagged so the visitor can review them.
+    const wrong = gradable.filter(q =>
+      !this.validationErrors[q.QuestionariesSeqId] && !this.isAnswerCorrect(q, this.getUserAnswers(q))
+    );
+    const unansweredGradable = gradable.filter(q => this.validationErrors[q.QuestionariesSeqId]).length;
+    const correctCount = gradable.length - wrong.length - unansweredGradable;
+    const scorePercent = gradable.length ? (correctCount / gradable.length) * 100 : 100;
+    const requiredPercent = passingScore ?? 100;
+    const passed = scorePercent >= requiredPercent;
+
+    console.log('=== QUESTIONNAIRE SCORE ===');
+    console.log('Gradable questions (ValidationRequired):', gradable.length);
+    console.log('Correct answers:', correctCount);
+    console.log('Wrong answers:', wrong.length, wrong.map(q => q.QuestionariesSeqId));
+    console.log('Unanswered:', unansweredGradable);
+    console.log('% match:', scorePercent.toFixed(2) + '%', '| SafetyPassingScore:',
+      passingScore !== null ? passingScore + '%' : `not set (raw: ${this.wizardService.getSettings()?.SafetyPassingScore}) → 100%`,
+      '|', passed ? 'PASS' : 'FAIL');
+    console.log('===========================');
+
+    if (!passed) {
+      wrong.forEach(q => {
+        this.validationErrors[q.QuestionariesSeqId] = true;
+        if (q.IsSafetyBriefQuest) hasSafetyBriefError = true;
+      });
     }
 
-    if (scoreSafetyBrief) {
-      const gradable = this.safetyBriefQuestions.filter(q => this.getCorrectAnswers(q).length > 0);
-      const wrong = gradable.filter(q => !this.isAnswerCorrect(q, this.getUserAnswers(q)));
-      const scorePercent = gradable.length
-        ? ((gradable.length - wrong.length) / gradable.length) * 100
-        : 100;
-
-      console.log('=== SAFETY BRIEF SCORE ===');
-      console.log('Gradable safety questions:', gradable.length);
-      console.log('Correct answers:', gradable.length - wrong.length);
-      console.log('Wrong answers:', wrong.length, wrong.map(q => q.QuestionariesSeqId));
-      console.log('% match:', scorePercent.toFixed(2) + '%', '| SafetyPassingScore:', passingScore + '%', '|', scorePercent >= passingScore ? 'PASS' : 'FAIL');
-      console.log('==========================');
-
-      if (scorePercent < passingScore) {
-        wrong.forEach(q => this.validationErrors[q.QuestionariesSeqId] = true);
-        hasSafetyBriefError = true;
-      }
-    }
-
-    // Safety brief wrong answer → show incorrect modal with rewatch button
+    // A wrong safety brief answer → incorrect modal with the rewatch button
     if (hasSafetyBriefError) {
       this.alertMessage = this.labelService.getLabel('questionnaires_safety_briefing_qn_wrong_answer_alert', 'caption');
       this.modalType = 'incorrect';
@@ -433,7 +421,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
 
     if (isValid) {
       this.saveFormData();
-    } else if (hasUnanswered || hasWrongAnswer) {
+    } else {
       this.alertMessage = this.labelService.getLabel('questionnaires_wrong_answer_alert', 'caption');
       this.modalType = 'required';
     }
