@@ -334,101 +334,106 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Settings Table1.SafetyPassingScore — the % of safety brief questions that must
+   * be answered correctly. null when not configured (or not a positive number), in
+   * which case every required safety brief question must be correct, as before.
+   */
+  private get safetyPassingScore(): number | null {
+    const raw = Number(this.wizardService.getSettings()?.SafetyPassingScore);
+    if (!Number.isFinite(raw) || raw <= 0) return null;
+    return Math.min(raw, 100);
+  }
+
+  private getUserAnswers(question: Question): string[] {
+    if (this.isMultipleAnswerQuestion(question)) {
+      return this.getQuestionArray(question.QuestionariesSeqId).value || [];
+    }
+    const value = this.getQuestionControl(question.QuestionariesSeqId).value;
+    return value ? [value] : [];
+  }
+
+  /** Radio: the answer is one of CrtAnswers. Checkbox: the selection matches CrtAnswers exactly. */
+  private isAnswerCorrect(question: Question, userAnswers: string[]): boolean {
+    const correctAnswers = this.getCorrectAnswers(question);
+    if (correctAnswers.length === 0) return true;
+    if (this.isMultipleAnswerQuestion(question)) {
+      return JSON.stringify([...userAnswers].sort()) === JSON.stringify([...correctAnswers].sort());
+    }
+    return correctAnswers.includes(userAnswers[0] || '');
+  }
+
   validateQuestionnaire(): void {
     this.validationErrors = {};
-    let isValid = true;
     let hasUnanswered = false;
     let hasWrongAnswer = false;
     let hasSafetyBriefError = false;
-    let firstSafetyQuestion: Question | null = null;
+
+    const passingScore = this.safetyPassingScore;
+    // Scored safety brief questions are judged as a group (below), not one by one.
+    const scoreSafetyBrief = passingScore !== null;
 
     this.questions.forEach(question => {
-      const isMultipleChoice = this.isMultipleAnswerQuestion(question);
-      const correctAnswers = this.getCorrectAnswers(question);
-      let userAnswers: string[] = [];
-      let isAnswerCorrect = false;
+      const userAnswers = this.getUserAnswers(question);
+      const isScoredSafety = scoreSafetyBrief && question.IsSafetyBriefQuest === true;
 
-      if (isMultipleChoice) {
-        // Checkbox question - multiple answers
-        const formArray = this.getQuestionArray(question.QuestionariesSeqId);
-        userAnswers = formArray.value || [];
-        
-        // Check if required field has answers
-        if (question.ValidationRequired && userAnswers.length === 0) {
-          this.validationErrors[question.QuestionariesSeqId] = true;
-          isValid = false;
-          hasUnanswered = true;
-          
-          if (question.IsSafetyBriefQuest && !hasSafetyBriefError) {
-            hasSafetyBriefError = true;
-            firstSafetyQuestion = question;
-          }
-          return;
-        }
-        
-        // Check if answers match correct answers (must match exactly)
-        if (question.ValidationRequired && correctAnswers.length > 0) {
-          const sortedUserAnswers = [...userAnswers].sort();
-          const sortedCorrectAnswers = [...correctAnswers].sort();
-          isAnswerCorrect = JSON.stringify(sortedUserAnswers) === JSON.stringify(sortedCorrectAnswers);
-        } else {
-          isAnswerCorrect = true; // No validation required
-        }
-      } else {
-        // Radio button question - single answer
-        const control = this.getQuestionControl(question.QuestionariesSeqId);
-        const userAnswer = control?.value;
-        
-        // Check if required field has answer
-        if (question.ValidationRequired && !userAnswer) {
-          this.validationErrors[question.QuestionariesSeqId] = true;
-          isValid = false;
-          hasUnanswered = true;
-          
-          if (question.IsSafetyBriefQuest && !hasSafetyBriefError) {
-            hasSafetyBriefError = true;
-            firstSafetyQuestion = question;
-          }
-          return;
-        }
-        
-        // Check if answer matches correct answer
-        if (question.ValidationRequired && correctAnswers.length > 0) {
-          isAnswerCorrect = correctAnswers.includes(userAnswer || '');
-        } else {
-          isAnswerCorrect = true; // No validation required
-        }
+      if (question.ValidationRequired && userAnswers.length === 0) {
+        this.validationErrors[question.QuestionariesSeqId] = true;
+        hasUnanswered = true;
+        if (question.IsSafetyBriefQuest && !isScoredSafety) hasSafetyBriefError = true;
+        return;
       }
 
-      if (question.ValidationRequired && !isAnswerCorrect) {
+      if (isScoredSafety) return;
+
+      if (question.ValidationRequired && !this.isAnswerCorrect(question, userAnswers)) {
         this.validationErrors[question.QuestionariesSeqId] = true;
-        isValid = false;
         hasWrongAnswer = true;
-        
-        // Track first safety brief question with error
-        if (question.IsSafetyBriefQuest && !hasSafetyBriefError) {
-          hasSafetyBriefError = true;
-          firstSafetyQuestion = question;
-        }
+        if (question.IsSafetyBriefQuest) hasSafetyBriefError = true;
       }
     });
 
+    // Safety brief score: % of gradable safety questions (those with CrtAnswers)
+    // answered correctly must reach SafetyPassingScore. Below it, every wrong
+    // safety answer is flagged so the visitor can review them.
+    if (!scoreSafetyBrief && this.safetyBriefQuestions.length) {
+      console.log('SafetyPassingScore not set — every required safety question must be correct. Raw value:', this.wizardService.getSettings()?.SafetyPassingScore);
+    }
+
+    if (scoreSafetyBrief) {
+      const gradable = this.safetyBriefQuestions.filter(q => this.getCorrectAnswers(q).length > 0);
+      const wrong = gradable.filter(q => !this.isAnswerCorrect(q, this.getUserAnswers(q)));
+      const scorePercent = gradable.length
+        ? ((gradable.length - wrong.length) / gradable.length) * 100
+        : 100;
+
+      console.log('=== SAFETY BRIEF SCORE ===');
+      console.log('Gradable safety questions:', gradable.length);
+      console.log('Correct answers:', gradable.length - wrong.length);
+      console.log('Wrong answers:', wrong.length, wrong.map(q => q.QuestionariesSeqId));
+      console.log('% match:', scorePercent.toFixed(2) + '%', '| SafetyPassingScore:', passingScore + '%', '|', scorePercent >= passingScore ? 'PASS' : 'FAIL');
+      console.log('==========================');
+
+      if (scorePercent < passingScore) {
+        wrong.forEach(q => this.validationErrors[q.QuestionariesSeqId] = true);
+        hasSafetyBriefError = true;
+      }
+    }
+
     // Safety brief wrong answer → show incorrect modal with rewatch button
-    if (hasSafetyBriefError && firstSafetyQuestion) {
+    if (hasSafetyBriefError) {
       this.alertMessage = this.labelService.getLabel('questionnaires_safety_briefing_qn_wrong_answer_alert', 'caption');
       this.modalType = 'incorrect';
       this.wizardService.setStepValid(false);
       return;
     }
 
+    const isValid = Object.keys(this.validationErrors).length === 0;
     this.wizardService.setStepValid(isValid);
 
     if (isValid) {
       this.saveFormData();
-    } else if (hasUnanswered) {
-      this.alertMessage = this.labelService.getLabel('questionnaires_wrong_answer_alert', 'caption');
-      this.modalType = 'required';
-    } else if (hasWrongAnswer) {
+    } else if (hasUnanswered || hasWrongAnswer) {
       this.alertMessage = this.labelService.getLabel('questionnaires_wrong_answer_alert', 'caption');
       this.modalType = 'required';
     }
