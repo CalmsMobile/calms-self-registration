@@ -4776,8 +4776,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         if (row?.Code === 10) continue;
 
         this.isVehicleBlacklisted = vehicle === currentVehicle;
-        const message = row?.description || row?.Description
-          || this.labelService.getLabel('registration_page_vehicle_blacklisted_alert', 'caption')
+        // Translated label first (ScreenName "Questionnaires" + Title "Vehicle
+        // Blacklist Error"), then the API's own description.
+        const message = this.labelService.getLabel('questionnaires_vehicle_blacklist_error', 'caption')
+          || row?.description || row?.Description
           || 'The vehicle number entered is not authorized for check-in. Please contact the security officer for further assistance.';
         this.showMessage({
           severity: 'error',
