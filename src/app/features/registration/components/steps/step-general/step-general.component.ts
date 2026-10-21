@@ -4783,7 +4783,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           || 'The vehicle number entered is not authorized for check-in. Please contact the security officer for further assistance.';
         this.showMessage({
           severity: 'error',
-          summary: this.labelService.getLabel('registration_page_vehicle_blacklisted_alert_title', 'caption') || 'Vehicle Not Authorized',
+          summary: this.labelService.getLabel('questionnaires_vehicle_blacklist_error_title', 'caption') || 'Vehicle Not Authorized',
           detail: `${vehicle}: ${message}`,
           life: 5000
         });

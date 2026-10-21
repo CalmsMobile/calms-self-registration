@@ -487,8 +487,40 @@ export class WizardService {
     return step ? this.formDataStore.value[step] : this.formDataStore.value;
   }
 
-  getFinalRegistrationData(): any {
+  /**
+   * Booking fields that step-general's "Save & Add" clears from the form for the
+   * next guest. Each saved guest still carries them, but the payload has one
+   * host/location/purpose per submission and reads it from the form — so once the
+   * last guest is saved and the form is blank, they would be sent empty.
+   */
+  private static readonly GUEST_BOOKING_FIELDS = [
+    'host', 'hostName', 'hostSeqId', 'department', 'meeting_location', 'roomDesc',
+    'floor', 'purpose', 'purposeDesc', 'remarks',
+  ];
+
+  /**
+   * formDataStore value for building payloads: any empty booking field in
+   * `general` falls back to the first saved guest (the primary visitor, as in
+   * getPrimaryVisitorFullName()).
+   */
+  private getSubmissionFormData(): any {
     const formData = this.formDataStore.value;
+    const general = formData.general;
+    const primaryGuest = (general?.savedVisitors || [])[0];
+    if (!general || !primaryGuest) return formData;
+
+    const isEmpty = (v: any) => v === null || v === undefined || v === '';
+    const patched = { ...general };
+    WizardService.GUEST_BOOKING_FIELDS.forEach(field => {
+      if (isEmpty(patched[field]) && !isEmpty(primaryGuest[field])) {
+        patched[field] = primaryGuest[field];
+      }
+    });
+    return { ...formData, general: patched };
+  }
+
+  getFinalRegistrationData(): any {
+    const formData = this.getSubmissionFormData();
     const settings = this.getSettings();
     const masterData = this.getmasterData();
 
@@ -579,7 +611,7 @@ export class WizardService {
 
   // New method to prepare data for VisitorAckSave API
   getVisitorAckData(): VisitorAck {
-    const formData = this.formDataStore.value;
+    const formData = this.getSubmissionFormData();
     const settings = this.getSettings();
     const generalData = formData.general || {};
 
@@ -697,7 +729,7 @@ export class WizardService {
     return visitorAck;
   }
   getDirectCheckInPayload(): any {
-    const formData = this.formDataStore.value;
+    const formData = this.getSubmissionFormData();
     const generalData = formData.general || {};
     const master = this.getmasterData();
     const settings = this.getSettings();
@@ -973,8 +1005,35 @@ export class WizardService {
       const genderDesc = (typeof data.gender === 'object' && data.gender !== null)
         ? (data.gender.Name || '') : (data.gender || '');
       const rawPhoto = data.profilePreview || (typeof data.profile === 'string' ? data.profile : '') || '';
+
+      // Each guest's own booking fields (Save & Add clears them per guest), falling
+      // back to the top-level value when this guest has none.
+      const pick = (field: string) => {
+        const own = data[field];
+        return own === null || own === undefined || own === '' ? generalData[field] : own;
+      };
+      const hostId = pick('host')?.toString() || '';
+      const hostRow = masterData?.Table?.find((h: any) => (h.HOSTIC ?? h.HostIC)?.toString() === hostId);
+      const deptId = pick('department')?.toString() || '';
+      const deptRow = masterData?.Table5?.find((d: any) => (d.DepartmentSeqId ?? d.dept_id)?.toString() === deptId);
+      const roomId = (pick('meeting_location') || pick('room'))?.toString() || '';
+      const roomRow = masterData?.Table1?.find((r: any) => (r.MeetingRoomSeqId || r.SeqId)?.toString() === roomId);
+      const floorId = pick('floor')?.toString() || '';
+      const floorRow = masterData?.Table2?.find((f: any) => f.floor_id?.toString() === floorId);
+
       return {
         MySelf: isSelf,
+        HostId: hostId,
+        HostDesc: hostRow?.HOSTNAME || pick('hostName') || '',
+        HostDeptId: deptId,
+        HostDeptDesc: deptRow?.dept_desc || deptRow?.DName || deptId,
+        RoomId: roomId,
+        RoomDesc: roomRow?.MeetingRoomDesc || pick('roomDesc') || '',
+        FloorId: floorId,
+        FloorDesc: floorRow?.floor_desc || '',
+        PurposeId: pick('purpose')?.toString() || '',
+        PurposeDesc: pick('purposeDesc') || '',
+        Remarks: pick('remarks') || '',
         Photo: stripPhotoPrefix(rawPhoto),
         // Send as a JSON array string for DB storage (e.g. "[0.0421,-0.0817,...]").
         FaceVector: Array.isArray(data.faceVector) ? JSON.stringify(data.faceVector) : '',
@@ -1112,7 +1171,7 @@ export class WizardService {
     visitType: string; visitPurpose: string;
     branch: string;
   } {
-    const formData = this.formDataStore.value;
+    const formData = this.getSubmissionFormData();
     const general = formData.general || {};
     const master = this.getmasterData();
     const fmt = (date: any): string => {
