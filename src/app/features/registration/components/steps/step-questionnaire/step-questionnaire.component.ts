@@ -487,7 +487,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     if (safetyBriefStepIndex >= 0) {
       this.wizardService.requestStepChange(safetyBriefStepIndex);
     } else {
-      this.messageHelper.warn('Safety brief step not found', 3000);
+      this.messageHelper.warn(this.labelService.getLabel('questionnaires_safety_brief_step_not_found', 'caption') || 'Safety brief step not found', 3000);
     }
   }
 
