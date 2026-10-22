@@ -29,7 +29,7 @@ const DOCUMENT_TYPES = [
   'image/jpeg', 'image/jpg', 'image/png'
 ];
 
-const MAX_IMAGE_SIZE_MB = 5;
+const MAX_IMAGE_SIZE_MB = 7;
 const MAX_DOCUMENT_SIZE_MB = 10;
 
 @Injectable({ providedIn: 'root' })

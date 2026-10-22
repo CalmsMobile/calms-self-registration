@@ -79,6 +79,18 @@ export interface VisitorSelfData {
   AUDF9: string;
   AUDF10: string;
   MySelf: boolean;
+  // Per-guest booking fields (multi-visitor: each guest may pick their own)
+  HostId?: string;
+  HostDesc?: string;
+  HostDeptId?: string;
+  HostDeptDesc?: string;
+  RoomId?: string;
+  RoomDesc?: string;
+  FloorId?: string;
+  FloorDesc?: string;
+  PurposeId?: string;
+  PurposeDesc?: string;
+  Remarks?: string;
 }
 
 export interface VisitorAck {

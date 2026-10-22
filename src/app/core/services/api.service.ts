@@ -155,6 +155,14 @@ export class ApiService {
     return this.apiBase.post(`${this.baseUrl}/SearchVisitor`, loParam);
   }
 
+  CheckVehicleBlacklist(searchText: string, branchSeqId: string) {
+    const loParam = {
+      SearchText: searchText,
+      RefBranchSeqId: Number(branchSeqId)
+    };
+    return this.apiBase.post(`${this.baseUrl}/CheckVehicleBlacklist`, loParam);
+  }
+
   SearchVisitorWhitelist(searchText: string, branchSeqId: string) {
     const loParam = {
       SearchText: searchText,

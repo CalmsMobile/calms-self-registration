@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface FaceValidationResult {
@@ -20,11 +20,33 @@ export interface FaceValidationResult {
   face_bbox: number[] | null;
 }
 
+export interface PassportCropResult {
+  method: 'face' | 'person';
+  face_detected: boolean;
+  head_ratio: number | null;
+  crop_box: { x: number; y: number; width: number; height: number };
+  output_width: number;
+  output_height: number;
+  frame_aspect: number;
+  image_base64: string;
+}
+
 export interface FaceEmbeddingResult {
   face_detected: boolean;
   embedding: number[] | null;
   dimensions: number;
 }
+
+/**
+ * Without this, an unreachable service leaves every request hanging until the
+ * browser's own TCP timeout (tens of seconds), so the capture dialog sits busy
+ * with no way to tell "slow" from "offline". Fail fast instead and let the
+ * caller surface it.
+ *
+ * The live loop polls at 500ms, so its own in-flight guard already prevents
+ * pile-up; this cap is for the one-shot validate / crop / embedding calls.
+ */
+export const FACE_API_TIMEOUT_MS = 8000;
 
 @Injectable({ providedIn: 'root' })
 export class FaceValidationService {
@@ -36,14 +58,33 @@ export class FaceValidationService {
   validatePhoto(file: File): Observable<FaceValidationResult> {
     const formData = new FormData();
     formData.append('image', file, file.name);
-    return this.http.post<FaceValidationResult>(`${this.baseUrl}/face-validation/validate`, formData);
+    return this.http.post<FaceValidationResult>(`${this.baseUrl}/face-validation/validate`, formData)
+      .pipe(timeout(FACE_API_TIMEOUT_MS));
+  }
+
+  /**
+   * REST call — crop a photo to passport proportions (head centred and scaled).
+   *
+   * Defaults to the 120x150 portrait frame (4:5). `validate` is deliberately not
+   * sent: the capture flow has already validated the frame, and re-running
+   * detection server-side would only double the round-trip.
+   */
+  passportCrop(file: File, frameWidth = 120, frameHeight = 150): Observable<PassportCropResult> {
+    const formData = new FormData();
+    formData.append('photo', file, file.name);
+    formData.append('frame_width', String(frameWidth));
+    formData.append('frame_height', String(frameHeight));
+    formData.append('as_json', 'true');
+    return this.http.post<PassportCropResult>(`${this.baseUrl}/passportimagecrop`, formData)
+      .pipe(timeout(FACE_API_TIMEOUT_MS));
   }
 
   /** REST call — extract the InsightFace embedding (feature vector) for a photo. */
   extractEmbedding(file: File): Observable<FaceEmbeddingResult> {
     const formData = new FormData();
     formData.append('photo', file, file.name);
-    return this.http.post<FaceEmbeddingResult>(`${this.baseUrl}/extract-embedding`, formData);
+    return this.http.post<FaceEmbeddingResult>(`${this.baseUrl}/extract-embedding`, formData)
+      .pipe(timeout(FACE_API_TIMEOUT_MS));
   }
 
 }

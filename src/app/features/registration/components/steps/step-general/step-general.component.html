@@ -275,7 +275,7 @@
         <div class="input-wrap">
           <span class="field-icon"><i class="pi pi-car"></i></span>
           <input pInputText id="vehicle_number" [placeholder]="'registration_page_vehicle_number' | translate:'placeholder'"
-            formControlName="vehicle_number" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_number')}"
+            (input)="isVehicleBlacklisted = false" formControlName="vehicle_number" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_number') || isVehicleBlacklisted}"
             [disabled]="isFieldDisabled('vehicle_number')">
           @if (generalForm.get('vehicle_number')?.value && !generalForm.get('vehicle_number')?.disabled) {
           <button type="button" class="field-clear-btn" (click)="clearField('vehicle_number')" tabindex="-1"><i class="pi pi-times"></i></button>
@@ -1167,7 +1167,7 @@
         <div class="m-input-wrap">
           <span class="m-field-icon"><i class="pi pi-car"></i></span>
           <input pInputText [placeholder]="'registration_page_vehicle_number' | translate:'placeholder'"
-            formControlName="vehicle_number" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_number')}"
+            (input)="isVehicleBlacklisted = false" formControlName="vehicle_number" [class]="{'ng-invalid': isFieldInvalidRequired('vehicle_number') || isVehicleBlacklisted}"
             [disabled]="isFieldDisabled('vehicle_number')">
           @if (generalForm.get('vehicle_number')?.value && !generalForm.get('vehicle_number')?.disabled) {
           <button type="button" class="field-clear-btn" (click)="clearField('vehicle_number')" tabindex="-1"><i class="pi pi-times"></i></button>
@@ -1443,7 +1443,7 @@
             [placeholder]="'registration_page_whom_you_would_like_to_visit' | translate:'placeholder'" (onChange)="onHostChange($event)"
             optionLabel="HOSTNAME" optionValue="HOSTIC" [class]="{'ng-invalid': isFieldInvalidRequired('host')}"
             [disabled]="isFieldDisabled('host')" [showClear]="true" (onClear)="onHostChange({value: null})"
-            [filter]="true" (onFilter)="onHostSearch($event.filter)"
+            [filter]="true" [autofocusFilter]="false" (onFilter)="onHostSearch($event.filter)"
             [emptyMessage]="hostEmptyFilterMessage" [emptyFilterMessage]="hostEmptyFilterMessage"
             appendTo="body">
           </p-select>
@@ -1809,6 +1809,7 @@
   styleClass="photo-capture-dialog" [showHeader]="false" (onHide)="stopCamera()">
   <div class="photo-capture-container">
 
+
     <!-- Close button -->
     <button type="button" class="photo-close-btn" (click)="cancelPhotoCaptureDialog()">
       <i class="pi pi-times"></i>
@@ -1914,13 +1915,6 @@
       </div>
     }
 
-    <!-- REST validation spinner -->
-    @if (isFaceValidating) {
-      <div class="face-validation-feedback face-loading">
-        <i class="pi pi-spin pi-spinner"></i>
-        <span>{{ 'registration_page_checking_photo' | translate }}</span>
-      </div>
-    }
 
     <div class="photo-actions">
       @if (!capturedImage) {
@@ -1932,9 +1926,9 @@
       </button>
       } @else {
       <button type="button" class="btn-capture" (click)="useCapture()"
-        [disabled]="isFaceValidating || !isUploadPhotoValid || !captureValidationPassed"
-        [class.btn-ready]="isUploadPhotoValid && !isFaceValidating && captureValidationPassed">
-        @if (isFaceValidating) {
+        [disabled]="isFaceValidating || isCroppingPhoto || !isUploadPhotoValid || !captureValidationPassed"
+        [class.btn-ready]="isUploadPhotoValid && !isFaceValidating && !isCroppingPhoto && captureValidationPassed">
+        @if (isFaceValidating || isCroppingPhoto) {
           <i class="pi pi-spin pi-spinner"></i>
         } @else {
           <i class="pi pi-check"></i>
@@ -2204,7 +2198,11 @@
       <div class="m-sd-card-inputs">
         <div class="m-sd-input-wrap">
           <i class="pi pi-calendar m-sd-input-icon"></i>
-          <input type="date" class="m-sd-input" [(ngModel)]="scheduleStartDateStr" [min]="minDateStr" [max]="scheduleStartMaxDateStr" />
+          <p-datepicker [(ngModel)]="scheduleStartDate" (ngModelChange)="onMobileScheduleDateChange()"
+            [minDate]="scheduleStartMinDate" [maxDate]="scheduleStartMaxDate"
+            dateFormat="dd M yy" [readonlyInput]="true" appendTo="body" panelStyleClass="m-sd-datepicker-panel"
+            styleClass="m-sd-datepicker" inputStyleClass="m-sd-input">
+          </p-datepicker>
         </div>
         <div class="m-sd-input-wrap">
           <i class="pi pi-clock m-sd-input-icon"></i>
@@ -2229,7 +2227,11 @@
       <div class="m-sd-card-inputs">
         <div class="m-sd-input-wrap">
           <i class="pi pi-calendar m-sd-input-icon"></i>
-          <input type="date" class="m-sd-input" [(ngModel)]="scheduleEndDateStr" [min]="scheduleStartDateStr || minDateStr" [max]="scheduleEndMaxDateStr" />
+          <p-datepicker [(ngModel)]="scheduleEndDate" (ngModelChange)="onMobileScheduleDateChange()"
+            [minDate]="scheduleStartDate || scheduleStartMinDate" [maxDate]="scheduleEndMaxDate"
+            dateFormat="dd M yy" [readonlyInput]="true" appendTo="body" panelStyleClass="m-sd-datepicker-panel"
+            styleClass="m-sd-datepicker" inputStyleClass="m-sd-input">
+          </p-datepicker>
         </div>
         <div class="m-sd-input-wrap">
           <i class="pi pi-clock m-sd-input-icon"></i>

@@ -97,6 +97,11 @@
 .layout {
   display: grid;
   grid-template-columns: 0.8fr 1px 1.2fr;
+  // Pin the row to the container height. Without it the implicit row is `auto`,
+  // so it grows to fit .right's content and overflows this box — .right's
+  // `max-height: 100%` then resolves against the overgrown row, never
+  // constrains, never scrolls, and `overflow: hidden` crops the actions row.
+  grid-template-rows: minmax(0, 1fr);
   gap: 40px;
   align-items: stretch;
   margin-top: 45px;
@@ -157,7 +162,11 @@
   overflow-x: hidden;
   min-height: 0;
   padding-right: 40px;
-  padding-bottom: 0;
+  // Clearance for the actions row must live here, not as margin-bottom on the
+  // last child: a scroll container does not reliably add a final child's bottom
+  // margin to its scrollable height, so Back/Skip/Continue got clipped at the
+  // viewport edge. Container padding is always counted.
+  padding-bottom: 48px;
   scroll-padding-bottom: 96px;
   overscroll-behavior: contain;
 
@@ -447,7 +456,7 @@
   position: static;
   flex-shrink: 0;
   margin-top: 18px;
-  margin-bottom: 24px;
+  margin-bottom: 0; // see .right padding-bottom
   padding: 14px 0 0;
   background: transparent;
   box-shadow: none;

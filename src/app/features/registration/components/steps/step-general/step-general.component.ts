@@ -69,6 +69,26 @@ const SHARED_VISIT_FIELDS: readonly string[] = [
   'facilitySelection',
 ];
 /**
+ * Booking-level fields that "Save & Add" still clears, so each guest picks their
+ * own host, location and purpose. The appointment date/time is kept for the next
+ * guest (it stays in SHARED_VISIT_FIELDS). AUDF* controls are cleared
+ * too (by prefix). Fields locked by the appointment flow, the hc share URL or
+ * direct check-in are left alone — see resetVisitorFieldsForNextGuest().
+ */
+const CLEARED_ON_NEXT_GUEST_FIELDS: readonly string[] = [
+  'host',
+  'hostName',
+  'hostSeqId',
+  'department',
+  'meeting_location',
+  'roomDesc',
+  'floor',
+  'purpose',
+  'purposeDesc',
+  'remarks',
+];
+
+/**
  * Fields the admin/host fills in when creating an appointment. In the appointment
  * flow the visitor may review them but never change them.
  *
@@ -98,7 +118,7 @@ const APPOINTMENT_LOCKED_FIELDS: readonly string[] = [
   standalone: true,
   imports: [DatePickerModule, SelectModule, ReactiveFormsModule, FormsModule, InputTextModule, AutoCompleteModule, TranslatePipe, MultiSelectModule, DividerModule, CheckboxModule, ButtonModule, TableModule, DialogModule, LanguageSelectorComponent, ProgressBarModule],
   templateUrl: './step-general.component.html',
-  styleUrls: ['./step-general.component.scss']
+  styleUrls: ['./step-general.component.scss', './step-general.mobile.scss']
 })
 export class StepGeneralComponent implements OnInit, OnDestroy {
   @ViewChild('cameraVideo') cameraVideoRef!: ElementRef<HTMLVideoElement>;
@@ -278,6 +298,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Original host data for filtering
   originalHostData: any[] = [];
   private departmentAutoSetByHost = false;
+  private floorAutoSetByHost = false;
 
   // Multiple visitors functionality
   visitors: any[] = [];
@@ -291,6 +312,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // Pending action after photo capture dialog resolves
   pendingAction: 'goNext' | 'addVisitor' | null = null;
 
+  // CheckVehicleBlacklist result for the vehicle number in the form
+  isVehicleBlacklisted = false;
+
   // Face validation (live camera polling + photo upload REST)
   faceValidationFeedback: string[] = [];
   isFaceStable = false;
@@ -299,6 +323,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   isUploadPhotoValid = true;
   private frameIntervalId: any = null;
   private isFaceValidationInFlight = false;
+  isCroppingPhoto = false;
+
   private capturedValidationBlob: Blob | null = null;
   captureValidationPassed = false;
   // InsightFace embedding (feature vector) of the current photo. Fetched during the
@@ -609,6 +635,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.scheduleEndDate = new Date(date);
     }
 
+    this.enforceScheduleDateBounds();
+    this.checkScheduleTimes();
+  }
+
+  onMobileScheduleDateChange(): void {
     this.enforceScheduleDateBounds();
     this.checkScheduleTimes();
   }
@@ -1420,6 +1451,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             visitpurpose_desc: p.PurposeName
           }));
           console.log('Visit purposes loaded from VimsAppFacilityPurposeList:', this.purposeList.length);
+          this.autoSelectSingleOptions();
           if (this.isAppointmentFlow && this.generalForm && this.visitorAckData?.visitorData) {
             const apptData = this.visitorAckData.visitorData;
             if (!this.generalForm.get('purpose')?.value && apptData.purposeId) {
@@ -1471,6 +1503,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // Apply query parameter host filtering for appointment flow
     this.applyQueryParamHostFiltering();
 
+    this.autoSelectSingleOptions();
+
     // Signal that branch data (including titleList) is ready.
     // In appointment flow the loader is held until both UDF settings and branch data arrive.
     this._branchDataReady = true;
@@ -1500,6 +1534,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.titleList = [...response.Table9];
       console.log('Titles loaded for host preload mode (Table9):', this.titleList.length);
     }
+
+    this.autoSelectSingleOptions();
   }
 
   private loadOtherBranchData() {
@@ -1544,6 +1580,39 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * Map a host row's HostFloor onto the floor_id the floor dropdown uses as its option
+   * value. The host carries a raw string that may be either the id or the description,
+   * so match on both. Returns null when nothing matches — unlike the department
+   * resolver we do not fall back to the raw value, because an unmatched floor would
+   * show blank in the dropdown and still reach FloorId in the payload.
+   */
+  private resolveFloorValue(raw: any): any {
+    if (raw === null || raw === undefined || String(raw).trim() === '') return null;
+    const needle = String(raw).trim().toLowerCase();
+    const match = this.meetingFloorList.find((f: any) =>
+      String(f.floor_id).toLowerCase() === needle ||
+      (f.floor_desc || '').toLowerCase() === needle
+    );
+    return match ? match.floor_id : null;
+  }
+
+  /**
+   * Set the floor that belongs to a host, mirroring the department rule: only when the
+   * field is still empty, so a floor the user picked is never overwritten.
+   */
+  private applyFloorFromHost(selectedHost: any): void {
+    const floorCtrl = this.generalForm?.get('floor');
+    if (!floorCtrl || floorCtrl.disabled || floorCtrl.value) return;
+
+    const floorValue = this.resolveFloorValue(selectedHost?.HostFloor ?? selectedHost?.floor_id);
+    if (floorValue === null) return;
+
+    console.log('Setting floor from host:', floorValue);
+    floorCtrl.setValue(floorValue, { emitEvent: false });
+    this.floorAutoSetByHost = true;
+  }
+
+  /**
    * Department for the hc (shared URL) flow: the value shared by the admin when present,
    * otherwise the department of the single pinned host.
    *
@@ -1584,6 +1653,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
     this.generalForm.get('hostName')?.setValue(selectedHost.HOSTNAME || selectedHost.Name || '', { emitEvent: false });
     this.generalForm.get('hostSeqId')?.setValue(this.resolveHostSeqId(selectedHost), { emitEvent: false });
+    this.applyFloorFromHost(selectedHost);
 
     if (this.generalForm.get('department')?.value) return; // never override an existing value
 
@@ -2054,6 +2124,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       case 'purpose': this.onPurposeChange({ value: null }); break;
       case 'facilitySelection': this.onFacilitySelectionChange(''); break;
       case 'visitor_id': this.isVisitorBlacklisted = false; this.isVisitorNotWhitelisted = false; break;
+      case 'vehicle_number': this.isVehicleBlacklisted = false; break;
     }
   }
 
@@ -2410,6 +2481,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.generalForm.get('endDate')?.valueChanges.subscribe(() => {
       this.checkEndBeforeStart();
     });
+
+    // Lists may already have loaded before the form existed.
+    this.autoSelectSingleOptions();
   }
 
   private checkEndBeforeStart(): void {
@@ -2644,19 +2718,27 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Clear every visitor-specific control, keeping the booking-level ones listed in
-   * SHARED_VISIT_FIELDS (plus appointment UDFs) so the next guest stays on the
-   * same visit.
+   * Clear every visitor-specific control plus the booking fields in
+   * CLEARED_ON_NEXT_GUEST_FIELDS and all appointment UDFs. The remaining
+   * SHARED_VISIT_FIELDS (visit type, event, facility booking, ...) are kept.
    */
   private resetVisitorFieldsForNextGuest(form: FormGroup): void {
+    const clearedBookingFields: string[] = [];
+
     Object.keys(form.controls).forEach(name => {
       // 'visitors' is a FormArray of legacy per-visitor groups, not a field.
       if (name === 'visitors') return;
-      if (SHARED_VISIT_FIELDS.includes(name)) return;
-      if (name.startsWith('AUDF')) return;
+      const isClearedBookingField = CLEARED_ON_NEXT_GUEST_FIELDS.includes(name) || name.startsWith('AUDF');
+      if (SHARED_VISIT_FIELDS.includes(name) && !isClearedBookingField) return;
       // Admin-owned and disabled in the appointment flow — clearing these would
       // wipe the booking and the visitor could not re-enter them.
       if (this.lockedFieldsInAppointmentFlow.includes(name)) return;
+      // Read-only booking fields (host from the hc share URL, its department,
+      // direct check-in schedule) can't be re-entered by the visitor either.
+      if (isClearedBookingField && this.isFieldDisabled(name)) return;
+      // A hidden host control carries the branch default host — nothing to re-pick.
+      if (this.shouldHideHostControl && ['host', 'hostName', 'hostSeqId'].includes(name)) return;
+      if (isClearedBookingField) clearedBookingFields.push(name);
 
       const control = form.get(name);
       if (!control) return;
@@ -2676,7 +2758,18 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // same cleared-selection handler that clearField() uses.
     this.onIdTypeChange({ value: null });
 
-    // Blacklist/whitelist verdicts belong to the ID we just cleared.
+    // Same idea for the booking dropdowns: host/department drive the filtered
+    // host list and the auto-filled floor/department.
+    if (clearedBookingFields.includes('host')) this.onHostChange({ value: null });
+    if (clearedBookingFields.includes('department')) this.onDepartmentChange({ value: null });
+    if (clearedBookingFields.length) {
+      this.hostSearchText = '';
+      // Lists with a single option are pre-selected on load — do it again.
+      this.autoSelectSingleOptions();
+    }
+
+    // Blacklist/whitelist verdicts belong to the ID/vehicle we just cleared.
+    this.isVehicleBlacklisted = false;
     this.isVisitorBlacklisted = false;
     this.isVisitorNotWhitelisted = false;
 
@@ -3684,9 +3777,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.showMessage({ severity: 'error', detail: alert.detail || 'Only image files are allowed.' });
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
+    // Matches MAX_IMAGE_SIZE_MB in FileUploadService — this path had its own
+    // 2MB cap, which rejected photos the rest of the app accepts.
+    if (file.size > 7 * 1024 * 1024) {
       const alert = this.getAlert('registration_page_image_size_invalid');
-      this.showMessage({ severity: 'error', detail: alert.detail || 'Maximum file size is 2MB.' });
+      this.showMessage({ severity: 'error', detail: alert.detail || 'Maximum file size is 7MB.' });
       return;
     }
 
@@ -3700,9 +3795,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         if (!result.face_detected) {
           this.faceValidationFeedback = ['no_face_detected_upload'];
           if (!closeDialog) return; // outside dialog: block entirely
-          // Inside dialog: show preview with disabled button and inline error
-          this.isUploadPhotoValid = false;
-          this.proceedWithFileRead(file, visitorIndex, closeDialog);
+          // Inside the dialog: don't render a preview the user cannot act on.
+          // Showing it left "Use this photo" permanently disabled with no way
+          // forward, so surface the reason and drop back to the live camera —
+          // the same recovery the camera path already does on a failed check.
+          this.isUploadPhotoValid = true;
+          const msg = this.firstFaceFeedback;
+          if (msg) this.showMessage({ severity: 'warn', detail: msg });
+          this.retakePhoto();
           return;
         }
         if (!result.stable) {
@@ -3730,6 +3830,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.pendingUploadFile = file;
         this.capturedImage = e.target.result;
         this.captureValidationPassed = true;
+        this.applyPassportCrop();
         // stopCamera() → stopFaceValidationWs() clears faceValidationFeedback;
         // preserve any REST validation feedback set before this call.
         const savedFeedback = [...this.faceValidationFeedback];
@@ -3936,7 +4037,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             this.isFaceValidationInFlight = false;
           },
           error: () => {
-            // If service is unreachable, silently allow capture
+            // Unreachable or timed out — fail open and allow capture.
             this.faceValidationFeedback = [];
             this.isFaceStable = true;
             this.isFaceValidationInFlight = false;
@@ -4041,9 +4142,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.captureValidationPassed = true;
         // Final verification passed → grab the face feature vector for the payload.
         this.extractFaceVector(validationFile);
+        // …and re-frame the preview to passport proportions, so what the user
+        // approves in the dialog is exactly what gets saved.
+        this.applyPassportCrop();
       },
       error: () => {
-        // Face validation service unavailable — proceed without blocking
+        // Unavailable or timed out — proceed without blocking.
         this.isFaceValidating = false;
         this.faceValidationFeedback = [];
         this.captureValidationPassed = true;
@@ -4098,24 +4202,57 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const base64 = this.capturedImage;
 
     if (this.pendingUploadFile) {
-      // Upload path — face was already validated in handleFileUpload
-      const file = this.pendingUploadFile;
+      // Upload path — face was already validated in handleFileUpload, and the
+      // passport crop was applied when the preview was shown.
       this.pendingUploadFile = null;
-      this.proceedWithCapture(file, base64);
+      this.proceedWithCapture(this.base64ToFile(base64, 'photo.jpg'), base64);
       return;
     }
 
-    // Camera capture path — already validated right after capturePhoto().
+    // Camera capture path — already validated and cropped right after capturePhoto().
     if (!this.captureValidationPassed) return;
 
+    this.proceedWithCapture(this.base64ToFile(base64, 'photo.jpg'), base64);
+  }
+
+  private base64ToFile(base64: string, name: string): File {
     const byteString = atob(base64.split(',')[1]);
     const mimeType = base64.split(',')[0].split(':')[1].split(';')[0];
     const ab = new ArrayBuffer(byteString.length);
     const ia = new Uint8Array(ab);
     for (let i = 0; i < byteString.length; i++) ia[i] = byteString.charCodeAt(i);
-    const file = new File([ab], 'photo.jpg', { type: mimeType });
+    return new File([ab], name, { type: mimeType });
+  }
 
-    this.proceedWithCapture(file, base64);
+  /**
+   * Re-frame `capturedImage` to passport proportions (120x150) in place.
+   *
+   * Runs as soon as validation passes — before the user approves the shot —
+   * because capturePhoto() keeps the whole video frame (the circular guide is
+   * only an on-screen aid). Cropping here means the dialog preview, the Retake
+   * comparison and the saved photo are all the same image.
+   *
+   * Fails open: if the crop service is down or finds no subject, the original
+   * frame stays as-is rather than blocking a registration over framing.
+   */
+  private applyPassportCrop(): void {
+    const original = this.capturedImage;
+    if (!original) return;
+
+    this.isCroppingPhoto = true;
+    this.faceValidationService.passportCrop(this.base64ToFile(original, 'photo.jpg')).subscribe({
+      next: (result) => {
+        this.isCroppingPhoto = false;
+        // Ignore a stale response if the user hit Retake while it was in flight.
+        if (result?.image_base64 && this.capturedImage === original) {
+          this.capturedImage = `data:image/jpeg;base64,${result.image_base64}`;
+        }
+      },
+      error: (err) => {
+        this.isCroppingPhoto = false;
+        console.warn('[PassportCrop] keeping the uncropped photo:', err);
+      }
+    });
   }
 
   private async proceedWithCapture(file: File, base64: string): Promise<void> {
@@ -4254,6 +4391,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     if (!selectedHostId) {
       this.generalForm.get('hostName')?.setValue('', { emitEvent: false });
       this.generalForm.get('hostSeqId')?.setValue('', { emitEvent: false });
+      if (this.floorAutoSetByHost) {
+        this.generalForm.get('floor')?.setValue(null, { emitEvent: false });
+        this.floorAutoSetByHost = false;
+      }
       if (this.departmentAutoSetByHost) {
         this.generalForm.get('department')?.setValue(null, { emitEvent: false });
         this.departmentAutoSetByHost = false;
@@ -4282,6 +4423,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // Save the numeric SEQID — the check-in payload needs it, and the `host` control
       // only carries HOSTIC (a string login id).
       this.generalForm.get('hostSeqId')?.setValue(this.resolveHostSeqId(selectedHost), { emitEvent: false });
+
+      this.applyFloorFromHost(selectedHost);
 
       // Get department value from various possible fields on the host object
       const hostDepartmentRaw = selectedHost.Department ||
@@ -4317,6 +4460,91 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.onDepartmentChange({ value: deptValue }, true);
       }
     }
+  }
+
+  /**
+   * Dropdowns that should pick their only option automatically.
+   *
+   * `options` is read lazily because these lists arrive from several async calls, and
+   * `after` runs the same handler the template wires to (onChange), so the dependent
+   * state a manual pick would produce — host name/SEQID, ID expiry rules, room and
+   * purpose descriptions — is set identically.
+   */
+  private get singleOptionFields(): ReadonlyArray<{
+    control: string;
+    valueField: string;
+    options: () => any[];
+    after?: (value: any, option: any) => void;
+  }> {
+    return [
+      { control: 'title', valueField: 'Title', options: () => this.titleList },
+      {
+        control: 'visitor_id_type', valueField: 'ID_TYPECODE',
+        options: () => this.idTypeList,
+        after: value => this.onIdTypeChange({ value })
+      },
+      {
+        control: 'department', valueField: 'DepartmentSeqId',
+        options: () => this.departmentList,
+        after: value => this.onDepartmentChange({ value })
+      },
+      {
+        control: 'host', valueField: 'HOSTIC',
+        // Preload mode deliberately keeps `hosts` empty until the user searches; with a
+        // single host there is nothing to search for, so fall back to the master list.
+        options: () => (this.hosts.length ? this.hosts : this.allHosts),
+        after: (value, option) => {
+          if (!this.hosts.length) {
+            this.hosts = [option];
+            this.hostNameList = [option];
+          }
+          this.onHostChange({ value });
+        }
+      },
+      {
+        control: 'meeting_location', valueField: 'MeetingRoomSeqId',
+        options: () => this.meetingLocList,
+        after: value => this.onRoomChange({ value })
+      },
+      { control: 'floor', valueField: 'floor_id', options: () => this.meetingFloorList },
+      {
+        control: 'purpose', valueField: 'visitpurpose_id',
+        options: () => this.purposeList,
+        after: value => this.onPurposeChange({ value })
+      }
+    ];
+  }
+
+  /**
+   * Select the sole option for any of the above dropdowns that has exactly one.
+   * Safe to call repeatedly: it skips controls that are disabled or already set, so a
+   * restored draft, an appointment prefill or the user's own choice is never overwritten.
+   */
+  private autoSelectSingleOptions(): void {
+    if (!this.generalForm) return;
+
+    let changed = false;
+
+    this.singleOptionFields.forEach(({ control, valueField, options, after }) => {
+      const ctrl = this.generalForm.get(control);
+      if (!ctrl || ctrl.disabled) return;
+
+      const current = ctrl.value;
+      if (current !== null && current !== undefined && current !== '') return;
+
+      const list = options() || [];
+      if (list.length !== 1) return;
+
+      const option = list[0];
+      const value = option?.[valueField];
+      if (value === null || value === undefined || value === '') return;
+
+      ctrl.setValue(value);
+      after?.(value, option);
+      changed = true;
+    });
+
+    if (changed) this.saveFormDataToWizard();
   }
 
   onPurposeChange(event: any): void {
@@ -4524,6 +4752,52 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       this.isVisitorNotWhitelisted = false;
       return true; // fail open
     }
+  }
+
+  /**
+   * Check every entered vehicle number (current form + saved guests) against
+   * CheckVehicleBlacklist. Code 10 = allowed; anything else blocks Next and shows
+   * the API's description. No-op (true) when no vehicle number is entered; fails
+   * open on API error, like the whitelist check.
+   */
+  private async ensureVehicleValidated(): Promise<boolean> {
+    const currentVehicle = (this.generalForm.get('vehicle_number')?.value || '').toString().trim();
+    const savedVehicles = this.isMultipleVisitorMode
+      ? this.savedVisitors.map(v => (v?.vehicle_number || '').toString().trim())
+      : [];
+    const vehicles = [...new Set([currentVehicle, ...savedVehicles].filter(Boolean))];
+    if (!vehicles.length) return true;
+
+    const branchId = this.wizardService.currentBranchID;
+    for (const vehicle of vehicles) {
+      try {
+        const result: any = await firstValueFrom(this.api.CheckVehicleBlacklist(vehicle, branchId));
+        const row = result?.Table?.[0];
+        if (row?.Code === 10) continue;
+
+        this.isVehicleBlacklisted = vehicle === currentVehicle;
+        // Translated label first (ScreenName "Questionnaires" + Title "Vehicle
+        // Blacklist Error"), then the API's own description.
+        const message = this.labelService.getLabel('questionnaires_vehicle_blacklist_error', 'caption')
+          || row?.description || row?.Description
+          || 'The vehicle number entered is not authorized for check-in. Please contact the security officer for further assistance.';
+        this.showMessage({
+          severity: 'error',
+          summary: this.labelService.getLabel('questionnaires_vehicle_blacklist_error_title', 'caption') || 'Vehicle Not Authorized',
+          detail: `${vehicle}: ${message}`,
+          life: 5000
+        });
+        if (this.isVehicleBlacklisted) {
+          this.generalForm.get('vehicle_number')?.markAsTouched();
+          this.scrollToFirstError();
+        }
+        return false;
+      } catch {
+        // fail open — API errors must not block registration
+      }
+    }
+    this.isVehicleBlacklisted = false;
+    return true;
   }
 
   onStartDateChange(event: any): void {
@@ -4950,6 +5224,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     console.log('[goNext] isImageCaptureEnabled:', this.isImageCaptureEnabled, '| ImageUploadRequired:', this.settings?.ImageUploadRequired);
     // Enforce whitelist on the save button (not only on blur).
     if (!(await this.ensureWhitelistValidated())) return;
+    if (!(await this.ensureVehicleValidated())) return;
     // Whenever image capture is enabled — mandatory OR optional — open the photo
     // dialog using the lightweight check used by "Save and Add"
     // (isCurrentVisitorFormValid). Full validateForm() runs after the dialog in

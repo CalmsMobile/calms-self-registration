@@ -314,8 +314,31 @@ export class WizardService {
     return this.hostList;
   }
 
+  /**
+   * Merge a few resolved values into the ALREADY-PROCESSED settings.
+   *
+   * Use this instead of setSettings() when you only have the flat settings object.
+   * setSettings() expects the RAW GetVisitorDeclarationSettings response and rebuilds
+   * everything from Table/Table1/Table2/Table5 — handing it a processed object
+   * silently resets every API flag to the hardcoded defaults and wipes the
+   * questionnaire and attachment settings along with it.
+   */
+  patchSettings(partial: any): void {
+    const current = this.settings$.value;
+    if (!current || !partial) return;
+    this.settings$.next({ ...current, ...partial });
+  }
+
   setSettings(allSettings: any): void {
-    console.log(allSettings);
+    // Explicit reset: clear everything this method owns, rather than throwing on
+    // `null.Table` the way the old unguarded read did.
+    if (!allSettings) {
+      this.settings$.next(null);
+      this.attachmentSetting$.next(null);
+      this.questionsSetting$.next(null);
+      return;
+    }
+
     let settingsData: any = {};
     if (allSettings.Table?.length) {
       const table1 = allSettings.Table1[0] || {};
@@ -369,9 +392,15 @@ export class WizardService {
     this.settings$.next(settingsData);
     console.log(settingsData);
 
-    this.attachmentSetting$.next(allSettings.Table4);
-
-    this.questionsSetting$.next(allSettings.Table3);
+    // Only overwrite when the raw table is actually present. A caller passing a
+    // payload without them must not blank the questionnaire (which would make
+    // shouldSkipQuestionnaire() auto-skip the step) or the attachment doc types.
+    if (allSettings.Table4 !== undefined) {
+      this.attachmentSetting$.next(allSettings.Table4);
+    }
+    if (allSettings.Table3 !== undefined) {
+      this.questionsSetting$.next(allSettings.Table3);
+    }
   }
 
   getSettings(): any {
@@ -458,8 +487,40 @@ export class WizardService {
     return step ? this.formDataStore.value[step] : this.formDataStore.value;
   }
 
-  getFinalRegistrationData(): any {
+  /**
+   * Booking fields that step-general's "Save & Add" clears from the form for the
+   * next guest. Each saved guest still carries them, but the payload has one
+   * host/location/purpose per submission and reads it from the form — so once the
+   * last guest is saved and the form is blank, they would be sent empty.
+   */
+  private static readonly GUEST_BOOKING_FIELDS = [
+    'host', 'hostName', 'hostSeqId', 'department', 'meeting_location', 'roomDesc',
+    'floor', 'purpose', 'purposeDesc', 'remarks',
+  ];
+
+  /**
+   * formDataStore value for building payloads: any empty booking field in
+   * `general` falls back to the first saved guest (the primary visitor, as in
+   * getPrimaryVisitorFullName()).
+   */
+  private getSubmissionFormData(): any {
     const formData = this.formDataStore.value;
+    const general = formData.general;
+    const primaryGuest = (general?.savedVisitors || [])[0];
+    if (!general || !primaryGuest) return formData;
+
+    const isEmpty = (v: any) => v === null || v === undefined || v === '';
+    const patched = { ...general };
+    WizardService.GUEST_BOOKING_FIELDS.forEach(field => {
+      if (isEmpty(patched[field]) && !isEmpty(primaryGuest[field])) {
+        patched[field] = primaryGuest[field];
+      }
+    });
+    return { ...formData, general: patched };
+  }
+
+  getFinalRegistrationData(): any {
+    const formData = this.getSubmissionFormData();
     const settings = this.getSettings();
     const masterData = this.getmasterData();
 
@@ -498,8 +559,14 @@ export class WizardService {
       loFinalData.PurposeId = generalSettings.PurposeEnabled ? (formData.general?.purpose || '') : '';
       loFinalData.PurposeDesc = generalSettings.PurposeEnabled ? (formData.general?.purposeDesc || '') : '';
 
+      const floorId = formData.general?.floor?.toString() || '';
+      // There is no floorDesc form control, so this was always ''. Resolve the
+      // description from the floor list instead, the way RoomDesc below already does
+      // (and getDirectCheckInPayload does for Floor).
+      const floorDesc = masterData?.Table2?.find((f: any) => f.floor_id?.toString() === floorId)?.floor_desc
+        || formData.general?.floorDesc || '';
       loFinalData.FloorId = generalSettings.FloorEnabled ? (formData.general?.floor || '') : '';
-      loFinalData.FloorDesc = generalSettings.FloorEnabled ? (formData.general?.floorDesc || '') : '';
+      loFinalData.FloorDesc = generalSettings.FloorEnabled ? floorDesc : '';
 
       const roomId = formData.general?.meeting_location?.toString() || formData.general?.room?.toString() || '';
       const roomDesc = masterData?.Table1?.find((r: any) => (r.MeetingRoomSeqId || r.SeqId)?.toString() === roomId)?.MeetingRoomDesc || formData.general?.roomDesc || '';
@@ -544,7 +611,7 @@ export class WizardService {
 
   // New method to prepare data for VisitorAckSave API
   getVisitorAckData(): VisitorAck {
-    const formData = this.formDataStore.value;
+    const formData = this.getSubmissionFormData();
     const settings = this.getSettings();
     const generalData = formData.general || {};
 
@@ -662,7 +729,7 @@ export class WizardService {
     return visitorAck;
   }
   getDirectCheckInPayload(): any {
-    const formData = this.formDataStore.value;
+    const formData = this.getSubmissionFormData();
     const generalData = formData.general || {};
     const master = this.getmasterData();
     const settings = this.getSettings();
@@ -938,8 +1005,35 @@ export class WizardService {
       const genderDesc = (typeof data.gender === 'object' && data.gender !== null)
         ? (data.gender.Name || '') : (data.gender || '');
       const rawPhoto = data.profilePreview || (typeof data.profile === 'string' ? data.profile : '') || '';
+
+      // Each guest's own booking fields (Save & Add clears them per guest), falling
+      // back to the top-level value when this guest has none.
+      const pick = (field: string) => {
+        const own = data[field];
+        return own === null || own === undefined || own === '' ? generalData[field] : own;
+      };
+      const hostId = pick('host')?.toString() || '';
+      const hostRow = masterData?.Table?.find((h: any) => (h.HOSTIC ?? h.HostIC)?.toString() === hostId);
+      const deptId = pick('department')?.toString() || '';
+      const deptRow = masterData?.Table5?.find((d: any) => (d.DepartmentSeqId ?? d.dept_id)?.toString() === deptId);
+      const roomId = (pick('meeting_location') || pick('room'))?.toString() || '';
+      const roomRow = masterData?.Table1?.find((r: any) => (r.MeetingRoomSeqId || r.SeqId)?.toString() === roomId);
+      const floorId = pick('floor')?.toString() || '';
+      const floorRow = masterData?.Table2?.find((f: any) => f.floor_id?.toString() === floorId);
+
       return {
         MySelf: isSelf,
+        HostId: hostId,
+        HostDesc: hostRow?.HOSTNAME || pick('hostName') || '',
+        HostDeptId: deptId,
+        HostDeptDesc: deptRow?.dept_desc || deptRow?.DName || deptId,
+        RoomId: roomId,
+        RoomDesc: roomRow?.MeetingRoomDesc || pick('roomDesc') || '',
+        FloorId: floorId,
+        FloorDesc: floorRow?.floor_desc || '',
+        PurposeId: pick('purpose')?.toString() || '',
+        PurposeDesc: pick('purposeDesc') || '',
+        Remarks: pick('remarks') || '',
         Photo: stripPhotoPrefix(rawPhoto),
         // Send as a JSON array string for DB storage (e.g. "[0.0421,-0.0817,...]").
         FaceVector: Array.isArray(data.faceVector) ? JSON.stringify(data.faceVector) : '',
@@ -1077,7 +1171,7 @@ export class WizardService {
     visitType: string; visitPurpose: string;
     branch: string;
   } {
-    const formData = this.formDataStore.value;
+    const formData = this.getSubmissionFormData();
     const general = formData.general || {};
     const master = this.getmasterData();
     const fmt = (date: any): string => {

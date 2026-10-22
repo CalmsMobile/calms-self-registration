@@ -1415,3 +1415,52 @@
   }
 
 }
+
+/* ── Blocked-branch dialog ────────────────────────────────────────────────
+   Shown when the selected branch has IsCheckInAllowedInKiosknURL = false.
+   Not closable by backdrop or X — OK is the only way out, and it returns the
+   user to the branch-selection screen. */
+::ng-deep .branch-not-allowed-dialog.p-dialog {
+  width: 380px;
+  max-width: 92vw;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+::ng-deep .branch-not-allowed-dialog .p-dialog-content {
+  padding: 0;
+  border-radius: 18px;
+}
+
+.branch-not-allowed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 30px 26px 24px;
+  text-align: center;
+
+  i {
+    font-size: 40px;
+    color: var(--theme-primary-yellow, #f5b942);
+  }
+}
+
+.branch-not-allowed-text {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #3c3c3c;
+}
+
+.branch-not-allowed-ok {
+  min-width: 120px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 999px;
+  background: var(--theme-primary-yellow, #f5b942);
+  color: var(--theme-primary-fg-color, #000);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}

@@ -25,7 +25,9 @@
   }
 
   @media (max-width: 600px) {
-    background-image: url('../assets/mobile-background.jpg');
+    // No background-image here: the block above that supplied background-size/
+    // repeat/position is commented out, so this one tiled at its natural 237x512
+    // and showed as an orange seam below the page on real iOS Safari.
     background-attachment: scroll;
     gap: 6px;
   }

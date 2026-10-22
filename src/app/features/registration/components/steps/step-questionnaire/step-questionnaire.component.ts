@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormBuilder, FormControl, FormGroup, FormArray, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { WizardService } from '../../../../../core/services/wizard.service';
 import { LabelService } from '../../../../../core/services/label.service';
@@ -32,10 +33,35 @@ interface Question {
   templateUrl: './step-questionnaire.component.html',
   styleUrls: ['./step-questionnaire.component.scss'],
   standalone: true,
-  imports: [FormsModule, ToastModule, ReactiveFormsModule, TranslatePipe, LanguageSelectorComponent]
+  imports: [FormsModule, ToastModule, ReactiveFormsModule, TranslatePipe, LanguageSelectorComponent, NgTemplateOutlet]
 })
 export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   questions: Question[] = [];
+
+  /**
+   * GetVisitorDeclarationSettings.Table3 splits into two groups via
+   * IsSafetyBriefQuest. Computed once in ngOnInit rather than as getters so the
+   * arrays stay referentially stable across change detection.
+   * A group with no questions renders nothing — not an empty titled section.
+   */
+  safetyBriefQuestions: Question[] = [];
+  generalQuestions: Question[] = [];
+
+  /** Section headings. Fall back to English — the pipe returns '' for a missing key. */
+  get safetyBriefSectionTitle(): string {
+    return this.labelService.getLabel('questionnaires_safety_brief_section_title', 'caption')
+      || 'Safety Briefing Assessment';
+  }
+
+  get generalSectionTitle(): string {
+    // The label row's Title repeats the ScreenName ("Questionnaires General
+    // Section Title"), and getLabelKey() prefixes ScreenName again — so the live
+    // key is doubled. Accept both spellings: the clean one wins if the row is
+    // ever corrected, and no code change is needed either way.
+    return this.labelService.getLabel('questionnaires_general_section_title', 'caption')
+      || this.labelService.getLabel('questionnaires_questionnaires_general_section_title', 'caption')
+      || 'General Visitor Questions';
+  }
 
   questionnaireForm: FormGroup;
   validationErrors: { [key: number]: boolean } = {};
@@ -97,6 +123,11 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
       this.wizardService.navigateToNextStep();
       return;
     }
+    // IsSafetyBriefQuest may be absent on a row — anything not explicitly true
+    // belongs to the general group.
+    this.safetyBriefQuestions = this.questions.filter(q => q.IsSafetyBriefQuest === true);
+    this.generalQuestions = this.questions.filter(q => q.IsSafetyBriefQuest !== true);
+
     this.buildFormControls();
     this.restoreFormData(); // Restore saved data
     this.isLoading = false;
@@ -303,101 +334,94 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Settings Table1.SafetyPassingScore — the % of ValidationRequired questions that
+   * must be answered correctly. null when not configured (or not a positive number),
+   * in which case every ValidationRequired question must be correct, as before.
+   */
+  private get safetyPassingScore(): number | null {
+    const raw = Number(this.wizardService.getSettings()?.SafetyPassingScore);
+    if (!Number.isFinite(raw) || raw <= 0) return null;
+    return Math.min(raw, 100);
+  }
+
+  private getUserAnswers(question: Question): string[] {
+    if (this.isMultipleAnswerQuestion(question)) {
+      return this.getQuestionArray(question.QuestionariesSeqId).value || [];
+    }
+    const value = this.getQuestionControl(question.QuestionariesSeqId).value;
+    return value ? [value] : [];
+  }
+
+  /** Radio: the answer is one of CrtAnswers. Checkbox: the selection matches CrtAnswers exactly. */
+  private isAnswerCorrect(question: Question, userAnswers: string[]): boolean {
+    const correctAnswers = this.getCorrectAnswers(question);
+    if (correctAnswers.length === 0) return true;
+    if (this.isMultipleAnswerQuestion(question)) {
+      return JSON.stringify([...userAnswers].sort()) === JSON.stringify([...correctAnswers].sort());
+    }
+    return correctAnswers.includes(userAnswers[0] || '');
+  }
+
   validateQuestionnaire(): void {
     this.validationErrors = {};
-    let isValid = true;
     let hasUnanswered = false;
-    let hasWrongAnswer = false;
     let hasSafetyBriefError = false;
-    let firstSafetyQuestion: Question | null = null;
+
+    // Required questions that have correct answers to check against.
+    const gradable = this.questions.filter(q => q.ValidationRequired && this.getCorrectAnswers(q).length > 0);
+    const passingScore = this.safetyPassingScore;
 
     this.questions.forEach(question => {
-      const isMultipleChoice = this.isMultipleAnswerQuestion(question);
-      const correctAnswers = this.getCorrectAnswers(question);
-      let userAnswers: string[] = [];
-      let isAnswerCorrect = false;
-
-      if (isMultipleChoice) {
-        // Checkbox question - multiple answers
-        const formArray = this.getQuestionArray(question.QuestionariesSeqId);
-        userAnswers = formArray.value || [];
-        
-        // Check if required field has answers
-        if (question.ValidationRequired && userAnswers.length === 0) {
-          this.validationErrors[question.QuestionariesSeqId] = true;
-          isValid = false;
-          hasUnanswered = true;
-          
-          if (question.IsSafetyBriefQuest && !hasSafetyBriefError) {
-            hasSafetyBriefError = true;
-            firstSafetyQuestion = question;
-          }
-          return;
-        }
-        
-        // Check if answers match correct answers (must match exactly)
-        if (question.ValidationRequired && correctAnswers.length > 0) {
-          const sortedUserAnswers = [...userAnswers].sort();
-          const sortedCorrectAnswers = [...correctAnswers].sort();
-          isAnswerCorrect = JSON.stringify(sortedUserAnswers) === JSON.stringify(sortedCorrectAnswers);
-        } else {
-          isAnswerCorrect = true; // No validation required
-        }
-      } else {
-        // Radio button question - single answer
-        const control = this.getQuestionControl(question.QuestionariesSeqId);
-        const userAnswer = control?.value;
-        
-        // Check if required field has answer
-        if (question.ValidationRequired && !userAnswer) {
-          this.validationErrors[question.QuestionariesSeqId] = true;
-          isValid = false;
-          hasUnanswered = true;
-          
-          if (question.IsSafetyBriefQuest && !hasSafetyBriefError) {
-            hasSafetyBriefError = true;
-            firstSafetyQuestion = question;
-          }
-          return;
-        }
-        
-        // Check if answer matches correct answer
-        if (question.ValidationRequired && correctAnswers.length > 0) {
-          isAnswerCorrect = correctAnswers.includes(userAnswer || '');
-        } else {
-          isAnswerCorrect = true; // No validation required
-        }
-      }
-
-      if (question.ValidationRequired && !isAnswerCorrect) {
+      if (question.ValidationRequired && this.getUserAnswers(question).length === 0) {
         this.validationErrors[question.QuestionariesSeqId] = true;
-        isValid = false;
-        hasWrongAnswer = true;
-        
-        // Track first safety brief question with error
-        if (question.IsSafetyBriefQuest && !hasSafetyBriefError) {
-          hasSafetyBriefError = true;
-          firstSafetyQuestion = question;
-        }
+        hasUnanswered = true;
       }
     });
 
-    // Safety brief wrong answer → show incorrect modal with rewatch button
-    if (hasSafetyBriefError && firstSafetyQuestion) {
+    // Scoring: % of gradable questions answered correctly must reach
+    // SafetyPassingScore (or 100% when it isn't set). Below it, every wrong
+    // answer is flagged so the visitor can review them.
+    const wrong = gradable.filter(q =>
+      !this.validationErrors[q.QuestionariesSeqId] && !this.isAnswerCorrect(q, this.getUserAnswers(q))
+    );
+    const unansweredGradable = gradable.filter(q => this.validationErrors[q.QuestionariesSeqId]).length;
+    const correctCount = gradable.length - wrong.length - unansweredGradable;
+    const scorePercent = gradable.length ? (correctCount / gradable.length) * 100 : 100;
+    const requiredPercent = passingScore ?? 100;
+    const passed = scorePercent >= requiredPercent;
+
+    console.log('=== QUESTIONNAIRE SCORE ===');
+    console.log('Gradable questions (ValidationRequired):', gradable.length);
+    console.log('Correct answers:', correctCount);
+    console.log('Wrong answers:', wrong.length, wrong.map(q => q.QuestionariesSeqId));
+    console.log('Unanswered:', unansweredGradable);
+    console.log('% match:', scorePercent.toFixed(2) + '%', '| SafetyPassingScore:',
+      passingScore !== null ? passingScore + '%' : `not set (raw: ${this.wizardService.getSettings()?.SafetyPassingScore}) → 100%`,
+      '|', passed ? 'PASS' : 'FAIL');
+    console.log('===========================');
+
+    if (!passed) {
+      wrong.forEach(q => {
+        this.validationErrors[q.QuestionariesSeqId] = true;
+        if (q.IsSafetyBriefQuest) hasSafetyBriefError = true;
+      });
+    }
+
+    // A wrong safety brief answer → incorrect modal with the rewatch button
+    if (hasSafetyBriefError) {
       this.alertMessage = this.labelService.getLabel('questionnaires_safety_briefing_qn_wrong_answer_alert', 'caption');
       this.modalType = 'incorrect';
       this.wizardService.setStepValid(false);
       return;
     }
 
+    const isValid = Object.keys(this.validationErrors).length === 0;
     this.wizardService.setStepValid(isValid);
 
     if (isValid) {
       this.saveFormData();
-    } else if (hasUnanswered) {
-      this.alertMessage = this.labelService.getLabel('questionnaires_wrong_answer_alert', 'caption');
-      this.modalType = 'required';
-    } else if (hasWrongAnswer) {
+    } else {
       this.alertMessage = this.labelService.getLabel('questionnaires_wrong_answer_alert', 'caption');
       this.modalType = 'required';
     }
@@ -463,7 +487,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     if (safetyBriefStepIndex >= 0) {
       this.wizardService.requestStepChange(safetyBriefStepIndex);
     } else {
-      this.messageHelper.warn('Safety brief step not found', 3000);
+      this.messageHelper.warn(this.labelService.getLabel('questionnaires_safety_brief_step_not_found', 'caption') || 'Safety brief step not found', 3000);
     }
   }
 

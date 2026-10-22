@@ -327,4 +327,19 @@
 </div>
 }
 
+<!-- Branch refuses kiosk/URL self-registration (IsCheckInAllowedInKiosknURL = false).
+     Outside the @if (!isLoading) block and the desktop/mobile sections so a single
+     dialog serves both layouts and still shows while the page is settling. -->
+<p-dialog [(visible)]="branchNotAllowedVisible" [modal]="true" [closable]="false"
+  [draggable]="false" [resizable]="false" [showHeader]="false"
+  styleClass="branch-not-allowed-dialog">
+  <div class="branch-not-allowed">
+    <i class="pi pi-info-circle"></i>
+    <p class="branch-not-allowed-text">{{ branchNotAllowedMessage }}</p>
+    <button type="button" class="branch-not-allowed-ok" (click)="dismissBranchNotAllowed()">
+      OK
+    </button>
+  </div>
+</p-dialog>
+
 <p-toast></p-toast>
