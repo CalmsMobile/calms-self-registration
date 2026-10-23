@@ -363,25 +363,63 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     return correctAnswers.includes(userAnswers[0] || '');
   }
 
+  /**
+   * Get validation summary with breakdown by question type
+   */
+  private getValidationSummary(wrongQuestions: Question[]): { 
+    safetyBriefWrong: Question[]; 
+    generalWrong: Question[];
+    hasBoth: boolean;
+  } {
+    const safetyBriefWrong = wrongQuestions.filter(q => q.IsSafetyBriefQuest === true);
+    const generalWrong = wrongQuestions.filter(q => q.IsSafetyBriefQuest !== true);
+    return {
+      safetyBriefWrong,
+      generalWrong,
+      hasBoth: safetyBriefWrong.length > 0 && generalWrong.length > 0
+    };
+  }
+
+  /**
+   * Get alert message based on validation results
+   */
+  private getAlertMessage(summary: { 
+    safetyBriefWrong: Question[]; 
+    generalWrong: Question[];
+    hasBoth: boolean;
+  }): string {
+    if (summary.hasBoth) {
+      return this.labelService.getLabel('questionnaires_safety_briefing_qn_wrong_answer_alert', 'caption')
+        || 'Your answers are incorrect. Please review the safety briefing and try again.';
+    } else if (summary.safetyBriefWrong.length > 0) {
+      return this.labelService.getLabel('questionnaires_safety_briefing_qn_wrong_answer_alert', 'caption')
+        || 'Your safety briefing assessment answers are incorrect. Please rewatch the video.';
+    } else if (summary.generalWrong.length > 0) {
+      return this.labelService.getLabel('questionnaires_general_qn_wrong_answer_alert', 'caption')
+        || 'Some of your general questions answers are incorrect. Please review and try again.';
+    }
+    return 'Your answers are incorrect. Please review and try again.';
+  }
+
   validateQuestionnaire(): void {
     this.validationErrors = {};
     let hasUnanswered = false;
     let hasSafetyBriefError = false;
 
-    // Required questions that have correct answers to check against.
-    const gradable = this.questions.filter(q => q.ValidationRequired && this.getCorrectAnswers(q).length > 0);
+    // Only validate questions marked as ValidationRequired
+    const validationRequiredQuestions = this.questions.filter(q => q.ValidationRequired);
+    const gradable = validationRequiredQuestions.filter(q => this.getCorrectAnswers(q).length > 0);
     const passingScore = this.safetyPassingScore;
 
-    this.questions.forEach(question => {
-      if (question.ValidationRequired && this.getUserAnswers(question).length === 0) {
+    // Check for unanswered validation-required questions
+    validationRequiredQuestions.forEach(question => {
+      if (this.getUserAnswers(question).length === 0) {
         this.validationErrors[question.QuestionariesSeqId] = true;
         hasUnanswered = true;
       }
     });
 
-    // Scoring: % of gradable questions answered correctly must reach
-    // SafetyPassingScore (or 100% when it isn't set). Below it, every wrong
-    // answer is flagged so the visitor can review them.
+    // Score calculation: % of gradable questions answered correctly must reach SafetyPassingScore
     const wrong = gradable.filter(q =>
       !this.validationErrors[q.QuestionariesSeqId] && !this.isAnswerCorrect(q, this.getUserAnswers(q))
     );
@@ -391,26 +429,28 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     const requiredPercent = passingScore ?? 100;
     const passed = scorePercent >= requiredPercent;
 
-    console.log('=== QUESTIONNAIRE SCORE ===');
-    console.log('Gradable questions (ValidationRequired):', gradable.length);
+    console.log('=== QUESTIONNAIRE VALIDATION ===');
+    console.log('Validation-Required questions:', validationRequiredQuestions.length);
+    console.log('Gradable (with correct answers):', gradable.length);
     console.log('Correct answers:', correctCount);
     console.log('Wrong answers:', wrong.length, wrong.map(q => q.QuestionariesSeqId));
     console.log('Unanswered:', unansweredGradable);
-    console.log('% match:', scorePercent.toFixed(2) + '%', '| SafetyPassingScore:',
+    console.log('Score %:', scorePercent.toFixed(2) + '%', '| SafetyPassingScore:',
       passingScore !== null ? passingScore + '%' : `not set (raw: ${this.wizardService.getSettings()?.SafetyPassingScore}) → 100%`,
-      '|', passed ? 'PASS' : 'FAIL');
-    console.log('===========================');
+      '|', passed ? 'PASS ✓' : 'FAIL ✗');
+    console.log('=================================');
 
     if (!passed) {
+      // Mark wrong answers as errors
       wrong.forEach(q => {
         this.validationErrors[q.QuestionariesSeqId] = true;
-        if (q.IsSafetyBriefQuest) hasSafetyBriefError = true;
       });
-    }
 
-    // A wrong safety brief answer → incorrect modal with the rewatch button
-    if (hasSafetyBriefError) {
-      this.alertMessage = this.labelService.getLabel('questionnaires_safety_briefing_qn_wrong_answer_alert', 'caption');
+      // Get validation summary categorized by question type (Safety Brief vs General)
+      const summary = this.getValidationSummary(wrong);
+
+      // Show appropriate alert message based on question type and score
+      this.alertMessage = this.getAlertMessage(summary);
       this.modalType = 'incorrect';
       this.wizardService.setStepValid(false);
       return;
