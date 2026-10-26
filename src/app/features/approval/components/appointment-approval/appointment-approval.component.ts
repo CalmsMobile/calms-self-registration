@@ -28,6 +28,9 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
   companyName: string = '';
   visitorImg: string = '';
   questionnaireData: any[] = [];
+  // questionnaireData split by IsSafetyBriefQuest, same grouping as the questionnaire step.
+  safetyBriefQna: any[] = [];
+  generalQna: any[] = [];
   docsData: any[] = [];
   itemsData: any[] = [];
   ndaDoc: string = '';
@@ -131,6 +134,13 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     ).subscribe({
       next: (res: any) => {
         this.questionnaireData = res.qna?.Table  || [];
+        // The flag may arrive as true / 1 / "true" — anything else is a general question.
+        const isSafety = (q: any) => q.IsSafetyBriefQuest === true || q.IsSafetyBriefQuest === 1 || q.IsSafetyBriefQuest === 'true';
+        this.safetyBriefQna = this.questionnaireData.filter(isSafety);
+        this.generalQna = this.questionnaireData.filter((q: any) => !isSafety(q));
+        console.log('[approval] questionnaire rows:', this.questionnaireData.length,
+          '| safety:', this.safetyBriefQna.length, '| general:', this.generalQna.length,
+          '| has IsSafetyBriefQuest:', this.questionnaireData.some((q: any) => 'IsSafetyBriefQuest' in q));
         this.docsData        = res.docs?.Table1 || res.docs?.Table  || [];
         this.itemsData       = res.items?.Table || [];
         this.udfCaptionMap = {};

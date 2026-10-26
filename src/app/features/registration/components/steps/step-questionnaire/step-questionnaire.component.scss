@@ -201,19 +201,17 @@
     background: currentColor;
   }
 
-  // Tinted block. --theme-primary-yellow-rgb is the branch colour in r,g,b form,
-  // set at runtime by ThemeService for exactly this kind of rgba() dilution, so
-  // the fill follows the branch instead of being a fixed colour.
+  // Branch colour at 50% with white text (the left bar follows currentColor).
+  // --theme-primary-yellow-rgb is the branch primary in r,g,b form (ThemeService).
   &.safety {
-    color: var(--primary, #c62828);
-    background: rgba(var(--theme-primary-yellow-rgb, 198, 40, 40), 0.12);
+    color: #ffffff;
+    background: rgba(var(--theme-primary-yellow-rgb, 198, 40, 40), );
   }
 
-  // Neutral tint keeps the two groups distinguishable without inventing a second
-  // brand colour that could clash on some branches.
+  // Same treatment as the safety heading: branch colour at 50% with white text.
   &.general {
-    color: #5a6472;
-    background: rgba(90, 100, 114, 0.08);
+    color: #ffffff;
+    background: rgba(var(--theme-primary-yellow-rgb, 198, 40, 40), );
   }
 }
 
@@ -271,7 +269,7 @@
 }
 
 .question-text {
-  font-size: 17px;
+  font-size: 15px;
   color: #505050;
   margin-bottom: 12px;
   line-height: 1.4;
@@ -293,7 +291,7 @@
   border: none;
   background: #f0f2f6;
   color: #5f6775;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   padding: 8px 18px;
   border-radius: 999px;

@@ -1193,6 +1193,33 @@
   gap: 14px;
 }
 
+/* Section headings for the two question groups (IsSafetyBriefQuest true / false),
+   matching the questionnaire step's .section-title. */
+.qa-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 0;
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: rgba(var(--theme-primary-yellow-rgb, 198, 40, 40), 0.5);
+
+  &::before {
+    content: '';
+    flex: 0 0 auto;
+    width: 4px;
+    align-self: stretch;
+    min-height: 16px;
+    border-radius: 2px;
+    background: currentColor;
+  }
+}
+
 .qa-row {
   display: grid;
   grid-template-columns: 32px 1fr;

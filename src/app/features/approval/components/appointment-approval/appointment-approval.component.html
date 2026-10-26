@@ -615,8 +615,8 @@
           <span>Wrong <span class="legend-dot dot-red"></span></span>
         </div>
       }
-      <div class="qa-list">
-        @for (item of questionnaireData; track $index) {
+      <!-- One row, rendered by both sections -->
+      <ng-template #qnaRow let-item>
           <div class="qa-row">
             <div class="qa-check" [class.wrong]="!isQnaCorrect(item)">
               @if (isQnaCorrect(item)) {
@@ -644,6 +644,20 @@
               </div>
             </div>
           </div>
+      </ng-template>
+
+      <div class="qa-list">
+        @if (safetyBriefQna.length) {
+          <h3 class="qa-section-title safety">Safety Briefing Assessment</h3>
+          @for (item of safetyBriefQna; track $index) {
+            <ng-container *ngTemplateOutlet="qnaRow; context: { $implicit: item }"></ng-container>
+          }
+        }
+        @if (generalQna.length) {
+          <h3 class="qa-section-title general">General Visitor Questions</h3>
+          @for (item of generalQna; track $index) {
+            <ng-container *ngTemplateOutlet="qnaRow; context: { $implicit: item }"></ng-container>
+          }
         }
         @if (questionnaireData.length === 0) {
           <p style="color:#6b7d9b;font-size:14px;text-align:center;padding:24px 0;">No questionnaire data available.</p>
