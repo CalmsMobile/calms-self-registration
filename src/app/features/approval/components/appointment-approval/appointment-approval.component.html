@@ -638,7 +638,7 @@
                     } @else if (opt.isSelected && !opt.isCorrect) {
                       <svg viewBox="0 0 24 24"><path d="M12 4 3 20h18L12 4Z"/></svg>
                     }
-                    {{ opt.label }}
+                    <span class="ans-chip__label">{{ truncateAnswerLabel(opt.label) }}</span>
                   </span>
                 }
               </div>

@@ -203,11 +203,18 @@ export class AppointmentApprovalComponent implements OnInit, OnDestroy {
     const correct  = (item.CrtAnswers || '').split(',').map((s: string) => s.trim()).filter(Boolean);
     const opts = [];
     for (let i = 1; i <= 4; i++) {
-      const label = item['Option' + i];
-      if (!label) continue;
+      const rawLabel = item['Option' + i];
+      if (!rawLabel) continue;
+      const optionText = String(rawLabel);
+      const label = optionText.length > 100 ? optionText.substring(0, 100) + '...' : optionText;
       opts.push({ label, index: i, isSelected: selected.includes(String(i)), isCorrect: correct.includes(String(i)) });
     }
     return opts;
+  }
+
+  truncateAnswerLabel(value: unknown): string {
+    const text = String(value ?? '');
+    return text.length > 100 ? text.substring(0, 100) + '...' : text;
   }
 
   isQnaCorrect(item: any): boolean {
