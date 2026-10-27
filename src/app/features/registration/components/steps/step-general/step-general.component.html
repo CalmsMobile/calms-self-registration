@@ -78,8 +78,6 @@
     @if (settings && udfSettings !== null) {
     <form [formGroup]="generalForm" class="form-grid">
 
-      <h3 class="form-section-title visitor">{{ getTranslatedLabelWithFallback('registration_page_visitor_details_section_title', 'Visitor Details') }}</h3>
-
       <!-- 2. Title -->
       @if (settings?.TitleEnabled) {
       <div class="form-field">
@@ -562,9 +560,7 @@
       }
       }
 
-      <h3 class="form-section-title appointment">{{ getTranslatedLabelWithFallback('registration_page_appointment_details_section_title', 'Appointment Details') }}</h3>
-
-      <!-- 15. Host Department -->
+         <!-- 15. Host Department -->
       @if (settings?.HostDepartmentEnabled) {
       <div class="form-field">
         <label class="field-label" for="department">
@@ -1005,8 +1001,6 @@
     @if (settings && udfSettings !== null) {
     <div class="m-form-scroll">
 
-      <h3 class="m-form-section-title visitor">{{ getTranslatedLabelWithFallback('registration_page_visitor_details_section_title', 'Visitor Details') }}</h3>
-
       <!-- 2. Title -->
       @if (settings?.TitleEnabled) {
       <div class="m-form-field">
@@ -1420,8 +1414,6 @@
       }
       }
       }
-
-      <h3 class="m-form-section-title appointment">{{ getTranslatedLabelWithFallback('registration_page_appointment_details_section_title', 'Appointment Details') }}</h3>
 
       <!-- 15. Host Department -->
       @if (settings?.HostDepartmentEnabled) {

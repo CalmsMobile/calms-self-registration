@@ -141,8 +141,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     return i === -1 ? { first: text, rest: '' } : { first: text.substring(0, i), rest: text.substring(i + 1) };
   }
 
+  /**
+   * Photo capture follows ImageUploadEnabled only — like every other field,
+   * ImageUploadRequired matters only when the field is enabled. (It used to be
+   * Enabled || Required, so Enabled=false + Required=true still opened the dialog.)
+   * Accepts true / 1 / "true" / "1"; a string "false" must not count as on.
+   */
   get isImageCaptureEnabled(): boolean {
-    return !!(this.settings?.ImageUploadEnabled || this.settings?.ImageUploadRequired);
+    const v = this.settings?.ImageUploadEnabled;
+    return v === true || v === 1 || v === 'true' || v === '1';
   }
 
   get isOcrScanEnabled(): boolean {

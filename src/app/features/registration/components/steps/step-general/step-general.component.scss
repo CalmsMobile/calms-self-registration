@@ -348,49 +348,6 @@
   }
 }
 
-/* Headings separating the visitor's own fields from the shared appointment
-   fields. Same look as the questionnaire step's .section-title. */
-.form-section-title,
-.m-form-section-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: #ffffff;
-  background: rgba(var(--theme-primary-yellow-rgb, 198, 40, 40), 0.5);
-
-  &::before {
-    content: '';
-    flex: 0 0 auto;
-    width: 4px;
-    align-self: stretch;
-    min-height: 16px;
-    border-radius: 2px;
-    background: currentColor;
-  }
-}
-
-.form-section-title {
-  grid-column: 1 / -1;
-  margin: 14px 0 6px;
-  padding: 9px 14px;
-  border-radius: 10px;
-  font-size: 14px;
-
-  &:first-child { margin-top: 2px; }
-}
-
-.m-form-section-title {
-  margin: 18px 0 8px;
-  padding: 8px 12px;
-  border-radius: 9px;
-  font-size: 13px;
-
-  &:first-child { margin-top: 4px; }
-}
-
 .form-field {
   display: flex;
   flex-direction: column;
