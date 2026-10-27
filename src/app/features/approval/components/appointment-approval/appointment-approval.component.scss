@@ -1207,7 +1207,7 @@
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: #ffffff;
-  background: rgba(var(--theme-primary-yellow-rgb, 198, 40, 40), 0.5);
+  background: #2eacf5;
 
   &::before {
     content: '';
@@ -1225,6 +1225,7 @@
   grid-template-columns: 32px 1fr;
   gap: 10px;
   align-items: start;
+  min-width: 0;
 }
 
 .qa-check {
@@ -1257,26 +1258,43 @@
   background: #f8f9fd;
   border-radius: 16px;
   padding: 12px 12px 12px 14px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 
   &.wrong { border-left-color: #ff6282; }
 }
 
 .qa-question {
+  display: -webkit-box;
+  min-width: 0;
+  max-width: 100%;
   color: #202f46;
   font-size: 13px;
   line-height: 1.4;
   font-weight: 600;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .qa-answers {
   margin-top: 12px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   gap: 10px;
 }
 
 .ans-chip {
-  height: 36px;
+  height: auto;
+  min-height: 36px;
+  width: fit-content;
+  max-width: min(100%, 100ch);
+  min-width: 0;
+  box-sizing: border-box;
   border-radius: 999px;
   border: 1px solid #d4dcea;
   background: transparent;
@@ -1287,6 +1305,21 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
+  padding: 6px 14px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow-wrap: anywhere;
+  text-align: center;
+  overflow: hidden;
+
+  .ans-chip__label {
+    display: block;
+    min-width: 0;
+    max-width: 100ch;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
 
   svg {
     width: 12px;
@@ -1318,10 +1351,10 @@
 /* ─── Safety modal desktop tune ─────────────────────── */
 @media (min-width: 1041px) {
   #safety-modal {
-    width: min(800px, calc(100vw - 40px));
+    width: min(870px, calc(100vw - 40px));
     max-width: calc(100vw - 40px);
-    max-height: calc(100vh - 86px);
-    height: 770px;
+    max-height: calc(110vh - 0px);
+        height: auto;
     padding: 39px 18px 18px;
     border-radius: 28px;
   }
