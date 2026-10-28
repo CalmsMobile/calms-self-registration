@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, shareReplay } from 'rxjs/operators';
 import { ApiBaseService } from './api-base.service';
 import { environment } from '../../../environments/environment';
 import { VisitorAck, VisitorAckResponse } from '../models/visitor-ack.model';
@@ -97,8 +98,23 @@ export class ApiService {
     );
   }
 
+  /**
+   * The language list takes no parameters and is the same for the whole session,
+   * but every <app-language-selector> instance (desktop + mobile header on each
+   * page, wizard header, home page) requested it on init — 6+ identical calls per
+   * page. Share one request and replay its result to every subscriber.
+   * shareReplay resets on error, so a failed call is retried by the next subscriber
+   * instead of replaying the failure.
+   */
+  private activeLanguages$?: Observable<any>;
+
   GetActiveLanguages() {
-    return this.apiBase.post(`${environment.portalApiURL}/GetLanguages`, '');
+    if (!this.activeLanguages$) {
+      this.activeLanguages$ = this.apiBase
+        .post(`${environment.portalApiURL}/GetLanguages`, '')
+        .pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    }
+    return this.activeLanguages$;
   }
 
   SaveVisitorRegistration(registrationData: any) {
