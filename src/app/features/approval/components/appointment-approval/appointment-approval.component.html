@@ -215,6 +215,18 @@
               <div><p class="detail-label">Phone</p><p class="detail-value">{{ appointmentData.TELEPHONE_NO }}</p></div>
             </article>
           }
+          @if (appointmentData?.visitor_comp_name?.trim()) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 7h1M14 7h1M9 11h1M14 11h1M9 15h1M14 15h1M10 21v-3h4v3"/></svg></div>
+              <div><p class="detail-label">Company</p><p class="detail-value">{{ appointmentData.visitor_comp_name }}</p></div>
+            </article>
+          }
+          @if (appointmentData?.PLATE_NUM?.trim()) {
+            <article class="detail-item">
+              <div class="detail-icon"><svg viewBox="0 0 24 24"><path d="M5 17h14M5 17a2 2 0 1 1-4 0v-4l2-6h18l2 6v4a2 2 0 1 1-4 0"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg></div>
+              <div><p class="detail-label">Vehicle No.</p><p class="detail-value">{{ appointmentData.PLATE_NUM }}</p></div>
+            </article>
+          }
 
           @if (appointmentData?.IdType) {
             <article class="detail-item">
