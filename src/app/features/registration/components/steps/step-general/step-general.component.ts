@@ -1374,9 +1374,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         }));
 
         // Remove duplicates based on normalized DName
-        this.departmentList = this.departmentList.filter((dept, index, self) =>
-          index === self.findIndex(d => d.DName === dept.DName)
-        );
+        // Set-based (single pass) — filter+findIndex is O(n²) and freezes on large host lists.
+        const seenDeptNames = new Set<string>();
+        this.departmentList = this.departmentList.filter((dept: any) => {
+          if (seenDeptNames.has(dept.DName)) return false;
+          seenDeptNames.add(dept.DName);
+          return true;
+        });
 
         console.log('Final department list:', this.departmentList);
       }

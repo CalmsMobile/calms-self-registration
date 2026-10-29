@@ -95,6 +95,19 @@
   padding-right: 34px !important;
 }
 
+/* Host dropdown uses virtual scroll (large host lists), which needs a fixed
+   row height matching [virtualScrollItemSize]="40" — so keep options on one
+   line and ellipsize instead of wrapping. */
+.host-select-panel .p-select-option {
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 40px;
+  line-height: 40px;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 /* Autocomplete-only overrides. PrimeNG sets the overlay's inline
    min-width = the input's width (target="@parent" resolves to the .p-autocomplete
    root), so we DON'T override min-width/width — that lets the panel match the
