@@ -415,6 +415,40 @@ export class WizardService {
     return this.questionsSetting$.value;
   }
 
+  /**
+   * % of gradable questions (ValidationRequired + CrtAnswers configured) answered correctly —
+   * same scoring the questionnaire step uses against SafetyPassingScore.
+   * null when the questionnaire step is disabled or no question is ValidationRequired
+   * (with CrtAnswers configured). Call BEFORE clearSessionStorage().
+   */
+  getQuestionnaireScore(): { correct: number; total: number; percent: number; passingScore: number | null } | null {
+    // Questionnaire screen disabled (QuestionnaireEnabled off, or excluded e.g. direct check-in)
+    if (!this.isStepEnabled('questionnaire')) return null;
+
+    const questions: any[] = this.getQuestionnaireSettings() || [];
+    const answers = this.getFormData('questionnaire') || {};
+    const splitList = (v: any): string[] =>
+      (Array.isArray(v) ? v : String(v ?? '').split(',')).map((s: any) => String(s).trim()).filter(Boolean);
+
+    const gradable = questions.filter(q => q.ValidationRequired && splitList(q.CrtAnswers).length > 0);
+    if (!gradable.length) return null;
+
+    const correct = gradable.filter(q => {
+      const crt = splitList(q.CrtAnswers);
+      const given = splitList(answers[`q${q.QuestionariesSeqId}`]);
+      // Multi-answer (checkbox) must match exactly; single-answer (radio) must be one of CrtAnswers.
+      return crt.length > 1
+        ? given.length === crt.length && crt.every(a => given.includes(a))
+        : given.length > 0 && crt.includes(given[0]);
+    }).length;
+
+    // Settings SafetyPassingScore — null when not configured (or not a positive number)
+    const rawPassing = Number(this.getSettings()?.SafetyPassingScore);
+    const passingScore = Number.isFinite(rawPassing) && rawPassing > 0 ? Math.min(rawPassing, 100) : null;
+
+    return { correct, total: gradable.length, percent: Math.round((correct / gradable.length) * 100), passingScore };
+  }
+
   shouldSkipQuestionnaire(stepRoute: string): boolean {
     if (stepRoute !== 'questionnaire') return false;
     const questions = this.questionsSetting$.value;

@@ -161,6 +161,16 @@
       }
 
       @if (status === 'success' || status === 'pending') {
+        <!-- Questionnaire score -->
+        @if (registrationData.quizScore; as score) {
+          <div class="quiz-score">
+            <p class="quiz-score-label">{{ quizScoreLabel }}</p>
+            <p class="quiz-score-value">{{ score.percent }}%</p>
+            @if (score.passingScore) {
+              <p class="quiz-score-min">({{ quizPassingScoreLabel }}: {{ score.passingScore }}%)</p>
+            }
+          </div>
+        }
         <div class="card-footer-text">
           <p>{{ 'thankyou_page_thank_you_message' | translate }}</p>
           <p>{{ 'thankyou_page_thank_you_sub_message' | translate }}</p>
@@ -223,4 +233,5 @@
       {{ 'thankyou_page_button_submit_again' | translate }}
     </button>
   }
+
 </div>

@@ -222,6 +222,29 @@
   p + p { margin-top: 2px; }
 }
 
+// Questionnaire score — shown above the thank-you message
+.quiz-score {
+  text-align: center;
+  font-size: 13px;
+  color: #000000;
+  line-height: 1.6;
+  padding: 8px 4px 0;
+}
+
+.quiz-score-label {
+  font-weight: 700;
+}
+
+.quiz-score-value {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.quiz-score-min {
+  font-size: 12px;
+  color: #6b7280;
+}
+
 .pass-body {
   padding: 18px 16px 16px;
 }

@@ -33,6 +33,8 @@ export interface RegistrationData {
   isAutoApproved?: boolean;
   isDirectCheckIn?: boolean;
   errorMessage?: string;
+  // Questionnaire result — null/absent when no gradable questions
+  quizScore?: { correct: number; total: number; percent: number; passingScore?: number | null } | null;
 }
 
 @Component({
@@ -60,6 +62,14 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
 
   get companyName(): string {
     return this.registrationData?.branch || '';
+  }
+
+  get quizScoreLabel(): string {
+    return this.labelService.getLabel('thankyou_page_questionnaire_score', 'caption') || 'Your Safety Assessment Score';
+  }
+
+  get quizPassingScoreLabel(): string {
+    return this.labelService.getLabel('thankyou_page_minimum_passing_score', 'caption') || 'Minimum passing score';
   }
 
   private get dynamicAlertMessages() {

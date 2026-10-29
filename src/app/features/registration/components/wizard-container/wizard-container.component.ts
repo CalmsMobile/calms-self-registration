@@ -466,6 +466,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               const savedRefCatCode = this.wizardService.refCatCode;
               const savedHcParam = this.wizardService.hcParam;
               const allowMultipleBooking = this.wizardService.getSettings()?.AllowMultipleBooking ?? true;
+              const quizScore = this.wizardService.getQuestionnaireScore();
 
               // Clear session storage after successful submission
               this.wizardService.clearSessionStorage();
@@ -492,6 +493,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                     visitType: summary.visitType,
                     visitPurpose: summary.visitPurpose,
                     branch: summary.branch,
+                    quizScore: quizScore,
                   },
                   branchName: branchName,
                   branchID: branchID,
