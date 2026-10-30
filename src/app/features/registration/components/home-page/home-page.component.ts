@@ -1005,12 +1005,12 @@ export class HomePageComponent implements AfterViewChecked {
       // Fire all API calls in parallel for faster loading
       const settingsPromise = this.getSelfRegistrationSettings();
       this.getPageSettings();
-      this.loadBranchHostDataAsync(newValue);
+      const hostDataPromise = this.loadBranchHostDataAsync(newValue);
 
       // Categories will be loaded inside loadBranchHostDataAsync from Table2 after host data arrives
 
-      // Await settings to ensure labels are ready for UI
-      await settingsPromise;
+      // Await settings (labels) and GetBranchHostDataForSelf — loader stays up until both land
+      await Promise.all([settingsPromise, hostDataPromise]);
 
       const branchLogoUrl = environment.proURL + "Handler/PortalImageHandler.ashx?ScreenType=20&RefSlno=" + newValue;
       this.logo = branchLogoUrl;
@@ -1279,18 +1279,19 @@ export class HomePageComponent implements AfterViewChecked {
   }
 
   /**
-   * Load branch host data and extract Table2 as categories
+   * Load branch host data and extract Table2 as categories.
+   * Resolves once GetBranchHostDataForSelf has responded (success or error) — never rejects.
    */
-  private loadBranchHostDataAsync(branchId: string | null): void {
+  private loadBranchHostDataAsync(branchId: string | null): Promise<void> {
     // Only load if we have a valid branch ID or refCode
     if (!branchId && !this.wizardService.refCode) {
       console.log('No branch ID or refCode provided for host data loading');
-      return;
+      return Promise.resolve();
     }
 
     console.log('Loading branch host data for branch:', branchId);
 
-    this.api.GetBranchHostData(branchId || '', true, this.wizardService.refCode || undefined).subscribe({
+    return new Promise<void>(resolve => this.api.GetBranchHostData(branchId || '', true, this.wizardService.refCode || undefined).subscribe({
       next: (response: any) => {
         console.log('Branch host data loaded:', response);
         // Store the data in wizard service for use in general step
@@ -1315,11 +1316,13 @@ export class HomePageComponent implements AfterViewChecked {
 
         console.log(`Categories: SelfVisitorCategories="${selfVisitorCategories}", total=${allCategories.length}, filtered=${categoryData.length}`);
         this.loadCategories(categoryData);
+        resolve();
       },
       error: (error) => {
         console.error('Error loading branch host data:', error);
+        resolve();
       }
-    });
+    }));
   }
 
   ngOnDestroy(): void {
