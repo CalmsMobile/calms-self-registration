@@ -3783,16 +3783,32 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.faceValidationFeedback = result.feedback;
         }
         this.isUploadPhotoValid = result.face_detected;
-        // Face present → grab the feature vector for the payload.
-        this.extractFaceVector(file);
-        this.proceedWithFileRead(file, visitorIndex, closeDialog);
+        // Face present → check it against the face blacklist before accepting the photo.
+        this.isFaceValidating = true;
+        this.isFaceBlacklisted(file).then(blacklisted => {
+          this.isFaceValidating = false;
+          if (blacklisted) {
+            if (closeDialog) this.retakePhoto(); // inside the dialog: back to the live camera
+            return;
+          }
+          // Not blacklisted → grab the feature vector for the payload.
+          this.extractFaceVector(file);
+          this.proceedWithFileRead(file, visitorIndex, closeDialog);
+        });
       },
       error: () => {
-        // Validation service unavailable — proceed without blocking
-        this.isFaceValidating = false;
+        // Validation service unavailable — don't block on quality, but the
+        // blacklist check must still run.
         this.faceValidationFeedback = [];
         this.isUploadPhotoValid = true;
-        this.proceedWithFileRead(file, visitorIndex, closeDialog);
+        this.isFaceBlacklisted(file).then(blacklisted => {
+          this.isFaceValidating = false;
+          if (blacklisted) {
+            if (closeDialog) this.retakePhoto();
+            return;
+          }
+          this.proceedWithFileRead(file, visitorIndex, closeDialog);
+        });
       }
     });
   }
@@ -4113,18 +4129,38 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           this.retakePhoto();
           return;
         }
-        this.captureValidationPassed = true;
-        // Final verification passed → grab the face feature vector for the payload.
-        this.extractFaceVector(validationFile);
-        // …and re-frame the preview to passport proportions, so what the user
-        // approves in the dialog is exactly what gets saved.
-        this.applyPassportCrop();
+        // Face is good → check it against the face blacklist before allowing "Use this photo".
+        const captured = this.capturedImage;
+        this.isFaceValidating = true;
+        this.isFaceBlacklisted(validationFile).then(blacklisted => {
+          this.isFaceValidating = false;
+          if (this.capturedImage !== captured) return; // retaken while the check was in flight
+          if (blacklisted) {
+            this.retakePhoto();
+            return;
+          }
+          this.captureValidationPassed = true;
+          // Final verification passed → grab the face feature vector for the payload.
+          this.extractFaceVector(validationFile);
+          // …and re-frame the preview to passport proportions, so what the user
+          // approves in the dialog is exactly what gets saved.
+          this.applyPassportCrop();
+        });
       },
       error: () => {
-        // Unavailable or timed out — proceed without blocking.
-        this.isFaceValidating = false;
+        // Validation unavailable or timed out — don't block on quality, but the
+        // blacklist check must still run.
         this.faceValidationFeedback = [];
-        this.captureValidationPassed = true;
+        const captured = this.capturedImage;
+        this.isFaceBlacklisted(validationFile).then(blacklisted => {
+          this.isFaceValidating = false;
+          if (this.capturedImage !== captured) return;
+          if (blacklisted) {
+            this.retakePhoto();
+            return;
+          }
+          this.captureValidationPassed = true;
+        });
       }
     });
   }
@@ -4150,6 +4186,23 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         this.capturedFaceVector = null;
         return null;
       });
+  }
+
+  /**
+   * Check the photo's face against the face blacklist (POST /blacklist/check).
+   * Resolves true — and shows the error toast — when it matches a blacklisted
+   * member. Fails open (false) on API error/timeout, like the other face checks.
+   */
+  private async isFaceBlacklisted(file: File): Promise<boolean> {
+    try {
+      const result = await firstValueFrom(this.faceValidationService.checkBlacklist(file));
+      if (!result?.is_blacklisted) return false;
+      // Same alert as the ID blacklist check
+      this.showMessage({ severity: 'error', ...this.getAlert('registration_page_blacklisted_alert'), life: 5000 });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /** Resolve the in-flight face-vector request (if any) so it's ready before saving. */

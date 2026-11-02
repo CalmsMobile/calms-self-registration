@@ -37,6 +37,18 @@ export interface FaceEmbeddingResult {
   dimensions: number;
 }
 
+export interface BlacklistMatch {
+  member_ref_id: number;
+  similarity_score: number;
+}
+
+export interface BlacklistCheckResult {
+  face_detected: boolean;
+  is_blacklisted: boolean;
+  threshold_used: number;
+  matches: BlacklistMatch[];
+}
+
 /**
  * Without this, an unreachable service leaves every request hanging until the
  * browser's own TCP timeout (tens of seconds), so the capture dialog sits busy
@@ -84,6 +96,14 @@ export class FaceValidationService {
     const formData = new FormData();
     formData.append('photo', file, file.name);
     return this.http.post<FaceEmbeddingResult>(`${this.baseUrl}/extract-embedding`, formData)
+      .pipe(timeout(FACE_API_TIMEOUT_MS));
+  }
+
+  /** REST call — check whether the face in a photo matches a blacklisted member. */
+  checkBlacklist(file: File): Observable<BlacklistCheckResult> {
+    const formData = new FormData();
+    formData.append('photo', file, file.name);
+    return this.http.post<BlacklistCheckResult>(`${this.baseUrl}/blacklist/check`, formData)
       .pipe(timeout(FACE_API_TIMEOUT_MS));
   }
 
