@@ -4192,8 +4192,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
    * Check the photo's face against the face blacklist (POST /blacklist/check).
    * Resolves true — and shows the error toast — when it matches a blacklisted
    * member. Fails open (false) on API error/timeout, like the other face checks.
+   * Only runs when GetVisitorDeclarationSettings Table1.EnableBlacklistValidationbyFace is on.
    */
   private async isFaceBlacklisted(file: File): Promise<boolean> {
+    const enabled = this.settings?.EnableBlacklistValidationbyFace;
+    if (enabled !== true && enabled !== 1 && enabled !== 'true') return false;
     try {
       const result = await firstValueFrom(this.faceValidationService.checkBlacklist(file));
       if (!result?.is_blacklisted) return false;
