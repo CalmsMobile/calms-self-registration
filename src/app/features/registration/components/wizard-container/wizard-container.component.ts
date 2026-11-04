@@ -15,6 +15,7 @@ import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { take, Subject, takeUntil } from 'rxjs';
 import { ApiService } from '../../../../core/services/api.service';
 import { LabelService } from '../../../../core/services/label.service';
+import { MessageHelperService } from '../../../../core/services/message-helper.service';
 import { LanguageService } from '../../../../core/services/language.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 import { SharedService } from '../../../../shared/shared.service';
@@ -64,7 +65,8 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     private api: ApiService,
     private labelService: LabelService,
     private languageService: LanguageService,
-    private sharedService: SharedService
+    private sharedService: SharedService,
+    private messageHelper: MessageHelperService
   ) {
     // Detect browser refresh or direct URL access: isNavigatedFromHome is an in-memory
     // flag that is never persisted to sessionStorage, so it is always false after a reload.
@@ -401,6 +403,18 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                 // VisitorCheckIn: api-base unwraps to { Table, Table1 }
                 // Table1[0] has Status, HexCode, att_id, VisitorName, IdentityNo
                 const checkInData = response?.Table1?.[0];
+
+                // Status: false is a check-in rejection (e.g. Code 20 = blacklisted,
+                // Code 70 = vehicle not authorized). Stay on this page with the form
+                // intact and toast the reason instead of showing "Waiting for approval".
+                if (checkInData?.Status === false) {
+                  this.messageHelper.error(
+                    checkInData.Description || response?.Table?.[0]?.Description || this.labelService.getLabel('thankyou_page_server_error_message'),
+                    5000
+                  );
+                  return;
+                }
+
                 qrCodeData = checkInData?.HexCode?.toString() || '';
                 visitorId = qrCodeData;
                 isAutoApproved = checkInData?.Status === true;
@@ -412,38 +426,14 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                 const responseData = response?.Table?.[0];
 
                 // Table[0].code is the business-logic result ('S' = success).
-                // A 200 HTTP response can still carry a save failure (e.g. 'B' = bad data) —
-                // without this check the form would show "Waiting for approval" even though nothing was saved.
+                // A 200 HTTP response can still carry a save failure (e.g. 'B' = not authorised) —
+                // stay on this page with the form intact and toast the reason, rather than
+                // showing "Waiting for approval" or the Server Error page.
                 if (responseData?.code !== undefined && responseData.code !== 'S') {
-                  this.isLoading = false;
-                  const branchName = this.wizardService.currentBranchName;
-                  const branchID = this.wizardService.currentBranchID;
-                  const summary = this.wizardService.buildRegistrationSummary();
-                  const errStartMode = this.wizardService.appointmentCode
-                    ? 'ac'
-                    : this.wizardService.refCode ? 'bc' : 'plain';
-                  const errRefCode = this.wizardService.refCode;
-                  const errRefCatCode = this.wizardService.refCatCode;
-                  const errHcParam = this.wizardService.hcParam;
-                  const errAllowMultipleBooking = this.wizardService.getSettings()?.AllowMultipleBooking ?? true;
-
-                  sessionStorage.setItem('navigatingToStatus', 'true');
-                  this.router.navigate(['/registration-status'], {
-                    state: {
-                      registrationData: {
-                        status: 'error',
-                        errorMessage: responseData.description || undefined,
-                        ...summary
-                      },
-                      branchName: branchName,
-                      branchID: branchID,
-                      startMode: errStartMode,
-                      refCode: errRefCode,
-                      refCatCode: errRefCatCode,
-                      hcParam: errHcParam,
-                      allowMultipleBooking: errAllowMultipleBooking
-                    }
-                  });
+                  this.messageHelper.error(
+                    responseData.description || this.labelService.getLabel('thankyou_page_server_error_message'),
+                    5000
+                  );
                   return;
                 }
 

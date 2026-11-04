@@ -5,6 +5,7 @@ import { environment } from '../../../../../environments/environment';
 import { RegistrationStatusComponent } from './registration-status.component';
 import { WizardService } from '../../../../core/services/wizard.service';
 import { ApiService } from '../../../../core/services/api.service';
+import { MessageHelperService } from '../../../../core/services/message-helper.service';
 
 /** How the app was originally launched. Persisted through navigation state. */
 type StartMode = 'plain' | 'bc' | 'ac';
@@ -78,7 +79,8 @@ export class RegistrationStatusPageComponent implements OnInit {
     private router: Router,
     private sharedService: SharedService,
     private wizardService: WizardService,
-    private api: ApiService
+    private api: ApiService,
+    private messageHelper: MessageHelperService
   ) {
     // One-time flag set by the app before navigating here.
     // On browser refresh, history.state is restored but this flag is gone → redirect to home.
@@ -166,6 +168,20 @@ export class RegistrationStatusPageComponent implements OnInit {
             // VisitorCheckIn: api-base unwraps to { Table, Table1 }, and Table1[0]
             // carries Status / HexCode — there is no 'code' field to check.
             const checkInData = response?.Table1?.[0];
+
+            // Status: false is a check-in rejection — keep the error state and toast
+            // the reason rather than flipping to "pending".
+            if (checkInData?.Status === false) {
+              const reason = checkInData.Description || response?.Table?.[0]?.Description;
+              this.registrationData = {
+                ...this.registrationData,
+                status: 'error',
+                errorMessage: reason || undefined,
+              };
+              if (reason) this.messageHelper.error(reason, 5000);
+              return;
+            }
+
             qrCodeData = checkInData?.HexCode?.toString() || '';
             visitorId = qrCodeData;
             registrationId = qrCodeData;
