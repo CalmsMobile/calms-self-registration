@@ -38,7 +38,7 @@ export interface FaceEmbeddingResult {
 }
 
 export interface BlacklistMatch {
-  member_ref_id: number;
+  member_ref_id: string;
   similarity_score: number;
 }
 
@@ -99,10 +99,19 @@ export class FaceValidationService {
       .pipe(timeout(FACE_API_TIMEOUT_MS));
   }
 
-  /** REST call — check whether the face in a photo matches a blacklisted member. */
-  checkBlacklist(file: File): Observable<BlacklistCheckResult> {
+  /**
+   * REST call — check whether the face in a photo matches a blacklisted member.
+   * Accepts a File (sent as `photo`) or a base64 string (sent as `photo_base64`,
+   * data: prefix optional) — e.g. a photo that came from the backend. The API
+   * rejects requests carrying both fields, so only one is ever appended.
+   */
+  checkBlacklist(photo: File | string): Observable<BlacklistCheckResult> {
     const formData = new FormData();
-    formData.append('photo', file, file.name);
+    if (typeof photo === 'string') {
+      formData.append('photo_base64', photo);
+    } else {
+      formData.append('photo', photo, photo.name);
+    }
     return this.http.post<BlacklistCheckResult>(`${this.baseUrl}/blacklist/check`, formData)
       .pipe(timeout(FACE_API_TIMEOUT_MS));
   }

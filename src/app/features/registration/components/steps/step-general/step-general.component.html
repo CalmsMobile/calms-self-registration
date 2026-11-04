@@ -1833,8 +1833,8 @@
 
     <div class="photo-actions">
       <!-- Keep existing photo -->
-      <button type="button" class="btn-capture" (click)="keepExistingPhoto()">
-        <i class="pi pi-check"></i>
+      <button type="button" class="btn-capture" (click)="keepExistingPhoto()" [disabled]="isFaceValidating">
+        <i class="pi" [class.pi-check]="!isFaceValidating" [class.pi-spin]="isFaceValidating" [class.pi-spinner]="isFaceValidating"></i>
         {{ 'registration_page_button_keep_photo' | translate }}
       </button>
 

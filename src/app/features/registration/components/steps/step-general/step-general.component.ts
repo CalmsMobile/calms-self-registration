@@ -3496,6 +3496,19 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       visitor_address: visitor.visitor_address_1 || visitor.Address || ''
     });
 
+    // Returning visitor's photo comes back as base64 (raw or data URL). Seed it
+    // as the existing photo; "Keep photo" still runs the face blacklist on it.
+    const rawPhoto: string = visitor.Photo || visitor.VisitorImg || '';
+    if (rawPhoto) {
+      const photoDataUrl = /^(data:|https?:)/i.test(rawPhoto)
+        ? rawPhoto
+        : `data:${rawPhoto.startsWith('iVBORw0KGgo') ? 'image/png' : 'image/jpeg'};base64,${rawPhoto}`;
+      this.capturedFaceVector = null;
+      this.faceVectorPending = null;
+      this.generalForm.patchValue({ profile: photoDataUrl, profilePreview: photoDataUrl, faceVector: null });
+      this.profileImage = this.sanitizer.bypassSecurityTrustUrl(photoDataUrl);
+    }
+
     this.udfSettings.forEach((udf: any) => {
       if (udf.udfPrefix !== 'v') return;
       const apiValue = visitor[udf.UDFName];
@@ -3905,7 +3918,23 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     this.closePhotoCaptureDialog();
   }
 
-  keepExistingPhoto(): void {
+  async keepExistingPhoto(): Promise<void> {
+    if (this.isFaceValidating) return;
+    // The existing photo may never have been through the camera/upload checks —
+    // e.g. a base64 photo from the backend (appointment Table2.Photo) — so run
+    // the face blacklist on it before accepting it. Only data URLs / raw base64
+    // can be sent; anything else (http/blob URL) is skipped, failing open.
+    const existing = this.dialogPreviousImage;
+    if (existing && !/^(https?:|blob:)/i.test(existing)) {
+      this.isFaceValidating = true;
+      const blacklisted = await this.isFaceBlacklisted(existing);
+      this.isFaceValidating = false;
+      if (blacklisted) {
+        this.clearPhoto();
+        this.switchToCamera();
+        return;
+      }
+    }
     this.closePhotoCaptureDialog();
     this.executePendingAction();
   }
@@ -4193,12 +4222,14 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
    * Resolves true — and shows the error toast — when it matches a blacklisted
    * member. Fails open (false) on API error/timeout, like the other face checks.
    * Only runs when GetVisitorDeclarationSettings Table1.EnableBlacklistValidationbyFace is on.
+   * Takes a File (camera/upload) or a base64 string (photo already on the form,
+   * e.g. the appointment photo from getAppointmentData Table2).
    */
-  private async isFaceBlacklisted(file: File): Promise<boolean> {
+  private async isFaceBlacklisted(photo: File | string): Promise<boolean> {
     const enabled = this.settings?.EnableBlacklistValidationbyFace;
     if (enabled !== true && enabled !== 1 && enabled !== 'true') return false;
     try {
-      const result = await firstValueFrom(this.faceValidationService.checkBlacklist(file));
+      const result = await firstValueFrom(this.faceValidationService.checkBlacklist(photo));
       if (!result?.is_blacklisted) return false;
       // Same alert as the ID blacklist check
       this.showMessage({ severity: 'error', ...this.getAlert('registration_page_blacklisted_alert'), life: 5000 });
