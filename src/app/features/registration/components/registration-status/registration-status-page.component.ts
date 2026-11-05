@@ -172,13 +172,17 @@ export class RegistrationStatusPageComponent implements OnInit {
             // Status: false is a check-in rejection — keep the error state and toast
             // the reason rather than flipping to "pending".
             if (checkInData?.Status === false) {
-              const reason = checkInData.Description || response?.Table?.[0]?.Description;
+              const { summary, detail } = this.wizardService.getSubmitRejectionAlert(response?.Table?.[0]?.Code);
               this.registrationData = {
                 ...this.registrationData,
                 status: 'error',
-                errorMessage: reason || undefined,
+                errorMessage: detail || undefined,
               };
-              if (reason) this.messageHelper.error(reason, 5000);
+              if (summary) {
+                this.messageHelper.errorWithTitle(summary, detail);
+              } else if (detail) {
+                this.messageHelper.error(detail, 5000);
+              }
               return;
             }
 
@@ -195,11 +199,17 @@ export class RegistrationStatusPageComponent implements OnInit {
             // A 200 can still carry a business-logic failure ('S' = saved). Without
             // this the page would flip to "pending" on a response that saved nothing.
             if (responseData?.code !== undefined && responseData.code !== 'S') {
+              const { summary, detail } = this.wizardService.getSubmitRejectionAlert(responseData.code);
               this.registrationData = {
                 ...this.registrationData,
                 status: 'error',
-                errorMessage: responseData.description || undefined,
+                errorMessage: detail || undefined,
               };
+              if (summary) {
+                this.messageHelper.errorWithTitle(summary, detail);
+              } else if (detail) {
+                this.messageHelper.error(detail, 5000);
+              }
               return;
             }
 

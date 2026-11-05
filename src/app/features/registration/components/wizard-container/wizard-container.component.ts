@@ -361,6 +361,17 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Rejected submission: stay on this step and toast the reason (blacklisted
+  // visitor / vehicle use the same translated alerts as the registration page).
+  private showSubmitRejection(code: any): void {
+    const { summary, detail } = this.wizardService.getSubmitRejectionAlert(code);
+    if (summary) {
+      this.messageHelper.errorWithTitle(summary, detail);
+    } else {
+      this.messageHelper.error(detail, 5000);
+    }
+  }
+
   private submitRegistration(): void {
     // Request validation first
     this.wizardService.requestValidation();
@@ -408,10 +419,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                 // Code 70 = vehicle not authorized). Stay on this page with the form
                 // intact and toast the reason instead of showing "Waiting for approval".
                 if (checkInData?.Status === false) {
-                  this.messageHelper.error(
-                    checkInData.Description || response?.Table?.[0]?.Description || this.labelService.getLabel('thankyou_page_server_error_message'),
-                    5000
-                  );
+                  this.showSubmitRejection(response?.Table?.[0]?.Code);
                   return;
                 }
 
@@ -430,10 +438,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                 // stay on this page with the form intact and toast the reason, rather than
                 // showing "Waiting for approval" or the Server Error page.
                 if (responseData?.code !== undefined && responseData.code !== 'S') {
-                  this.messageHelper.error(
-                    responseData.description || this.labelService.getLabel('thankyou_page_server_error_message'),
-                    5000
-                  );
+                  this.showSubmitRejection(responseData.code);
                   return;
                 }
 

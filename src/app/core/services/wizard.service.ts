@@ -1195,6 +1195,37 @@ export class WizardService {
   }
 
   /**
+   * Toast for a rejected final submission (VisitorCheckIn / VisitorAckSave).
+   * Blacklisted visitor / vehicle reuse the registration page's translated alerts
+   * so the visitor sees the same message as on step-general. The API's own
+   * description is never shown; unknown codes get the generic server error label.
+   *   VisitorAckSave: B = visitor blacklisted
+   *   VisitorCheckIn: 20 = visitor blacklisted, 70 = vehicle not authorised
+   */
+  getSubmitRejectionAlert(code: any): { summary: string; detail: string } {
+    switch (String(code ?? '').trim().toUpperCase()) {
+      case 'B':
+      case '20': {
+        // Same split as step-general getAlert(): "Title / Message"
+        const caption = this.labelService.getLabel('registration_page_blacklisted_alert', 'caption');
+        const idx = caption.indexOf(' / ');
+        if (idx !== -1) return { summary: caption.substring(0, idx), detail: caption.substring(idx + 3) };
+        return { summary: '', detail: caption || 'You are not authorised to register. Please contact your host/administrator for further details.' };
+      }
+      case '70':
+        return {
+          summary: this.labelService.getLabel('registration_page_vehicle_blacklist_error_title', 'caption') || 'Vehicle Not Authorized',
+          detail: this.labelService.getLabel('registration_page_vehicle_blacklist_error', 'caption')
+            || 'The vehicle number entered is not authorized for check-in. Please contact the security officer for further assistance.'
+        };
+    }
+    return {
+      summary: '',
+      detail: this.labelService.getLabel('thankyou_page_server_error_message') || 'Something went wrong. Please try again.'
+    };
+  }
+
+  /**
    * Builds a human-readable summary from the current form data + master data.
    * Call this BEFORE clearSessionStorage() so all lookups still work.
    */
