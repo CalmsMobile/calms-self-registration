@@ -69,7 +69,10 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
   }
 
   get quizPassingScoreLabel(): string {
-    return this.labelService.getLabel('thankyou_page_minimum_passing_score', 'caption') || 'Minimum passing score';
+    // Template adds its own ": " — strip a trailing colon from the caption
+    // (e.g. "Minimum passing score:") so it doesn't render as "::".
+    const caption = this.labelService.getLabel('thankyou_page_minimum_passing_score', 'caption') || 'Minimum passing score';
+    return caption.replace(/[:：]\s*$/, '');
   }
 
   private get dynamicAlertMessages() {
