@@ -30,8 +30,11 @@
   <!-- Video Card -->
   <section class="video-card">
     <div #videoContainer class="video-inner">
+      <!-- No native controls: the only control offered is the play/pause toggle below. Context
+           menu is blocked because Chrome/Firefox expose "Show all controls", loop and save there. -->
       <video #safetyVideo class="safety-video" [hidden]="videoEnded && showReplay" disablePictureInPicture
-        controlsList="nodownload nofullscreen noremoteplayback">
+        controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+        (click)="togglePlayPause()" (contextmenu)="$event.preventDefault()">
         <source [src]="videoSource" type="video/mp4">
       </video>
 
@@ -40,7 +43,13 @@
         <div class="video-progress-bar">
           <div class="video-progress-fill" [style.width.%]="progressPercent"></div>
         </div>
-        <span class="video-time">{{ formatTime(currentTime) }} / {{ formatTime(videoDuration) }}</span>
+        <div class="video-controls-row">
+          <button type="button" class="video-toggle-btn" (click)="togglePlayPause()"
+            [attr.aria-label]="isPlaying ? 'Pause' : 'Play'">
+            <i class="pi" [class.pi-pause]="isPlaying" [class.pi-play]="!isPlaying"></i>
+          </button>
+          <span class="video-time">{{ formatTime(currentTime) }} / {{ formatTime(videoDuration) }}</span>
+        </div>
       </div>
       }
 

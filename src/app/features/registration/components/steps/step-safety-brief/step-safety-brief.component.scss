@@ -218,10 +218,31 @@
     }
   }
 
+  .video-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .video-toggle-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: background 0.2s;
+
+    i { font-size: 16px; }
+    &:hover { background: rgba(255, 255, 255, 0.35); }
+  }
+
   .video-time {
     color: #fff;
     font-size: 12px;
-    align-self: flex-end;
     font-variant-numeric: tabular-nums;
   }
 }

@@ -29,6 +29,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
   videoSource = '';
   isReplaying = false; // Track if user is replaying video
   isPausedMidVideo = false; // Track if video was paused due to visibility/focus loss
+  isPlaying = false;        // mirrors the video's play/pause state for the toggle button
+  private cursorHideTimer?: ReturnType<typeof setTimeout>;
   videoDuration = 0;       // total duration in seconds (loaded from metadata)
   currentTime = 0;         // current playback position in seconds
   logo = 'assets/logo.png';
@@ -125,6 +127,43 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     video.addEventListener('ended', () => {
       this.handleVideoEnd();
     });
+
+    // Native listeners run outside Angular's zone — re-enter so the toggle icon updates.
+    video.addEventListener('play', () => this.ngZone.run(() => this.isPlaying = true));
+    video.addEventListener('pause', () => this.ngZone.run(() => this.isPlaying = false));
+
+    // Show the cursor again on movement so the play/pause button can be reached; hide it
+    // after 3s of no movement while playing.
+    this.videoContainer.nativeElement.addEventListener('mousemove', () => this.showCursorTemporarily());
+  }
+
+  /** Play/pause toggle — the only playback control offered (no seek, speed or volume). */
+  togglePlayPause(): void {
+    const video = this.videoElement?.nativeElement;
+    if (!video || this.videoEnded || this.showPlayButton) return;
+    if (video.paused) {
+      video.play().catch(err => console.error('Resume failed:', err));
+    } else {
+      video.pause();
+    }
+    this.showCursorTemporarily();
+  }
+
+  @HostListener('document:keydown.space', ['$event'])
+  handleSpace(event: Event): void {
+    if (!this.isFullscreen || this.videoEnded || this.showPlayButton) return;
+    event.preventDefault(); // stop the page scrolling / a focused button re-firing
+    this.togglePlayPause();
+  }
+
+  private showCursorTemporarily(): void {
+    const container = this.videoContainer?.nativeElement;
+    if (!container) return;
+    container.style.cursor = 'default';
+    clearTimeout(this.cursorHideTimer);
+    this.cursorHideTimer = setTimeout(() => {
+      if (this.isPlaying && !this.videoEnded) container.style.cursor = 'none';
+    }, 3000);
   }
 
   setupFullscreenListener(): void {
@@ -168,10 +207,8 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
 
       // Always enter fullscreen (first play or replay)
       await this.requestFullscreen(container);
-      // Hide cursor after 3 seconds (for desktop)
-      setTimeout(() => {
-        container.style.cursor = 'none';
-      }, 3000);
+      // Hide cursor after 3 seconds of no movement (for desktop)
+      this.showCursorTemporarily();
 
     } catch (error) {
       console.error('Playback failed:', error);
@@ -506,6 +543,7 @@ export class StepSafetyBriefComponent implements OnInit, AfterViewInit, OnDestro
     // Remove window focus listener
     window.removeEventListener('focus', this.handleWindowFocus);
     document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    clearTimeout(this.cursorHideTimer);
     window.removeEventListener('blur', this.handleWindowBlur);
   }
   
