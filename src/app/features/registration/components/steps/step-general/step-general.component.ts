@@ -2234,9 +2234,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     // If the appointment fullName contains a title prefix (e.g. "Mr.Aravind"), extract and
     // resolve it against titleList so the title dropdown gets pre-selected correctly.
     let resolvedTitle: string | null = savedData.title || null;
-    // Details entered by the admin/host when sharing the registration URL (hc flow). Empty
+    // Details entered by the admin/host when sharing the registration URL (em / mn / vn). Empty
     // object when absent, so every fallback below collapses to the pre-existing default.
-    const sharePrefill = (this.wizardService.isHostFromQuery && this.wizardService.shareUrlPrefill)
+    const sharePrefill = this.wizardService.shareUrlPrefill
       ? this.wizardService.shareUrlPrefill
       : { fullName: '', email: '', phone: '', departmentId: '' };
     let resolvedFullName: string = isPreFilledData ? (visitorData.fullName || savedData.fullName || '') : (savedData.fullName || sharePrefill.fullName || '');

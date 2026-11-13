@@ -5,6 +5,14 @@ import { ApiBaseService } from './api-base.service';
 import { environment } from '../../../environments/environment';
 import { VisitorAck, VisitorAckResponse } from '../models/visitor-ack.model';
 
+/** Optional encrypted params forwarded as-is to GetSelfRegShareURLData. */
+export interface ShareUrlVisitorParams {
+  refCode?: string;            // bc
+  refVisitorEmail?: string;    // em
+  refVisitorMobileNo?: string; // mn
+  refVisitorName?: string;     // vn
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -290,14 +298,18 @@ export class ApiService {
 
   /**
    * Get host data from a shared/short URL host code
-   * @param refHostCode The host code from the hc query parameter
+   * @param refHostCode Optional encrypted host code from the hc query parameter
    * @param refCatCode Optional encrypted category code from the vc query parameter
+   * @param extra Optional encrypted branch code (bc) and visitor details (em / mn / vn)
    */
-  GetSelfRegShareURLData(refHostCode: string, refCatCode?: string) {
-    const loParam: any = { RefHostCode: refHostCode };
-    if (refCatCode) {
-      loParam.RefCatCode = refCatCode;
-    }
+  GetSelfRegShareURLData(refHostCode?: string, refCatCode?: string, extra: ShareUrlVisitorParams = {}) {
+    const loParam: any = {};
+    if (extra.refCode) loParam.RefCode = extra.refCode;
+    if (refHostCode) loParam.RefHostCode = refHostCode;
+    if (refCatCode) loParam.RefCatCode = refCatCode;
+    if (extra.refVisitorEmail) loParam.RefVisitorEmail = extra.refVisitorEmail;
+    if (extra.refVisitorMobileNo) loParam.RefVisitorMobileNo = extra.refVisitorMobileNo;
+    if (extra.refVisitorName) loParam.RefVisitorName = extra.refVisitorName;
     return this.apiBase.post(`${this.baseUrl}/GetSelfRegShareURLData`, loParam);
   }
 

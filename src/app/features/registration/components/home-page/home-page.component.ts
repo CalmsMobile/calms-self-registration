@@ -8,7 +8,7 @@ import { MessageHelperService } from '../../../../core/services/message-helper.s
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SelectModule } from 'primeng/select';
-import { ApiService } from '../../../../core/services/api.service';
+import { ApiService, ShareUrlVisitorParams } from '../../../../core/services/api.service';
 import { WizardService } from '../../../../core/services/wizard.service';
 import { ThemeService } from '../../../../core/services/theme.service';
 import { AppConfigService } from '../../../../core/services/app-config.service';
@@ -190,12 +190,21 @@ export class HomePageComponent implements AfterViewChecked {
 
       // Capture the original query string so we can restore it if the page is refreshed
       // while the user is in the wizard. Only capture when meaningful params are present.
-      const hasQueryParams = !!(p['ac'] || p['bc'] || p['hc'] || p['vc']);
+      const hasQueryParams = !!(p['ac'] || p['bc'] || p['hc'] || p['vc'] || p['em'] || p['mn'] || p['vn']);
       if (hasQueryParams) {
         const qs = window.location.search;
         this.wizardService.originalQueryString = qs;
         sessionStorage.setItem('originalQueryString', qs);
       }
+
+      // Encrypted params forwarded to GetSelfRegShareURLData alongside hc/vc
+      // (bc = branch, em = email, mn = mobile no, vn = visitor name).
+      const shareUrlParams: ShareUrlVisitorParams = {
+        refCode: p['bc'] || undefined,
+        refVisitorEmail: p['em'] || undefined,
+        refVisitorMobileNo: p['mn'] || undefined,
+        refVisitorName: p['vn'] || undefined,
+      };
 
       if (p['ac']) {
         // Appointment flow: use encrypted appointment code directly
@@ -244,16 +253,7 @@ export class HomePageComponent implements AfterViewChecked {
         // Read vc early so it can be passed to GetSelfRegShareURLData when hc is also present
         const vcParam = p['vc'];
 
-        if (hcParam) {
-          this.wizardService.hcParam = hcParam;
-          this.wizardService.isHostFromQuery = true;
-          this.api.GetSelfRegShareURLData(hcParam, vcParam || undefined).subscribe({
-            next: (response: any) => this.applyShareUrlResponse(response),
-            error: (err) => {
-              console.error('Error fetching host code from hc param:', err);
-            }
-          });
-        }
+        this.fetchShareUrlData(hcParam, vcParam, shareUrlParams);
 
         // Check for category query parameter (vc)
         if (vcParam) {
@@ -294,16 +294,7 @@ export class HomePageComponent implements AfterViewChecked {
         // Check for standalone hc param (without bc)
         const hcParam = p['hc'];
         const vcParam = p['vc'];
-        if (hcParam) {
-          this.wizardService.hcParam = hcParam;
-          this.wizardService.isHostFromQuery = true;
-          this.api.GetSelfRegShareURLData(hcParam, vcParam || undefined).subscribe({
-            next: (response: any) => this.applyShareUrlResponse(response),
-            error: (err) => {
-              console.error('Error fetching host code from hc param:', err);
-            }
-          });
-        }
+        this.fetchShareUrlData(hcParam, vcParam, shareUrlParams);
 
         // Restore branch/category when the user navigated back from step-general.
         // Both dropdowns remain fully editable so the user can change either.
@@ -594,6 +585,27 @@ export class HomePageComponent implements AfterViewChecked {
    * `.Data.Table` variant never matched and the standalone-hc path resolved nothing. Accepting
    * both shapes here keeps the working path identical and repairs the broken one.
    */
+  /**
+   * Call GetSelfRegShareURLData when the link carries any share-URL param. Every param is
+   * optional: hc (host), vc (category), bc (branch), em / mn / vn (visitor details). Only the
+   * ones present are sent; with none of hc / em / mn / vn there is nothing to resolve.
+   */
+  private fetchShareUrlData(hcParam: string | undefined, vcParam: string | undefined, extra: ShareUrlVisitorParams): void {
+    const hasVisitorParams = !!(extra.refVisitorEmail || extra.refVisitorMobileNo || extra.refVisitorName);
+    if (!hcParam && !hasVisitorParams) return;
+
+    if (hcParam) {
+      this.wizardService.hcParam = hcParam;
+      this.wizardService.isHostFromQuery = true;
+    }
+    this.api.GetSelfRegShareURLData(hcParam, vcParam || undefined, extra).subscribe({
+      next: (response: any) => this.applyShareUrlResponse(response),
+      error: (err) => {
+        console.error('Error fetching share URL data:', err);
+      }
+    });
+  }
+
   private applyShareUrlResponse(response: any): void {
     const responseArray = Array.isArray(response) ? response : [response];
     const root = responseArray[0] ?? {};
@@ -640,7 +652,8 @@ export class HomePageComponent implements AfterViewChecked {
     const prefill = {
       fullName: firstNonEmpty(tableData.VisitorName, tableData.FullName),
       email: firstNonEmpty(tableData.VisitorEmail, tableData.Email),
-      phone: firstNonEmpty(tableData.VisitorContact, tableData.ContactNo, tableData.Contact, tableData.MobileNo),
+      // Phone input accepts digits only — strip any spaces / '+' / '-' the backend returns.
+      phone: firstNonEmpty(tableData.VisitorMobileNo, tableData.VisitorContact, tableData.ContactNo, tableData.Contact, tableData.MobileNo).replace(/\D/g, ''),
       departmentId: firstNonEmpty(tableData.HostDeptId, tableData.DepartmentSeqId, tableData.HostDeptDesc)
     };
 
