@@ -2324,18 +2324,21 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         if (udf.Enabled) {
           const controlName = udf.formControlName;  // e.g. 'AUDF1' or 'VUDF1'
 
-          // Get value from saved data, fall back to visitorData in appointment flow
+          // Saved form data wins whenever the key exists — including when the visitor
+          // deliberately emptied the field. Falling back to the appointment value on an
+          // empty saved value (the old '||' / '??' chain) resurrected the bulk-upload value
+          // after back-navigation or a form re-init, so it was resubmitted and the admin
+          // page never showed the field as cleared. The appointment value is only the
+          // initial value, used before this step has saved anything for the control.
           const appointmentValue = isPreFilledData ? (visitorData[controlName] ?? null) : null;
+          const hasSavedValue = Object.prototype.hasOwnProperty.call(savedData, controlName);
+          const sourceValue = hasSavedValue ? savedData[controlName] : appointmentValue;
           let controlValue: any;
           if (udf.UDFCtrlType === 10) {
-            controlValue = savedData[controlName] || appointmentValue || '';
-          } else if (udf.UDFCtrlType === 40) {
-            // Date: an empty-string saved value means "unset" — a real saved date is a
-            // Date object or non-empty string. Use '||' so '' falls through to the
-            // appointment value; '??' would wrongly keep '' and blank the field.
-            controlValue = savedData[controlName] || appointmentValue || null;
+            controlValue = sourceValue ?? '';
           } else {
-            controlValue = savedData[controlName] ?? appointmentValue ?? null;
+            // Date / select / multiselect: '' means unset — normalise to null.
+            controlValue = (sourceValue === '' || sourceValue === undefined) ? null : sourceValue;
           }
 
           // p-multiSelect requires an array — coerce any value coming from the API/saved data

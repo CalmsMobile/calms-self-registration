@@ -1024,6 +1024,9 @@ export class WizardService {
       return idx >= 0 ? src.substring(idx + 8) : src;
     };
 
+    const audf = (data: any, key: string) =>
+      Object.prototype.hasOwnProperty.call(generalData, key) ? generalData[key] : data[key];
+
     const buildVisitorEntry = (data: any, isSelf: boolean) => {
       const companyId = (typeof data.visitor_company === 'object' && data.visitor_company !== null)
         ? (data.visitor_company.visitor_comp_code || data.visitor_company.id || '') : '';
@@ -1102,16 +1105,19 @@ export class WizardService {
         VUDF8: this.normalizeUDFValue(data.VUDF8),
         VUDF9: this.normalizeUDFValue(data.VUDF9),
         VUDF10: this.normalizeUDFValue(data.VUDF10),
-        AUDF1: this.normalizeUDFValue(data.AUDF1),
-        AUDF2: this.normalizeUDFValue(data.AUDF2),
-        AUDF3: this.normalizeUDFValue(data.AUDF3),
-        AUDF4: this.normalizeUDFValue(data.AUDF4),
-        AUDF5: this.normalizeUDFValue(data.AUDF5),
-        AUDF6: this.normalizeUDFValue(data.AUDF6),
-        AUDF7: this.normalizeUDFValue(data.AUDF7),
-        AUDF8: this.normalizeUDFValue(data.AUDF8),
-        AUDF9: this.normalizeUDFValue(data.AUDF9),
-        AUDF10: this.normalizeUDFValue(data.AUDF10),
+        // Appointment UDFs are booking-level: read them from the live form (generalData),
+        // which keeps them across Save & Add, not from the per-guest snapshot — a guest row
+        // saved before AUDF was filled/edited otherwise sent the stale (often empty) value.
+        AUDF1: this.normalizeUDFValue(audf(data, 'AUDF1')),
+        AUDF2: this.normalizeUDFValue(audf(data, 'AUDF2')),
+        AUDF3: this.normalizeUDFValue(audf(data, 'AUDF3')),
+        AUDF4: this.normalizeUDFValue(audf(data, 'AUDF4')),
+        AUDF5: this.normalizeUDFValue(audf(data, 'AUDF5')),
+        AUDF6: this.normalizeUDFValue(audf(data, 'AUDF6')),
+        AUDF7: this.normalizeUDFValue(audf(data, 'AUDF7')),
+        AUDF8: this.normalizeUDFValue(audf(data, 'AUDF8')),
+        AUDF9: this.normalizeUDFValue(audf(data, 'AUDF9')),
+        AUDF10: this.normalizeUDFValue(audf(data, 'AUDF10')),
         uid: generateUID()
       };
     };
