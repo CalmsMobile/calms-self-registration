@@ -2256,15 +2256,6 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         }
       }
     }
-    // Appointments saved after the title/name split store FullName without the "Mr." prefix
-    // and return the title in its own field — use it when the name carried no prefix.
-    if (isPreFilledData && !resolvedTitle && visitorData.title && this.titleList.length > 0) {
-      const apiTitle = String(visitorData.title).replace(/\.+$/, '').trim().toLowerCase();
-      const match = this.titleList.find((t: any) =>
-        (t.Title || '').replace(/\.+$/, '').trim().toLowerCase() === apiTitle
-      );
-      if (match) resolvedTitle = match.Title;
-    }
 
     const appointmentPhotoRaw = (isPreFilledData && !savedData.profilePreview)
       ? (this.visitorAckData?.imageData?.[0]?.Photo || null)

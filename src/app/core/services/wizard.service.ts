@@ -720,10 +720,7 @@ export class WizardService {
       EnableFb: generalData.facilityBooking || false,
 
       // Main visitor info - get from the first visitor in the list
-      // Name only — the title travels separately (VisitorsList[i].TitleId / TitleDesc).
-      FullName: this.getPrimaryVisitorName(formData),
-      TitleId: this.getPrimaryVisitorTitle(formData),
-      TitleDesc: this.getPrimaryVisitorTitle(formData),
+      FullName: this.getPrimaryVisitorFullName(formData),
       IdentityNo: this.getPrimaryVisitorIdentityNo(formData),
       Visitor_IC: this.getPrimaryVisitorIdentityNo(formData),
       ID_TYPE: this.getPrimaryVisitorIdType(formData),
@@ -1079,7 +1076,7 @@ export class WizardService {
         FaceVector: Array.isArray(data.faceVector) ? JSON.stringify(data.faceVector) : '',
         TitleId: data.title || '',
         TitleDesc: data.title || '',
-        FullName: data.fullName || '', // name only — TitleId / TitleDesc carry the title
+        FullName: this.buildFullName(data.title, data.fullName),
         IdentityNo: data.visitor_id || '',
         Visitor_IC: data.visitor_id || '',
         GenderId: genderId,
@@ -1542,27 +1539,6 @@ export class WizardService {
     const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
     if (savedVisitors.length > 0) return this.buildFullName(savedVisitors[0].title, savedVisitors[0].fullName);
     return this.buildFullName(generalData.title, generalData.fullName);
-  }
-
-  /**
-   * Primary visitor's name WITHOUT the title prefix, for the VisitorAckSave / VisitorCheckIn
-   * payloads (the title is sent in its own fields). getPrimaryVisitorFullName() keeps the
-   * "Mr.Name" form for display only (final-page summary).
-   */
-  private getPrimaryVisitorName(formData: any): string {
-    const generalData = formData.general || {};
-    const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-    const data = savedVisitors.length > 0 ? savedVisitors[0] : generalData;
-    return data.fullName || '';
-  }
-
-  /** Primary visitor's title (e.g. "Mr."), sent beside the title-less FullName. '' when titles are off. */
-  private getPrimaryVisitorTitle(formData: any): string {
-    if (!this.getSettings()?.TitleEnabled) return '';
-    const generalData = formData.general || {};
-    const savedVisitors = generalData.savedVisitors || generalData.visitors || [];
-    const data = savedVisitors.length > 0 ? savedVisitors[0] : generalData;
-    return data.title || '';
   }
 
   private getPrimaryVisitorIdentityNo(formData: any): string {

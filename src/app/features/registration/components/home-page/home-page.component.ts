@@ -430,8 +430,6 @@ export class HomePageComponent implements AfterViewChecked {
             hostName: visitorData.HostName,
             identityNo: visitorData.IdentityNo,
             fullName: visitorData.FullName,
-            // Title saved separately from FullName (no longer "Mr.Name"); key read defensively.
-            title: visitorData.Title ?? visitorData.TitleId ?? visitorData.TitleDesc ?? null,
             company: visitorData.CompanyId,
             purposeId: visitorData.PurposeId,
             startTime: visitorData.START_TIME,
