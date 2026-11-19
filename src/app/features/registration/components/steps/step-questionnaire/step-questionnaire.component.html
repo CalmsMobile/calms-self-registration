@@ -55,6 +55,19 @@
             </div>
           </ng-template>
 
+          @if (scoreResult) {
+            <div class="score-summary">
+              <div class="score-item fail">
+                <span class="score-label">{{ scoreLabel }}</span>
+                <span class="score-value">{{ scoreResult.score }}%</span>
+              </div>
+              <div class="score-item pass">
+                <span class="score-label">{{ passingScoreLabel }}</span>
+                <span class="score-value">{{ scoreResult.passingScore }}%</span>
+              </div>
+            </div>
+          }
+
           @if (safetyBriefQuestions.length) {
             <h2 class="section-title safety">{{ safetyBriefSectionTitle }}</h2>
             @for (question of safetyBriefQuestions; track question.QuestionariesSeqId) {
@@ -137,6 +150,19 @@
       </div>
     </ng-template>
 
+    @if (scoreResult) {
+            <div class="score-summary mobile">
+              <div class="score-item fail">
+                <span class="score-label">{{ scoreLabel }}</span>
+                <span class="score-value">{{ scoreResult.score }}%</span>
+              </div>
+              <div class="score-item pass">
+                <span class="score-label">{{ passingScoreLabel }}</span>
+                <span class="score-value">{{ scoreResult.passingScore }}%</span>
+              </div>
+            </div>
+          }
+
     @if (safetyBriefQuestions.length) {
       <h2 class="m-section-title safety">{{ safetyBriefSectionTitle }}</h2>
       @for (question of safetyBriefQuestions; track question.QuestionariesSeqId) {
@@ -177,6 +203,18 @@
       </svg>
     </div>
     <p class="modal-text compact">{{ alertMessage }}</p>
+    @if (scoreResult) {
+            <div class="score-summary in-modal">
+              <div class="score-item fail">
+                <span class="score-label">{{ scoreLabel }}</span>
+                <span class="score-value">{{ scoreResult.score }}%</span>
+              </div>
+              <div class="score-item pass">
+                <span class="score-label">{{ passingScoreLabel }}</span>
+                <span class="score-value">{{ scoreResult.passingScore }}%</span>
+              </div>
+            </div>
+          }
     <div class="modal-actions compact">
       <button class="modal-btn danger" type="button" (click)="rewatchSafetyBrief()">{{ 'questionnaires_rewatch_safety_brief' | translate }}</button>
       <button class="modal-link" type="button" (click)="reviewAnswers()">{{ 'questionnaires_review_my_answer' | translate }}</button>

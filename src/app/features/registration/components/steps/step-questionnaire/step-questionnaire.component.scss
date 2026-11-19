@@ -783,3 +783,34 @@
     }
   }
 }
+
+/* ===== SCORE SUMMARY (failed check — modal + review screen) ===== */
+/* Plain text lines: score (red) with the passing score below it (green). */
+.score-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 16px;
+
+  &.in-modal { margin: 4px 0 16px; align-items: center; }
+  &.mobile { margin: 0 0 14px; }
+
+  .score-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 15px;
+    font-weight: 600;
+
+    &.fail { color: #c62828; }
+    &.pass { color: #2e7d32; }
+  }
+
+  .score-label::after { content: ':'; }
+
+  .score-value {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+}

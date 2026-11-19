@@ -68,6 +68,23 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   isLoading = true;
   modalType: 'incorrect' | 'required' | null = null;
   alertMessage = '';
+  /**
+   * Result of the last failed check, kept so the score and passing score stay visible on the
+   * review screen after the modal closes. Cleared once the questionnaire passes.
+   */
+  scoreResult: { score: number; passingScore: number } | null = null;
+
+  // Label keys = ScreenName "Questionnaires" + Title "Your Score" / "Passing Score".
+  // The template's CSS adds the ":" — strip a trailing colon from the caption so it isn't doubled.
+  get scoreLabel(): string {
+    const caption = this.labelService.getLabel('questionnaires_your_score', 'caption') || 'Your Score';
+    return caption.replace(/[:：]\s*$/, '');
+  }
+
+  get passingScoreLabel(): string {
+    const caption = this.labelService.getLabel('questionnaires_passing_score', 'caption') || 'Passing Score';
+    return caption.replace(/[:：]\s*$/, '');
+  }
   illustrationUrl = 'assets/safety-declaration.png';
   logo = 'assets/logo.png';
   companyTitle = '';
@@ -441,6 +458,8 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     console.log('=================================');
 
     if (!passed) {
+      this.scoreResult = { score: Math.round(scorePercent), passingScore: requiredPercent };
+
       // Mark wrong answers as errors
       wrong.forEach(q => {
         this.validationErrors[q.QuestionariesSeqId] = true;
@@ -456,6 +475,7 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
       return;
     }
 
+    this.scoreResult = null;
     const isValid = Object.keys(this.validationErrors).length === 0;
     this.wizardService.setStepValid(isValid);
 
