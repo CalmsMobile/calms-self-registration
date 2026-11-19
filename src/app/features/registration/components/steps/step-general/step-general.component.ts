@@ -1312,10 +1312,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       const mappedHosts = response.Table.map((host: any) => {
         let formattedHost = { ...host };
 
-        // Ensure HOSTNAME field exists for dropdown display
-        if (!host.HOSTNAME && host.Name) {
-          formattedHost.HOSTNAME = host.Name;
-        }
+        // Ensure HOSTNAME field exists for dropdown display (trimmed — the API can return
+        // a leading space, e.g. " Lim Boon Soon")
+        formattedHost.HOSTNAME = String(host.HOSTNAME || host.Name || '').trim();
 
         // Ensure HOSTIC field exists for dropdown value
         if (!host.HOSTIC && host.HostIC) {
@@ -1665,12 +1664,15 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
 
   // Apply query parameter host filtering for appointment flow or hc query param
   private applyQueryParamHostFiltering() {
+    // Search the full master list: with EnableSelfRegistrationHostPreload on, this.hosts is
+    // deliberately empty until the visitor types, so matching against it never found the host.
+    const hostPool: any[] = this.allHosts?.length ? this.allHosts : this.hosts;
     // Handle isHostFromQuery: auto-select and disable host from hc query param
     if (this.wizardService.isHostFromQuery && this.wizardService.hostCodeFromQuery) {
       const hostCode = this.wizardService.hostCodeFromQuery;
       console.log('Applying host filtering for hc query param, hostCodeFromQuery:', hostCode);
 
-      const matchingHost = this.hosts.find((host: any) =>
+      const matchingHost = hostPool.find((host: any) =>
         host.HOSTIC === hostCode ||
         host.HostIC === hostCode ||
         String(host.HOSTIC) === String(hostCode)
@@ -1688,7 +1690,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
         console.log('Host auto-selected and disabled for hc query param flow');
         return;
       } else {
-        console.warn('No matching host found for hostCodeFromQuery:', hostCode, 'Available hosts:', this.hosts);
+        console.warn('No matching host found for hostCodeFromQuery:', hostCode, 'Available hosts:', hostPool);
       }
     }
 
@@ -1702,7 +1704,7 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     console.log('Applying query parameter host filtering for HostId:', hostId);
 
     // Find the host that matches the HostId from visitor ack data
-    const matchingHost = this.hosts.find((host: any) => {
+    const matchingHost = hostPool.find((host: any) => {
       return host.HOSTIC === hostId ||
         host.HostIC === hostId ||
         host.SeqId === hostId;
@@ -4629,6 +4631,13 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
     const selectedDepartment = event.value;
     console.log('Department changed to:', selectedDepartment);
     if (!skipHostClear) this.departmentAutoSetByHost = false;
+
+    // Host pinned by the shared link (hc) or appointment (ac): keep it. Re-filtering by
+    // department dropped a host with no / a different department (e.g. DEPARTMENT_REFID ""),
+    // which blanked the locked host field.
+    if (this.shouldFilterHostByQueryParam) {
+      return;
+    }
 
     if (!selectedDepartment || !this.originalHostData || this.originalHostData.length === 0) {
       // Reset to all hosts if no department selected or no original data
