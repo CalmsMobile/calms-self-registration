@@ -3668,7 +3668,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   }
 
   getVisitorIdTypeValidationError(): string {
-    const template = this.labelService.getLabel('registration_page_error_invalid_id', 'caption') ||
+    // Setup row Title "ID Validation Error" → key registration_page_id_validation_error.
+    // The old key (error_invalid_id) matches no setup row, so the configured caption was never
+    // used and the hard-coded default always showed. Old key kept as a fallback.
+    const template = this.labelService.getLabel('registration_page_id_validation_error', 'caption') ||
+      this.labelService.getLabel('registration_page_error_invalid_id', 'caption') ||
       'Identity number must be {type} and at least {MinLength} characters';
     const error = this.generalForm.get('visitor_id')?.getError('idTypeInvalid') || {};
     const inputType = this.selectedIdTypeData?.INPUT_TYPE;

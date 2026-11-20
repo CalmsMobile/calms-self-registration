@@ -519,8 +519,19 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     this.modalType = null;
   }
 
+  /**
+   * Close the result modal and bring the first highlighted (wrong / unanswered) question into
+   * view. validationErrors drives the red .has-error border; an error clears as soon as the
+   * visitor changes that answer (selectRadioOption / toggleCheckbox).
+   */
   reviewAnswers(): void {
     this.modalType = null;
+    setTimeout(() => {
+      // Desktop and mobile layouts are both in the DOM; pick the one that is visible.
+      const first = Array.from(document.querySelectorAll<HTMLElement>('.question-card.has-error, .m-question-card.has-error'))
+        .find(el => el.offsetParent !== null);
+      first?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
   }
 
   goBack(): void {
