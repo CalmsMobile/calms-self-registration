@@ -4719,8 +4719,10 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
             return;
           }
 
-          // Stores safety-briefing data and auto-fills the returning visitor's fields
-          this.applyVisitorRecord(visitor);
+          // NRIC entry no longer auto-fills the form — only the returning visitor's
+          // safety-briefing status is kept (it decides whether the video can be skipped).
+          // Search profile / OCR still auto-fill via applyVisitorRecord / applyVisitorToForm.
+          this.wizardService.setSafetyBriefFromVisitor(visitor);
           done();
         },
         error: () => { done(); }
@@ -4767,11 +4769,11 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
           const result = Array.isArray(response) ? response[0] : response;
           const code = result?.Table?.[0]?.Code;
           if (code === 10) {
-            // Whitelisted — allow to proceed. The response also carries the visitor
-            // record in Table1, so auto-fill from it exactly as the blacklist
-            // SearchVisitor path does.
+            // Whitelisted — allow to proceed. Triggered by NRIC / name entry, so no form
+            // auto-fill; keep only the safety-briefing status from the Table1 record.
             this.isVisitorNotWhitelisted = false;
-            this.applyVisitorRecord(result?.Table1?.[0]);
+            const record = result?.Table1?.[0];
+            if (record) this.wizardService.setSafetyBriefFromVisitor(record);
           } else {
             // Code 20 or unexpected — not whitelisted
             this.isVisitorNotWhitelisted = true;
