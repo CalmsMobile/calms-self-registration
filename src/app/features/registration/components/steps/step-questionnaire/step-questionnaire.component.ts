@@ -405,6 +405,12 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
     generalWrong: Question[];
     hasBoth: boolean;
   }): string {
+    // Video step off: the safety-brief captions ask the visitor to rewatch a video that is not
+    // offered (and the Rewatch button is hidden) — use the general wrong-answer alert instead.
+    if (!this.canRewatchSafetyBrief && (summary.hasBoth || summary.safetyBriefWrong.length > 0)) {
+      return this.labelService.getLabel('questionnaires_wrong_answer_alert', 'caption')
+        || 'All questions must be answered correctly to proceed.';
+    }
     if (summary.hasBoth) {
       return this.labelService.getLabel('questionnaires_safety_briefing_qn_wrong_answer_alert', 'caption')
         || 'Your answers are incorrect. Please review the safety briefing and try again.';
@@ -412,7 +418,10 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
       return this.labelService.getLabel('questionnaires_safety_briefing_qn_wrong_answer_alert', 'caption')
         || 'Your safety briefing assessment answers are incorrect. Please rewatch the video.';
     } else if (summary.generalWrong.length > 0) {
+      // Setup has no "General Qn Wrong Answer Alert" row yet — fall back to the existing,
+      // editable "Wrong answer alert" caption before the hard-coded English default.
       return this.labelService.getLabel('questionnaires_general_qn_wrong_answer_alert', 'caption')
+        || this.labelService.getLabel('questionnaires_wrong_answer_alert', 'caption')
         || 'Some of your general questions answers are incorrect. Please review and try again.';
     }
     return 'Your answers are incorrect. Please review and try again.';
@@ -543,6 +552,12 @@ export class StepQuestionnaireComponent implements OnInit, OnDestroy {
   skipStep(): void {
     this.saveFormData();
     this.wizardService.skipToNextStep();
+  }
+
+  /** Rewatch is only offered when the safety-brief video step is part of this wizard
+   *  (SafetyBriefVideoEnabled); otherwise the button led to a "step not found" warning. */
+  get canRewatchSafetyBrief(): boolean {
+    return this.wizardService.isStepEnabled('safety-brief');
   }
 
   rewatchSafetyBrief(): void {

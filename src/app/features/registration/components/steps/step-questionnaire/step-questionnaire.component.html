@@ -216,7 +216,9 @@
             </div>
           }
     <div class="modal-actions compact">
+      @if (canRewatchSafetyBrief) {
       <button class="modal-btn danger" type="button" (click)="rewatchSafetyBrief()">{{ 'questionnaires_rewatch_safety_brief' | translate }}</button>
+      }
       <button class="modal-link" type="button" (click)="reviewAnswers()">{{ 'questionnaires_review_my_answer' | translate }}</button>
     </div>
   </div>
