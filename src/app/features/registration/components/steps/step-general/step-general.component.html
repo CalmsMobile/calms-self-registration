@@ -597,7 +597,7 @@
             [disabled]="isFieldDisabled('host')" [showClear]="true" (onClear)="onHostChange({value: null})"
             [filter]="true" (onFilter)="onHostSearch($event.filter)"
             [emptyMessage]="hostEmptyFilterMessage" [emptyFilterMessage]="hostEmptyFilterMessage"
-            [virtualScroll]="true" [virtualScrollItemSize]="40" panelStyleClass="host-select-panel"
+            panelStyleClass="host-select-panel"
             appendTo="body">
           </p-select>
         </div>
@@ -1445,6 +1445,7 @@
             optionLabel="HOSTNAME" optionValue="HOSTIC" [class]="{'ng-invalid': isFieldInvalidRequired('host')}"
             [disabled]="isFieldDisabled('host')" [showClear]="true" (onClear)="onHostChange({value: null})"
             [filter]="true" [autofocusFilter]="false" (onFilter)="onHostSearch($event.filter)"
+            (onHide)="onHostPanelHide()"
             [emptyMessage]="hostEmptyFilterMessage" [emptyFilterMessage]="hostEmptyFilterMessage"
             [virtualScroll]="true" [virtualScrollItemSize]="40" panelStyleClass="host-select-panel"
             appendTo="body">

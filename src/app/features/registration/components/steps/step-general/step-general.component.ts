@@ -169,9 +169,8 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   ocrNoDataFound = false;
 
   hosts: any[] = [];
-  // Full host list, always loaded locally. When EnableSelfRegistrationHostPreload is
-  // true the dropdown (`hosts`) stays empty until the user searches; matches are then
-  // filtered locally out of this master list. When false, `hosts` mirrors this list.
+  // Full host list, always loaded locally. The rendered dropdown list is kept
+  // small initially and expanded from this master list only when searching.
   allHosts: any[] = [];
   departmentList: any[] = [];
   hostNameList: any[] = [];
@@ -277,7 +276,12 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   // matches. When EnableSelfRegistrationHostPreload is true the full host list
   // is NOT preloaded (privacy), so nothing is shown until this many chars.
   private readonly HOST_SEARCH_MIN_CHARS = 3;
+  // Avoid rendering a potentially huge host list during initial page paint.
+  // Searching still uses allHosts, so every host remains discoverable.
+  private readonly HOST_INITIAL_DISPLAY_LIMIT = 100;
   hostSearchText: string = '';
+  private hostOptionsRevealed = false;
+  private lastAppliedHostQuery = '';
   showReturningVisitorPopup = false;
   searchQuery = '';
   visitorNotFound = false;
@@ -1337,7 +1341,9 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
       // When preload is enabled, keep the dropdown empty until the user searches
       // (>= HOST_SEARCH_MIN_CHARS) — matches are filtered locally in onHostSearch.
       // When disabled, show the full list as usual.
-      this.hosts = this.enableSelfRegistrationHostPreload ? [] : [...mappedHosts];
+      this.hosts = this.enableSelfRegistrationHostPreload
+        ? []
+        : mappedHosts.slice(0, this.HOST_INITIAL_DISPLAY_LIMIT);
 
       this.hostNameList = [...this.hosts];
       console.log('Hosts processed successfully, master count:', this.allHosts.length, '| displayed:', this.hosts.length);
@@ -1746,26 +1752,57 @@ export class StepGeneralComponent implements OnInit, OnDestroy {
   onHostSearch(searchText: string): void {
     this.hostSearchText = searchText ?? '';
 
-    // Preload disabled → full list is shown; let PrimeNG filter it client-side.
-    if (!this.enableSelfRegistrationHostPreload) {
+    const query = this.hostSearchText.trim().toLowerCase();
+
+    // In normal mode show a small initial set for fast page paint, then search
+    // the complete local list once the user starts typing.
+    if (!this.enableSelfRegistrationHostPreload && query.length === 0) {
+      this.hosts = this.allHosts.slice(0, this.HOST_INITIAL_DISPLAY_LIMIT);
+      this.hostNameList = [...this.hosts];
+      this.hostOptionsRevealed = false;
+      this.lastAppliedHostQuery = '';
       return;
     }
-
-    const query = this.hostSearchText.trim().toLowerCase();
 
     // Privacy: reveal nothing until the minimum characters are typed.
     // Shortening the query below the threshold hides results again.
-    if (query.length < this.HOST_SEARCH_MIN_CHARS) {
-      this.hosts = [];
+    const minimumChars = this.enableSelfRegistrationHostPreload ? this.HOST_SEARCH_MIN_CHARS : 1;
+    if (query.length < minimumChars) {
+      this.hosts = this.enableSelfRegistrationHostPreload
+        ? []
+        : this.allHosts.slice(0, this.HOST_INITIAL_DISPLAY_LIMIT);
       this.hostNameList = [];
+      this.hostOptionsRevealed = false;
+      this.lastAppliedHostQuery = '';
       return;
     }
 
-    // Filter the locally-loaded master list by host name.
-    this.hosts = this.allHosts.filter((h: any) =>
-      (h.HOSTNAME || h.Name || '').toLowerCase().includes(query)
-    );
-    this.hostNameList = [...this.hosts];
+    // Let PrimeNG filter the currently revealed options after the first
+    // search. Replacing [options] on every keypress while the virtual-scroll
+    // overlay is open causes the panel to be destroyed/recreated and can make
+    // it collapse until the select is opened again.
+    //
+    // Rebuild only when a new search starts (for example, after Ctrl+A or
+    // deleting below the minimum and typing a different query).
+    if (!this.hostOptionsRevealed || !query.startsWith(this.lastAppliedHostQuery)) {
+      this.hosts = this.allHosts.filter((h: any) =>
+        (h.HOSTNAME || h.Name || '').toLowerCase().includes(query)
+      );
+      this.hostNameList = [...this.hosts];
+      this.hostOptionsRevealed = true;
+      this.lastAppliedHostQuery = query;
+    }
+  }
+
+  /** Reset the privacy-gated host options after the panel closes. */
+  onHostPanelHide(): void {
+    this.hostSearchText = '';
+    this.hostOptionsRevealed = false;
+    this.lastAppliedHostQuery = '';
+    this.hosts = this.enableSelfRegistrationHostPreload
+      ? []
+      : this.allHosts.slice(0, this.HOST_INITIAL_DISPLAY_LIMIT);
+    this.hostNameList = [];
   }
 
   /** Message shown inside the host dropdown when no options are listed. */

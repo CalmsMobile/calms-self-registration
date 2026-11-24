@@ -95,9 +95,8 @@
   padding-right: 34px !important;
 }
 
-/* Host dropdown uses virtual scroll (large host lists), which needs a fixed
-   row height matching [virtualScrollItemSize]="40" — so keep options on one
-   line and ellipsize instead of wrapping. */
+/* Keep host names compact and prevent long names from changing the option
+   height while the searchable panel is being resized. */
 .host-select-panel .p-select-option {
   white-space: nowrap !important;
   overflow: hidden;
