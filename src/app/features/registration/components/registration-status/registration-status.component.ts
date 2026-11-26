@@ -48,6 +48,8 @@ export class RegistrationStatusComponent implements OnInit, OnDestroy {
   @Input() registrationData!: RegistrationData;
   /** Controlled by the page component based on how the app was started. */
   @Input() showNewRegistration: boolean = true;
+  /** Master switch (EnableNewRegButton) — also gates the pending-screen button. */
+  @Input() enableNewRegButton: boolean = false;
   @Input() isRetrying: boolean = false;
   @ViewChild('passCardRef') passCardRef!: ElementRef<HTMLElement>;
   @Output() newRegistration = new EventEmitter<void>();

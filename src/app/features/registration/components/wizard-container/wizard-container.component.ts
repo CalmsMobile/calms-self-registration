@@ -461,6 +461,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               const savedRefCatCode = this.wizardService.refCatCode;
               const savedHcParam = this.wizardService.hcParam;
               const allowMultipleBooking = this.wizardService.getSettings()?.AllowMultipleBooking ?? true;
+              const enableNewRegButton = this.wizardService.getSelfRegistrationSettings()?.EnableNewRegButton === true;
               const quizScore = this.wizardService.getQuestionnaireScore();
 
               // Clear session storage after successful submission
@@ -496,7 +497,8 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                   refCode: savedRefCode,
                   refCatCode: savedRefCatCode,
                   hcParam: savedHcParam,
-                  allowMultipleBooking: allowMultipleBooking
+                  allowMultipleBooking: allowMultipleBooking,
+                  enableNewRegButton: enableNewRegButton
                 }
               });
             },
@@ -520,6 +522,7 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
               const errRefCatCode = this.wizardService.refCatCode;
               const errHcParam = this.wizardService.hcParam;
               const errAllowMultipleBooking = this.wizardService.getSettings()?.AllowMultipleBooking ?? true;
+              const errEnableNewRegButton = this.wizardService.getSelfRegistrationSettings()?.EnableNewRegButton === true;
 
               sessionStorage.setItem('navigatingToStatus', 'true');
               this.router.navigate(['/registration-status'], {
@@ -534,7 +537,8 @@ export class WizardContainerComponent implements OnInit, OnDestroy {
                   refCode: errRefCode,
                   refCatCode: errRefCatCode,
                   hcParam: errHcParam,
-                  allowMultipleBooking: errAllowMultipleBooking
+                  allowMultipleBooking: errAllowMultipleBooking,
+                  enableNewRegButton: errEnableNewRegButton
                 }
               });
             }

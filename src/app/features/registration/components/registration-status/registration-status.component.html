@@ -212,7 +212,7 @@
     </div>
   }
 
-  @if (status === 'pending') {
+  @if (status === 'pending' && enableNewRegButton) {
     <button class="action-btn pending-btn" type="button" (click)="onNewRegistration()">
       <span class="btn-icon">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.3 4h2.2A5 5 0 1 0 12 7V4l4 3-4 3V7Z"/></svg>

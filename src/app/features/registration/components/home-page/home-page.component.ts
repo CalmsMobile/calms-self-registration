@@ -715,6 +715,8 @@ export class HomePageComponent implements AfterViewChecked {
             EnableWhitelistValidation: tcSettings.EnableWhitelistValidation ?? false,
             AptEndTime: tcSettings.AptEndTime || '',
             AllowMultipleBooking: tcSettings.AllowMultipleBooking ?? false,
+            // Master switch for the confirmation page "New Registration" button.
+            EnableNewRegButton: tcSettings.EnableNewRegButton === true,
             EnableIDOCRScan: tcSettings.EnableIDOCRScan ?? false,
             MultipleVisitorEnabled: tcSettings.MultipleVisitorEnabled ?? false
           });

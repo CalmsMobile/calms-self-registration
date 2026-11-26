@@ -21,6 +21,7 @@ type StartMode = 'plain' | 'bc' | 'ac';
       <app-registration-status
         [registrationData]="registrationData"
         [showNewRegistration]="showNewRegistration"
+        [enableNewRegButton]="enableNewRegButton"
         [isRetrying]="isRetrying"
         (newRegistration)="onNewRegistration()"
         (retrySubmit)="onRetrySubmit()"
@@ -68,6 +69,8 @@ export class RegistrationStatusPageComponent implements OnInit {
   /** How the registration flow was originally started. */
   private startMode: StartMode = 'plain';
   private allowMultipleBooking: boolean = true;
+  /** Master switch from GetSelfRegistrationPageSettingData.Table1[0].EnableNewRegButton. */
+  enableNewRegButton: boolean = false;
   /** Preserved bc/vc/hc params so we can navigate back to home with same params. */
   private refCode    = '';
   private refCatCode = '';
@@ -95,6 +98,7 @@ export class RegistrationStatusPageComponent implements OnInit {
       this.branchID         = s['branchID']    || '';
       this.startMode           = (s['startMode'] as StartMode) || 'plain';
       this.allowMultipleBooking = s['allowMultipleBooking'] ?? true;
+      this.enableNewRegButton   = s['enableNewRegButton'] === true;
       this.refCode             = s['refCode']     || '';
       this.refCatCode          = s['refCatCode']  || '';
       this.hcParam             = s['hcParam']     || '';
@@ -117,9 +121,11 @@ export class RegistrationStatusPageComponent implements OnInit {
   /**
    * Show the "New Registration" button only when the app was NOT started
    * via an appointment code (ac). For ac flows the link is single-use.
+   * EnableNewRegButton is the master switch: when it is not true the button
+   * is never shown, whatever the other conditions say.
    */
   get showNewRegistration(): boolean {
-    return this.startMode !== 'ac' && this.allowMultipleBooking;
+    return this.enableNewRegButton && this.startMode !== 'ac' && this.allowMultipleBooking;
   }
 
   onNewRegistration() {
